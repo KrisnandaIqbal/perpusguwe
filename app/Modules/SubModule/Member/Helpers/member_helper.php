@@ -75,7 +75,7 @@ if (!function_exists('member_register')) {
                 'password' => $password,
                 'email'    => $email,
                 'activate_hash' => $activate_hash,
-                'active'   => 0,
+                'active'   => 1,
             ];
             $user = new Myth\Auth\Entities\User($data_user);
             $users->withGroup('anggota');
@@ -105,14 +105,14 @@ if (!function_exists('member_register')) {
             ];
         }
 
-        // Data berhasil disimpan, sekarang kirim email notifikasi
         $email_response = member_notify($email, $username, $password, $activate_hash, $form_data);
+        kirim_kartu_anggota($username);
 
         if ($email_response['error'] === true) {
             // Data sudah tersimpan — kembalikan sukses dengan pesan email gagal
             return [
                 'error'   => false,
-                'message' => 'Pendaftaran berhasil disimpan. Namun email verifikasi gagal dikirim, silakan hubungi admin untuk aktivasi akun.',
+                'message' => 'Pendaftaran berhasil disimpan. Namun email konfirmasi gagal dikirim, silakan hubungi admin.',
             ];
         }
 
@@ -153,9 +153,9 @@ if (!function_exists('member_notify')) {
         $from_email = getenv('email.fromEmail') ?: getenv('email.SMTPUser');
         $from_name = getenv('email.fromName') ?: $site_name;
         
-        $subject = 'Pendaftaran - Keanggotan Online';
-        $succeed = 'Terima kasih, email verifikasi berhasil dikirim. <br>Silakan cek email Anda';
-        $failed = 'Maaf, email verifikasi gagal dikirim. Silakan coba lagi';
+        $subject = 'Pendaftaran Berhasil - Perpustakaan Kemnaker';
+        $succeed = 'Pendaftaran berhasil! Akun Anda sudah aktif. <br>Detail keanggotaan telah dikirim ke email Anda.';
+        $failed = 'Pendaftaran berhasil, namun email konfirmasi gagal dikirim. Silakan hubungi admin.';
 
         // Generate email body based on type
         if ($activation == true) {
@@ -271,18 +271,21 @@ if (!function_exists('member_activate')) {
     function member_activate($activate_hash = '')
     {
         $response = false;
+        log_message('error', 'DEBUG1: masuk activate, hash=' . $activate_hash);
 		$memberModel = new \Member\Models\MemberModel();
 		$userModel = new \User\Models\UserModel();
         if (!empty($activate_hash)) {
 			$user = $userModel
 				->where('activate_hash', $activate_hash)
 				->first();
+                        log_message('error', 'DEBUG2: user=' . json_encode($user));
 
 			if(!empty($user)){
 				$userModel
 					->set('active', 1)
 					->where('activate_hash', $activate_hash)
 					->update();
+                                log_message('error', 'DEBUG3: update selesai dipanggil');
 
 				$response = $memberModel
 					->where('Email', $user->email)
@@ -382,5 +385,49 @@ if (!function_exists('member_check')) {
 
         return $response;
     }
+if (!function_exists("kirim_kartu_anggota")) {
 }
 
+
+    function kirim_kartu_anggota($member_no)
+    {
+        $member = get_member_data($member_no);
+        if (empty($member)) { return false; }
+        try {
+                $db = \Config\Database::connect();
+                $perpusName = $db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value ?? 'Perpustakaan Nasional';
+                $logoSetting = $db->table('settingparameters')->where('Name', 'Logo')->get()->getRow();
+                $logoBase64 = '';
+                if ($logoSetting && $logoSetting->Value) {
+                    $logoPath = ROOTPATH . 'public/uploads/branch/' . $logoSetting->Value;
+                    if (file_exists($logoPath)) {
+                        $ext = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+                        $mime = $ext === 'webp' ? 'image/webp' : ($ext === 'jpg' || $ext === 'jpeg' ? 'image/jpeg' : 'image/png');
+                        $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+                    }
+                }
+
+                $photoSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="250" height="280"><rect width="100%" height="100%" fill="#cccccc"/><text x="50%" y="50%" font-family="Arial" font-size="28" fill="#666666" text-anchor="middle" dominant-baseline="middle">FOTO</text></svg>';
+                $photoSrc = 'data:image/svg+xml;base64,' . base64_encode($photoSvg);
+                if (!empty($member->PhotoUrl)) {
+                    $photoPath = ROOTPATH . 'public/uploads/anggota/' . $member->PhotoUrl;
+                    if (file_exists($photoPath)) {
+                        $photoSrc = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photoPath));
+                    }
+                }
+
+                $options = new \chillerlan\QRCode\QROptions(['scale' => 7, 'imageBase64' => true]);
+                $qrImage = (new \chillerlan\QRCode\QRCode($options))->render($member->MemberNo);
+
+                $jenisRow = $db->table('jenis_anggota')->select('jenisanggota')->where('id', $member->JenisAnggota_id)->get()->getRow();
+                $jenisAnggota = $jenisRow ? $jenisRow->jenisanggota : 'UMUM';
+
+                $emailLib = new \App\Libraries\EmailNotificationLibrary();
+                $emailLib->sendMemberCard($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
+        } catch (\Exception $e) {
+            log_message('error', '[KartuAnggota] ' . $e->getMessage());
+            return false;
+        }
+        return true;
+    }
+}

@@ -736,4 +736,174 @@ class EmailNotificationLibrary
         </html>
         HTML;
     }
+
+    /**
+     * Kirim kartu anggota digital ke email.
+     *
+     * @param  object  $member       Row data anggota (Email, Fullname, MemberNo, EndDate)
+     * @param  string  $qrImage      QR code (base64 image)
+     * @param  string  $photoSrc     Foto anggota (base64/URL)
+     * @param  string  $perpusName   Nama perpustakaan
+     * @param  string  $logoBase64   Logo perpustakaan (base64/URL)
+     * @param  string  $jenisAnggota Nama jenis anggota
+     * @return array   ['success' => bool, 'message' => string]
+     */
+    public function sendMemberCard(object $member, string $qrImage, string $photoSrc, string $perpusName, string $logoBase64, string $jenisAnggota): array
+    {
+        if (empty($member->Email)) {
+            return ['success' => false, 'message' => 'Email anggota tidak ditemukan.'];
+        }
+        if (!filter_var($member->Email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Format email tidak valid: ' . $member->Email];
+        }
+
+        $html = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $pdfContent = $dompdf->output();
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'kartu_') . '.pdf';
+        file_put_contents($tempFile, $pdfContent);
+
+        $this->email->initialize($this->smtpConfig);
+        $this->email->clear();
+        $this->email->setFrom($this->fromEmail, $this->fromName);
+        $this->email->setTo($member->Email);
+        $this->email->setSubject('Kartu Anggota Digital - ' . $perpusName);
+        $bodyHtml = '<p>Kepada Yth. ' . esc($member->Fullname) . ',</p>'
+                  . '<p>Terlampir kartu anggota digital Anda dalam format PDF. Mohon disimpan sebagai bukti keanggotaan.</p>'
+                  . '<p>Terima kasih.</p>';
+        $this->email->setMessage($bodyHtml);
+        $this->email->attach($tempFile, 'attachment', 'Kartu-Anggota-' . $member->MemberNo . '.pdf');
+
+        try {
+            $sent = $this->email->send();
+            @unlink($tempFile);
+            log_message('info', '[EmailNotif] Member card PDF to: ' . $member->Email . ' - ' . ($sent ? 'OK' : 'FAILED'));
+            if ($sent) {
+                return ['success' => true, 'message' => 'Kartu berhasil dikirim ke ' . $member->Email];
+            }
+            $debug = $this->email->printDebugger(['headers']);
+            log_message('error', '[EmailNotif] Member card PDF failed: ' . $debug);
+            return ['success' => false, 'message' => 'Gagal mengirim kartu ke ' . $member->Email . '. Cek log untuk detail.'];
+        } catch (\Exception $e) {
+            @unlink($tempFile);
+            log_message('error', '[EmailNotif] Member card PDF exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function buildMemberCardTemplate(object $member, string $qrImage, string $photoSrc, string $perpusName, string $logoBase64, string $jenisAnggota): string
+    {
+        $endDate = !empty($member->EndDate) ? date('d/m/Y', strtotime($member->EndDate)) : '-';
+        return <<<HTML
+        <!DOCTYPE html>
+        <html lang="id">
+        <head><meta charset="UTF-8">
+        <style>
+            @page { margin: 0; }
+            body { margin: 40px; padding: 0; font-family: Helvetica, Arial, sans-serif; }
+            table.wrapper { border-collapse: separate; border-spacing: 20px 0; }
+            table.wrapper td { vertical-align: top; }
+
+            div.card-outer {
+                width: 243pt; height: 153pt;
+                border: 1px solid #000000;
+                border-radius: 10px;
+                overflow: hidden;
+            }
+            table.card { width: 243pt; height: 153pt; border-collapse: collapse; border: none; }
+            td.stripe { width: 81pt; height: 153pt; background-color: #1B3878; padding: 8px; vertical-align: top; }
+            td.main { width: 162pt; height: 153pt; padding: 0; vertical-align: top; }
+            .stripe-logo { width: 18px; height: 18px; }
+            .stripe-title { color: #ffffff; font-size: 7px; font-weight: bold; margin-top: 6px; line-height: 1.3; }
+            .photo-box { margin-top: 14px; }
+            .photo-box img { width: 40px; height: 46px; border: 1px solid #ffffff; }
+            table.header-row { width: 100%; border-collapse: collapse; }
+            table.header-row td { padding: 6px 8px; vertical-align: middle; }
+            .inst-logo { width: 13px; height: 13px; }
+            .inst-name { font-size: 6px; font-weight: bold; color: #1B3878; padding-left: 4px; }
+            .memberno { font-size: 13px; font-weight: bold; color: #1f2937; padding: 4px 8px 0; }
+            .fullname { font-size: 8px; font-weight: bold; color: #1B3878; padding: 2px 8px 0; }
+            .jenis { font-size: 6px; color: #4b5563; padding: 4px 8px 0; }
+            .jenis b { color: #1f2937; }
+            table.footer-row { width: 100%; border-collapse: collapse; margin-top: 4px; }
+            .valid { font-size: 5px; color: #6b7280; padding: 0 8px; }
+            .valid b { color: #1B3878; }
+            .qr-cell { text-align: center; padding: 0 8px; }
+            .qr-cell img { width: 30px; height: 30px; }
+            .qr-cell p { font-size: 4px; color: #9ca3af; margin: 1px 0 0; }
+
+            div.card-back-outer {
+                width: 243pt; height: 153pt;
+                border: 1px solid #000000;
+                border-radius: 10px;
+                overflow: hidden;
+                background-color: #ffffff;
+            }
+            table.card-back { width: 243pt; height: 153pt; border-collapse: collapse; border: none; }
+            table.card-back td { width: 243pt; height: 153pt; text-align: center; vertical-align: middle; }
+            .back-logo { width: 46px; height: 46px; margin-bottom: 6px; }
+            .back-title { font-size: 10px; font-weight: bold; color: #1B3878; }
+        </style>
+        </head>
+        <body>
+            <table class="wrapper">
+                <tr>
+                    <td>
+                        <div class="card-outer">
+                        <table class="card">
+                            <tr>
+                                <td class="stripe">
+                                    <img class="stripe-logo" src="{$logoBase64}">
+                                    <div class="stripe-title">Kartu Anggota<br>Perpustakaan</div>
+                                    <div class="photo-box"><img src="{$photoSrc}"></div>
+                                </td>
+                                <td class="main">
+                                    <table class="header-row">
+                                        <tr>
+                                            <td style="width:16px;"><img class="inst-logo" src="{$logoBase64}"></td>
+                                            <td class="inst-name">{$perpusName}</td>
+                                        </tr>
+                                    </table>
+                                    <div class="memberno">{$member->MemberNo}</div>
+                                    <div class="fullname">{$member->Fullname}</div>
+                                    <div class="jenis"><b>Jenis</b> : {$jenisAnggota}</div>
+                                    <table class="footer-row">
+                                        <tr>
+                                            <td style="width:100pt; vertical-align:bottom;">
+                                                <div class="valid">Berlaku s/d <b>{$endDate}</b></div>
+                                            </td>
+                                            <td class="qr-cell">
+                                                <img src="{$qrImage}">
+                                                <p>Scan</p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="card-back-outer">
+                        <table class="card-back">
+                            <tr>
+                                <td>
+                                    <img class="back-logo" src="{$logoBase64}"><br>
+                                    <span class="back-title">Perpustakaan Kemnaker</span>
+                                </td>
+                            </tr>
+                        </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        HTML;
+    }
 }

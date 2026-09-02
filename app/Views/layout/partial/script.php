@@ -1,5 +1,5 @@
 <!--CORE-->
-<script src="<?= base_url('assets/js'); ?>/jquery-4.0.0.min.js"></script>
+<script src="<?= base_url('assets/js'); ?>/jquery-3.3.1.min.js"></script>
 <script>
     // Memastikan jQuery sudah ter-load sebelum menambal fungsinya
     if (typeof jQuery !== 'undefined') {
@@ -45,7 +45,7 @@
         }
     }
 </script>
-<script src="<?= base_url('assets/js'); ?>/bootstrap.min.js"></script>
+<script src="<?= base_url('assets/vendors/bootstrap'); ?>/bootstrap.bundle.min.js"></script>
 <script src="<?= base_url('assets/js'); ?>/metisMenu.min.js"></script>
 <script src="<?= base_url('assets/js'); ?>/scrollbar.min.js"></script>
 <script src="<?= base_url('assets/js'); ?>/toastr.min.js"></script>
@@ -68,7 +68,7 @@
 <script src="<?= base_url('assets/vendors'); ?>/datatables/js/responsive.bootstrap.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="https://cdn.tiny.cloud/1/32x284pjuqkz6bpk6b6dnfpxfestvjmqesa33sgixmunt7sh/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="<?= base_url('assets/vendors/tinymce'); ?>/tinymce.min.js" referrerpolicy="origin"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!--INIT -->

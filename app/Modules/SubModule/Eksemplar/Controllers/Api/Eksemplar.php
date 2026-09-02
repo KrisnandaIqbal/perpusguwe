@@ -196,6 +196,32 @@ class Eksemplar extends \Base\Controllers\BaseResourceController
     return $dataTable;
 }
 
+public function datatable_cetaklabel($IsQUARANTINE = 0)
+{
+    $db = db_connect();
+    $builder = $db->table('collections as a')
+        ->select('a.ID, a.ID as action, a.ID as Collection_id')
+        ->select('a.NomorBarcode, a.UpdateDate')
+        ->select('b.Title, b.Author, b.PublishYear, b.CallNumber')
+        ->join('catalogs as b', 'b.ID = a.Catalog_id', 'left')
+        ->where('a.IsQUARANTINE', $IsQUARANTINE)
+        ->groupBy('a.ID', 'DESC');
+
+    $dataTable = DataTable::of($builder)
+        ->addNumbering('no')
+        ->edit('ID', function ($row) {
+            return '<input type="checkbox" class="check" name="ID[]" value="' . $row->ID . '" data-title="' . htmlspecialchars($row->Title ?? '') . '">';
+        })
+        ->edit('NomorBarcode', function ($row) {
+            return '<b>' . $row->NomorBarcode . '</b>';
+        })
+        ->edit('UpdateDate', function ($row) {
+            return $row->UpdateDate ? date('d-m-Y H:i', strtotime($row->UpdateDate)) : '-';
+        })
+        ->toJson();
+    return $dataTable;
+}
+
 	public function index($catalog_id = null)
 	{
 		// Retrieve parameters from the request

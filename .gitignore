@@ -132,3 +132,16 @@ nb-configuration.xml
 /phpunit*.xml
 /.phpunit.*.cache
 
+
+#-------------------------
+# Custom exclusions (Kemnaker)
+#-------------------------
+inlislitev33.zip
+composer.phar
+composer-setup.php
+error_log
+public/error_log
+*.bak
+-d
+public/test_kartu_real.pdf
+public/test_kartu_real.pdf

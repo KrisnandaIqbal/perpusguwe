@@ -66,6 +66,7 @@ $routes->group('api/eksemplar', ['namespace' => 'Eksemplar\Controllers\Api'], fu
     $subroutes->add('datatable',               'Eksemplar::datatable');
     $subroutes->add('datatable/(:any)',        'Eksemplar::datatable/$1');
     $subroutes->add('datatable/(:any)/(:any)', 'Eksemplar::datatable/$1/$2');
+    $subroutes->add('datatable_cetaklabel', 'Eksemplar::datatable_cetaklabel');
     $subroutes->add('switch/(:any)',           'Eksemplar::switch/$1');
 
     $subroutes->get('collectionsources',   'Eksemplar::get_collectionsources');

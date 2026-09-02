@@ -322,7 +322,7 @@
               <label class="form-label required">Jenis Identitas</label>
               <select class="form-control" name="IdentityType_id" id="IdentityType_id" placeholder="Jenis identitas">
                 <option value="" disabled selected>Jenis identitas</option>
-                <?php foreach (get_table('master_jenis_identitas', 'id, Nama', null, 'data') as $row) : ?>
+                <?php foreach (get_table('master_jenis_identitas', 'id, Nama', 'active=1', 'data') as $row) : ?>
                   <option value="<?= $row->id ?>" <?= set_select('IdentityType_id', $row->id) ?>><?= $row->Nama ?></option>
                 <?php endforeach; ?>
               </select>
@@ -341,6 +341,20 @@
               <div class="help-text">Email aktif untuk menerima notifikasi pendaftaran</div>
             </div>
           </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label required">Password</label>
+              <input type="password" name="Password" id="Password" class="form-control" required minlength="6" placeholder="Minimal 6 karakter">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label required">Konfirmasi Password</label>
+              <input type="password" name="PasswordConfirm" id="PasswordConfirm" class="form-control" required minlength="6" placeholder="Ulangi password">
+            </div>
+          </div>
+        </div>
           <div class="col-md-4">
             <div class="form-group">
               <label class="form-label">&nbsp;</label>

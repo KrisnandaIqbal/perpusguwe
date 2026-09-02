@@ -54,14 +54,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var string|string[]
      */
-    public $scriptSrc = 'self';
+    public $scriptSrc = ['self', 'unsafe-inline', 'unsafe-eval', 'cdn.jsdelivr.net', 'js.hcaptcha.com', 'newassets.hcaptcha.com'];
 
     /**
      * Lists allowed stylesheets' URLs.
      *
      * @var string|string[]
      */
-    public $styleSrc = 'self';
+    public $styleSrc = ['self', 'unsafe-inline', 'cdn.jsdelivr.net', 'fonts.googleapis.com'];
 
     /**
      * Defines the origins from which images can be loaded.
@@ -92,14 +92,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var string|string[]
      */
-    public $connectSrc = 'self';
+    public $connectSrc = ['self', 'hcaptcha.com', 'newassets.hcaptcha.com'];
 
     /**
      * Specifies the origins that can serve web fonts.
      *
      * @var string|string[]
      */
-    public $fontSrc;
+    public $fontSrc = ['self', 'fonts.gstatic.com', 'fonts.googleapis.com'];
 
     /**
      * Lists valid endpoints for submission from `<form>` tags.
@@ -124,7 +124,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var array|string|null
      */
-    public $frameSrc;
+    public $frameSrc = ['self', 'hcaptcha.com', 'newassets.hcaptcha.com'];
 
     /**
      * Restricts the origins allowed to deliver video and audio.
