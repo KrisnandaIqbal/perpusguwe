@@ -30,13 +30,13 @@ class EksemplarFormController extends \Base\Controllers\BaseController
 
         $this->validation->setRules([
             'Catalog_id'          => ['label' => 'Judul Katalog',       'rules' => 'required'],
-            'Location_Library_id' => ['label' => 'Lokasi Perpustakaan', 'rules' => 'required'],
-            'Location_id'         => ['label' => 'Lokasi Ruang',        'rules' => 'required'],
-            'Source_id'           => ['label' => 'Sumber Pengadaan',    'rules' => 'required'],
-            'Partner_id'          => ['label' => 'Nama Sumber',         'rules' => 'required'],
+            'Location_Library_id' => ['label' => 'Lokasi Perpustakaan', 'rules' => 'permit_empty'],
+            'Location_id'         => ['label' => 'Lokasi Ruang',        'rules' => 'permit_empty'],
+            'Source_id'           => ['label' => 'Sumber Pengadaan',    'rules' => 'permit_empty'],
+            'Partner_id'          => ['label' => 'Nama Sumber',         'rules' => 'permit_empty'],
             'Media_id'            => ['label' => 'Bentuk Fisik',        'rules' => 'required'],
             'Category_id'         => ['label' => 'Kategori Koleksi',    'rules' => 'required'],
-            'TanggalPengadaan'    => ['label' => 'Tanggal Pengadaan',   'rules' => 'required'],
+            'TanggalPengadaan'    => ['label' => 'Tanggal Pengadaan',   'rules' => 'permit_empty'],
         ]);
 
         if ($this->request->getPost()) {
@@ -82,9 +82,9 @@ class EksemplarFormController extends \Base\Controllers\BaseController
 
                     $save = [
                         'Catalog_id'          => $post['Catalog_id'],
-                        'ISDRM'               => $post['ISDRM'],
-                        'Location_Library_id' => $post['Location_Library_id'],
-                        'Location_id'         => $post['Location_id'],
+                        'ISDRM'               => isset($post['ISDRM']) ? $post['ISDRM'] : 0,
+                        'Location_Library_id' => isset($post['Location_Library_id']) ? $post['Location_Library_id'] : null,
+                        'Location_id'         => isset($post['Location_id']) ? $post['Location_id'] : null,
                         'NomorBarcode'        => $nomorBarcode,
                         'NoInduk'             => $noInduk,
                         'RFID'                => $rfid,
@@ -101,7 +101,7 @@ class EksemplarFormController extends \Base\Controllers\BaseController
                     if (!empty($post['Category_id']))      $save['Category_id']       = $post['Category_id'];
                     if (!empty($post['Currency']))         $save['Currency']          = $post['Currency'];
                     if (!empty($post['Media_id']))         $save['Media_id']          = $post['Media_id'];
-                    if (!empty($post['Source_id']))        $save['Source_id']         = $post['Source_id'];
+                    $save['Source_id'] = 2; // default: Hadiah/Hibah         = $post['Source_id'];
                     if (!empty($post['Status_id']))        $save['Status_id']         = $post['Status_id'];
                     if (!empty($post['Partner_id']))       $save['Partner_id']        = $post['Partner_id'];
                     if (!empty($post['Price']))            $save['Price']             = $post['Price'];
@@ -204,13 +204,13 @@ class EksemplarFormController extends \Base\Controllers\BaseController
 
         $this->validation->setRules([
             'Catalog_id'          => ['label' => 'Judul Katalog',       'rules' => 'required'],
-            'Location_Library_id' => ['label' => 'Lokasi Perpustakaan', 'rules' => 'required'],
-            'Location_id'         => ['label' => 'Lokasi Ruang',        'rules' => 'required'],
-            'Source_id'           => ['label' => 'Sumber Pengadaan',    'rules' => 'required'],
-            'Partner_id'          => ['label' => 'Nama Sumber',         'rules' => 'required'],
+            'Location_Library_id' => ['label' => 'Lokasi Perpustakaan', 'rules' => 'permit_empty'],
+            'Location_id'         => ['label' => 'Lokasi Ruang',        'rules' => 'permit_empty'],
+            'Source_id'           => ['label' => 'Sumber Pengadaan',    'rules' => 'permit_empty'],
+            'Partner_id'          => ['label' => 'Nama Sumber',         'rules' => 'permit_empty'],
             'Media_id'            => ['label' => 'Bentuk Fisik',        'rules' => 'required'],
             'Category_id'         => ['label' => 'Kategori Koleksi',    'rules' => 'required'],
-            'TanggalPengadaan'    => ['label' => 'Tanggal Pengadaan',   'rules' => 'required'],
+            'TanggalPengadaan'    => ['label' => 'Tanggal Pengadaan',   'rules' => 'permit_empty'],
         ]);
 
         if ($this->request->getPost()) {
@@ -220,9 +220,9 @@ class EksemplarFormController extends \Base\Controllers\BaseController
                 $redirect = isset($post['redirect']) ? $post['redirect'] : '';
 
                 $update = [
-                    'Location_Library_id' => $post['Location_Library_id'],
-                    'Location_id'         => $post['Location_id'],
-                    'ISDRM'               => $post['ISDRM'],
+                    'Location_Library_id' => isset($post['Location_Library_id']) ? $post['Location_Library_id'] : null,
+                    'Location_id'         => isset($post['Location_id']) ? $post['Location_id'] : null,
+                    'ISDRM'               => isset($post['ISDRM']) ? $post['ISDRM'] : 0,
                     'NomorBarcode'        => isset($post['NomorBarcode0']) ? $post['NomorBarcode0'] : (isset($post['NomorBarcode']) ? $post['NomorBarcode'] : ''),
                     'NoInduk'             => isset($post['NoInduk0']) ? $post['NoInduk0'] : (isset($post['NoInduk']) ? $post['NoInduk'] : ''),
                     'RFID'                => isset($post['RFID0']) ? $post['RFID0'] : (isset($post['RFID']) ? $post['RFID'] : ''),
