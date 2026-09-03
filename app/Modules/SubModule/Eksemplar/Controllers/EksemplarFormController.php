@@ -126,6 +126,8 @@ class EksemplarFormController extends \Base\Controllers\BaseController
                             return redirect()->back()->withInput();
                         }
 
+                        record_history('CREATE', 'item', $Catalog_id, 'Tambah ' . $total . ' eksemplar baru');
+
                         $this->session->setFlashdata('swal_icon',  'success');
                         $this->session->setFlashdata('swal_title', 'Berhasil');
                         $this->session->setFlashdata('swal_text',  'Eksemplar berhasil ditambah');
@@ -243,6 +245,8 @@ class EksemplarFormController extends \Base\Controllers\BaseController
 
                 try {
                     $this->eksemplarModel->update($id, $update);
+
+                    record_history('UPDATE', 'item', $id, 'Update eksemplar');
 
                     $this->session->setFlashdata('swal_icon', 'success');
                     $this->session->setFlashdata('swal_title', 'Berhasil');
