@@ -568,23 +568,47 @@ $rda = $request->getGet('rda') ?? 1;
 			<div class="row">
 				<?php if ($rda == 1) : ?>
 					<div class="col-md-6">
-						<div class="form-group">
-							<label for="jenisIsi">Jenis Isi</label>
-							<input type="text" class="form-control" name="jenisIsi" id="jenisIsi" placeholder="" value="<?= trim($str_336['a'] ?? '') ?>" />
-						</div>
-					</div>
-					<div class=" col-md-6">
-						<div class="form-group">
-							<label for="jenisMedia">Jenis Media</label>
-							<input type="text" class="form-control" name="jenisMedia" id="jenisMedia" placeholder="" value="<?= trim($str_337['a'] ?? '') ?>" />
-						</div>
-					</div>
-					<div class=" col-md-6">
-						<div class="form-group">
-							<label for="jenisWadah">Jenis Wadah</label>
-							<input type="text" class="form-control" name="jenisWadah" id="jenisWadah" placeholder="" value="<?= trim($str_338['a'] ?? '') ?>" />
-						</div>
-					</div>
+                        <div class="form-group">
+                                <label for="jenisIsi">Jenis Isi</label>
+                                <select class="form-control" name="jenisIsi" id="jenisIsi">
+                                        <option value="">-- Pilih Jenis Isi --</option>
+                                        <?php
+                                        $currentJenisIsi = trim($str_336['a'] ?? '');
+                                        $contentTypes = (new \Base\Models\DataModel('mst_content_type'))->orderBy('content_type')->findAll();
+                                        foreach ($contentTypes as $ct): ?>
+                                                <option value="<?= esc($ct->content_type) ?>" <?= ($currentJenisIsi == $ct->content_type) ? 'selected' : '' ?>><?= esc($ct->content_type) ?></option>
+                                        <?php endforeach; ?>
+                                </select>
+                        </div>
+                </div>
+                <div class="col-md-6">
+                        <div class="form-group">
+                                <label for="jenisMedia">Jenis Media</label>
+                                <select class="form-control" name="jenisMedia" id="jenisMedia">
+                                        <option value="">-- Pilih Jenis Media --</option>
+                                        <?php
+                                        $currentJenisMedia = trim($str_337['a'] ?? '');
+                                        $mediaTypes = (new \Base\Models\DataModel('mst_media_type'))->orderBy('media_type')->findAll();
+                                        foreach ($mediaTypes as $mt): ?>
+                                                <option value="<?= esc($mt->media_type) ?>" <?= ($currentJenisMedia == $mt->media_type) ? 'selected' : '' ?>><?= esc($mt->media_type) ?></option>
+                                        <?php endforeach; ?>
+                                </select>
+                        </div>
+                </div>
+                <div class="col-md-6">
+                        <div class="form-group">
+                                <label for="jenisWadah">Jenis Wadah</label>
+                                <select class="form-control" name="jenisWadah" id="jenisWadah">
+                                        <option value="">-- Pilih Jenis Wadah --</option>
+                                        <?php
+                                        $currentJenisWadah = trim($str_338['a'] ?? '');
+                                        $carrierTypes = (new \Base\Models\DataModel('mst_carrier_type'))->orderBy('carrier_type')->findAll();
+                                        foreach ($carrierTypes as $ct): ?>
+                                                <option value="<?= esc($ct->carrier_type) ?>" <?= ($currentJenisWadah == $ct->carrier_type) ? 'selected' : '' ?>><?= esc($ct->carrier_type) ?></option>
+                                        <?php endforeach; ?>
+                                </select>
+                        </div>
+                </div>
 				<?php endif; ?>
 				<div class=" col-md-6">
 					<div class="form-group">

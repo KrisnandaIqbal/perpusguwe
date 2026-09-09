@@ -31,6 +31,8 @@ $routes->group('eksemplar', ['namespace' => 'Eksemplar\Controllers'], function (
     // === EksemplarFormController (create & edit) ===
     $subroutes->add('create',        'EksemplarFormController::create');
     $subroutes->add('edit/(:any)',   'EksemplarFormController::edit/$1');
+    $subroutes->add('modal-create/(:any)', 'EksemplarFormController::modalCreate/$1');
+    $subroutes->add('modal-edit/(:any)',   'EksemplarFormController::modalEdit/$1');
 
     // === EksemplarImportController (import & template) ===
     $subroutes->add('importviews',       'EksemplarImportController::importviews');

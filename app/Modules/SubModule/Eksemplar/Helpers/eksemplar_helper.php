@@ -50,28 +50,58 @@ function get_branch($branch_id)
 
 function gen_no_barcode($i = 1)
 {
-	$db = db_connect();
-	$query = $db->table('collections')->select('MAX(RIGHT(NomorBarcode,5)) as no')->get();
-	$no = $query->getRow()->no;
-	$formatQuery = $db->table('settingparameters')
+        $db = db_connect();
+        $query = $db->table('collections')->select('MAX(RIGHT(NomorBarcode,5)) as no')->get();
+        $no = $query->getRow()->no;
+
+        if (empty($no)) {
+                $no = $i;
+        } else {
+                $no = intval($no) + $i;
+                $no = str_pad($no, 5, "0", STR_PAD_LEFT);
+        }
+
+        $formatResult = $db->table('settingparameters')
                      ->select('Value')
                      ->where('Name', 'FormatNomorInduk')
-                     ->get();
+                     ->get()
+                     ->getRow();
 
-    $formatResult = $formatQuery->getRow();
-	$format = get_parameter('nomor-barcode', '{yyyy}/PN/{99999}');
-	$format2 = str_replace('{yyyy}', date('Y'), $format);
-	$format3 = str_replace('{99999}', '', $format2);
+        $formatString = ($formatResult && !empty($formatResult->Value))
+                ? $formatResult->Value
+                : get_parameter('nomor-barcode', '{yyyy}/PN/{99999}');
 
-	if (empty($no)) {
-		$no = $i;
-	} else {
-		$no = intval($no) + $i;
-		$no = str_pad($no, 5, "0", STR_PAD_LEFT);
-	}
+        if (strpos($formatString, '|') === false) {
+                $format2 = str_replace('{yyyy}', date('Y'), $formatString);
+                return str_replace('{99999}', $no, $format2);
+        }
 
-	$number = $format3 . $no;
-	return $number;
+        $formatArray = explode('|', $formatString);
+        $result = '';
+        $separatorOptions = ['2' => '', '3' => '/', '4' => '-', '5' => '.'];
+
+        for ($j = 0; $j < count($formatArray); $j++) {
+                $value = trim($formatArray[$j]);
+                if ($j % 2 === 0) {
+                        if ($value !== '0') {
+                                if (preg_match('/\{([^}]+)\}/', $value, $matches)) {
+                                        $result .= ($matches[1] === '99999') ? $no : $matches[1];
+                                } elseif ($value === '6') {
+                                        $result .= $no;
+                                } elseif ($value === '7') {
+                                        $result .= date('Y');
+                                }
+                                // posisi 2,3,4,5 (kode jenis/kategori/bentuk/sumber) sengaja dilewati:
+                                // fungsi ini tidak menerima collectionData, jadi kode tersebut tidak tersedia di sini
+                        }
+                } else {
+                        if ($value !== '2' && isset($separatorOptions[$value])) {
+                                $result .= $separatorOptions[$value];
+                        }
+                }
+        }
+
+        return $result;
 }
 
 function gen_no_rfid($i = 1)
