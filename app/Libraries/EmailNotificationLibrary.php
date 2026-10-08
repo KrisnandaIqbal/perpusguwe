@@ -906,4 +906,135 @@ class EmailNotificationLibrary
         </html>
         HTML;
     }
+    // ===== NOTIFIKASI KEANGGOTAAN: pendaftaran diterima / disetujui / ditolak =====
+
+    /**
+     * @param object $member  Butuh: Email, Fullname
+     */
+    public function sendRegistrationReceived(object $member): array
+    {
+        $p = 'margin:0 0 16px;color:#374151;font-size:14px;line-height:1.7;';
+        $content = '<p style="' . $p . '">Kepada Yth. <strong>' . esc($member->Fullname) . '</strong>,</p>'
+                 . '<p style="' . $p . '">Usul pendaftaran keanggotaan perpustakaan Anda telah kami terima. Pendaftaran belum aktif sampai diverifikasi oleh pustakawan.</p>'
+                 . '<p style="' . $p . '">Hasil verifikasi akan kami kirimkan ke alamat email ini.</p>';
+
+        return $this->sendMembershipMail(
+            $member->Email ?? '',
+            'Pendaftaran Anggota Diterima - ' . $this->fromName,
+            $this->buildMembershipMailLayout('Pendaftaran Diterima', $content),
+            'Registration received'
+        );
+    }
+
+    /**
+     * @param object $member  Butuh: Email, Fullname, MemberNo, EndDate
+     * Parameter lain sama seperti sendMemberCard().
+     */
+    public function sendMembershipApproved(object $member, string $qrImage, string $photoSrc, string $perpusName, string $logoBase64, string $jenisAnggota): array
+    {
+        if (empty($member->Email) || !filter_var($member->Email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Email anggota tidak valid atau kosong.'];
+        }
+
+        $endDate = !empty($member->EndDate) ? date('d/m/Y', strtotime($member->EndDate)) : '-';
+        $p  = 'margin:0 0 16px;color:#374151;font-size:14px;line-height:1.7;';
+        $td = 'padding:4px 0;font-size:13px;color:#374151;';
+        $content = '<p style="' . $p . '">Kepada Yth. <strong>' . esc($member->Fullname) . '</strong>,</p>'
+                 . '<p style="' . $p . '">Pendaftaran keanggotaan perpustakaan Anda telah <strong>disetujui</strong>. Berikut data keanggotaan Anda:</p>'
+                 . '<table cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 20px;margin-bottom:16px;">'
+                 . '<tr><td style="' . $td . 'width:140px;color:#6b7280;">Nomor Anggota</td><td style="' . $td . 'font-weight:700;">: ' . esc($member->MemberNo) . '</td></tr>'
+                 . '<tr><td style="' . $td . 'color:#6b7280;">Jenis Anggota</td><td style="' . $td . 'font-weight:700;">: ' . esc($jenisAnggota) . '</td></tr>'
+                 . '<tr><td style="' . $td . 'color:#6b7280;">Berlaku s.d.</td><td style="' . $td . 'font-weight:700;">: ' . $endDate . '</td></tr>'
+                 . '</table>'
+                 . '<p style="' . $p . '">Kartu anggota digital terlampir dalam format PDF. Mohon disimpan sebagai bukti keanggotaan.</p>';
+
+        $cardHtml = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml($cardHtml);
+        $dompdf->render();
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'kartu_');
+        file_put_contents($tempFile, $dompdf->output());
+
+        $result = $this->sendMembershipMail(
+            $member->Email,
+            'Keanggotaan Aktif - Kartu Anggota Digital - ' . $perpusName,
+            $this->buildMembershipMailLayout('Keanggotaan Disetujui', $content),
+            'Membership approved + card',
+            $tempFile,
+            'Kartu-Anggota-' . $member->MemberNo . '.pdf'
+        );
+        @unlink($tempFile);
+        return $result;
+    }
+
+    /**
+     * @param object $member  Butuh: Email, Fullname
+     * @param string $reason  Alasan penolakan (boleh kosong)
+     */
+    public function sendRegistrationRejected(object $member, string $reason = ''): array
+    {
+        $p = 'margin:0 0 16px;color:#374151;font-size:14px;line-height:1.7;';
+        $content = '<p style="' . $p . '">Kepada Yth. <strong>' . esc($member->Fullname) . '</strong>,</p>'
+                 . '<p style="' . $p . '">Mohon maaf, usul pendaftaran keanggotaan perpustakaan Anda belum dapat kami setujui.</p>';
+        if (trim($reason) !== '') {
+            $content .= '<p style="' . $p . 'background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;"><strong>Alasan:</strong><br>'
+                      . nl2br(esc($reason)) . '</p>';
+        }
+        $content .= '<p style="' . $p . '">Anda dapat mengajukan pendaftaran kembali setelah data diperbaiki, atau menghubungi pustakawan untuk informasi lebih lanjut.</p>';
+
+        return $this->sendMembershipMail(
+            $member->Email ?? '',
+            'Pendaftaran Anggota Belum Dapat Disetujui - ' . $this->fromName,
+            $this->buildMembershipMailLayout('Pendaftaran Belum Dapat Disetujui', $content),
+            'Registration rejected'
+        );
+    }
+
+    private function sendMembershipMail(string $to, string $subject, string $html, string $logTag, ?string $attachPath = null, ?string $attachName = null): array
+    {
+        if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Email tidak valid atau kosong.'];
+        }
+
+        $this->email->initialize($this->smtpConfig);
+        $this->email->clear(true); // true = lampiran sebelumnya ikut dibersihkan
+        $this->email->setFrom($this->fromEmail, $this->fromName);
+        $this->email->setTo($to);
+        $this->email->setSubject($subject);
+        $this->email->setMessage($html);
+        if ($attachPath) {
+            $this->email->attach($attachPath, 'attachment', $attachName);
+        }
+
+        try {
+            $sent = $this->email->send();
+            log_message('info', '[EmailNotif] ' . $logTag . ' to: ' . $to . ' - ' . ($sent ? 'OK' : 'FAILED'));
+            if ($sent) {
+                return ['success' => true, 'message' => 'Email berhasil dikirim ke ' . $to];
+            }
+            log_message('error', '[EmailNotif] ' . $logTag . ' failed: ' . $this->email->printDebugger(['headers']));
+            return ['success' => false, 'message' => 'Gagal mengirim email ke ' . $to . '. Cek log untuk detail.'];
+        } catch (\Throwable $e) {
+            log_message('error', '[EmailNotif] ' . $logTag . ' exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function buildMembershipMailLayout(string $heading, string $contentHtml): string
+    {
+        $appName = esc($this->fromName);
+        return '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>'
+            . '<body style="margin:0;padding:24px;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">'
+            . '<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">'
+            . '<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">'
+            . '<tr><td style="background:#1e40af;padding:20px 40px;"><p style="margin:0;color:#ffffff;font-size:16px;font-weight:700;">' . $appName . '</p></td></tr>'
+            . '<tr><td style="padding:32px 40px;"><h2 style="margin:0 0 16px;color:#1f2937;font-size:18px;">' . esc($heading) . '</h2>'
+            . $contentHtml
+            . '</td></tr>'
+            . '<tr><td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center;">'
+            . '<p style="margin:0;color:#9ca3af;font-size:12px;">Email ini dikirim otomatis oleh sistem ' . $appName . '.<br>Harap tidak membalas email ini.</p></td></tr>'
+            . '</table></td></tr></table></body></html>';
+    }
 }

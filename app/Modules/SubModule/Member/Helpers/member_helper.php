@@ -135,7 +135,7 @@ if (!function_exists('member_notify')) {
             'SMTPUser' => getenv('email.SMTPUser') ?: 'your-email@gmail.com',
             'SMTPPass' => getenv('email.SMTPPass') ?: 'your-app-password',
             'SMTPPort' => (int) (getenv('email.SMTPPort') ?: 587),
-            'SMTPCrypto' => 'tls',
+            'SMTPCrypto' => (getenv('email.SMTPCrypto') ?: 'tls'),
             'mailType' => 'html',
             'charset' => 'utf-8',
             'newline' => "\r\n"
@@ -238,7 +238,7 @@ if (!function_exists('test_email_config')) {
             'SMTPUser' => getenv('email.SMTPUser') ?: 'your-email@gmail.com',
             'SMTPPass' => getenv('email.SMTPPass') ?: 'your-app-password',
             'SMTPPort' => getenv('email.SMTPPort') ?: 587,
-            'SMTPCrypto' => 'tls',
+            'SMTPCrypto' => (getenv('email.SMTPCrypto') ?: 'tls'),
             'mailType' => 'html',
             'charset' => 'utf-8',
             'newline' => "\r\n"

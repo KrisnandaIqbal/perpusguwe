@@ -6,7 +6,9 @@
 $isEdit = ($mode === 'edit');
 $e = $eksemplar; // object saat edit, null saat create
 ?>
-<form id="formEksemplarModal" autocomplete="off">
+<form id="formEksemplarModal" autocomplete="off"
+    action="<?= $isEdit ? base_url('eksemplar/edit/' . $e->ID) : base_url('eksemplar/create') ?>"
+    method="post" enctype="multipart/form-data">
     <?= csrf_field() ?>
     <input type="hidden" name="Catalog_id" value="<?= esc($catalog_id) ?>">
     <?php if ($isEdit) : ?>
@@ -104,16 +106,21 @@ $e = $eksemplar; // object saat edit, null saat create
 
     <?php if ($isEdit) : ?>
         <div class="form-group">
-            <label>Status</label>
-            <select class="form-control" name="Status_id">
-                <option value="">-- Pilih --</option>
-                <?php foreach ($statuses as $row) : ?>
-                    <option value="<?= $row->ID ?>" <?= ($e->Status_id == $row->ID) ? 'selected' : '' ?>>
-                        <?= esc($row->Name) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
+        <label>Status</label>
+        <select class="form-control" name="Status_id">
+            <option value="">-- Pilih --</option>
+            <?php foreach ($statuses as $row) : ?>
+                <?php
+                    $isSelected = $isEdit
+                        ? ($e->Status_id == $row->ID)
+                        : (strtolower($row->Name) === 'tersedia');
+                ?>
+                <option value="<?= $row->ID ?>" <?= $isSelected ? 'selected' : '' ?>>
+                    <?= esc($row->Name) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
     <?php endif; ?>
 
     <div class="form-group">
