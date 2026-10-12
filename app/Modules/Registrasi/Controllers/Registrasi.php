@@ -35,6 +35,7 @@ class Registrasi extends BaseController
         
         $data['jenis_anggota'] = $this->db->table('jenis_anggota')
                                           ->where('active', 1)
+                                          ->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN', 'Magang', 'Mahasiswa', 'Umum')", 'ASC', false)
                                           ->get()->getResult();
 
         $data['unit_kerja'] = $this->db->table('master_unit')
@@ -72,17 +73,17 @@ class Registrasi extends BaseController
         ];
 
         // Conditional Rules
-        // Check if Magang / Non ASN
+        // Check if ASN or non-ASN (Non-ASN, Magang, Mahasiswa, Umum)
         $jenisAnggota = $this->db->table('jenis_anggota')->where('id', $jenisAnggotaId)->get()->getRow();
-        $isMagang = false;
-        if ($jenisAnggota && (stripos($jenisAnggota->jenisanggota, 'Magang') !== false || stripos($jenisAnggota->jenisanggota, 'Non ASN') !== false)) {
-            $isMagang = true;
+        $isAsn = false;
+        if ($jenisAnggota && strcasecmp(trim($jenisAnggota->jenisanggota), 'ASN') === 0) {
+            $isAsn = true;
         }
 
         $rules['IdentityNo'] = 'required';
 
-        if ($isMagang) {
-            // Non-ASN / Magang uses NIK
+        if (!$isAsn) {
+            // Non-ASN (Umum, Mahasiswa, Magang, Non ASN) uses NIK
             $nikType = $this->db->table('master_jenis_identitas')->where('IsNIK', 1)->get()->getRow();
             if ($nikType) {
                 $identityTypeId = $nikType->id;
@@ -114,11 +115,12 @@ class Registrasi extends BaseController
             ]);
         }
 
-        if ($isMagang) {
+        if (!$isAsn) {
             if (!IdentityValidator::isValidNIK($identityNo)) {
+                $kategoriLabel = $jenisAnggota ? $jenisAnggota->jenisanggota : 'Kategori ini';
                 return $this->respond([
                     'success' => false,
-                    'message' => 'Nomor Identitas untuk Non-ASN / Magang (NIK) harus 16 digit angka.'
+                    'message' => 'Nomor Identitas untuk ' . $kategoriLabel . ' (NIK) harus 16 digit angka.'
                 ]);
             }
         } else {

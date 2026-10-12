@@ -36,8 +36,9 @@ WHERE NOT EXISTS (
     SELECT 1 FROM `master_jenis_identitas` WHERE `Nama` = 'NIP'
 ) LIMIT 1;
 
--- 5. Tambahkan Jenis Anggota 'ASN' dan 'Non ASN' (Hanya 2 ini yang aktif)
-UPDATE `jenis_anggota` SET `active` = 0 WHERE `jenisanggota` NOT IN ('ASN', 'Non ASN');
+-- 5. Konfigurasi Jenis Anggota: ASN, Non ASN, Magang, Mahasiswa, Umum
+UPDATE `jenis_anggota` SET `active` = 1 WHERE `jenisanggota` IN ('ASN', 'Non ASN', 'Umum', 'Mahasiswa', 'Magang');
+UPDATE `jenis_anggota` SET `active` = 0 WHERE `jenisanggota` NOT IN ('ASN', 'Non ASN', 'Umum', 'Mahasiswa', 'Magang');
 
 INSERT INTO `jenis_anggota` (`jenisanggota`, `MasaBerlakuAnggota`, `UploadDokumenKeanggotaanOnline`, `MaxPinjamKoleksi`, `MaxLoanDays`, `active`, `CreateDate`)
 SELECT * FROM (SELECT 'ASN', 1000, 1, 5, 14, 1, NOW()) AS tmp
@@ -50,4 +51,11 @@ SELECT * FROM (SELECT 'Non ASN', 365, 1, 3, 7, 1, NOW()) AS tmp
 WHERE NOT EXISTS (
     SELECT jenisanggota FROM `jenis_anggota` WHERE jenisanggota = 'Non ASN'
 ) LIMIT 1;
+
+INSERT INTO `jenis_anggota` (`jenisanggota`, `MasaBerlakuAnggota`, `UploadDokumenKeanggotaanOnline`, `MaxPinjamKoleksi`, `MaxLoanDays`, `active`, `CreateDate`)
+SELECT * FROM (SELECT 'Magang', 180, 1, 2, 7, 1, NOW()) AS tmp
+WHERE NOT EXISTS (
+    SELECT jenisanggota FROM `jenis_anggota` WHERE jenisanggota = 'Magang'
+) LIMIT 1;
+
 

@@ -443,10 +443,10 @@ if (!empty($jenis_identitas)) {
         line-height: 1.5;
     }
 
-    /* ─── Selectable Radio Cards (ASN / Non-ASN) ─── */
+    /* ─── Selectable Radio Cards (ASN / Non-ASN / Umum / etc) ─── */
     .rf-radio-cards {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
         margin-bottom: 22px;
     }
@@ -2101,8 +2101,9 @@ if (!empty($jenis_identitas)) {
                         <!-- Selectable Cards for Jenis Anggota -->
                         <div class="rf-radio-cards" id="jenisAnggotaCards">
                             <?php foreach ($jenis_anggota as $idx => $ja): 
-                                $jaNameLower = strtolower($ja->jenisanggota);
-                                $isAsn = stripos($jaNameLower, 'asn') !== false && stripos($jaNameLower, 'non') === false;
+                                $jaName = trim($ja->jenisanggota);
+                                $jaNameLower = strtolower($jaName);
+                                $isAsn = (strcasecmp($jaName, 'ASN') === 0);
                             ?>
                             <div class="rf-radio-card">
                                 <input type="radio" name="JenisAnggota_id" id="ja_<?= $ja->id ?>"
@@ -2117,8 +2118,28 @@ if (!empty($jenis_identitas)) {
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M3 21h18M3 7v14M21 7v14M6 7V4a1 1 0 011-1h10a1 1 0 011 1v3M9 11h6M9 15h6" />
                                             </svg>
+                                            <?php elseif (stripos($jaNameLower, 'mahasiswa') !== false): ?>
+                                            <!-- Graduation Cap SVG -->
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                                            </svg>
+                                            <?php elseif (stripos($jaNameLower, 'magang') !== false): ?>
+                                            <!-- Briefcase / Internship SVG -->
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                            </svg>
+                                            <?php elseif (stripos($jaNameLower, 'umum') !== false): ?>
+                                            <!-- Users / Public Community SVG -->
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                                <circle cx="9" cy="7" r="4"/>
+                                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                            </svg>
                                             <?php else: ?>
-                                            <!-- Researcher / Student Badge SVG -->
+                                            <!-- Non-ASN / ID Badge SVG -->
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
                                                 <circle cx="9" cy="7" r="4" />
@@ -2134,9 +2155,15 @@ if (!empty($jenis_identitas)) {
                                         <div class="rf-card-title"><?= esc($ja->jenisanggota) ?></div>
                                         <div class="rf-card-desc">
                                             <?php if ($isAsn): ?>
-                                            Pegawai ASN (PNS & PPPK). Wajib menggunakan NIP 18 digit resmi BKN.
+                                            Pegawai ASN (PNS & PPPK). Menggunakan NIP 18 digit resmi BKN.
+                                            <?php elseif (stripos($jaNameLower, 'mahasiswa') !== false): ?>
+                                            Mahasiswa perguruan tinggi. Menggunakan NIK KTP 16 digit.
+                                            <?php elseif (stripos($jaNameLower, 'magang') !== false): ?>
+                                            Peserta magang & riset. Menggunakan NIK KTP 16 digit.
+                                            <?php elseif (stripos($jaNameLower, 'umum') !== false): ?>
+                                            Masyarakat umum / luar. Menggunakan NIK KTP 16 digit.
                                             <?php else: ?>
-                                            Tenaga Non-ASN, Honorer, Magang & Riset. Menggunakan NIK KTP 16 digit.
+                                            Tenaga Non-ASN & Honorer. Menggunakan NIK KTP 16 digit.
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -2621,7 +2648,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const syaratScrollbox = document.getElementById('syaratScrollbox');
 
     let selectedIdDigits = 18;
-    let isMagang = false;
+    let isNonAsn = false;
 
     // ─── Stepper Navigation (Click to Scroll) ───
     const stepButtons = document.querySelectorAll('.rf-step');
@@ -2660,12 +2687,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyJenisAnggota(radio) {
         if (!radio) return;
-        const name = (radio.dataset.name || '').toLowerCase();
-        isMagang = name.includes('magang') || name.includes('non asn');
+        const name = (radio.dataset.name || '').trim().toLowerCase();
+        const isAsn = (name === 'asn');
+        isNonAsn = !isAsn;
         document.getElementById('jenisAnggotaError').style.display = 'none';
 
-        if (isMagang) {
-            // Non-ASN / Magang: Langsung NIK (16 digit)
+        if (isNonAsn) {
+            // Non-ASN / Magang / Mahasiswa / Umum: Langsung NIK (16 digit)
             identityTypeInput.value = nikId;
             selectedIdDigits = 16;
             inputIdentityNo.maxLength = 16;
@@ -2929,7 +2957,10 @@ document.addEventListener('DOMContentLoaded', function() {
         cbPersetujuan.disabled = false;
         cbPersetujuan.checked = true;
         btnSubmit.disabled = false;
-        persetujuanError.style.display = 'none';
+        if (persetujuanError) persetujuanError.style.display = 'none';
+        if (typeof validatePersetujuan === 'function') {
+            validatePersetujuan();
+        }
         closeModal();
     });
 
@@ -3031,7 +3062,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateIdentityField() {
         const val = inputIdentityNo.value.trim();
         const len = val.length;
-        const typeName = isMagang ? 'NIK' : 'NIP';
+        const typeName = isNonAsn ? 'NIK' : 'NIP';
         const needed = selectedIdDigits;
 
         if (len === 0) {
@@ -3189,7 +3220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 1. Jenis Anggota
         const selectedJa = document.querySelector('input[name="JenisAnggota_id"]:checked');
         if (!selectedJa) {
-            errorItems.push({ sec: 'section-1', step: 'section-1', msg: '<strong>Kategori Keanggotaan:</strong> Pilih status kepegawaian Anda (ASN atau Non-ASN).' });
+            errorItems.push({ sec: 'section-1', step: 'section-1', msg: '<strong>Kategori Keanggotaan:</strong> Pilih kategori keanggotaan Anda.' });
             const jaErr = document.getElementById('jenisAnggotaError');
             if (jaErr) {
                 jaErr.style.display = 'flex';
