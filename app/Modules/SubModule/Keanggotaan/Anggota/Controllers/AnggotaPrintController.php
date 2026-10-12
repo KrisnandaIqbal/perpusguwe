@@ -26,61 +26,12 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
 
     public function printanggota($id = null)
     {
-        $db = db_connect();
-
-        $anggota = $db->table('members m')->select('m.*')->where('m.id', $id)->get()->getRow();
+        $anggota = db_connect()->table('members m')->select('m.*')->where('m.id', $id)->get()->getRow();
         if (!$anggota) {
             throw new \Exception('Data anggota tidak ditemukan');
         }
-        $this->data['anggota'] = $anggota;
 
-        $this->data['perpus_name'] = $db->table('settingparameters')
-            ->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value ?? "Perpustakaan Nasional";
-
-        $logo_setting = $db->table('settingparameters')->where('Name', 'Logo')->get()->getRow();
-        $logo_base64  = '';
-        if ($logo_setting && $logo_setting->Value) {
-            $logo_path = ROOTPATH . 'public/uploads/branch/' . $logo_setting->Value;
-            if (file_exists($logo_path)) {
-                $logo_base64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
-            }
-        }
-        $this->data['logo_base64'] = $logo_base64 ?: 'https://placehold.co/80x80/cccccc/666666?text=LOGO';
-
-        $photo_base64 = '';
-        if ($anggota->PhotoUrl) {
-            $photo_path = ROOTPATH . 'public/uploads/anggota/' . $anggota->PhotoUrl;
-            if (file_exists($photo_path)) {
-                $photo_base64 = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photo_path));
-            }
-        }
-        $this->data['photo_base64'] = $photo_base64;
-
-        $options  = new QROptions(['scale' => 7, 'imageBase64' => true]);
-        $qrcode   = new QRCode($options);
-        $this->data['qr_image'] = $qrcode->render($anggota->MemberNo);
-
-        $this->data['end_date'] = date('d F Y', strtotime($anggota->EndDate));
-
-        $jenis_anggota = $this->jenisanggotaModel->find($anggota->JenisAnggota_id);
-        $this->data['jenis_anggota_nama'] = $jenis_anggota ? $jenis_anggota->jenisanggota : 'UMUM';
-
-        $background_image_filename = $db->table('settingparameters')
-            ->where('Name', 'FileKartuAnggota')->get()->getRow()->Value ?? null;
-
-        $backgroundStyle = '';
-        if (!empty($background_image_filename)) {
-            $bgPath = ROOTPATH . 'public/uploads/master-template/' . $background_image_filename;
-            if (file_exists($bgPath)) {
-                $ext   = strtolower(pathinfo($bgPath, PATHINFO_EXTENSION));
-                $mime  = $ext === 'jpg' ? 'image/jpeg' : 'image/' . $ext;
-                $bgB64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($bgPath));
-                $backgroundStyle = "background: url('{$bgB64}') no-repeat center center / cover;";
-            }
-        }
-        $this->data['backgroundStyle'] = $backgroundStyle;
-
-        echo view('Anggota\Views\pdf\pdf1', $this->data);
+        return $this->renderKartu([$anggota]);
     }
 
     // ----------------------------------------------------------------
@@ -122,70 +73,66 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
             throw new \Exception('ID anggota tidak valid');
         }
 
-        $db = db_connect();
+        $members = db_connect()->table('members m')->select('m.*')
+            ->whereIn('m.id', $member_ids)->orderBy('m.MemberNo', 'ASC')->get()->getResult();
 
-        $perpus_name = $db->table('settingparameters')
-            ->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value ?? "Perpustakaan Nasional";
+        return $this->renderKartu($members);
+    }
 
-        $logo_setting = $db->table('settingparameters')->where('Name', 'Logo')->get()->getRow();
-        $logo_base64  = '';
-        if ($logo_setting && $logo_setting->Value) {
-            $logo_path = ROOTPATH . 'public/uploads/branch/' . $logo_setting->Value;
-            if (file_exists($logo_path)) {
-                $logo_base64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
+    // ----------------------------------------------------------------
+    // KARTU ANGGOTA KEMNAKER (DEPAN + BELAKANG)
+    // ----------------------------------------------------------------
+
+    /**
+     * Kartu hanya dicetak untuk anggota berstatus Aktif yang sudah punya No. Anggota.
+     * Pendaftar yang belum disetujui (PENDING-) dilewati dan disebut di halaman cetak.
+     */
+    private function renderKartu(array $members)
+    {
+        $db    = db_connect();
+        $aktif = $db->table('status_anggota')->where('Nama', 'Aktif')->get()->getRow();
+
+        $cards   = [];
+        $skipped = [];
+
+        foreach ($members as $anggota) {
+            $memberNo = (string) $anggota->MemberNo;
+
+            if (strpos($memberNo, 'PENDING-') === 0 || !$aktif || (int) $anggota->StatusAnggota_id !== (int) $aktif->id) {
+                $skipped[] = $anggota->Fullname;
+                continue;
             }
-        }
-        $logo_base64 = $logo_base64 ?: 'https://placehold.co/80x80/cccccc/666666?text=LOGO';
 
-        $members_data = [];
+            // No. Anggota YYMMDD99999: sisi depan menampilkan nomor urutnya saja (001, 002, ...)
+            $isUniversal = (bool) preg_match('/^[0-9]{11}$/', $memberNo);
 
-        foreach ($member_ids as $member_id) {
-            $anggota = $db->table('members m')->select('m.*')->where('m.id', $member_id)->get()->getRow();
-            if (!$anggota) continue;
-
-            $photo_base64 = '';
-            if ($anggota->PhotoUrl) {
-                $photo_path = ROOTPATH . 'public/uploads/anggota/' . $anggota->PhotoUrl;
-                if (file_exists($photo_path)) {
-                    $photo_base64 = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photo_path));
-                }
-            }
-            $photo_src = $photo_base64 ?: 'https://placehold.co/250x280/cccccc/666666?text=FOTO';
-
-            $options = new QROptions(['scale' => 7, 'imageBase64' => true]);
-            $qrcode  = new QRCode($options);
-            $qr_image = $qrcode->render($anggota->MemberNo);
-
-            $jenis_anggota_data = $db->table('jenis_anggota')
-                ->select('jenisanggota')->where('id', $anggota->JenisAnggota_id)->get()->getRow();
-
-            $members_data[] = [
-                'anggota'          => $anggota,
-                'photo_base64'     => $photo_src,
-                'qr_image'         => $qr_image,
-                'end_date'         => date('d F Y', strtotime($anggota->EndDate)),
-                'jenis_anggota_nama' => $jenis_anggota_data ? $jenis_anggota_data->jenisanggota : 'UMUM',
+            $cards[] = [
+                'nama'        => $anggota->Fullname,
+                'member_no'   => $memberNo,
+                'nomor_depan' => $isUniversal ? str_pad((string) (int) substr($memberNo, -5), 3, '0', STR_PAD_LEFT) : $memberNo,
+                'nomor_urut'  => $isUniversal,
+                'berlaku'     => $this->tanggalKartu($anggota->EndDate),
+                'qr'          => (new QRCode(new QROptions(['addQuietzone' => false])))->getMatrix($memberNo)->matrix(true),
             ];
         }
 
-        $bg_b64     = '';
-        $bg_setting = $db->table('settingparameters')->where('Name', 'FileKartuAnggota')->get()->getRow();
-        if ($bg_setting && $bg_setting->Value) {
-            $bgPath = ROOTPATH . 'public/uploads/master-template/' . $bg_setting->Value;
-            if (file_exists($bgPath)) {
-                $ext    = strtolower(pathinfo($bgPath, PATHINFO_EXTENSION));
-                $mime   = $ext === 'jpg' ? 'image/jpeg' : 'image/' . $ext;
-                $bg_b64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($bgPath));
-            }
+        return view('Anggota\Views\pdf\kartu-anggota', [
+            'cards'   => $cards,
+            'skipped' => $skipped,
+            'logo'    => base_url('assets/img/kartu/logo-kemnaker.png'),
+        ]);
+    }
+
+    private function tanggalKartu($date): string
+    {
+        $time = $date ? strtotime($date) : false;
+        if (!$time || $time <= 0) {
+            return '-';
         }
 
-        $this->data['members_data'] = $members_data;
-        $this->data['perpus_name']  = $perpus_name;
-        $this->data['logo_base64']  = $logo_base64;
-        $this->data['bg_b64']       = $bg_b64;
-        $this->data['title']        = 'Cetak Kartu Anggota - Multiple';
+        $bulan = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
 
-        return view('Anggota\Views\pdf\multiple-pdf1', $this->data);
+        return date('j', $time) . ' ' . $bulan[(int) date('n', $time) - 1] . ' ' . date('Y', $time);
     }
 
     // ----------------------------------------------------------------

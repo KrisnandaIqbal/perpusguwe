@@ -364,6 +364,66 @@ if (!function_exists('generateAutoNumber')) {
     }
 }
 
+if (!function_exists('generateUniversalMemberNumber')) {
+    function generateUniversalMemberNumber() {
+        // Format: YYMMDD99999, 5 digit terakhir berurutan terus (tidak diulang per hari)
+        $db = db_connect();
+        $db->transStart();
+
+        // Counter disimpan supaya nomor tidak terpakai ulang walau anggota terakhir dihapus
+        $counter = $db->query("SELECT ID, Value FROM settingparameters WHERE Name = 'NomorAnggotaCounter' FOR UPDATE")->getRow();
+        $lastMember = $db->query("SELECT MAX(CAST(RIGHT(MemberNo, 5) AS UNSIGNED)) AS last FROM members WHERE MemberNo REGEXP '^[0-9]{11}$'")->getRow();
+
+        $newNumber = max((int) ($counter->Value ?? 0), (int) ($lastMember->last ?? 0)) + 1;
+
+        if ($counter) {
+            $db->table('settingparameters')->where('ID', $counter->ID)->update([
+                'Value'      => $newNumber,
+                'UpdateDate' => date('Y-m-d H:i:s'),
+            ]);
+        } else {
+            $db->table('settingparameters')->insert([
+                'Name'       => 'NomorAnggotaCounter',
+                'Value'      => $newNumber,
+                'CreateDate' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        $db->transComplete();
+
+        return date('ymd') . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+    }
+}
+
+if (!function_exists('memberApprovalData')) {
+    /**
+     * Data tambahan saat anggota pendaftaran online (MemberNo PENDING-...) disetujui,
+     * yaitu ketika statusnya diubah menjadi Aktif. Selain itu mengembalikan array kosong.
+     * Masa berlaku (EndDate) dihitung satu tahun dari tanggal pendaftaran.
+     */
+    function memberApprovalData($memberId, $newStatusId) {
+        $db = db_connect();
+
+        $member = $db->table('members')->select('MemberNo, RegisterDate')->where('ID', $memberId)->get()->getRow();
+        if (!$member || strpos((string) $member->MemberNo, 'PENDING-') !== 0) {
+            return [];
+        }
+
+        $aktif = $db->table('status_anggota')->where('Nama', 'Aktif')->get()->getRow();
+        if (!$aktif || (int) $newStatusId !== (int) $aktif->id) {
+            return [];
+        }
+
+        $daftar = !empty($member->RegisterDate) ? strtotime($member->RegisterDate) : time();
+
+        return [
+            'MemberNo'       => generateUniversalMemberNumber(),
+            'TglPersetujuan' => date('Y-m-d H:i:s'),
+            'EndDate'        => date('Y-m-d 00:00:00', strtotime('+1 year', $daftar)),
+        ];
+    }
+}
+
 
 
 if (!function_exists('is_form_field_active')) {

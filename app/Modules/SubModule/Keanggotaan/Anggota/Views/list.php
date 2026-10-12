@@ -78,6 +78,7 @@ $request = service('request');
 <?= $this->section('script'); ?>
 <?= $this->include('Anggota\Views\modal_upload'); ?>
 <?= $this->include('Anggota\Views\modal_camera'); ?>
+<?= $this->include('Anggota\Views\modal_approval'); ?>
 <script>
       $(document).ready(function() {
         <?php if (session()->getFlashdata('swal_icon')) : ?>
@@ -180,6 +181,12 @@ $request = service('request');
                 });
 
                 $(".apply-select").on('change', function() {
+                    var approveValue = $(this).attr('data-approve-value');
+                    if (approveValue && $(this).val() == approveValue) {
+                        open_approval(this);
+                        return;
+                    }
+
                     var url = $(this).attr('data-href');
                     var field = $(this).attr('data-field');
                     var value = $(this).val();
@@ -366,6 +373,7 @@ $request = service('request');
                 console.log(res)
 
                 if (res.error == false) {
+                    t.ajax.reload(null, false);
                     Swal.fire({
                         title: 'Berhasil',
                         html: res.message,

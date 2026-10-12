@@ -89,6 +89,9 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		 * DataTables
 		 * @var \Hermawan\DataTables\DataTable $dataTable
 		 */
+		$aktif = $db->table('status_anggota')->where('Nama', 'Aktif')->get()->getRow();
+		$aktifId = $aktif->id ?? '';
+
 		$dataTable = DataTable::of($builder)
 			->addNumbering('no')
 			->edit('cid', function ($row) {
@@ -154,8 +157,12 @@ class Anggota extends \Base\Controllers\BaseResourceController
 				$html  =  '<badge class="badge badge-warning badge-pill">' . substr($row->EndDate, 0, 10) . '</badge>';
 				return $html;
 			})
-			->edit('StatusAnggota', function ($row) {
-				$html = '<select class="form-control apply-select" name="status_anggota" style="width:100%" data-href="' . base_url('api/anggota/switch/' . $row->ID) . '" data-field="StatusAnggota_id">';
+			->edit('StatusAnggota', function ($row) use ($aktifId) {
+				// Pendaftar online yang belum disetujui: perubahan ke Aktif harus lewat konfirmasi
+				$approval = strpos((string) $row->MemberNo, 'PENDING-') === 0
+					? ' data-approve-value="' . $aktifId . '" data-summary="' . base_url('api/anggota/approval_summary/' . $row->ID) . '"'
+					: '';
+				$html = '<select class="form-control apply-select" name="status_anggota" style="width:100%" data-href="' . base_url('api/anggota/switch/' . $row->ID) . '" data-field="StatusAnggota_id"' . $approval . '>';
 				foreach (get_ref_table('status_anggota', 'id, Nama', 'id IS NOT NULL', 'data') as $row2) {
 					$selected = $row2->id == $row->StatusAnggota_id ? 'selected' : '';
 					$html .= '<option value="' . $row2->id . '" ' . $selected . '>' . $row2->Nama . '</option>';
@@ -175,6 +182,36 @@ class Anggota extends \Base\Controllers\BaseResourceController
 
 		return $dataTable;
 }
+	// Data yang diisi pendaftar di form pendaftaran online, untuk konfirmasi persetujuan
+	public function approval_summary($id = null)
+	{
+		$db = db_connect();
+		$row = $db->table('members as a')
+			->select('a.ID, a.Fullname, a.IdentityNo, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja')
+			->join('jenis_anggota', 'jenis_anggota.id = a.JenisAnggota_id', 'left')
+			->join('master_jenis_identitas', 'master_jenis_identitas.id = a.IdentityType_id', 'left')
+			->join('master_unit', 'master_unit.id = a.UnitKerja_id', 'left')
+			->where('a.ID', $id)
+			->get()->getRow();
+
+		if (!$row) {
+			return $this->failNotFound('Data anggota tidak ditemukan');
+		}
+
+		return $this->respond([
+			'JenisAnggota'   => $row->JenisAnggota,
+			'JenisIdentitas' => $row->JenisIdentitas,
+			'IdentityNo'     => $row->IdentityNo,
+			'Fullname'       => $row->Fullname,
+			'UnitKerja'      => $row->UnitKerja,
+			'AddressNow'     => $row->AddressNow,
+			'Email'          => $row->Email,
+			'Phone'          => $row->NoHp ?: $row->Phone,
+			'PhotoUrl'       => !empty($row->PhotoUrl) ? base_url('uploads/anggota/' . $row->PhotoUrl) : null,
+			'RegisterDate'   => $row->RegisterDate,
+		]);
+	}
+
 	public function detail($id = null)
 	{
 		$data = $this->anggotaModel->find($id);
@@ -414,17 +451,39 @@ class Anggota extends \Base\Controllers\BaseResourceController
     $field = $this->request->getPost('field');
     $value = $this->request->getPost('value');
 
-    $update_data_id = $this->anggotaModel->update($id, array($field => $value));
+    $update_data = array($field => $value);
+    if ($field === 'StatusAnggota_id') {
+        helper('anggota');
+        $update_data = array_merge($update_data, memberApprovalData($id, $value));
+    }
+
+    $update_data_id = $this->anggotaModel->update($id, $update_data);
+
+    $success = 'Field ' . $field . ' berhasil disimpan';
+    $failed  = 'Field ' . $field . ' gagal disimpan. Silakan coba lagi';
+
+    if ($field === 'StatusAnggota_id') {
+        $member = $this->anggotaModel->find($id);
+        $status = db_connect()->table('status_anggota')->where('id', $value)->get()->getRow();
+        $nama   = esc($member->Fullname ?? 'Anggota');
+
+        if (isset($update_data['MemberNo'])) {
+            $success = $nama . ' sudah disetujui dan aktif sebagai anggota.<br>No. Anggota: <b>' . esc($update_data['MemberNo']) . '</b>';
+        } else {
+            $success = 'Status ' . $nama . ' sekarang ' . esc($status->Nama ?? '-') . '.';
+        }
+        $failed = 'Status ' . $nama . ' gagal diubah. Silakan coba lagi.';
+    }
 
     if ($update_data_id) {
         $response = [
             'error' => false,
-            'message' => 'Field ' . $field . ' berhasil disimpan',
+            'message' => $success,
         ];
     } else {
         $response = [
             'error' => true,
-            'message' => 'Field ' . $field . ' gagal disimpan. Silakan coba lagi',
+            'message' => $failed,
         ];
     }
     return $this->simpleResponse($response);

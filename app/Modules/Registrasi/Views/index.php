@@ -2588,7 +2588,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('formRegistrasi');
     const cbPersetujuan = document.getElementById('Persetujuan');
     const btnSubmit = document.getElementById('btnSubmitRegistrasi');
-    const persetujuanError = document.getElementById('persetujuanError');
     const alertEl = document.getElementById('alertMessage');
 
     const identityTypeInput = document.getElementById('IdentityType_id');
@@ -2930,11 +2929,8 @@ document.addEventListener('DOMContentLoaded', function() {
         cbPersetujuan.disabled = false;
         cbPersetujuan.checked = true;
         btnSubmit.disabled = false;
-        if (persetujuanError) persetujuanError.style.display = 'none';
-        if (typeof validatePersetujuan === 'function') {
-            validatePersetujuan();
-        }
         closeModal();
+        validatePersetujuan();
     });
 
     cbPersetujuan.addEventListener('change', function() {
