@@ -2929,10 +2929,6 @@ document.addEventListener('DOMContentLoaded', function() {
         cbPersetujuan.disabled = false;
         cbPersetujuan.checked = true;
         btnSubmit.disabled = false;
-        if (persetujuanError) persetujuanError.style.display = 'none';
-        if (typeof validatePersetujuan === 'function') {
-            validatePersetujuan();
-        }
         closeModal();
         validatePersetujuan();
     });
