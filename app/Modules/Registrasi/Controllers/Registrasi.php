@@ -35,7 +35,7 @@ class Registrasi extends BaseController
         
         $data['jenis_anggota'] = $this->db->table('jenis_anggota')
                                           ->where('active', 1)
-                                          ->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN', 'Magang', 'Mahasiswa', 'Umum')", 'ASC', false)
+                                          ->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)
                                           ->get()->getResult();
 
         $data['unit_kerja'] = $this->db->table('master_unit')
@@ -73,10 +73,10 @@ class Registrasi extends BaseController
         ];
 
         // Conditional Rules
-        // Check if ASN or non-ASN (Non-ASN, Magang, Mahasiswa, Umum)
+        // Check if ASN or Non-ASN
         $jenisAnggota = $this->db->table('jenis_anggota')->where('id', $jenisAnggotaId)->get()->getRow();
         $isAsn = false;
-        if ($jenisAnggota && strcasecmp(trim($jenisAnggota->jenisanggota), 'ASN') === 0) {
+        if ($jenisAnggota && (stripos($jenisAnggota->jenisanggota, 'ASN') !== false && stripos($jenisAnggota->jenisanggota, 'Non') === false)) {
             $isAsn = true;
         }
 
@@ -117,10 +117,9 @@ class Registrasi extends BaseController
 
         if (!$isAsn) {
             if (!IdentityValidator::isValidNIK($identityNo)) {
-                $kategoriLabel = $jenisAnggota ? $jenisAnggota->jenisanggota : 'Kategori ini';
                 return $this->respond([
                     'success' => false,
-                    'message' => 'Nomor Identitas untuk ' . $kategoriLabel . ' (NIK) harus 16 digit angka.'
+                    'message' => 'Nomor Identitas untuk Non-ASN (NIK) harus 16 digit angka.'
                 ]);
             }
         } else {
