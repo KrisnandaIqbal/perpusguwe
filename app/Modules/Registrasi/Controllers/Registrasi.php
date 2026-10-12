@@ -186,7 +186,7 @@ class Registrasi extends BaseController
             'Phone' => $phone,
             'StatusAnggota_id' => 2, // Menunggu verifikasi
             'RegisterDate' => date('Y-m-d H:i:s'),
-            'TglPersetujuan' => date('Y-m-d H:i:s'),
+            'TglPersetujuan' => null,
             'MemberNo' => 'PENDING-' . strtoupper(substr(md5(uniqid()), 0, 8)),
             'EndDate' => null,
             'CreateDate' => date('Y-m-d H:i:s'),

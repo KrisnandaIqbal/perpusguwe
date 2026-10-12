@@ -404,6 +404,15 @@ class AnggotaController extends \Base\Controllers\BaseController
                     'UpdateBy'           => login_id(),
                 ];
 
+                // Nomor PENDING- dan nomor YYMMDD99999 tidak boleh tertimpa No. Identitas
+                helper('anggota');
+                $approval = memberApprovalData($ID, $update_data['StatusAnggota_id']);
+                if ($approval) {
+                    $update_data = array_merge($update_data, $approval);
+                } elseif (preg_match('/^(PENDING-|[0-9]{11}$)/', (string) $anggota->MemberNo)) {
+                    $update_data['MemberNo'] = $anggota->MemberNo;
+                }
+
                 $province = $this->request->getPost('Province');
                 if (!empty($province)) {
                     $region = $this->regionModel->where('code', $province)->first();
@@ -619,7 +628,13 @@ class AnggotaController extends \Base\Controllers\BaseController
         $field = $this->request->getGet('field');
         $value = $this->request->getGet('value');
 
-        $anggotaUpdate = $this->anggotaModel->update($id, [$field => $value]);
+        $update_data = [$field => $value];
+        if ($field === 'StatusAnggota_id') {
+            helper('anggota');
+            $update_data = array_merge($update_data, memberApprovalData($id, $value));
+        }
+
+        $anggotaUpdate = $this->anggotaModel->update($id, $update_data);
         if ($anggotaUpdate) {
             $this->session->setFlashdata('swal_icon', 'success');
             $this->session->setFlashdata('swal_title', 'Berhasil');
