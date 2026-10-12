@@ -2101,7 +2101,7 @@ if (!empty($jenis_identitas)) {
                         <!-- Selectable Cards for Jenis Anggota -->
                         <div class="rf-radio-cards" id="jenisAnggotaCards">
                             <?php foreach ($jenis_anggota as $idx => $ja): 
-                                $jaNameLower = strtolower($ja->jenisanggota);
+                                $jaNameLower = strtolower(trim($ja->jenisanggota));
                                 $isAsn = stripos($jaNameLower, 'asn') !== false && stripos($jaNameLower, 'non') === false;
                             ?>
                             <div class="rf-radio-card">
@@ -2118,7 +2118,7 @@ if (!empty($jenis_identitas)) {
                                                 <path d="M3 21h18M3 7v14M21 7v14M6 7V4a1 1 0 011-1h10a1 1 0 011 1v3M9 11h6M9 15h6" />
                                             </svg>
                                             <?php else: ?>
-                                            <!-- Researcher / Student Badge SVG -->
+                                            <!-- Non-ASN / ID Badge SVG -->
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
                                                 <circle cx="9" cy="7" r="4" />
@@ -2620,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const syaratScrollbox = document.getElementById('syaratScrollbox');
 
     let selectedIdDigits = 18;
-    let isMagang = false;
+    let isNonAsn = false;
 
     // ─── Stepper Navigation (Click to Scroll) ───
     const stepButtons = document.querySelectorAll('.rf-step');
@@ -2659,12 +2659,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyJenisAnggota(radio) {
         if (!radio) return;
-        const name = (radio.dataset.name || '').toLowerCase();
-        isMagang = name.includes('magang') || name.includes('non asn');
+        const name = (radio.dataset.name || '').trim().toLowerCase();
+        const isAsn = name.includes('asn') && !name.includes('non');
+        isNonAsn = !isAsn;
         document.getElementById('jenisAnggotaError').style.display = 'none';
 
-        if (isMagang) {
-            // Non-ASN / Magang: Langsung NIK (16 digit)
+        if (isNonAsn) {
+            // Non-ASN: Langsung NIK (16 digit)
             identityTypeInput.value = nikId;
             selectedIdDigits = 16;
             inputIdentityNo.maxLength = 16;
@@ -2928,6 +2929,10 @@ document.addEventListener('DOMContentLoaded', function() {
         cbPersetujuan.disabled = false;
         cbPersetujuan.checked = true;
         btnSubmit.disabled = false;
+        if (persetujuanError) persetujuanError.style.display = 'none';
+        if (typeof validatePersetujuan === 'function') {
+            validatePersetujuan();
+        }
         closeModal();
         validatePersetujuan();
     });
@@ -3030,7 +3035,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateIdentityField() {
         const val = inputIdentityNo.value.trim();
         const len = val.length;
-        const typeName = isMagang ? 'NIK' : 'NIP';
+        const typeName = isNonAsn ? 'NIK' : 'NIP';
         const needed = selectedIdDigits;
 
         if (len === 0) {
