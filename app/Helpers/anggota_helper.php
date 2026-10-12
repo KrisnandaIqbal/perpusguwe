@@ -399,11 +399,12 @@ if (!function_exists('memberApprovalData')) {
     /**
      * Data tambahan saat anggota pendaftaran online (MemberNo PENDING-...) disetujui,
      * yaitu ketika statusnya diubah menjadi Aktif. Selain itu mengembalikan array kosong.
+     * Masa berlaku (EndDate) dihitung satu tahun dari tanggal pendaftaran.
      */
     function memberApprovalData($memberId, $newStatusId) {
         $db = db_connect();
 
-        $member = $db->table('members')->select('MemberNo')->where('ID', $memberId)->get()->getRow();
+        $member = $db->table('members')->select('MemberNo, RegisterDate')->where('ID', $memberId)->get()->getRow();
         if (!$member || strpos((string) $member->MemberNo, 'PENDING-') !== 0) {
             return [];
         }
@@ -413,9 +414,12 @@ if (!function_exists('memberApprovalData')) {
             return [];
         }
 
+        $daftar = !empty($member->RegisterDate) ? strtotime($member->RegisterDate) : time();
+
         return [
             'MemberNo'       => generateUniversalMemberNumber(),
             'TglPersetujuan' => date('Y-m-d H:i:s'),
+            'EndDate'        => date('Y-m-d 00:00:00', strtotime('+1 year', $daftar)),
         ];
     }
 }
