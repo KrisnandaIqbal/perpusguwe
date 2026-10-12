@@ -73,6 +73,10 @@ class Filters extends BaseConfig
                 'opac/statistics_anggota',  // method: statistics_anggota
                 'opac/downloadMarc*',       // method: semua downloadMarc (Utf8, Xml, Mods, dll)
                 // 'opac/bacaDigital/*' TIDAK DIMASUKKAN agar terkena filter session (wajib login)
+
+                // --- PENGECUALIAN PENDAFTARAN ANGGOTA (PUBLIK) ---
+                'registrasi*',
+                'home/pendaftaran*',
             ]],
             'cors',
             'permissions' => ['except' => [
@@ -112,7 +116,11 @@ class Filters extends BaseConfig
                 
                 // --- PENGECUALIAN UNTUK PDF VIEWER DECRYPT ---
                 'katalog/view_decrypted*',
-                'katalog/get_decrypted_content*'
+                'katalog/get_decrypted_content*',
+
+                // --- PENGECUALIAN PENDAFTARAN ANGGOTA (PUBLIK) ---
+                'registrasi*',
+                'home/pendaftaran*',
             ]],
         ],
         'after' => [
