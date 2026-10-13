@@ -2,7 +2,6 @@
 
 namespace Anggota\Controllers;
 
-use chillerlan\QRCode\{QRCode, QROptions};
 use Dompdf\Dompdf;
 
 /**
@@ -38,27 +37,10 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
     // CETAK KARTU BELAKANG
     // ----------------------------------------------------------------
 
+    /** Kartu depan dan belakang sudah satu tampilan; rute lama diteruskan ke sana. */
     public function printkartubelakang($id = null)
     {
-        $db = db_connect();
-
-        $this->data['perpus_name'] = $db->table('settingparameters')
-            ->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value ?? "Perpustakaan Nasional";
-
-        $this->data['lokasi_perpustakaan'] = $db->table('settingparameters')
-            ->where('Name', 'NamaLokasiPerpustakaan')->get()->getRow()->Value ?? "Perpustakaan Nasional";
-
-        $logo_setting = $db->table('settingparameters')->where('Name', 'Logo')->get()->getRow();
-        $logo_base64  = '';
-        if ($logo_setting && $logo_setting->Value) {
-            $logo_path = ROOTPATH . 'public/uploads/branch/' . $logo_setting->Value;
-            if (file_exists($logo_path)) {
-                $logo_base64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
-            }
-        }
-        $this->data['logo_base64'] = $logo_base64 ?: 'https://placehold.co/80x80/cccccc/666666?text=LOGO';
-
-        echo view('Anggota\Views\pdf\cetak-kartubelakang', $this->data);
+        return $this->printanggota($id);
     }
 
     // ----------------------------------------------------------------
@@ -92,28 +74,18 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
         $db    = db_connect();
         $aktif = $db->table('status_anggota')->where('Nama', 'Aktif')->get()->getRow();
 
+        helper('anggota');
+
         $cards   = [];
         $skipped = [];
 
         foreach ($members as $anggota) {
-            $memberNo = (string) $anggota->MemberNo;
-
-            if (strpos($memberNo, 'PENDING-') === 0 || !$aktif || (int) $anggota->StatusAnggota_id !== (int) $aktif->id) {
+            if (strpos((string) $anggota->MemberNo, 'PENDING-') === 0 || !$aktif || (int) $anggota->StatusAnggota_id !== (int) $aktif->id) {
                 $skipped[] = $anggota->Fullname;
                 continue;
             }
 
-            // No. Anggota YYMMDD99999: sisi depan menampilkan nomor urutnya saja (001, 002, ...)
-            $isUniversal = (bool) preg_match('/^[0-9]{11}$/', $memberNo);
-
-            $cards[] = [
-                'nama'        => $anggota->Fullname,
-                'member_no'   => $memberNo,
-                'nomor_depan' => $isUniversal ? str_pad((string) (int) substr($memberNo, -5), 3, '0', STR_PAD_LEFT) : $memberNo,
-                'nomor_urut'  => $isUniversal,
-                'berlaku'     => $this->tanggalKartu($anggota->EndDate),
-                'qr'          => (new QRCode(new QROptions(['addQuietzone' => false])))->getMatrix($memberNo)->matrix(true),
-            ];
+            $cards[] = kartuAnggotaData($anggota);
         }
 
         return view('Anggota\Views\pdf\kartu-anggota', [
@@ -121,18 +93,6 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
             'skipped' => $skipped,
             'logo'    => base_url('assets/img/kartu/logo-kemnaker.png'),
         ]);
-    }
-
-    private function tanggalKartu($date): string
-    {
-        $time = $date ? strtotime($date) : false;
-        if (!$time || $time <= 0) {
-            return '-';
-        }
-
-        $bulan = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
-
-        return date('j', $time) . ' ' . $bulan[(int) date('n', $time) - 1] . ' ' . date('Y', $time);
     }
 
     // ----------------------------------------------------------------

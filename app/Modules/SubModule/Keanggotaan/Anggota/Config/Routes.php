@@ -83,6 +83,8 @@ $routes->group('api/anggota', ['namespace' => 'Anggota\Controllers\Api'], functi
     $subroutes->add('datatable/(:any)',   'Anggota::datatable/$1');
     $subroutes->add('switch/(:any)',      'Anggota::switch/$1');
     $subroutes->add('approval_summary/(:num)', 'Anggota::approval_summary/$1');
+    $subroutes->post('minta_perbaikan/(:num)', 'Anggota::minta_perbaikan/$1');
+    $subroutes->post('kirim_ulang_email/(:num)', 'Anggota::kirim_ulang_email/$1');
     $subroutes->add('upload_file',        'Anggota::upload_file');
     $subroutes->add('capture_file',       'Anggota::capture_file');
 });

@@ -419,7 +419,89 @@ if (!function_exists('memberApprovalData')) {
         return [
             'MemberNo'       => generateUniversalMemberNumber(),
             'TglPersetujuan' => date('Y-m-d H:i:s'),
+            'TglKeputusan'   => date('Y-m-d H:i:s'),
+            'KeputusanBy'    => login_id(),
             'EndDate'        => date('Y-m-d 00:00:00', strtotime('+1 year', $daftar)),
+        ];
+    }
+}
+
+if (!function_exists('statusAnggotaId')) {
+    function statusAnggotaId(string $nama): ?int {
+        $row = db_connect()->table('status_anggota')->select('id')->where('Nama', $nama)->get()->getRow();
+        return $row ? (int) $row->id : null;
+    }
+}
+
+if (!function_exists('alasanPerbaikan')) {
+    /**
+     * Alasan pendaftaran belum bisa diterima. 'cara' dikirim ke email pendaftar.
+     * 'daftar_ulang' false berarti pendaftar tidak diminta mengisi formulir lagi.
+     */
+    function alasanPerbaikan(): array {
+        return [
+            'identitas' => [
+                'label'        => 'Nomor identitas tidak valid',
+                'cara'         => 'Periksa lagi nomor identitas Anda: NIP 18 digit untuk ASN, NIK 16 digit untuk Non ASN.',
+                'daftar_ulang' => true,
+            ],
+            'unit_kerja' => [
+                'label'        => 'Bukan pegawai atau unit kerja tidak sesuai',
+                'cara'         => 'Pilih unit kerja tempat Anda bertugas saat ini.',
+                'daftar_ulang' => true,
+            ],
+            'jenis_anggota' => [
+                'label'        => 'Jenis anggota tidak sesuai',
+                'cara'         => 'Pilih jenis anggota yang sesuai dengan status kepegawaian Anda: ASN atau Non ASN.',
+                'daftar_ulang' => true,
+            ],
+            'tidak_lengkap' => [
+                'label'        => 'Data tidak lengkap',
+                'cara'         => 'Isi kembali formulir pendaftaran dengan data yang lengkap.',
+                'daftar_ulang' => true,
+            ],
+            'ganda' => [
+                'label'        => 'Pendaftaran ganda',
+                'cara'         => 'Anda sudah tercatat dengan pendaftaran lain, jadi tidak perlu mendaftar lagi.',
+                'daftar_ulang' => false,
+            ],
+            'lainnya' => [
+                'label'        => 'Lainnya',
+                'cara'         => '',
+                'daftar_ulang' => true,
+            ],
+        ];
+    }
+}
+
+if (!function_exists('tanggalKartu')) {
+    function tanggalKartu($date): string {
+        $time = $date ? strtotime($date) : false;
+        if (!$time || $time <= 0) {
+            return '-';
+        }
+
+        $bulan = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+
+        return date('j', $time) . ' ' . $bulan[(int) date('n', $time) - 1] . ' ' . date('Y', $time);
+    }
+}
+
+if (!function_exists('kartuAnggotaData')) {
+    /** Isi kartu anggota, dipakai halaman cetak dan lampiran PDF di email persetujuan. */
+    function kartuAnggotaData(object $anggota): array {
+        $memberNo = (string) $anggota->MemberNo;
+
+        // No. Anggota YYMMDD99999: sisi depan menampilkan nomor urutnya saja (001, 002, ...)
+        $isUniversal = (bool) preg_match('/^[0-9]{11}$/', $memberNo);
+
+        return [
+            'nama'        => $anggota->Fullname,
+            'member_no'   => $memberNo,
+            'nomor_depan' => $isUniversal ? str_pad((string) (int) substr($memberNo, -5), 3, '0', STR_PAD_LEFT) : $memberNo,
+            'nomor_urut'  => $isUniversal,
+            'berlaku'     => tanggalKartu($anggota->EndDate),
+            'qr'          => (new \chillerlan\QRCode\QRCode(new \chillerlan\QRCode\QROptions(['addQuietzone' => false])))->getMatrix($memberNo)->matrix(true),
         ];
     }
 }
