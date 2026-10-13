@@ -186,6 +186,10 @@ $request = service('request');
                         open_approval(this);
                         return;
                     }
+                    if (approveValue && $(this).val() == $(this).attr('data-reject-value')) {
+                        open_approval(this, true);
+                        return;
+                    }
 
                     var url = $(this).attr('data-href');
                     var field = $(this).attr('data-field');
@@ -363,6 +367,40 @@ $request = service('request');
         return false;
     });
 
+    // Peringatan (misalnya email gagal terkirim) tidak ditutup otomatis supaya sempat dibaca
+    function show_result(res) {
+        Swal.fire({
+            title: res.warning ? 'Tersimpan, email belum terkirim' : 'Berhasil',
+            html: res.message,
+            icon: res.warning ? 'warning' : 'success',
+            showConfirmButton: !!res.warning,
+            confirmButtonText: 'Mengerti',
+            timer: res.warning ? undefined : 5000,
+        });
+    }
+
+    $(document).on('click', '.kirim-ulang-email', function() {
+        var $button = $(this).prop('disabled', true);
+        var label = $button.html();
+        $button.text('Mengirim...');
+
+        $.post($button.attr('data-href'))
+            .done(function(res) {
+                if (res.error) {
+                    Swal.fire({ title: 'Email belum terkirim', text: res.message, icon: 'error', confirmButtonText: 'Mengerti' });
+                    return;
+                }
+                t.ajax.reload(null, false);
+                show_result(res);
+            })
+            .fail(function() {
+                Swal.fire({ title: 'Email belum terkirim', text: 'Server tidak menjawab. Coba lagi.', icon: 'error', confirmButtonText: 'Mengerti' });
+            })
+            .always(function() {
+                $button.prop('disabled', false).html(label);
+            });
+    });
+
     function ajax_post(url, data_post) {
         $.ajax({
                 url: url,
@@ -374,13 +412,7 @@ $request = service('request');
 
                 if (res.error == false) {
                     t.ajax.reload(null, false);
-                    Swal.fire({
-                        title: 'Berhasil',
-                        html: res.message,
-                        icon: 'success',
-                        showConfirmButton: false,
-                        timer: 5000,
-                    }).then(() => {});
+                    show_result(res);
                 } else {
                     Swal.fire({
                         title: 'Gagal',

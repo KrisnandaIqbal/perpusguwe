@@ -133,20 +133,33 @@ class Registrasi extends BaseController
         }
 
         // Duplicate Check
-        $checkIdentity = $this->db->table('members')->where('IdentityNo', $identityNo)->countAllResults();
-        if ($checkIdentity > 0) {
-            return $this->respond([
-                'success' => false,
-                'message' => 'Nomor Identitas sudah terdaftar sebelumnya.'
-            ]);
-        }
+        // Pendaftaran berstatus Perlu Perbaikan boleh diulang dengan nomor identitas dan email yang sama
+        helper('anggota');
+        $perbaikanId = statusAnggotaId('Perlu Perbaikan');
+        $ulang = null;
 
-        $checkEmail = $this->db->table('members')->where('Email', $email)->countAllResults();
-        if ($checkEmail > 0) {
-            return $this->respond([
-                'success' => false,
-                'message' => 'Email sudah terdaftar sebelumnya.'
-            ]);
+        $sama = $this->db->table('members')
+            ->select('ID, IdentityNo, Email, MemberNo, StatusAnggota_id, PhotoUrl')
+            ->groupStart()->where('IdentityNo', $identityNo)->orWhere('Email', $email)->groupEnd()
+            ->get()->getResult();
+
+        foreach ($sama as $row) {
+            $bolehUlang = $perbaikanId
+                && (int) $row->StatusAnggota_id === $perbaikanId
+                && strpos((string) $row->MemberNo, 'PENDING-') === 0;
+
+            if (!$bolehUlang) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => $row->IdentityNo === $identityNo
+                        ? 'Nomor Identitas sudah terdaftar sebelumnya.'
+                        : 'Email sudah terdaftar sebelumnya.'
+                ]);
+            }
+
+            if ($ulang === null || $row->IdentityNo === $identityNo) {
+                $ulang = $row;
+            }
         }
 
         // Handle photo upload (optional)
@@ -199,11 +212,23 @@ class Registrasi extends BaseController
         }
 
         try {
-            $this->db->table('members')->insert($dataInsert);
-            $newId = $this->db->insertID();
+            if ($ulang) {
+                // Baris lama dipakai lagi; alasan perbaikannya tetap tersimpan untuk dibaca admin
+                unset($dataInsert['MemberNo'], $dataInsert['CreateDate']);
+                $dataInsert['UpdateDate'] = date('Y-m-d H:i:s');
+                $this->db->table('members')->where('ID', $ulang->ID)->update($dataInsert);
+                $newId = $ulang->ID;
 
-            // Hook for sending email
-            $this->sendNotificationEmail($email, $fullname);
+                if ($photoFileName && $ulang->PhotoUrl && is_file($this->modulePath . $ulang->PhotoUrl)) {
+                    unlink($this->modulePath . $ulang->PhotoUrl);
+                }
+            } else {
+                $this->db->table('members')->insert($dataInsert);
+                $newId = $this->db->insertID();
+            }
+
+            // Pendaftaran tetap diterima walau email gagal; hasilnya tercatat di kolom NotifTerkirim
+            (new \App\Libraries\EmailPendaftaran())->kirim(\App\Libraries\EmailPendaftaran::DITERIMA, $newId);
 
             return $this->respond([
                 'success' => true,
@@ -227,12 +252,6 @@ class Registrasi extends BaseController
     {
         $data['title'] = 'Pendaftaran Berhasil';
         return view('Registrasi\Views\success', $data);
-    }
-
-    private function sendNotificationEmail($email, $fullname)
-    {
-        // TODO: Implement email sending logic here
-        // Email library can be loaded and used to send a confirmation email
     }
 }
 

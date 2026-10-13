@@ -404,6 +404,11 @@ class AnggotaController extends \Base\Controllers\BaseController
                     'UpdateBy'           => login_id(),
                 ];
 
+                // Jangan mengosongkan unit kerja kalau isiannya tidak ikut terkirim
+                if (empty($update_data['UnitKerja_id'])) {
+                    unset($update_data['UnitKerja_id']);
+                }
+
                 // Nomor PENDING- dan nomor YYMMDD99999 tidak boleh tertimpa No. Identitas
                 helper('anggota');
                 $approval = memberApprovalData($ID, $update_data['StatusAnggota_id']);
@@ -490,6 +495,10 @@ class AnggotaController extends \Base\Controllers\BaseController
 
                 $anggotaUpdate = $this->anggotaModel->update($ID, $update_data);
                 if ($anggotaUpdate) {
+                    if ($approval) {
+                        (new \App\Libraries\EmailPendaftaran())->kirim(\App\Libraries\EmailPendaftaran::DISETUJUI, $ID);
+                    }
+
                     $Koleksi = $this->request->getPost('CategoryLoan_id');
                     $this->AksesKoleksiModel->where('member_id', $member_id)->delete();
 

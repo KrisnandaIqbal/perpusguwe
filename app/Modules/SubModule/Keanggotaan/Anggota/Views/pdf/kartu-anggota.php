@@ -14,10 +14,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cetak Kartu Anggota</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
+        <?php foreach ([500 => 'Medium', 700 => 'Bold', 800 => 'ExtraBold'] as $tebal => $nama): ?>
+        @font-face { font-family: "Plus Jakarta Sans"; font-weight: <?= $tebal ?>; font-display: swap;
+            src: url("<?= base_url('assets/fonts/plus-jakarta-sans/PlusJakartaSans-' . $nama . '.ttf') ?>") format("truetype"); }
+        <?php endforeach; ?>
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {

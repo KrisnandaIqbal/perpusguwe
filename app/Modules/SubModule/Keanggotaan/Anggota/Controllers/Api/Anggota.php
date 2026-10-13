@@ -69,6 +69,10 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'a.EndDate',
 			'a.JenisAnggota_id',
 			'a.StatusAnggota_id',
+			'a.AlasanPerbaikan',
+			'a.NotifJenis',
+			'a.NotifTerkirim',
+			'a.NotifDate',
 			'a.CreateDate',
 			
 			// Kolom dari tabel join
@@ -91,6 +95,10 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		 */
 		$aktif = $db->table('status_anggota')->where('Nama', 'Aktif')->get()->getRow();
 		$aktifId = $aktif->id ?? '';
+
+		helper('anggota');
+		$perbaikanId = statusAnggotaId('Perlu Perbaikan') ?? '';
+		$alasanList  = alasanPerbaikan();
 
 		$dataTable = DataTable::of($builder)
 			->addNumbering('no')
@@ -157,15 +165,37 @@ class Anggota extends \Base\Controllers\BaseResourceController
 				$html  =  '<badge class="badge badge-warning badge-pill">' . substr($row->EndDate, 0, 10) . '</badge>';
 				return $html;
 			})
-			->edit('StatusAnggota', function ($row) use ($aktifId) {
-				// Pendaftar online yang belum disetujui: perubahan ke Aktif harus lewat konfirmasi
-				$approval = strpos((string) $row->MemberNo, 'PENDING-') === 0
-					? ' data-approve-value="' . $aktifId . '" data-summary="' . base_url('api/anggota/approval_summary/' . $row->ID) . '"'
+			->edit('StatusAnggota', function ($row) use ($aktifId, $perbaikanId, $alasanList) {
+				// Pendaftar online yang belum disetujui: Aktif dan Perlu Perbaikan harus lewat dialog keputusan
+				$pending  = strpos((string) $row->MemberNo, 'PENDING-') === 0;
+				$approval = $pending
+					? ' data-approve-value="' . $aktifId . '" data-reject-value="' . $perbaikanId . '" data-summary="' . base_url('api/anggota/approval_summary/' . $row->ID) . '" data-reject-href="' . base_url('api/anggota/minta_perbaikan/' . $row->ID) . '"'
 					: '';
 				$html = '<select class="form-control apply-select" name="status_anggota" style="width:100%" data-href="' . base_url('api/anggota/switch/' . $row->ID) . '" data-field="StatusAnggota_id"' . $approval . '>';
 				foreach (get_ref_table('status_anggota', 'id, Nama', 'id IS NOT NULL', 'data') as $row2) {
+					// Perlu Perbaikan hanya untuk pendaftar yang belum punya No. Anggota
+					if ($row2->id == $perbaikanId && !$pending && $row2->id != $row->StatusAnggota_id) {
+						continue;
+					}
 					$selected = $row2->id == $row->StatusAnggota_id ? 'selected' : '';
 					$html .= '<option value="' . $row2->id . '" ' . $selected . '>' . $row2->Nama . '</option>';
+				}
+				$html .= '</select>';
+
+				if ($perbaikanId !== '' && $row->StatusAnggota_id == $perbaikanId && isset($alasanList[$row->AlasanPerbaikan])) {
+					$html .= '<div class="small text-left mt-1">' . esc($alasanList[$row->AlasanPerbaikan]['label']) . '</div>';
+				}
+				// Tombol kirim selalu ada selama statusnya punya pemberitahuan; keterangannya mengikuti kiriman terakhir
+				if (!empty($row->Email) && \App\Libraries\EmailPendaftaran::jenisUntuk((string) $row->MemberNo, $row->StatusAnggota_id)) {
+					if (empty($row->NotifJenis)) {
+						$ket = '';
+					} elseif ((string) $row->NotifTerkirim === '1') {
+						$ket = 'Email terkirim ' . date('d/m/Y H:i', strtotime($row->NotifDate)) . '.';
+					} else {
+						$ket = 'Email pemberitahuan belum terkirim.';
+					}
+					$html .= ($ket !== '' ? '<div class="small text-left mt-1">' . $ket . '</div>' : '')
+						. '<button type="button" class="btn btn-secondary btn-sm btn-block mt-1 kirim-ulang-email" data-href="' . base_url('api/anggota/kirim_ulang_email/' . $row->ID) . '"><i class="fa fa-envelope"></i> ' . (empty($row->NotifJenis) ? 'Kirim email' : 'Kirim ulang email') . '</button>';
 				}
 				return $html;
 			})
@@ -187,7 +217,7 @@ class Anggota extends \Base\Controllers\BaseResourceController
 	{
 		$db = db_connect();
 		$row = $db->table('members as a')
-			->select('a.ID, a.Fullname, a.IdentityNo, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja')
+			->select('a.ID, a.Fullname, a.IdentityNo, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, a.AlasanPerbaikan, a.CatatanPerbaikan, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja')
 			->join('jenis_anggota', 'jenis_anggota.id = a.JenisAnggota_id', 'left')
 			->join('master_jenis_identitas', 'master_jenis_identitas.id = a.IdentityType_id', 'left')
 			->join('master_unit', 'master_unit.id = a.UnitKerja_id', 'left')
@@ -197,6 +227,10 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		if (!$row) {
 			return $this->failNotFound('Data anggota tidak ditemukan');
 		}
+
+		helper('anggota');
+		$alasan     = alasanPerbaikan()[$row->AlasanPerbaikan] ?? null;
+		$sebelumnya = $alasan ? trim($alasan['label'] . '. ' . $row->CatatanPerbaikan) : null;
 
 		return $this->respond([
 			'JenisAnggota'   => $row->JenisAnggota,
@@ -209,7 +243,75 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'Phone'          => $row->NoHp ?: $row->Phone,
 			'PhotoUrl'       => !empty($row->PhotoUrl) ? base_url('uploads/anggota/' . $row->PhotoUrl) : null,
 			'RegisterDate'   => $row->RegisterDate,
+			'PerbaikanSebelumnya' => $sebelumnya,
 		]);
+	}
+
+	// Pendaftaran belum bisa diterima: status Perlu Perbaikan beserta alasannya, lalu pendaftar diberi tahu lewat email
+	public function minta_perbaikan($id = null)
+	{
+		helper('anggota');
+
+		$alasan      = (string) $this->request->getPost('alasan');
+		$catatan     = trim((string) $this->request->getPost('catatan'));
+		$member      = $this->anggotaModel->find($id);
+		$perbaikanId = statusAnggotaId('Perlu Perbaikan');
+		$galat       = null;
+
+		if (!$member || strpos((string) $member->MemberNo, 'PENDING-') !== 0) {
+			$galat = 'Hanya pendaftar yang belum punya No. Anggota yang bisa diminta memperbaiki datanya.';
+		} elseif (!$perbaikanId) {
+			$galat = 'Status Perlu Perbaikan belum ada di database. Jalankan artifacts/perlu_perbaikan_migration.sql.';
+		} elseif (!isset(alasanPerbaikan()[$alasan])) {
+			$galat = 'Pilih dulu alasannya.';
+		} elseif ($alasan === 'lainnya' && $catatan === '') {
+			$galat = 'Untuk alasan Lainnya, tulis alasannya di catatan.';
+		} elseif (mb_strlen($catatan) > 500) {
+			$galat = 'Catatan paling banyak 500 karakter.';
+		}
+
+		if ($galat) {
+			return $this->simpleResponse(['error' => true, 'message' => $galat]);
+		}
+
+		$saved = $this->anggotaModel->update($id, [
+			'StatusAnggota_id' => $perbaikanId,
+			'AlasanPerbaikan'  => $alasan,
+			'CatatanPerbaikan' => $catatan !== '' ? $catatan : null,
+			'TglKeputusan'     => date('Y-m-d H:i:s'),
+			'KeputusanBy'      => login_id(),
+		]);
+
+		$nama = esc($member->Fullname);
+		if (!$saved) {
+			return $this->simpleResponse(['error' => true, 'message' => 'Keputusan untuk ' . $nama . ' gagal disimpan. Silakan coba lagi.']);
+		}
+
+		$email = (new \App\Libraries\EmailPendaftaran())->kirim(\App\Libraries\EmailPendaftaran::PERBAIKAN, $id);
+
+		return $this->simpleResponse([
+			'error'   => false,
+			'warning' => !$email['terkirim'],
+			'message' => 'Pendaftaran ' . $nama . ' ditandai Perlu Perbaikan.<br>' . $this->pesanEmail($email, 'Alasannya dikirim ke ' . esc($member->Email) . '.'),
+		]);
+	}
+
+	public function kirim_ulang_email($id = null)
+	{
+		$email = (new \App\Libraries\EmailPendaftaran())->kirimUlang($id);
+
+		return $this->simpleResponse([
+			'error'   => !$email['terkirim'],
+			'message' => esc($email['pesan']),
+		]);
+	}
+
+	// Keputusan admin tetap tersimpan walau email gagal; admin diarahkan ke tombol kirim ulang
+	private function pesanEmail(array $email, string $terkirim): string
+	{
+		return $email['terkirim']
+			? $terkirim
+			: '<b>Email pemberitahuan belum terkirim.</b> ' . esc($email['pesan']) . '<br>Kirim ulang dari kolom Status Anggota.';
 	}
 
 	public function detail($id = null)
@@ -454,6 +556,12 @@ class Anggota extends \Base\Controllers\BaseResourceController
     $update_data = array($field => $value);
     if ($field === 'StatusAnggota_id') {
         helper('anggota');
+        if ((int) $value === statusAnggotaId('Perlu Perbaikan')) {
+            return $this->simpleResponse([
+                'error'   => true,
+                'message' => 'Status Perlu Perbaikan harus disertai alasan. Pilih status itu di Daftar Anggota, lalu isi alasannya.',
+            ]);
+        }
         $update_data = array_merge($update_data, memberApprovalData($id, $value));
     }
 
@@ -480,6 +588,12 @@ class Anggota extends \Base\Controllers\BaseResourceController
             'error' => false,
             'message' => $success,
         ];
+
+        if (isset($update_data['MemberNo'])) {
+            $email = (new \App\Libraries\EmailPendaftaran())->kirim(\App\Libraries\EmailPendaftaran::DISETUJUI, $id);
+            $response['warning']  = !$email['terkirim'];
+            $response['message'] .= '<br>' . $this->pesanEmail($email, 'Kartu anggota dikirim ke ' . esc($member->Email) . '.');
+        }
     } else {
         $response = [
             'error' => true,
