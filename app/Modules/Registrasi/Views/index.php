@@ -446,8 +446,8 @@ if (!empty($jenis_identitas)) {
     /* ─── Selectable Radio Cards (ASN / Non-ASN) ─── */
     .rf-radio-cards {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
         margin-bottom: 22px;
     }
 
@@ -464,21 +464,25 @@ if (!empty($jenis_identitas)) {
     }
 
     .rf-card-choice {
+        position: relative;
         display: flex;
         flex-direction: column;
         height: 100%;
-        padding: 16px 18px;
-        background: var(--bg-card);
-        border: 1.5px solid var(--border-card);
-        border-radius: 12px;
+        padding: 18px 20px;
+        background: #ffffff;
+        border: 2px solid var(--border-card);
+        border-radius: 14px;
         cursor: pointer;
         transition: all var(--transition-fast);
         user-select: none;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     }
 
     .rf-card-choice:hover {
-        border-color: #cbd5e1;
-        background: var(--bg-card-hover);
+        border-color: #94a3b8;
+        background: #fafbfe;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.08);
     }
 
     .rf-card-choice-top {
@@ -486,81 +490,165 @@ if (!empty($jenis_identitas)) {
         align-items: center;
         justify-content: space-between;
         margin-bottom: 12px;
+        gap: 10px;
+    }
+
+    .rf-card-icon-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
     }
 
     .rf-card-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
         background: var(--bg-page);
         border: 1px solid var(--border-subtle);
         color: var(--navy-700);
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
         transition: all var(--transition-fast);
     }
 
+    .rf-card-icon.is-asn {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+    }
+
+    .rf-card-icon.is-nonasn {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #047857;
+    }
+
     .rf-card-icon svg {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .rf-card-chip {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 6px;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    .rf-card-chip.is-asn {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .rf-card-chip.is-nonasn {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
     }
 
     .rf-card-radio-mark {
-        width: 18px;
-        height: 18px;
+        width: 22px;
+        height: 22px;
         border-radius: 50%;
-        border: 1.5px solid var(--border-input);
+        border: 2px solid var(--border-input);
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all var(--transition-fast);
         background: #ffffff;
+        flex-shrink: 0;
+        color: transparent;
     }
 
-    .rf-radio-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: transparent;
-        transition: background var(--transition-fast);
+    .rf-card-radio-mark svg {
+        width: 12px;
+        height: 12px;
+        stroke-width: 3;
+        transition: transform var(--transition-fast);
+        transform: scale(0.6);
+    }
+
+    .rf-card-choice-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .rf-card-title-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 4px;
+        flex-wrap: wrap;
     }
 
     .rf-card-title {
         font-family: var(--font-heading);
-        font-size: 0.92rem;
-        font-weight: 700;
+        font-size: 1.05rem;
+        font-weight: 800;
         color: var(--navy-900);
-        margin-bottom: 4px;
         line-height: 1.3;
     }
 
-    .rf-card-desc {
-        font-size: 0.77rem;
+    .rf-card-subtitle {
+        font-size: 0.73rem;
+        font-weight: 600;
         color: var(--text-muted);
-        line-height: 1.45;
     }
 
-    /* Selected State (Contrast, subtle blue tint) */
+    .rf-card-desc {
+        font-size: 0.79rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin-top: 2px;
+    }
+
+    .rf-card-footer {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--border-subtle);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .rf-card-footer svg {
+        width: 13px;
+        height: 13px;
+        color: var(--accent-600);
+    }
+
+    /* Selected State (High clarity, glowing border, vibrant check) */
     .rf-radio-card input[type="radio"]:checked + .rf-card-choice {
         border-color: var(--accent-600);
-        background-color: var(--accent-50);
-        box-shadow: 0 0 0 1px var(--accent-600), var(--shadow-subtle);
-    }
-
-    .rf-radio-card input[type="radio"]:checked + .rf-card-choice .rf-card-icon {
-        background-color: #ffffff;
-        border-color: var(--accent-200);
-        color: var(--accent-600);
+        background-color: #f8faff;
+        box-shadow: 0 0 0 1px var(--accent-600), 0 8px 24px -4px rgba(37, 99, 235, 0.16);
     }
 
     .rf-radio-card input[type="radio"]:checked + .rf-card-choice .rf-card-radio-mark {
         border-color: var(--accent-600);
         background: var(--accent-600);
+        color: #ffffff;
     }
 
-    .rf-radio-card input[type="radio"]:checked + .rf-card-choice .rf-radio-dot {
-        background: #ffffff;
+    .rf-radio-card input[type="radio"]:checked + .rf-card-choice .rf-card-radio-mark svg {
+        transform: scale(1);
+    }
+
+    .rf-radio-card input[type="radio"]:checked + .rf-card-choice .rf-card-title {
+        color: var(--accent-700);
     }
 
     .rf-radio-card input[type="radio"]:focus-visible + .rf-card-choice {
@@ -1792,11 +1880,30 @@ if (!empty($jenis_identitas)) {
     @media (max-width: 640px) {
         .rf-radio-cards {
             grid-template-columns: 1fr;
-            gap: 10px;
+            gap: 12px;
         }
 
         .rf-card-choice {
-            padding: 14px 16px;
+            padding: 16px;
+        }
+
+        .rf-card-title {
+            font-size: 1rem;
+        }
+
+        .rf-card-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .rf-card-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .rf-card-chip {
+            font-size: 0.68rem;
+            padding: 3px 6px;
         }
 
         .rf-grid-2 {
@@ -2111,33 +2218,49 @@ if (!empty($jenis_identitas)) {
                                        required>
                                 <label for="ja_<?= $ja->id ?>" class="rf-card-choice">
                                     <div class="rf-card-choice-top">
-                                        <div class="rf-card-icon">
-                                            <?php if ($isAsn): ?>
-                                            <!-- Official Government Landmark SVG -->
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M3 21h18M3 7v14M21 7v14M6 7V4a1 1 0 011-1h10a1 1 0 011 1v3M9 11h6M9 15h6" />
-                                            </svg>
-                                            <?php else: ?>
-                                            <!-- Non-ASN / ID Badge SVG -->
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-                                                <circle cx="9" cy="7" r="4" />
-                                                <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-                                            </svg>
-                                            <?php endif; ?>
+                                        <div class="rf-card-icon-group">
+                                            <div class="rf-card-icon <?= $isAsn ? 'is-asn' : 'is-nonasn' ?>">
+                                                <?php if ($isAsn): ?>
+                                                <!-- Official Government Landmark SVG -->
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M3 21h18M3 7v14M21 7v14M6 7V4a1 1 0 011-1h10a1 1 0 011 1v3M9 11h6M9 15h6" />
+                                                </svg>
+                                                <?php else: ?>
+                                                <!-- Non-ASN / ID Badge SVG -->
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                                                    <circle cx="9" cy="7" r="4" />
+                                                    <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                                                </svg>
+                                                <?php endif; ?>
+                                            </div>
+                                            <span class="rf-card-chip <?= $isAsn ? 'is-asn' : 'is-nonasn' ?>">
+                                                <?= $isAsn ? 'Wajib NIP 18 Digit' : 'Wajib NIK 16 Digit' ?>
+                                            </span>
                                         </div>
-                                        <div class="rf-card-radio-mark">
-                                            <span class="rf-radio-dot"></span>
+                                        <div class="rf-card-radio-mark" aria-hidden="true">
+                                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3.5 8.5l3 3 6-7"/>
+                                            </svg>
                                         </div>
                                     </div>
                                     <div class="rf-card-choice-body">
-                                        <div class="rf-card-title"><?= esc($ja->jenisanggota) ?></div>
+                                        <div class="rf-card-title-row">
+                                            <div class="rf-card-title"><?= esc($ja->jenisanggota) ?></div>
+                                            <span class="rf-card-subtitle"><?= $isAsn ? 'PNS & PPPK' : 'PPNPN & Honorer' ?></span>
+                                        </div>
                                         <div class="rf-card-desc">
                                             <?php if ($isAsn): ?>
-                                            Pegawai ASN (PNS & PPPK). Wajib menggunakan NIP 18 digit resmi BKN.
+                                            Pegawai ASN Kementerian Ketenagakerjaan. Menggunakan NIP 18 digit resmi BKN tanpa spasi.
                                             <?php else: ?>
-                                            Tenaga Non-ASN, Honorer, Magang & Riset. Menggunakan NIK KTP 16 digit.
+                                            Tenaga Non-ASN, Honorer, Magang & Riset. Menggunakan NIK KTP resmi 16 digit.
                                             <?php endif; ?>
+                                        </div>
+                                        <div class="rf-card-footer">
+                                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                                <path d="M8 16A8 8 0 108 0a8 8 0 000 16zm.93-9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 110-2 1 1 0 010 2z"/>
+                                            </svg>
+                                            <span>Format identitas divalidasi otomatis oleh sistem</span>
                                         </div>
                                     </div>
                                 </label>
@@ -2511,7 +2634,7 @@ if (!empty($jenis_identitas)) {
                             </svg>
                             <div class="rf-dark-content">
                                 <strong>Alamat Perpustakaan:</strong>
-                                <span><?= esc($_alamatPerpus) ?></span>
+                                <span> Jl.Jenderal Gatot Subroto Kav. 51, RT.5/RW.4, Kuningan Timur, Kecamatan Setiabudi, Kota Jakarta Selatan, DKI Jakarta 12950. Gedung B</span>
                             </div>
                         </div>
                         <?php endif; ?>
@@ -2524,7 +2647,7 @@ if (!empty($jenis_identitas)) {
                             </svg>
                             <div class="rf-dark-content">
                                 <strong>Surel Layanan:</strong>
-                                <a href="mailto:<?= esc($_emailPerpus) ?>"><?= esc($_emailPerpus) ?></a>
+                                <a href="mailto:perpustakaan@kemnaker.go.id">perpustakaan@kemnaker.go.id</a>
                             </div>
                         </div>
                         <?php endif; ?>
@@ -2536,7 +2659,7 @@ if (!empty($jenis_identitas)) {
                             </svg>
                             <div class="rf-dark-content">
                                 <strong>Telepon Layanan:</strong>
-                                <span><?= esc($_phonePerpus) ?></span>
+                                <span>08119521151</span>
                             </div>
                         </div>
                         <?php endif; ?>
