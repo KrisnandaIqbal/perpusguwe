@@ -28,17 +28,6 @@
 							</div>
 							<div class="col-md-3">
 								<div class="position-relative form-group">
-									<label for="UnitKerja_id">Unit Kerja / Satuan Kerja</label>
-									<select class="form-control select2" id="UnitKerja_id" name="UnitKerja_id" style="width:100%">
-										<option value="">Pilih Satuan Kerja</option>
-										<?php foreach (get_ref_table('master_unit', 'id, nama_unit', 'active = 1 OR id = ' . (int) $anggota->UnitKerja_id, 'data') as $row) : ?>
-											<option value="<?= $row->id ?>" <?= ($row->id == $anggota->UnitKerja_id) ? 'selected' : '' ?>><?= esc($row->nama_unit) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-							</div>
-							<div class="col-md-3">
-								<div class="position-relative form-group">
 									<label for="name">Tanggal Register</label>
 									<div>
 										<input type="text" class="form-control datepicker" id="frm_create_RegisterDate" name="RegisterDate" placeholder="Tanggal Register" value="<?= set_value('RegisterDate', substr($anggota->RegisterDate, 0, 10)); ?>" readonly />

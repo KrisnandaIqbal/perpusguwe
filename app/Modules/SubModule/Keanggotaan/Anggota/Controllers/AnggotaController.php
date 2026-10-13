@@ -298,7 +298,7 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->edit($member->ID, true);
     }
 
-    public function edit(int $ID = null, $is_anggota = false)
+    public function edit(?int $ID = null, $is_anggota = false)
     {
         if (!is_allowed('anggota/edit')) {
             if ($this->request->isAJAX()) {
@@ -350,6 +350,26 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->data['hak_akses_lokasi']    = $hak_akses_lokasi;
         $this->data['arr_hak_akses_lokasi'] = $arr_hak_akses_lokasi;
 
+        // Data pendukung pendaftaran online Kemnaker
+        $this->data['unit_kerja']          = $db->table('master_unit')->where('active', 1)->get()->getResult();
+        $this->data['jenis_identitas']     = $db->table('master_jenis_identitas')->where('active', 1)->get()->getResult();
+        $this->data['jenis_anggota_list']  = $db->table('jenis_anggota')->where('active', 1)->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)->get()->getResult();
+        $this->data['status_anggota_list'] = $db->table('status_anggota')->get()->getResult();
+
+        $_nipId = '';
+        $_nikId = '';
+        if (!empty($this->data['jenis_identitas'])) {
+            foreach ($this->data['jenis_identitas'] as $ji) {
+                if (stripos($ji->Nama, 'nip') !== false) {
+                    $_nipId = $ji->id;
+                } elseif ($ji->IsNIK == 1 || stripos($ji->Nama, 'nik') !== false || stripos($ji->Nama, 'ktp') !== false) {
+                    if (!$_nikId) $_nikId = $ji->id;
+                }
+            }
+        }
+        $this->data['nip_id'] = $_nipId;
+        $this->data['nik_id'] = $_nikId;
+
         $this->validation->setRules([
             'Fullname' => [
                 'label'  => 'Fullname',
@@ -370,37 +390,44 @@ class AnggotaController extends \Base\Controllers\BaseController
 
         if ($this->request->getPost()) {
             if ($this->validation->withRequest($this->request)->run()) {
+                $postedMemberNo = $this->request->getPost('MemberNo');
+                if (!empty($postedMemberNo)) {
+                    $MemberNo = $postedMemberNo;
+                } else {
+                    $MemberNo = $anggota->MemberNo ?: $this->request->getPost('IdentityNo');
+                }
+
                 $update_data = [
-                    'Fullname'           => $this->request->getPost('Fullname'),
+                    'Fullname'           => $this->request->getPost('Fullname') ?? $anggota->Fullname,
                     'MemberNo'           => $MemberNo,
-                    'IdentityNo'         => $this->request->getPost('IdentityNo'),
-                    'PlaceOfBirth'       => $this->request->getPost('PlaceOfBirth'),
-                    'DateOfBirth'        => $this->request->getPost('DateOfBirth'),
-                    'Address'            => $this->request->getPost('Address'),
-                    'AddressNow'         => $this->request->getPost('AddressNow'),
-                    'Phone'              => $this->request->getPost('Phone'),
-                    'InstitutionName'    => $this->request->getPost('InstitutionName'),
-                    'InstitutionAddress' => $this->request->getPost('InstitutionAddress'),
-                    'InstitutionPhone'   => $this->request->getPost('InstitutionPhone'),
-                    'MotherMaidenName'   => $this->request->getPost('MotherMaidenName'),
-                    'Email'              => $this->request->getPost('Email'),
-                    'RT'                 => $this->request->getPost('RT'),
-                    'RTNow'              => $this->request->getPost('RTNow'),
-                    'RWNow'              => $this->request->getPost('RWNow'),
-                    'RW'                 => $this->request->getPost('RW'),
-                    'TahunAjaran'        => $this->request->getPost('TahunAjaran'),
-                    'IdentityType_id'    => $this->request->getPost('IdentityType_id'),
-                    'MaritalStatus_id'   => $this->request->getPost('MaritalStatus_id'),
-                    'Sex_id'             => $this->request->getPost('Sex_id'),
-                    'JenjangPendidikan_id' => $this->request->getPost('JenjangPendidikan_id'),
-                    'Job_id'             => $this->request->getPost('Job_id'),
-                    'JenisAnggota_id'    => $this->request->getPost('JenisAnggota_id'),
-                    'Agama_id'           => $this->request->getPost('Agama_id'),
-                    'UnitKerja_id'       => $this->request->getPost('UnitKerja_id'),
-                    'Fakultas_id'        => $this->request->getPost('Fakultas_id'),
-                    'Kelas_id'           => $this->request->getPost('Kelas_id'),
-                    'Jurusan_id'         => $this->request->getPost('Jurusan_id'),
-                    'StatusAnggota_id'   => $this->request->getPost('StatusAnggota_id'),
+                    'IdentityNo'         => $this->request->getPost('IdentityNo') ?? $anggota->IdentityNo,
+                    'PlaceOfBirth'       => $this->request->getPost('PlaceOfBirth') ?? $anggota->PlaceOfBirth,
+                    'DateOfBirth'        => $this->request->getPost('DateOfBirth') ?? $anggota->DateOfBirth,
+                    'Address'            => $this->request->getPost('Address') ?? $anggota->Address,
+                    'AddressNow'         => $this->request->getPost('AddressNow') ?? $anggota->AddressNow,
+                    'Phone'              => $this->request->getPost('Phone') ?? $anggota->Phone,
+                    'InstitutionName'    => $this->request->getPost('InstitutionName') ?? $anggota->InstitutionName,
+                    'InstitutionAddress' => $this->request->getPost('InstitutionAddress') ?? $anggota->InstitutionAddress,
+                    'InstitutionPhone'   => $this->request->getPost('InstitutionPhone') ?? $anggota->InstitutionPhone,
+                    'MotherMaidenName'   => $this->request->getPost('MotherMaidenName') ?? $anggota->MotherMaidenName,
+                    'Email'              => $this->request->getPost('Email') ?? $anggota->Email,
+                    'RT'                 => $this->request->getPost('RT') ?? $anggota->RT,
+                    'RTNow'              => $this->request->getPost('RTNow') ?? $anggota->RTNow,
+                    'RWNow'              => $this->request->getPost('RWNow') ?? $anggota->RWNow,
+                    'RW'                 => $this->request->getPost('RW') ?? $anggota->RW,
+                    'TahunAjaran'        => $this->request->getPost('TahunAjaran') ?? $anggota->TahunAjaran,
+                    'IdentityType_id'    => $this->request->getPost('IdentityType_id') ?? $anggota->IdentityType_id,
+                    'MaritalStatus_id'   => $this->request->getPost('MaritalStatus_id') ?? $anggota->MaritalStatus_id,
+                    'Sex_id'             => $this->request->getPost('Sex_id') ?? $anggota->Sex_id,
+                    'JenjangPendidikan_id' => $this->request->getPost('JenjangPendidikan_id') ?? $anggota->JenjangPendidikan_id,
+                    'Job_id'             => $this->request->getPost('Job_id') ?? $anggota->Job_id,
+                    'JenisAnggota_id'    => $this->request->getPost('JenisAnggota_id') ?? $anggota->JenisAnggota_id,
+                    'Agama_id'           => $this->request->getPost('Agama_id') ?? $anggota->Agama_id,
+                    'UnitKerja_id'       => $this->request->getPost('UnitKerja_id') ?? $anggota->UnitKerja_id,
+                    'Fakultas_id'        => $this->request->getPost('Fakultas_id') ?? $anggota->Fakultas_id,
+                    'Kelas_id'           => $this->request->getPost('Kelas_id') ?? $anggota->Kelas_id,
+                    'Jurusan_id'         => $this->request->getPost('Jurusan_id') ?? $anggota->Jurusan_id,
+                    'StatusAnggota_id'   => $this->request->getPost('StatusAnggota_id') ?? $anggota->StatusAnggota_id,
                     'UpdateBy'           => login_id(),
                 ];
 
@@ -499,28 +526,31 @@ class AnggotaController extends \Base\Controllers\BaseController
                         (new \App\Libraries\EmailPendaftaran())->kirim(\App\Libraries\EmailPendaftaran::DISETUJUI, $ID);
                     }
 
-                    $Koleksi = $this->request->getPost('CategoryLoan_id');
+                    $Koleksi = (array) ($this->request->getPost('CategoryLoan_id') ?? []);
                     $this->AksesKoleksiModel->where('member_id', $member_id)->delete();
-
                     $save_akses_koleksi = [];
-                    for ($x = 0; $x < count($Koleksi); $x++) {
-                        $save_akses_koleksi[] = [
-                            'Member_id'       => $member_id,
-                            'CategoryLoan_id' => $Koleksi[$x],
-                        ];
-                        if (!empty($save_akses_koleksi)) {
-                            $this->AksesKoleksiModel->insertBatch($save_akses_koleksi);
+                    foreach ($Koleksi as $kId) {
+                        if (!empty($kId)) {
+                            $save_akses_koleksi[] = [
+                                'Member_id'       => $member_id,
+                                'CategoryLoan_id' => $kId,
+                            ];
                         }
                     }
+                    if (!empty($save_akses_koleksi)) {
+                        $this->AksesKoleksiModel->insertBatch($save_akses_koleksi);
+                    }
 
-                    $Locations = $this->request->getPost('LocationLoan_id');
+                    $Locations = (array) ($this->request->getPost('LocationLoan_id') ?? []);
                     $this->anggotahakaksesModel->where('member_id', $member_id)->delete();
                     $save_akses_lokasi = [];
-                    for ($x = 0; $x < count($Locations); $x++) {
-                        $save_akses_lokasi[] = [
-                            'Member_id'       => $member_id,
-                            'LocationLoan_id' => $Locations[$x],
-                        ];
+                    foreach ($Locations as $lId) {
+                        if (!empty($lId)) {
+                            $save_akses_lokasi[] = [
+                                'Member_id'       => $member_id,
+                                'LocationLoan_id' => $lId,
+                            ];
+                        }
                     }
                     if (!empty($save_akses_lokasi)) {
                         $this->anggotahakaksesModel->insertBatch($save_akses_lokasi);
@@ -572,7 +602,7 @@ class AnggotaController extends \Base\Controllers\BaseController
     // DETAIL
     // ----------------------------------------------------------------
 
-    public function detail(int $id = null)
+    public function detail(?int $id = null)
     {
         $anggota = $this->anggotaModel->find($id);
         $this->data['redirect'] = base_url('anggota/detail/' . $id);

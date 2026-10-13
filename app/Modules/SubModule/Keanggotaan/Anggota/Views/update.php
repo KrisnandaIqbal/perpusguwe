@@ -93,17 +93,59 @@ $jenis_anggota = get_ref_single('jenis_anggota', 'id=' . $member->JenisAnggota_i
 		font-weight: bold;
 	}
 
+	/* Select2 Harmonization & Bug Fix */
+	.select2-container {
+		width: 100% !important;
+	}
+
+	.select2-container--default .select2-selection--single {
+		height: 42px !important;
+		min-height: 42px !important;
+		padding: 6px 14px !important;
+		border: 1.5px solid #d1d5db !important;
+		border-radius: 8px !important;
+		display: flex !important;
+		align-items: center !important;
+		background-color: #ffffff !important;
+	}
+
+	.select2-container--default .select2-selection--single .select2-selection__rendered {
+		color: #1e293b !important;
+		font-size: 0.92rem !important;
+		line-height: normal !important;
+		padding-left: 0 !important;
+		padding-right: 28px !important;
+		width: 100% !important;
+	}
+
+	.select2-container--default .select2-selection--single .select2-selection__arrow {
+		height: 100% !important;
+		top: 0 !important;
+		right: 12px !important;
+		width: 20px !important;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+	}
+
+	.select2-container--default .select2-selection--single .select2-selection__arrow b {
+		border-color: #64748b transparent transparent transparent !important;
+		border-width: 6px 4.5px 0 4.5px !important;
+		margin: 0 !important;
+		position: static !important;
+	}
+
 	/* Hover effect on Select2 */
 	.select2-container--default .select2-selection--single:hover,
 	.select2-container--default .select2-selection--multiple:hover {
-		border-color: #80bdff;
+		border-color: #80bdff !important;
 	}
 
 	/* Focus state */
 	.select2-container--default.select2-container--focus .select2-selection--single,
 	.select2-container--default.select2-container--focus .select2-selection--multiple {
-		border-color: #80bdff;
-		box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+		border-color: #2563eb !important;
+		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
 	}
 
 	/* Disabled Select2 */
