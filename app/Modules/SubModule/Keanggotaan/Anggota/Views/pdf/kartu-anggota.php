@@ -49,19 +49,31 @@
 
         /* --- Sisi depan --- */
         .front { background: #F0EBE1; color: #0D1C2E; }
-        .front .motif { left: 168px; top: -10px; width: 210px; height: 210px; opacity: 0.92; }
-        .front .logo { left: 18px; top: 14px; width: 26px; height: 26px; }
+        /* 210 px dengan jarak 3 px di atas dan bawah kartu (216 px) */
+        .front .motif { left: 168px; top: 3px; width: 210px; height: 210px; opacity: 0.85; }
+        /* Logo, foto, nama, dan nomor ditumpuk di kiri dengan jarak 10 px yang sama */
+        /* Bawah kolom di 200 px, 16 px dari tepi bawah kartu */
+        .front .kolom { left: 18px; top: 14px; width: 150px; height: 186px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+        /* Tinggi 36 px membuat simbolnya selebar 24 px, sama dengan logo sisi belakang */
+        .front .logo { width: auto; height: 36px; }
+        /* Foto mulai dari tengah tulisan KEMNAKER pada logo */
+        .front .kolom > .foto { margin-left: 13.5px; }
 
-        .front .nama { left: 18px; top: 93.3px; width: 140px; }
+        /* Foto mengisi sisa tinggi kolom, lebarnya mengikuti rasio pas foto 2:3 */
+        .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }
+        /* Tanpa foto: nama dan nomor tetap di bawah, ruang di bawah logo dibiarkan kosong */
+        .front .tanpa-foto .nama { margin-top: auto; }
+
+        /* Berhenti sebelum motif besar yang mulai di 168 px */
+        .front .nama { max-width: 150px; }
         .front .nama .label { font-size: 7px; line-height: 10.5px; letter-spacing: 1.12px; opacity: 0.4; }
-        .front .nama .value { padding-top: 3px; font-size: 14px; font-weight: 800; line-height: 16.8px; max-height: 53.4px;
-            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; }
-        /* Nama satu atau dua kata paling banyak dua baris, jadi boleh lebih besar */
-        .front .nama.is-short .value { font-size: 18px; line-height: 21px; max-height: 45px; -webkit-line-clamp: 2; }
+        .front .nama .value { padding-top: 3px; font-size: 11px; font-weight: 800; line-height: 13.2px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .front .nomor { left: 19px; top: 165px; display: inline-flex; flex-direction: column; align-items: center; }
+        .front .kolom > .nomor { margin-left: 1px; }
+        .front .nomor { display: inline-flex; flex-direction: column; align-items: center; }
         .front .nomor .label { align-self: flex-start; font-size: 7px; line-height: 7px; letter-spacing: 1.26px; opacity: 0.45; }
-        .front .nomor .value { padding-top: 4px; font-size: 22px; font-weight: 800; line-height: 22px; letter-spacing: -0.22px; }
+        .front .nomor .value { padding-top: 4px; font-size: 18px; font-weight: 800; line-height: 18px; letter-spacing: -0.18px; }
         .front .nomor.is-full { align-items: flex-start; }
         .front .nomor.is-full .value { padding-top: 8px; font-size: 13px; line-height: 18px; letter-spacing: 0; }
 
@@ -82,7 +94,8 @@
         .back .info { left: 193.8px; top: 24px; width: 132px; height: 168px; display: flex; flex-direction: column;
             justify-content: space-between; align-items: flex-end; text-align: right; }
         /* Logo dicetak krem lewat mask supaya sisi belakang hanya memakai navy, krem, dan emas */
-        .back .info .logo { width: 24px; height: 24px; background: #F0EBE1;
+        /* Ukuran sama dengan logo sisi depan (tinggi 36 px, rasio gambar 1152:1556) */
+        .back .info .logo { height: 36px; aspect-ratio: 1152 / 1556; background: #F0EBE1;
             -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat; }
         /* Label diredupkan sedikit supaya nilainya yang terbaca lebih dulu */
         .back .info .label { font-size: 6px; line-height: 9px; letter-spacing: 0.96px; opacity: 0.7; }
@@ -118,6 +131,15 @@
         </p>
     <?php endif; ?>
 
+    <?php $tanpaFoto = array_column(array_filter($cards, fn ($card) => !$card['foto']), 'nama'); ?>
+    <?php if (!empty($tanpaFoto)): ?>
+        <p class="notice">
+            Dicetak tanpa foto karena belum mengunggah foto:
+            <strong><?= esc(implode(', ', $tanpaFoto)) ?></strong>.
+            Kalau ingin kartunya berfoto, unggah fotonya dulu di data anggota lalu cetak ulang.
+        </p>
+    <?php endif; ?>
+
     <?php if (empty($cards)): ?>
         <p class="notice">Tidak ada kartu yang bisa dicetak dari anggota yang dipilih.</p>
     <?php endif; ?>
@@ -139,23 +161,22 @@
                 <div class="slot">
                     <div class="card front">
                         <img class="abs motif" src="<?= esc($logo, 'attr') ?>" alt="">
-                        <img class="abs logo" src="<?= esc($logo, 'attr') ?>" alt="Logo Kemnaker">
+                        <div class="abs kolom <?= $card['foto'] ? '' : 'tanpa-foto' ?>">
+                            <img class="logo" src="<?= base_url('assets/img/kartu/logo-kemnaker-teks.webp') ?>" alt="Logo Kemnaker">
 
-                        <?php
-                        // Nama dua kata ditumpuk satu kata per baris; nama lain dibiarkan turun baris sendiri
-                        $kata = preg_split('/\s+/', trim($card['nama']));
-                        $nama = count($kata) === 2 ? esc($kata[0]) . '<br>' . esc($kata[1]) : esc($card['nama']);
-                        // Huruf besar hanya kalau kata terpanjangnya masih muat selebar kolom nama
-                        $besar = count($kata) <= 2 && max(array_map('mb_strlen', $kata)) <= 11;
-                        ?>
-                        <div class="abs nama <?= $besar ? 'is-short' : '' ?>">
-                            <div class="label">Nama</div>
-                            <div class="value"><?= $nama ?></div>
-                        </div>
+                            <?php if ($card['foto']): ?>
+                                <img class="foto" src="<?= esc($card['foto'], 'attr') ?>" alt="Foto <?= esc($card['nama'], 'attr') ?>">
+                            <?php endif; ?>
 
-                        <div class="abs nomor <?= $card['nomor_urut'] ? '' : 'is-full' ?>">
-                            <div class="label">No. Anggota</div>
-                            <div class="value"><?= esc($card['nomor_depan']) ?></div>
+                            <div class="nama">
+                                <div class="label">Nama</div>
+                                <div class="value"><?= esc($card['nama']) ?></div>
+                            </div>
+
+                            <div class="nomor <?= $card['nomor_urut'] ? '' : 'is-full' ?>">
+                                <div class="label">No. Anggota</div>
+                                <div class="value"><?= esc($card['nomor_depan']) ?></div>
+                            </div>
                         </div>
 
                         <div class="abs tegak" aria-hidden="true">
@@ -176,7 +197,7 @@
                         </div>
 
                         <div class="abs info">
-                            <div class="logo" style="--logo: url('<?= esc($logo, 'attr') ?>')"></div>
+                            <div class="logo" style="--logo: url('<?= base_url('assets/img/kartu/logo-kemnaker-teks-putih.png') ?>')"></div>
 
                             <div class="berlaku">
                                 <div class="label">Berlaku s/d</div>
