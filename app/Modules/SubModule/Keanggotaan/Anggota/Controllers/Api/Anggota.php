@@ -108,13 +108,18 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			})
 			->edit('FullName', function ($row) {
 				$default = base_url('uploads/default/nophoto.jpg');
-				$image = (!empty($row->PhotoUrl)) ? base_url('uploads/anggota/' . $row->PhotoUrl) : $default;
+				$photoVersion = !empty($row->UpdateDate) ? '?v=' . strtotime($row->UpdateDate) : '';
+				$image = (!empty($row->PhotoUrl)) ? base_url('uploads/anggota/' . $row->PhotoUrl . $photoVersion) : $default;
 
 				$html =
 					'<div class="widget-content p-0">
 							<div class="widget-content-wrapper">
 								<div class="widget-content-left mr-3">
-									<a href="' . $image . '" class="image-link"><img width="100" class="rounded" src="' . $image . '" id="lazy' . $row->ID . '" class="lazy" data-src="' . $image . '" onerror="this.onerror=null;this.src=' . $default . ';" alt=""></a>
+									<a href="' . $image . '" class="image-link" onclick="if(typeof openSimplePopup===\'function\'){openSimplePopup(\'' . $image . '\', \'Pas Foto ' . esc($row->FullName, 'attr') . '\'); return false;}">
+										<div style="width: 64px; height: 96px; aspect-ratio: 2/3; overflow: hidden; border-radius: 6px; border: 1px solid #d1d5db; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: #f8fafc; display: flex; align-items: center; justify-content: center;">
+											<img class="lazy" data-src="' . $image . '" src="' . $image . '" id="lazy' . $row->ID . '" onerror="this.onerror=null;this.src=\'' . $default . '\';" alt="' . esc($row->FullName, 'attr') . '" style="width: 100%; height: 100%; aspect-ratio: 2/3; object-fit: cover; display: block;">
+										</div>
+									</a>
 								</div>
 						
 								<div class="widget-content-left">

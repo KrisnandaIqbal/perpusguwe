@@ -10,8 +10,11 @@
 #photo {
   border: 1px solid black;
   box-shadow: 2px 2px 3px black;
-  width:320px;
-  height:240px;
+  width: 160px;
+  height: 240px;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  cursor: pointer;
 }
 
 #canvas {
@@ -170,10 +173,16 @@
 				canvas.height = height;
 				context.drawImage(video, 0, 0, width, height);
 				
-				var data = canvas.toDataURL('image/png');
-				photo.setAttribute('src', data);
-				camera_image.setAttribute('value', data);
-
+				var rawData = canvas.toDataURL('image/jpeg', 0.95);
+				if (typeof openImageCropper === 'function') {
+					openImageCropper(rawData, function(blob, croppedDataUrl) {
+						photo.setAttribute('src', croppedDataUrl);
+						camera_image.setAttribute('value', croppedDataUrl);
+					});
+				} else {
+					photo.setAttribute('src', rawData);
+					camera_image.setAttribute('value', rawData);
+				}
 			} else {
 				clearphoto();
 			}

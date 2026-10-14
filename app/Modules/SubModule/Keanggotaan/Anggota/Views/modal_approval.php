@@ -3,7 +3,8 @@
     #modal_approval .approval-data { display: grid; grid-template-columns: 130px 1fr; gap: 8px 14px; margin: 0; }
     #modal_approval .approval-data dt { font-weight: normal; color: #495057; }
     #modal_approval .approval-data dd { margin: 0; font-weight: 600; word-break: break-word; }
-    #modal_approval .approval-photo { width: 96px; height: 120px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+    #modal_approval .approval-photo { width: 90px; height: 135px; aspect-ratio: 2/3; object-fit: cover; border-radius: 6px; flex-shrink: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.2s ease; }
+    #modal_approval .approval-photo:hover { transform: scale(1.03); }
     #modal_approval .modal-footer .btn { min-height: 44px; min-width: 96px; }
     #modal_approval .form-control { min-height: 44px; }
     @media (max-width: 575px) {
@@ -30,7 +31,7 @@
                 </div>
                 <div id="approval_content" style="display:none">
                     <div class="approval-body d-flex" style="gap:18px">
-                        <img class="approval-photo" id="approval_photo" src="" alt="Foto pendaftar">
+                        <img class="approval-photo" id="approval_photo" src="" alt="Foto pendaftar" title="Klik untuk melihat foto ukuran penuh" onclick="if(this.src && typeof openSimplePopup === 'function') openSimplePopup(this.src, 'Pas Foto Pendaftar');">
                         <dl class="approval-data">
                             <dt>Jenis anggota</dt><dd data-field="JenisAnggota"></dd>
                             <dt data-field="JenisIdentitas"></dt><dd data-field="IdentityNo"></dd>

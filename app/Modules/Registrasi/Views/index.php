@@ -1723,7 +1723,7 @@ if (!empty($jenis_identitas)) {
         background: #ffffff;
         border: 1px solid var(--border-card);
         border-radius: 14px;
-        max-width: 540px;
+        max-width: 680px;
         width: 100%;
         max-height: 85vh;
         display: flex;
@@ -1776,7 +1776,7 @@ if (!empty($jenis_identitas)) {
     }
 
     .rf-modal-body {
-        padding: 20px 22px;
+        padding: 22px 24px;
         overflow-y: auto;
         font-size: 0.84rem;
         color: var(--text-secondary);
@@ -1785,7 +1785,7 @@ if (!empty($jenis_identitas)) {
 
     .rf-modal-body ol {
         padding-left: 20px;
-        margin: 12px 0;
+        margin: 10px 0;
     }
 
     .rf-modal-body li {
@@ -1796,14 +1796,112 @@ if (!empty($jenis_identitas)) {
         color: var(--navy-900);
     }
 
-    .rf-scroll-note {
-        font-size: 0.76rem;
+    /* Styling Dokumen Tata Tertib */
+    .rf-doc-header {
+        text-align: center;
+        border-bottom: 2px solid var(--border-subtle);
+        padding-bottom: 16px;
+        margin-bottom: 18px;
+    }
+
+    .rf-doc-title {
+        font-family: var(--font-heading);
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: var(--navy-950);
+        margin: 0 0 8px 0;
+        line-height: 1.4;
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+    }
+
+    .rf-doc-meta {
+        font-size: 0.8rem;
         color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 10px;
         background: var(--bg-page);
         border: 1px solid var(--border-subtle);
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-top: 14px;
+        border-radius: 8px;
+        padding: 8px 14px;
+        display: inline-block;
+        text-align: left;
+    }
+
+    .rf-doc-chapter {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--navy-950);
+        margin: 20px 0 10px 0;
+        padding-bottom: 4px;
+        border-bottom: 1px dashed var(--border-subtle);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .rf-doc-article {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--navy-900);
+        margin: 14px 0 6px 0;
+    }
+
+    .rf-doc-list {
+        padding-left: 22px;
+        margin: 8px 0 12px 0;
+    }
+
+    .rf-doc-list li {
+        margin-bottom: 6px;
+    }
+
+    .rf-doc-list-alpha {
+        list-style-type: lower-alpha;
+        padding-left: 22px;
+        margin: 6px 0 8px 0;
+    }
+
+    .rf-doc-list-alpha li {
+        margin-bottom: 4px;
+    }
+
+    .rf-doc-highlight {
+        background-color: #fefce8;
+        border-left: 3px solid #eab308;
+        padding: 6px 10px;
+        border-radius: 4px;
+        margin: 6px 0;
+    }
+
+    .rf-doc-sign {
+        margin: 16px 0;
+        padding: 12px 16px;
+        background: var(--bg-page);
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .rf-doc-annex {
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 2px dashed var(--border-subtle);
+    }
+
+    .rf-scroll-note {
+        font-size: 0.78rem;
+        color: #b45309;
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-top: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .rf-modal-foot {
@@ -2347,7 +2445,7 @@ if (!empty($jenis_identitas)) {
                             <div class="rf-custom-select" id="customUnitKerja">
                                 <!-- Real select for form payload & validation -->
                                 <select class="rf-select-native" id="UnitKerja_id" name="UnitKerja_id" required tabindex="-1" aria-hidden="true">
-                                    <option value="">Pilih Satuan Kerja / Unit Eselon I</option>
+                                    <option value="">Pilih Satuan Kerja / Unit Eselon II</option>
                                     <?php foreach ($unit_kerja as $uk): ?>
                                         <option value="<?= $uk->id ?>"><?= esc($uk->nama_unit) ?></option>
                                     <?php endforeach; ?>
@@ -2355,7 +2453,7 @@ if (!empty($jenis_identitas)) {
 
                                 <!-- Visual Trigger (Strictly 100% width) -->
                                 <button type="button" class="rf-select-trigger" id="unitKerjaTrigger" aria-haspopup="listbox" aria-expanded="false">
-                                    <span class="rf-select-value is-placeholder" id="unitKerjaValue">Pilih Satuan Kerja / Unit Eselon I</span>
+                                    <span class="rf-select-value is-placeholder" id="unitKerjaValue">Pilih Satuan Kerja / Unit Eselon II</span>
                                     <svg class="rf-select-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M6 8l4 4 4-4"/>
                                     </svg>
@@ -2364,7 +2462,7 @@ if (!empty($jenis_identitas)) {
                                 <!-- Dropdown Menu (Strictly 100% width, never overflows) -->
                                 <div class="rf-select-dropdown" id="unitKerjaDropdown" role="listbox" tabindex="-1">
                                     <div class="rf-select-option is-placeholder" data-value="" role="option">
-                                        <span class="rf-opt-text">Pilih Satuan Kerja / Unit Eselon I</span>
+                                        <span class="rf-opt-text">Pilih Satuan Kerja / Unit Eselon II</span>
                                     </div>
                                     <?php foreach ($unit_kerja as $uk): ?>
                                         <div class="rf-select-option" data-value="<?= $uk->id ?>" role="option">
@@ -2676,24 +2774,230 @@ if (!empty($jenis_identitas)) {
 <div id="modalSyarat" class="rf-overlay" role="dialog" aria-modal="true" aria-labelledby="rfModalTitle">
     <div class="rf-modal">
         <div class="rf-modal-head">
-            <h3 id="rfModalTitle">Syarat dan Ketentuan Keanggotaan</h3>
+            <h3 id="rfModalTitle">Tata Tertib Keanggotaan & Layanan Sirkulasi</h3>
             <button type="button" class="rf-modal-close" id="closeSyarat" aria-label="Tutup">&times;</button>
         </div>
         <div class="rf-modal-body" id="syaratScrollbox">
-            <p>Selamat datang di layanan Pendaftaran Anggota Perpustakaan.</p>
-            <p>Dengan mendaftar sebagai anggota, Anda menyetujui seluruh ketentuan dan kebijakan yang berlaku sebagai berikut:</p>
-            <ol>
-                <li><strong>Kebenaran Data:</strong> Seluruh data yang Anda masukkan dalam formulir ini adalah benar, akurat, dan dapat dipertanggungjawabkan sesuai identitas asli (KTP/SK Kedinasan resmi).</li>
-                <li><strong>Penggunaan Kartu Anggota:</strong> Kartu anggota tidak dapat dipindahtangankan dan sepenuhnya menjadi tanggung jawab pemegang kartu yang terdaftar.</li>
-                <li><strong>Peminjaman Koleksi:</strong> Anggota berhak meminjam koleksi perpustakaan sesuai kuota dan batas waktu yang ditentukan oleh peraturan perpustakaan.</li>
-                <li><strong>Sanksi Keterlambatan:</strong> Keterlambatan pengembalian koleksi akan dikenakan denda atau penangguhan hak pinjam sesuai ketentuan yang berlaku.</li>
-                <li><strong>Tanggung Jawab Kerusakan/Kehilangan:</strong> Apabila koleksi yang dipinjam mengalami kerusakan atau hilang, anggota wajib mengganti dengan koleksi yang sama atau membayar biaya penggantian resmi.</li>
-                <li><strong>Ketertiban Ruang Baca:</strong> Anggota wajib menjaga ketertiban, keamanan, dan kebersihan lingkungan perpustakaan.</li>
-                <li><strong>Privasi Data (Kepatuhan UU PDP):</strong> Data pribadi yang Anda berikan dikelola dengan aman untuk keperluan administrasi perpustakaan dan tidak akan disebarluaskan ke pihak ketiga tanpa izin sah.</li>
+            <div class="rf-doc-header">
+                <h4 class="rf-doc-title">TATA TERTIB KEANGGOTAAN DAN LAYANAN SIRKULASI<br>PERPUSTAKAAN KEMENTERIAN KETENAGAKERJAAN</h4>
+                <div style="text-align: left; margin-top: 10px;">
+                    <strong>Dasar:</strong>
+                    <ol class="rf-doc-list">
+                        <li>Undang-Undang Nomor 43 Tahun 2007 tentang Perpustakaan.</li>
+                        <li>Peraturan Perpustakaan Nasional Nomor 7 Tahun 2022 tentang Standar Nasional Perpustakaan Khusus.</li>
+                        <li>Undang-Undang Nomor 27 Tahun 2022 tentang Perlindungan Data Pribadi.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="rf-doc-chapter">BAB I. KETENTUAN UMUM</div>
+            <div class="rf-doc-article">Pasal 1</div>
+            <p>Dalam tata tertib ini yang dimaksud dengan:</p>
+            <ol class="rf-doc-list">
+                <li><strong>Perpustakaan</strong> adalah Perpustakaan Kementerian Ketenagakerjaan di lingkungan Biro Hubungan Masyarakat, Sekretariat Jenderal.</li>
+                <li><strong>Anggota</strong> adalah pegawai atau peserta magang yang terdaftar dan memiliki kartu anggota Perpustakaan.</li>
+                <li><strong>Pengelola</strong> adalah pustakawan dan petugas pada Tim Kerja Informasi Publik dan Perpustakaan yang melaksanakan layanan Perpustakaan.</li>
+                <li><strong>Sirkulasi</strong> adalah layanan peminjaman, pengembalian, dan perpanjangan koleksi.</li>
+                <li><strong>Koleksi</strong> adalah seluruh bahan perpustakaan yang dikelola Perpustakaan.</li>
             </ol>
-            <div class="rf-scroll-note">Gulir kotak teks ini hingga paling bawah untuk mengaktifkan tombol persetujuan.</div>
-            <div style="height: 60px;"></div>
-            <p style="font-size:0.78rem;color:var(--text-muted);">Terima kasih atas kepatuhan Anda demi kenyamanan seluruh pemustaka.</p>
+
+            <div class="rf-doc-chapter">BAB II. KEANGGOTAAN</div>
+            <div class="rf-doc-article">Pasal 2 (Jenis Anggota)</div>
+            <p>Anggota terdiri atas:</p>
+            <ol class="rf-doc-list">
+                <li><strong>Anggota Pegawai</strong>, yaitu pegawai Kementerian Ketenagakerjaan berstatus ASN, PPPK, atau non-ASN.</li>
+                <li><strong>Anggota Magang</strong>, yaitu peserta magang yang ditempatkan di lingkungan Kementerian Ketenagakerjaan.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 3 (Syarat dan Data Pendaftaran)</div>
+            <ol class="rf-doc-list">
+                <li>Pendaftar menyerahkan data yang benar dan lengkap, yaitu:
+                    <ol class="rf-doc-list-alpha">
+                        <li>nama lengkap;</li>
+                        <li>NIP bagi ASN dan PPPK, atau NIK bagi non-ASN dan peserta magang;</li>
+                        <li>unit kerja atau unit penempatan;</li>
+                        <li>alamat email dan nomor telepon yang aktif;</li>
+                        <li>bagi peserta magang: asal institusi dan tanggal berakhirnya masa magang.</li>
+                    </ol>
+                </li>
+                <li>Pendaftar menyatakan telah membaca dan menyetujui tata tertib ini.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 4 (Tata Cara Pendaftaran)</div>
+            <ol class="rf-doc-list">
+                <li>Pendaftaran dilakukan melalui formulir pendaftaran yang disediakan Perpustakaan.</li>
+                <li>Pengelola memverifikasi status pendaftar dengan memeriksa kartu identitas pegawai atau peserta magang (langsung atau melalui foto/pindaian), serta mencatat hasil verifikasi, nama petugas, dan tanggal verifikasi, sebelum keanggotaan diaktifkan.</li>
+                <li>Setelah diaktifkan, Anggota menerima nomor anggota dan kartu anggota digital melalui email.</li>
+                <li>Formulir pendaftaran, pernyataan persetujuan, catatan verifikasi, dan catatan pengiriman kartu disimpan sebagai bukti pendaftaran.</li>
+                <li>Setiap Anggota diberi nomor anggota Perpustakaan yang berbeda dari NIP atau NIK, dengan format tahun-bulan-tanggal pengesahan keanggotaan diikuti nomor urut lima digit. Nomor urut berjalan terus dan tidak diulang setiap hari. Nomor anggota tidak berubah selama Anggota terdaftar, termasuk saat perpanjangan.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 5 (Masa Berlaku)</div>
+            <ol class="rf-doc-list">
+                <li>Keanggotaan Pegawai berlaku 1 (satu) tahun sejak tanggal pendaftaran dan dapat diperpanjang.</li>
+                <li>Keanggotaan Magang berlaku sampai dengan tanggal berakhirnya masa magang.</li>
+                <li>Perpanjangan keanggotaan dilakukan dengan konfirmasi data kepada Pengelola sebelum masa berlaku berakhir.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 6 (Kartu Anggota)</div>
+            <ol class="rf-doc-list">
+                <li>Kartu anggota berbentuk digital dan/atau cetak. Kartu digital dikirim melalui email setelah keanggotaan diaktifkan dan berlaku sebagai bukti keanggotaan sejak diterbitkan. Kartu cetak diterbitkan menyusul sesuai ketersediaan. Kartu anggota bersifat pribadi dan tidak boleh dipindahtangankan.</li>
+                <li>Kehilangan kartu dilaporkan kepada Pengelola untuk diterbitkan ulang.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 7 (Berakhirnya Keanggotaan)</div>
+            <p>Keanggotaan berakhir apabila:</p>
+            <ol class="rf-doc-list">
+                <li>masa berlaku berakhir dan tidak diperpanjang;</li>
+                <li>Anggota Pegawai pindah tugas ke luar Kementerian, pensiun, atau berhenti sebagai pegawai;</li>
+                <li>Anggota Magang telah mencapai tanggal berakhirnya masa magang;</li>
+                <li>Anggota mengundurkan diri.</li>
+            </ol>
+            <p><em>Sebelum keanggotaan berakhir, Anggota wajib mengembalikan seluruh koleksi yang dipinjam.</em></p>
+
+            <div class="rf-doc-chapter">BAB III. HAK DAN KEWAJIBAN ANGGOTA</div>
+            <div class="rf-doc-article">Pasal 8 (Hak)</div>
+            <p>Anggota berhak:</p>
+            <ol class="rf-doc-list">
+                <li>memperoleh layanan dan fasilitas Perpustakaan;</li>
+                <li>memperoleh informasi tentang koleksi dan layanan;</li>
+                <li>meminjam koleksi sesuai ketentuan;</li>
+                <li>menyampaikan saran dan pengaduan kepada Pengelola.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 9 (Kewajiban)</div>
+            <p>Anggota wajib:</p>
+            <ol class="rf-doc-list">
+                <li>mematuhi tata tertib ini;</li>
+                <li>memberikan data yang benar dan memperbarui data apabila berubah;</li>
+                <li>menjaga kartu anggota;</li>
+                <li>menjaga keutuhan dan kebersihan koleksi serta fasilitas;</li>
+                <li>mengembalikan koleksi tepat waktu;</li>
+                <li>mengganti koleksi yang hilang atau rusak;</li>
+                <li>menjaga ketertiban di ruang Perpustakaan.</li>
+            </ol>
+
+            <div class="rf-doc-chapter">BAB IV. SIRKULASI</div>
+            <div class="rf-doc-article">Pasal 10 (Peminjaman)</div>
+            <ol class="rf-doc-list">
+                <li>Peminjaman dilakukan dengan menunjukkan kartu anggota yang masih berlaku.</li>
+                <li>Setiap Anggota dapat meminjam paling banyak 2 (dua) eksemplar pada waktu yang sama.</li>
+                <li>Lama peminjaman adalah 10 (sepuluh) hari kerja (akhir pekan, cuti bersama dan libur nasional tidak dihitung).</li>
+                <li>Peminjaman dicatat melalui sistem Perpustakaan.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 11 (Perpanjangan)</div>
+            <ol class="rf-doc-list">
+                <li>Peminjaman dapat diperpanjang 1 (satu) kali untuk 10 (sepuluh) hari kerja (akhir pekan, cuti bersama dan libur nasional tidak dihitung).</li>
+                <li>Perpanjangan diajukan sebelum tanggal jatuh tempo.</li>
+            </ol>
+
+            <div class="rf-doc-article">Pasal 12 (Koleksi yang Tidak Dipinjamkan)</div>
+            <ol class="rf-doc-list">
+                <li>Koleksi tertentu hanya dapat dibaca di tempat dan tidak dipinjamkan, meliputi koleksi referensi, koleksi bernilai historis atau eksemplar tunggal, serta koleksi yang rapuh.</li>
+                <li>Koleksi pada ayat (1) ditandai pada sistem Perpustakaan oleh Pengelola.</li>
+            </ol>
+
+            <div class="rf-doc-chapter">BAB V. SANKSI</div>
+            <div class="rf-doc-article">Pasal 13 (Keterlambatan)</div>
+            <p>Anggota yang terlambat mengembalikan koleksi dikenai penangguhan hak pinjam sampai koleksi dikembalikan.</p>
+
+            <div class="rf-doc-article">Pasal 14 (Kehilangan dan Kerusakan)</div>
+            <ol class="rf-doc-list">
+                <li>Anggota yang menghilangkan koleksi wajib menggantinya dengan koleksi yang sama.</li>
+                <li>Apabila koleksi yang sama tidak tersedia, penggantian dilakukan dengan koleksi lain yang setara subjek dan nilainya, dengan persetujuan Pengelola.</li>
+                <li>Penggantian dilakukan paling lambat 30 hari sejak kehilangan dilaporkan.</li>
+                <li class="rf-doc-highlight">Koleksi yang rusak berat (karena anggota) diperlakukan sebagai koleksi hilang.</li>
+                <li>Selama penggantian belum dilakukan, hak pinjam Anggota ditangguhkan.</li>
+            </ol>
+
+            <div class="rf-doc-chapter">BAB VI. PELINDUNGAN DATA PRIBADI</div>
+            <div class="rf-doc-article">Pasal 15</div>
+            <ol class="rf-doc-list">
+                <li class="rf-doc-highlight">(1) Perpustakaan mengumpulkan data pribadi Anggota, termasuk NIP atau NIK, hanya untuk verifikasi identitas, pengelolaan keanggotaan, dan layanan sirkulasi.</li>
+                <li class="rf-doc-highlight">(2) Data pribadi hanya dapat diakses oleh Pengelola yang berwenang, tidak dibagikan kepada pihak lain di luar tujuan pada ayat (1), dan tidak ditampilkan pada kartu anggota, katalog daring (OPAC), maupun laporan. Nomor identitas pada laporan disamarkan.</li>
+                <li class="rf-doc-highlight">(3) Foto atau pindaian kartu identitas hanya digunakan untuk verifikasi dan tidak disimpan setelah verifikasi selesai.</li>
+                <li class="rf-doc-highlight">(4) Anggota berhak mengetahui data yang disimpan, memperbaiki data yang tidak benar, dan meminta penghapusan data setelah keanggotaan berakhir dan seluruh kewajibannya diselesaikan.</li>
+                <li class="rf-doc-highlight">(5) Data Anggota disimpan selama keanggotaan berlaku serta dapat diarsipkan setelah keanggotaan berakhir, kemudian dihapus atau dianonimkan sesuai ketentuan.</li>
+                <li class="rf-doc-highlight">(6) Pengelola menjaga keamanan data, termasuk membatasi akses sistem dan mengamankan cadangan (backup) data.</li>
+            </ol>
+
+            <div class="rf-doc-chapter">BAB VII. PENANGGUNG JAWAB</div>
+            <div class="rf-doc-article">Pasal 16</div>
+            <ol class="rf-doc-list">
+                <li>Pengelola bertanggung jawab atas pendaftaran, verifikasi, sirkulasi, pencatatan, dan penyimpanan bukti keanggotaan.</li>
+                <li>Pengelola menyusun rekapitulasi keanggotaan dan sirkulasi secara berkala dan melaporkannya kepada pimpinan.</li>
+                <li>Ketua Tim Kerja Informasi Publik dan Perpustakaan mengawasi pelaksanaan tata tertib ini.</li>
+            </ol>
+
+            <div class="rf-doc-chapter">BAB VIII. PENUTUP</div>
+            <div class="rf-doc-article">Pasal 17</div>
+            <ol class="rf-doc-list">
+                <li>Hal yang belum diatur dalam tata tertib ini diatur lebih lanjut oleh Pengelola dengan persetujuan Ketua Tim Kerja Informasi Publik dan Perpustakaan.</li>
+                <li>Tata tertib ini berlaku sejak tanggal ditetapkan.</li>
+            </ol>
+
+            <!-- LAMPIRAN -->
+            <div class="rf-doc-annex">
+                <div class="rf-doc-chapter" style="border-bottom: 2px solid var(--navy-900);">LAMPIRAN: ALUR PELAKSANAAN</div>
+
+                <div class="rf-doc-article">A. Pendaftaran</div>
+                <ol class="rf-doc-list">
+                    <li>Pendaftar mengisi formulir online dan mencentang persetujuan tata tertib.</li>
+                    <li>Pengelola memeriksa kartu identitas pendaftar (ID card pegawai, atau ID card/surat penempatan bagi magang) secara langsung atau lewat foto/pindaian, lalu mencocokkan dengan data yang diisi. Foto tidak disimpan setelah dicocokkan.</li>
+                    <li class="rf-doc-highlight">Petugas meminta konfirmasi apakah foto pemustaka dimasukan ke dalam kartu.</li>
+                    <li>Jika data sesuai, Pengelola mengisi nomor anggota di sistem, memilih jenis anggota, mengisi tanggal kadaluarsa, dan mencatat hasil verifikasi (petugas dan tanggal). Jika belum sesuai, pendaftar diminta memperbaiki.</li>
+                    <li class="rf-doc-highlight">Kartu digital dikirim lewat email. Anggota membalas email untuk mengonfirmasi bahwa kartu sudah diterima.</li>
+                    <li class="rf-doc-highlight">Anggota memberikan konfirmasi apakah ingin ada foto di kartu anggota cetak atau tidak.</li>
+                    <li>Kartu cetak, jika sudah jadi, diserahkan dengan daftar serah terima bertanda tangan.</li>
+                    <li>Pengelola menyimpan formulir, catatan verifikasi, catatan pengiriman email, dan balasan konfirmasi sebagai bukti pendaftaran.</li>
+                    <li>Jika anggota mengundurkan diri, maka dapat mendaftar setelah periode 1 (satu) bulan dari masa pengunduran diri.</li>
+                </ol>
+
+                <div class="rf-doc-article">B. Peminjaman</div>
+                <ol class="rf-doc-list">
+                    <li>Anggota menunjukkan kartu atau menyebutkan nomor anggota.</li>
+                    <li>Pengelola memeriksa di sistem: keanggotaan masih aktif, pinjaman belum 2 buku, dan hak pinjam tidak sedang ditangguhkan.</li>
+                    <li>Pengelola mencatat peminjaman. Jatuh tempo 14 hari dari hari peminjaman.</li>
+                </ol>
+
+                <div class="rf-doc-article">C. Pengembalian dan Perpanjangan</div>
+                <ol class="rf-doc-list">
+                    <li>Saat buku kembali, Pengelola mencatat pengembaliannya di sistem.</li>
+                    <li>Jika terlambat, hak pinjam ditangguhkan sampai bukunya kembali.</li>
+                    <li>Perpanjangan hanya bisa 1 kali dan harus sebelum jatuh tempo.</li>
+                </ol>
+
+                <div class="rf-doc-article">D. Perpanjangan Keanggotaan (Pegawai, Tiap Tahun)</div>
+                <ol class="rf-doc-list">
+                    <li>Sekitar 30 hari sebelum kedaluwarsa, Pengelola mengirim pengingat lewat email.</li>
+                    <li>Anggota mengonfirmasi bahwa datanya masih benar (masih pegawai, kontak masih aktif).</li>
+                    <li>Pengelola memperbarui tanggal kadaluwarsa. Nomor dan kartu tetap sama.</li>
+                </ol>
+
+                <div class="rf-doc-article">E. Berakhirnya Keanggotaan</div>
+                <ol class="rf-doc-list">
+                    <li>Anggota magang: kedaluwarsa pada tanggal akhir magang, dan buku harus dikembalikan sebelum itu.</li>
+                    <li>Pegawai yang pindah atau pensiun berakhir keanggotaannya saat tidak melakukan perpanjangan tahunan.</li>
+                    <li>Anggota yang belum mengembalikan buku tetap harus menyelesaikannya meski keanggotaannya sudah berakhir.</li>
+                </ol>
+
+                <div class="rf-doc-article">F. Laporan</div>
+                <ol class="rf-doc-list">
+                    <li>Tiap bulan, Pengelola mengekspor rekap dari sistem: anggota baru, jumlah per jenis, anggota aktif, dan yang kedaluwarsa. Rekap ini dilaporkan ke pimpinan sebagai bukti pendaftaran berjalan.</li>
+                </ol>
+            </div>
+
+            <div class="rf-scroll-note">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Gulir kotak teks ini hingga paling bawah untuk mengaktifkan tombol persetujuan di bawah.</span>
+            </div>
+            <div style="height: 40px;"></div>
+            <p style="font-size:0.78rem;color:var(--text-muted);text-align:center;">Terima kasih atas kepatuhan Anda demi kenyamanan seluruh pemustaka Perpustakaan Kementerian Ketenagakerjaan.</p>
         </div>
         <div class="rf-modal-foot">
             <button type="button" class="rf-btn rf-btn-ghost" id="btnTutupSyarat">Tutup</button>
@@ -2846,13 +3150,27 @@ document.addEventListener('DOMContentLoaded', function() {
         this.value = this.value.replace(/\D/g, '').slice(0, selectedIdDigits);
         updateDigitCount();
         if (this.classList.contains('has-error')) this.classList.remove('has-error');
+        if (this.value.length === 0) {
+            this.classList.remove('has-error', 'is-valid');
+            digitCount.className = 'rf-digit-badge';
+            digitCount.textContent = '0 / ' + selectedIdDigits + ' digit';
+            feedbackIdentityNo.style.display = 'none';
+        } else if (this.value.length === selectedIdDigits) {
+            validateIdentityField();
+        } else {
+            this.classList.remove('is-valid');
+            feedbackIdentityNo.style.display = 'none';
+        }
     });
 
     function updateDigitCount() {
         const len = inputIdentityNo.value.length;
         digitCount.textContent = len + ' / ' + selectedIdDigits + ' digit';
-        if (len === selectedIdDigits) {
+        if (len === 0) {
+            digitCount.classList.remove('is-valid', 'is-error');
+        } else if (len === selectedIdDigits) {
             digitCount.classList.add('is-valid');
+            digitCount.classList.remove('is-error');
         } else {
             digitCount.classList.remove('is-valid');
         }
@@ -2860,10 +3178,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Phone Formatting ───
     const phoneInput = document.getElementById('Phone');
-    phoneInput.addEventListener('input', function() {
-        this.value = this.value.replace(/\D/g, '');
-        if (this.classList.contains('has-error')) this.classList.remove('has-error');
-    });
 
     // ─── Custom Dropdown Unit Kerja (100% Responsive / No Overflow) ───
     const customUnitKerja = document.getElementById('customUnitKerja');
@@ -2896,7 +3210,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitKerjaValue.textContent = text;
                     unitKerjaValue.classList.remove('is-placeholder');
                 } else {
-                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon I';
+                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon II';
                     unitKerjaValue.classList.add('is-placeholder');
                 }
 
@@ -2928,7 +3242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnResetForm.addEventListener('click', function() {
             setTimeout(() => {
                 if (unitKerjaValue) {
-                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon I';
+                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon II';
                     unitKerjaValue.classList.add('is-placeholder');
                 }
                 unitKerjaOptions.forEach(o => o.classList.remove('is-selected'));
@@ -3060,26 +3374,6 @@ document.addEventListener('DOMContentLoaded', function() {
         btnSubmit.disabled = !this.checked;
     });
 
-    // ─── Form Reset Handler ───
-    document.getElementById('btnReset').addEventListener('click', function() {
-        setTimeout(function() {
-            if (jaRadios.length > 0) {
-                jaRadios[0].checked = true;
-                applyJenisAnggota(jaRadios[0]);
-            }
-            inputIdentityNo.value = '';
-            updateDigitCount();
-            cbPersetujuan.checked = false;
-            cbPersetujuan.disabled = true;
-            btnSubmit.disabled = true;
-            wantPhotoNo.checked = true;
-            syncPhotoToggle();
-            form.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
-            alertEl.className = 'rf-alert';
-            alertEl.style.display = 'none';
-        }, 10);
-    });
-
     // Elements for Validation
     const fullnameInput = document.getElementById('Fullname');
     const badgeFullname = document.getElementById('badge_Fullname');
@@ -3151,6 +3445,73 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Menghapus seluruh status hijau/merah jika input kosong atau dibersihkan
+    function clearFieldStatus(field, badge, feedback) {
+        if (field) {
+            field.classList.remove('has-error', 'is-valid');
+        }
+        if (badge) {
+            badge.className = 'rf-badge-status';
+            badge.style.display = 'none';
+            badge.textContent = '';
+        }
+        if (feedback) {
+            feedback.className = 'rf-field-feedback';
+            feedback.style.display = 'none';
+            feedback.innerHTML = '';
+        }
+    }
+
+    // ─── Form Reset Handler (Bersihkan Formulir Secara Menyeluruh) ───
+    const resetBtnEl = document.getElementById('btnReset');
+    if (resetBtnEl) {
+        resetBtnEl.addEventListener('click', function() {
+            setTimeout(function() {
+                if (jaRadios.length > 0) {
+                    jaRadios[0].checked = true;
+                    applyJenisAnggota(jaRadios[0]);
+                }
+                inputIdentityNo.value = '';
+                inputIdentityNo.classList.remove('has-error', 'is-valid');
+                digitCount.className = 'rf-digit-badge';
+                digitCount.textContent = '0 / ' + selectedIdDigits + ' digit';
+                feedbackIdentityNo.className = 'rf-field-feedback';
+                feedbackIdentityNo.style.display = 'none';
+                feedbackIdentityNo.innerHTML = '';
+
+                if (unitKerjaValue) {
+                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon II';
+                    unitKerjaValue.classList.add('is-placeholder');
+                }
+                unitKerjaOptions.forEach(o => o.classList.remove('is-selected'));
+                if (unitKerjaTrigger) unitKerjaTrigger.classList.remove('has-error', 'is-valid');
+
+                clearFieldStatus(fullnameInput, badgeFullname, feedbackFullname);
+                clearFieldStatus(addressInput, badgeAddress, feedbackAddress);
+                clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
+                clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
+                clearFieldStatus(unitKerjaTrigger, badgeUnitKerja, feedbackUnitKerja);
+
+                cbPersetujuan.checked = false;
+                cbPersetujuan.disabled = true;
+                agreeBox.classList.remove('has-error', 'is-valid');
+                persetujuanFeedback.className = 'rf-field-feedback';
+                persetujuanFeedback.style.display = 'none';
+                persetujuanFeedback.innerHTML = '';
+
+                btnSubmit.disabled = true;
+                wantPhotoNo.checked = true;
+                syncPhotoToggle();
+
+                form.querySelectorAll('.has-error, .is-valid').forEach(el => el.classList.remove('has-error', 'is-valid'));
+                if (errorSummaryBox) errorSummaryBox.style.display = 'none';
+                alertEl.className = 'rf-alert';
+                alertEl.style.display = 'none';
+                stepButtons.forEach(btn => btn.classList.remove('has-error'));
+            }, 30);
+        });
+    }
+
     function validateIdentityField() {
         const val = inputIdentityNo.value.trim();
         const len = val.length;
@@ -3205,8 +3566,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateFullname() {
         const val = fullnameInput.value.trim();
-        if (val.length < 3) {
+        if (val.length === 0) {
+            clearFieldStatus(fullnameInput, badgeFullname, feedbackFullname);
             setFieldError(fullnameInput, badgeFullname, feedbackFullname, 'Wajib Diisi', 'Nama lengkap wajib diisi minimal 3 karakter sesuai KTP / SK Kedinasan.');
+            return '<strong>Nama Lengkap:</strong> Wajib diisi minimal 3 karakter sesuai identitas.';
+        } else if (val.length < 3) {
+            setFieldError(fullnameInput, badgeFullname, feedbackFullname, 'Minimal 3 Karakter', 'Nama lengkap minimal 3 karakter sesuai identitas.');
             return '<strong>Nama Lengkap:</strong> Wajib diisi minimal 3 karakter sesuai identitas.';
         } else {
             setFieldValid(fullnameInput, badgeFullname, feedbackFullname, 'Sesuai format nama sipil resmi.');
@@ -3226,8 +3591,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateAddress() {
         const val = addressInput.value.trim();
-        if (val.length < 5) {
+        if (val.length === 0) {
+            clearFieldStatus(addressInput, badgeAddress, feedbackAddress);
             setFieldError(addressInput, badgeAddress, feedbackAddress, 'Wajib Diisi', 'Alamat domisili saat ini wajib diisi lengkap untuk pengiriman berkas atau kartu anggota.');
+            return '<strong>Alamat Domisili:</strong> Wajib diisi alamat domisili lengkap.';
+        } else if (val.length < 5) {
+            setFieldError(addressInput, badgeAddress, feedbackAddress, 'Kurang Lengkap', 'Alamat domisili saat ini wajib diisi lengkap.');
             return '<strong>Alamat Domisili:</strong> Wajib diisi alamat domisili lengkap.';
         } else {
             setFieldValid(addressInput, badgeAddress, feedbackAddress, 'Alamat domisili tercatat.');
@@ -3238,7 +3607,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateEmail() {
         const val = emailInput.value.trim();
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!val || !re.test(val)) {
+        if (val.length === 0) {
+            clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
+            setFieldError(emailInput, badgeEmail, feedbackEmail, 'Wajib Diisi', 'Format email tidak valid. Masukkan surel aktif (contoh: nama@kemnaker.go.id).');
+            return '<strong>Alamat Email:</strong> Wajib diisi surel aktif.';
+        } else if (!re.test(val)) {
             setFieldError(emailInput, badgeEmail, feedbackEmail, 'Email Tidak Valid', 'Format email tidak valid. Masukkan surel aktif (contoh: nama@kemnaker.go.id).');
             return '<strong>Alamat Email:</strong> Format surel tidak valid (harus email aktif).';
         } else {
@@ -3249,7 +3622,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validatePhone() {
         const raw = phoneInput.value.replace(/\D/g, '');
-        if (raw.length < 9 || raw.length > 13) {
+        if (raw.length === 0) {
+            clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
+            setFieldError(phoneInput, badgePhone, feedbackPhone, 'Wajib Diisi', 'Nomor telepon / WhatsApp wajib diisi.');
+            return '<strong>Kontak Pemohon:</strong> Nomor telepon / WhatsApp wajib diisi.';
+        } else if (raw.length < 9 || raw.length > 13) {
             setFieldError(phoneInput, badgePhone, feedbackPhone, 'Format Nomor Tidak Valid', 'Nomor harus nomor seluler / WhatsApp yang valid (diawali 08 atau 62, 9–13 digit).');
             return '<strong>Kontak Pemohon:</strong> Format nomor Telepon / WhatsApp tidak valid (harus nomor seluler diawali 08 atau 62).';
         } else {
@@ -3284,21 +3661,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Real-time Input Listeners
+    // ─── Real-time Input Listeners ───
+    // Bila pengguna mengosongkan / menghapus isi input, status hijau (is-valid) seketika dihilangkan
     fullnameInput.addEventListener('input', function() {
-        if (this.value.trim().length >= 3) validateFullname();
-    });
-
-    emailInput.addEventListener('input', function() {
-        if (this.value.includes('@')) validateEmail();
-    });
-
-    phoneInput.addEventListener('input', function() {
-        if (this.value.length >= 9) validatePhone();
+        const val = this.value.trim();
+        if (val.length === 0) {
+            clearFieldStatus(fullnameInput, badgeFullname, feedbackFullname);
+        } else if (val.length >= 3) {
+            validateFullname();
+        } else {
+            clearFieldStatus(fullnameInput, badgeFullname, feedbackFullname);
+        }
     });
 
     addressInput.addEventListener('input', function() {
-        if (this.value.trim().length >= 5) validateAddress();
+        const val = this.value.trim();
+        if (val.length === 0) {
+            clearFieldStatus(addressInput, badgeAddress, feedbackAddress);
+        } else if (val.length >= 5) {
+            validateAddress();
+        } else {
+            clearFieldStatus(addressInput, badgeAddress, feedbackAddress);
+        }
+    });
+
+    emailInput.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (val.length === 0) {
+            clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
+        } else {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (re.test(val)) {
+                validateEmail();
+            } else {
+                clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
+            }
+        }
+    });
+
+    phoneInput.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.classList.contains('has-error')) this.classList.remove('has-error');
+        const raw = this.value;
+        if (raw.length === 0) {
+            clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
+        } else if (raw.length >= 9 && raw.length <= 13) {
+            validatePhone();
+        } else {
+            clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
+        }
     });
 
     cbPersetujuan.addEventListener('change', function() {

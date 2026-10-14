@@ -55,6 +55,8 @@
 
 <!--VENDORS-->
 <script src="<?= base_url('assets/vendors'); ?>/dropzone/min/dropzone.min.js"></script>
+<script src="<?= base_url('themes/uigniter/js/vendors'); ?>/cropper.min.js"></script>
+<script src="<?= base_url('themes/uigniter/js/vendors'); ?>/jquery-cropper.min.js"></script>
 <script src="<?= base_url('assets/vendors'); ?>/magnific-popup/jquery.magnific-popup.min.js"></script>
 <script src="<?= base_url('assets/vendors'); ?>/form-components/toggle-switch.js"></script>
 <script src="<?= base_url('assets/vendors'); ?>/form-components/moment.js"></script>
