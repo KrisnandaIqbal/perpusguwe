@@ -42,8 +42,42 @@ class Filters extends BaseConfig
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
-            'session' => ['except' => ['', 'logout*', 'login*','news*', 'home*', 'auth/a/*', 'api/katalog/*', 'api/eksemplar/*','api/sirkulasi-peminjaman/*','api/sirkulasi-pengembalian/*','opac*', 'buku-tamu*',
-            'api-lokasi-ruang/check*','baca-ditempat*','peminjaman-mandiri*','pengembalian-mandiri*','oai*','api/region/*','api/member/*']],
+            'session' => ['except' => [
+                '', 
+                'logout*', 
+                'login*',
+                'news*', 
+                'home*', 
+                'auth/a/*', 
+                'api/katalog/*', 
+                'api/eksemplar/*',
+                'api/sirkulasi-peminjaman/*',
+                'api/sirkulasi-pengembalian/*',
+                'buku-tamu*',
+                'api-lokasi-ruang/check*',
+                'baca-ditempat*',
+                'peminjaman-mandiri*',
+                'pengembalian-mandiri*',
+                'oai*',
+                'api/region/*',
+                'api/member/*',
+                
+                // --- PENGECUALIAN UNTUK CONTROLLER OPAC ---
+                'opac',                     // method: index
+                'opac/index',               // method: index
+                'opac/detail/*',            // method: detail
+                'opac/search',              // method: search
+                'opac/browse',              // method: browse
+                'opac/export',              // method: export
+                'opac/statistics',          // method: statistics
+                'opac/statistics_anggota',  // method: statistics_anggota
+                'opac/downloadMarc*',       // method: semua downloadMarc (Utf8, Xml, Mods, dll)
+                // 'opac/bacaDigital/*' TIDAK DIMASUKKAN agar terkena filter session (wajib login)
+
+                // --- PENGECUALIAN PENDAFTARAN ANGGOTA (PUBLIK) ---
+                'registrasi*',
+                'home/pendaftaran*',
+            ]],
             'cors',
             'permissions' => ['except' => [
                 '',
@@ -56,7 +90,6 @@ class Filters extends BaseConfig
                 'api-lokasi-ruang/check*',
                 'buku-tamu*',
                 'baca-ditempat*',
-                'opac*',
                 'home*',
                 'news*',
                 'apply_status*',
@@ -69,6 +102,26 @@ class Filters extends BaseConfig
                 'master-template/*',
                 'api/member/*',
                 'bukutamu/*',
+                'anggota/export*',
+                
+                // --- PENGECUALIAN UNTUK CONTROLLER OPAC ---
+                'opac',
+                'opac/index',
+                'opac/detail/*',
+                'opac/search',
+                'opac/browse',
+                'opac/export',
+                'opac/statistics',
+                'opac/statistics_anggota',
+                'opac/downloadMarc*',
+                
+                // --- PENGECUALIAN UNTUK PDF VIEWER DECRYPT ---
+                'katalog/view_decrypted*',
+                'katalog/get_decrypted_content*',
+
+                // --- PENGECUALIAN PENDAFTARAN ANGGOTA (PUBLIK) ---
+                'registrasi*',
+                'home/pendaftaran*',
             ]],
         ],
         'after' => [

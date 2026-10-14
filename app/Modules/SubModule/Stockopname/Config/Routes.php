@@ -13,11 +13,13 @@ $routes->group('stockopname', ['namespace' => 'Stockopname\Controllers'], functi
 	  // Barcode scanning and detail management
     $subroutes->add('scanBarcode', 'Stockopname::scanBarcode');
     $subroutes->add('updateDetail', 'Stockopname::updateDetail');
+    $subroutes->add('updateCollection', 'Stockopname::updateCollection');
     $subroutes->delete('deleteDetail/(:num)', 'Stockopname::deleteDetail/$1');
     $subroutes->get('getCollectionInfo', 'Stockopname::getCollectionInfo');
     
     // Export functionality
-    $subroutes->get('exportStockopname/(:num)', 'Stockopname::exportStockopname/$1');
+    $subroutes->get('exportstockopname/(:num)', 'Stockopname::exportstockopname/$1');
+    $subroutes->get('exportexcel/(:num)', 'Stockopname::exportexcel/$1');
 
 });
 

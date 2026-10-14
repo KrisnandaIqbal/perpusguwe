@@ -43,11 +43,122 @@ div.dataTables_wrapper div.dataTables_paginate {
     z-index: 2000 !important;
 }
 
-.select2-container--default .select2-selection--single{
-	padding:6px;
-	height: 37px;
-	font-size: 1.1em;  
-	position: relative;
+/* =========================================================
+   SELECT2 HARMONIZATION & BUG FIX (GLOBAL)
+   Fixes squished 28px height, misaligned arrow & cut-off text
+   ========================================================= */
+.select2-container {
+    width: 100% !important;
+    display: block !important;
+}
+
+.select2-container .select2-selection--single,
+.select2-container--default .select2-selection--single,
+.select2-container--bootstrap4 .select2-selection--single {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 6px 14px !important;
+    background-color: #ffffff !important;
+    border: 1.5px solid #d1d5db !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.select2-container .select2-selection--single:focus,
+.select2-container.select2-container--focus .select2-selection--single,
+.select2-container.select2-container--open .select2-selection--single,
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single,
+.select2-container--bootstrap4.select2-container--focus .select2-selection--single,
+.select2-container--bootstrap4.select2-container--open .select2-selection--single {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    outline: 0 !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered,
+.select2-container--default .select2-selection--single .select2-selection__rendered,
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+    color: #1e293b !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    line-height: normal !important;
+    padding-left: 0 !important;
+    padding-right: 32px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+    display: block !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__placeholder,
+.select2-container--default .select2-selection--single .select2-selection__placeholder,
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__placeholder {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__arrow,
+.select2-container--default .select2-selection--single .select2-selection__arrow,
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+    height: 100% !important;
+    top: 0 !important;
+    right: 12px !important;
+    width: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: absolute !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__arrow b,
+.select2-container--default .select2-selection--single .select2-selection__arrow b,
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow b {
+    border-color: #64748b transparent transparent transparent !important;
+    border-width: 6px 4.5px 0 4.5px !important;
+    border-style: solid !important;
+    margin: 0 !important;
+    position: static !important;
+}
+
+.select2-container.select2-container--open .select2-selection--single .select2-selection__arrow b,
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b,
+.select2-container--bootstrap4.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #2563eb transparent !important;
+    border-width: 0 4.5px 6px 4.5px !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__clear,
+.select2-container--default .select2-selection--single .select2-selection__clear,
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__clear {
+    color: #94a3b8 !important;
+    font-size: 1.15rem !important;
+    font-weight: 600 !important;
+    margin-right: 20px !important;
+    line-height: 1 !important;
+    float: right !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__clear:hover,
+.select2-container--default .select2-selection--single .select2-selection__clear:hover,
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__clear:hover {
+    color: #ef4444 !important;
+}
+
+.select2-container .select2-selection--multiple,
+.select2-container--default .select2-selection--multiple,
+.select2-container--bootstrap4 .select2-selection--multiple {
+    min-height: 42px !important;
+    padding: 4px 8px !important;
+    border: 1.5px solid #d1d5db !important;
+    border-radius: 8px !important;
 }
 
 .tox.tox-tinymce.tox-fullscreen {

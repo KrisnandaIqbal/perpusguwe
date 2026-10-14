@@ -49,6 +49,9 @@ $request = service('request');
                     <button type="button" id="proses_keranjang" class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="Semua anggota yang terpilih"><i class="fa fa-shopping-cart"></i> Pindahkan ke Keranjang</button>
                     <button type="button" id="print_kartu" class="btn btn-primary ml-2" data-toggle="tooltip" data-placement="top" title="Print kartu anggota yang terpilih"><i class="fa fa-print"></i> Print Kartu</button>
                     <button type="button" id="aktifkan_online" class="btn btn-success ml-2" data-toggle="tooltip" data-placement="top" title="Aktifkan akses online untuk anggota yang terpilih"><i class="fa fa-globe"></i> Aktifkan Online</button>
+                    <button type="button" id="btn_export_pdf" class="btn btn-secondary ml-2" data-toggle="tooltip" data-placement="top" title="Pilih anggota dahulu" disabled><i class="fa fa-file-pdf"></i> Pratinjau & Ekspor PDF (<span id="count_export_pdf">0</span>)</button>
+                    <button type="button" id="btn_export_xlsx" class="btn btn-outline-success ml-2" data-toggle="tooltip" data-placement="top" title="Ekspor seluruh data anggota ke Excel"><i class="fa fa-file-excel"></i> Ekspor Semua XLSX</button>
+                    <a href="javascript:void(0)" id="clear_selection" class="small text-muted ml-2" style="display:none; text-decoration: underline;">Kosongkan pilihan</a>
                 </div>
 
                 <table style="width: 100%;" id="tbl_data" class="table table-hover table-striped table-bordered">
@@ -78,6 +81,8 @@ $request = service('request');
 <?= $this->section('script'); ?>
 <?= $this->include('Anggota\Views\modal_upload'); ?>
 <?= $this->include('Anggota\Views\modal_camera'); ?>
+<?= $this->include('Anggota\Views\modal_approval'); ?>
+<?= $this->include('Anggota\Views\modal_preview_pdf'); ?>
 <script>
       $(document).ready(function() {
         <?php if (session()->getFlashdata('swal_icon')) : ?>
@@ -92,6 +97,39 @@ $request = service('request');
     });
 </script>
 <script>
+    // Pilihan anggota lintas halaman (FR-01, FR-02, FR-03, FR-04)
+    var selectedMemberIds = new Set();
+
+    function updateExportPdfState() {
+        var count = selectedMemberIds ? selectedMemberIds.size : 0;
+        $('#count_export_pdf').text(count);
+        if (count > 0) {
+            $('#btn_export_pdf').prop('disabled', false).removeAttr('disabled').attr('title', 'Pratinjau & Ekspor ' + count + ' anggota ke PDF');
+            $('#clear_selection').show();
+        } else {
+            $('#btn_export_pdf').prop('disabled', true).attr('disabled', 'disabled').attr('title', 'Pilih anggota dahulu');
+            $('#clear_selection').hide();
+        }
+    }
+
+    function syncCheckboxesOnDraw() {
+        if (!selectedMemberIds) return;
+        var allChecked = true;
+        var hasRows = false;
+        $('#tbl_data tbody input[type="checkbox"]').each(function() {
+            hasRows = true;
+            var val = $(this).val();
+            if (val && selectedMemberIds.has(String(val))) {
+                $(this).prop('checked', true);
+            } else {
+                $(this).prop('checked', false);
+                allChecked = false;
+            }
+        });
+        $('.check_data').prop('checked', hasRows && allChecked);
+        updateExportPdfState();
+    }
+
     var t;
     $(document).ready(function() {
         t = $('#tbl_data').DataTable({
@@ -180,6 +218,16 @@ $request = service('request');
                 });
 
                 $(".apply-select").on('change', function() {
+                    var approveValue = $(this).attr('data-approve-value');
+                    if (approveValue && $(this).val() == approveValue) {
+                        open_approval(this);
+                        return;
+                    }
+                    if (approveValue && $(this).val() == $(this).attr('data-reject-value')) {
+                        open_approval(this, true);
+                        return;
+                    }
+
                     var url = $(this).attr('data-href');
                     var field = $(this).attr('data-field');
                     var value = $(this).val();
@@ -195,6 +243,8 @@ $request = service('request');
                 $('.image-link').magnificPopup({
                     type: 'image'
                 });
+
+                syncCheckboxesOnDraw();
             },
             "initComplete": function(settings, json) {
 
@@ -202,8 +252,248 @@ $request = service('request');
         });
     });
 
-    $(".check_data").click(function() {
-        $('#tbl_data input:checkbox').not(this).prop('checked', this.checked);
+    // Centang / hapus centang seluruh baris di halaman aktif
+    $(document).on('click change', '.check_data', function() {
+        var isChecked = $(this).is(':checked');
+        $('.check_data').prop('checked', isChecked);
+        $('#tbl_data tbody input[type="checkbox"]').each(function() {
+            var val = $(this).val();
+            if (val && val !== 'on') {
+                $(this).prop('checked', isChecked);
+                if (isChecked) {
+                    selectedMemberIds.add(String(val));
+                } else {
+                    selectedMemberIds.delete(String(val));
+                }
+            }
+        });
+        updateExportPdfState();
+    });
+
+    // Centang / hapus centang checkbox individual per baris
+    $(document).on('click change', '#tbl_data tbody input[type="checkbox"], input.check', function() {
+        var val = $(this).val();
+        if (val && val !== 'on') {
+            if ($(this).is(':checked')) {
+                selectedMemberIds.add(String(val));
+            } else {
+                selectedMemberIds.delete(String(val));
+            }
+        }
+
+        var allChecked = true;
+        var rowBoxes = $('#tbl_data tbody input[type="checkbox"]');
+        if (rowBoxes.length === 0) {
+            allChecked = false;
+        } else {
+            rowBoxes.each(function() {
+                if (!$(this).is(':checked')) {
+                    allChecked = false;
+                    return false;
+                }
+            });
+        }
+        $('.check_data').prop('checked', allChecked);
+        updateExportPdfState();
+    });
+
+    // Kosongkan pilihan
+    $('#clear_selection').click(function(e) {
+        e.preventDefault();
+        selectedMemberIds.clear();
+        $('#tbl_data input[type="checkbox"]').prop('checked', false);
+        $('.check_data').prop('checked', false);
+        updateExportPdfState();
+    });
+
+    // Fungsi membuka pratinjau dokumen di Modal (Murni HTML langsung di DIV modal, instan, bebas blokir & tanpa auto-download)
+    function openPdfPreview() {
+        // Fallback: Jika set kosong, periksa checkbox aktif di tabel
+        if (selectedMemberIds.size === 0) {
+            $('#tbl_data tbody input[type="checkbox"]:checked, input.check:checked').each(function() {
+                var val = $(this).val();
+                if (val && val !== 'on') {
+                    selectedMemberIds.add(String(val));
+                }
+            });
+        }
+
+        var count = selectedMemberIds.size;
+        $('#preview_count_badge').text(count);
+        $('#preview_loading_count').text(count);
+
+        // Kunci tombol aksi sampai dokumen selesai dirender
+        $('#btn_download_from_preview').prop('disabled', true).html('<i class="fa fa-download mr-1"></i> Unduh PDF');
+        $('#btn_open_tab_pdf').prop('disabled', true);
+
+        // Buka modal pratinjau
+        $('#modal_preview_pdf').modal('show');
+
+        // Reset tampilan spinner
+        $('#pdf_preview_loading').html(`
+            <div class="spinner-border text-light mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="sr-only">Memuat...</span>
+            </div>
+            <h6 class="font-weight-bold mb-1">Menyiapkan Pratinjau Dokumen...</h6>
+            <p class="small text-white-50 mb-0">Sedang menyusun data ${count} anggota terpilih</p>
+        `).css('display', 'flex');
+        $('#pdf_preview_content').hide().html('');
+
+        var ids = Array.from(selectedMemberIds);
+
+        // Ambil HTML dokumen via AJAX POST (bebas auto-download & langsung tampil)
+        $.ajax({
+            url: '<?= base_url('anggota/export_pdf') ?>',
+            type: 'POST',
+            data: {
+                preview: 1,
+                member_ids: ids
+                <?php if (csrf_token()): ?>,
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                <?php endif; ?>
+            },
+            dataType: 'html',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            },
+            success: function(html) {
+                // Sembunyikan loading spinner seutuhnya & tampilkan lembar dokumen
+                $('#pdf_preview_loading').css('display', 'none').hide();
+                $('#pdf_preview_content').html(html).show();
+
+                // Pratinjau sudah terlihat, sekarang aktifkan tombol Unduh PDF & Buka di Tab Baru
+                $('#btn_download_from_preview').prop('disabled', false);
+                $('#btn_open_tab_pdf').prop('disabled', false);
+            },
+            error: function(xhr, status, error) {
+                console.error('Preview Error:', xhr.status, error, xhr.responseText);
+                var errMsg = 'Terjadi kendala saat memuat pratinjau data';
+                if (xhr.status === 400 || xhr.status === 403) {
+                    errMsg = xhr.responseText ? $('<div>' + xhr.responseText + '</div>').text() : errMsg;
+                }
+                $('#pdf_preview_loading').html(`
+                    <div class="text-center p-4">
+                        <i class="fa fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                        <h6 class="font-weight-bold mb-2">Gagal memuat pratinjau dokumen</h6>
+                        <p class="small text-white-50 mb-3">${errMsg}</p>
+                        <div>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="btn_retry_preview">
+                                <i class="fa fa-redo mr-1"></i> Coba Lagi
+                            </button>
+                        </div>
+                    </div>
+                `).show();
+            }
+        });
+    }
+
+    // Handler klik Pratinjau & Ekspor PDF dari toolbar daftar anggota
+    $('#btn_export_pdf').click(function() {
+        if (selectedMemberIds.size === 0) {
+            Swal.fire({
+                title: 'Peringatan',
+                text: 'Silakan pilih minimal 1 anggota untuk melihat pratinjau PDF',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+        if (selectedMemberIds.size > 50) {
+            Swal.fire({
+                title: 'Batas Maksimal Ekspor',
+                text: 'Maksimal 50 anggota per dokumen PDF. Anda telah memilih ' + selectedMemberIds.size + ' anggota.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+
+        // Tampilkan pratinjau terlebih dahulu (tanpa men-download file)
+        openPdfPreview();
+    });
+
+    // Handler tombol "Unduh PDF" dari dalam modal pratinjau
+    // HANYA dipicu saat tombol ini diklik setelah pratinjau terlihat
+    $('#btn_download_from_preview').click(function() {
+        if ($(this).prop('disabled') || selectedMemberIds.size === 0) {
+            return false;
+        }
+
+        var $btn = $(this);
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Menyiapkan File PDF...');
+
+        // Trigger pengunduhan file .pdf melalui form submit POST
+        var form = $('<form></form>');
+        form.attr('method', 'post');
+        form.attr('action', '<?= base_url('anggota/export_pdf') ?>');
+
+        <?php if (csrf_token()): ?>
+            form.append('<input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>" />');
+        <?php endif; ?>
+
+        form.append('<input type="hidden" name="preview" value="0" />');
+
+        selectedMemberIds.forEach(function(id) {
+            form.append('<input type="hidden" name="member_ids[]" value="' + id + '" />');
+        });
+
+        $('body').append(form);
+        form.submit();
+        form.remove();
+
+        setTimeout(function() {
+            $btn.prop('disabled', false).html(originalHtml);
+        }, 3500);
+    });
+
+    // Handler tombol "Buka di Tab Baru" dari dalam modal pratinjau
+    $('#btn_open_tab_pdf').click(function() {
+        if ($(this).prop('disabled') || selectedMemberIds.size === 0) return;
+
+        var form = $('<form></form>');
+        form.attr('method', 'post');
+        form.attr('target', '_blank');
+        form.attr('action', '<?= base_url('anggota/export_pdf') ?>');
+
+        <?php if (csrf_token()): ?>
+            form.append('<input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>" />');
+        <?php endif; ?>
+
+        form.append('<input type="hidden" name="preview" value="1" />');
+
+        selectedMemberIds.forEach(function(id) {
+            form.append('<input type="hidden" name="member_ids[]" value="' + id + '" />');
+        });
+
+        $('body').append(form);
+        form.submit();
+        form.remove();
+    });
+
+    $(document).on('click', '#btn_retry_preview', function() {
+        openPdfPreview();
+    });
+
+    // Reset konten & status modal saat modal ditutup
+    $('#modal_preview_pdf').on('hidden.bs.modal', function () {
+        $('#pdf_preview_content').hide().html('');
+        $('#pdf_preview_loading').css('display', 'flex');
+        $('#btn_download_from_preview').prop('disabled', true);
+        $('#btn_open_tab_pdf').prop('disabled', true);
+    });
+
+    // Handler klik Ekspor Semua XLSX (FR-10, FR-15)
+    $('#btn_export_xlsx').click(function() {
+        var $btn = $(this);
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Memproses...');
+
+        window.location.href = '<?= base_url('anggota/export_xlsx') ?>';
+
+        setTimeout(function() {
+            $btn.prop('disabled', false).html(originalHtml);
+        }, 3000);
     });
 
     $('#proses_keranjang').click(function() {
@@ -356,6 +646,40 @@ $request = service('request');
         return false;
     });
 
+    // Peringatan (misalnya email gagal terkirim) tidak ditutup otomatis supaya sempat dibaca
+    function show_result(res) {
+        Swal.fire({
+            title: res.warning ? 'Tersimpan, email belum terkirim' : 'Berhasil',
+            html: res.message,
+            icon: res.warning ? 'warning' : 'success',
+            showConfirmButton: !!res.warning,
+            confirmButtonText: 'Mengerti',
+            timer: res.warning ? undefined : 5000,
+        });
+    }
+
+    $(document).on('click', '.kirim-ulang-email', function() {
+        var $button = $(this).prop('disabled', true);
+        var label = $button.html();
+        $button.text('Mengirim...');
+
+        $.post($button.attr('data-href'))
+            .done(function(res) {
+                if (res.error) {
+                    Swal.fire({ title: 'Email belum terkirim', text: res.message, icon: 'error', confirmButtonText: 'Mengerti' });
+                    return;
+                }
+                t.ajax.reload(null, false);
+                show_result(res);
+            })
+            .fail(function() {
+                Swal.fire({ title: 'Email belum terkirim', text: 'Server tidak menjawab. Coba lagi.', icon: 'error', confirmButtonText: 'Mengerti' });
+            })
+            .always(function() {
+                $button.prop('disabled', false).html(label);
+            });
+    });
+
     function ajax_post(url, data_post) {
         $.ajax({
                 url: url,
@@ -366,13 +690,8 @@ $request = service('request');
                 console.log(res)
 
                 if (res.error == false) {
-                    Swal.fire({
-                        title: 'Berhasil',
-                        html: res.message,
-                        icon: 'success',
-                        showConfirmButton: false,
-                        timer: 5000,
-                    }).then(() => {});
+                    t.ajax.reload(null, false);
+                    show_result(res);
                 } else {
                     Swal.fire({
                         title: 'Gagal',

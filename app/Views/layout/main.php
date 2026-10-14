@@ -33,6 +33,7 @@ $page_title = ucfirst($segment2 ?: $segment1);
     <link rel="stylesheet" href="<?= base_url('themes/uigniter'); ?>/css/base.css">
     <?= $this->include('App\Views\layout\partial\style'); ?>
     <?= $this->include('App\Views\layout\partial\style_custom'); ?>
+    <?= $this->renderSection('style'); ?>
 
     <style>
         * {

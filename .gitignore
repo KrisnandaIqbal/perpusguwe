@@ -131,6 +131,7 @@ nb-configuration.xml
 /phpunit*.xml
 /.phpunit.*.cache
 
+public/phpmyadmin/
 
 #-------------------------
 # Custom exclusions (Kemnaker)

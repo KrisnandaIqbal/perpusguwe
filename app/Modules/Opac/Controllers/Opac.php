@@ -103,7 +103,7 @@ private function loadRegularCatalogs()
     $perPage     = 12;
     $currentPage = $this->request->getVar('page') ?? 1;
 
-    $builder = $this->katalogModel->select('catalogs.*')->orderBy("ID", "DESC");
+    $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
 
     $search = sanitizeSearch($this->request->getVar('search'));
 
@@ -1687,11 +1687,13 @@ public function browse()
         return implode(' ', $terms);
     }
 
-    public function bacaDigital($catalog_id)
-    {
+    public function bacaDigital($catalog_id){
+    
         helper('reference');
 
         $file = $this->fileModel->where('Catalog_id', $catalog_id)->first();
+      
+      
         if (!$file) {
             throw new \CodeIgniter\Exceptions\PageNotFoundException('File digital tidak ditemukan');
         }
@@ -1739,54 +1741,66 @@ public function browse()
                 }
             }
         }
-
+         
         return redirect()->to(base_url('katalog/view_decrypted/' . encData($file->ID)));
     }
 
     private function _autoReturnDigitalLoan($loanItem, int $collection_id)
-    {
-        $now = date('Y-m-d H:i:s');
-        $ip  = $this->request->getIPAddress();
+{
+    // Hanya proses auto-return untuk koleksi digital (ISDRM = 1)
+    $collection = $this->db->table('collections')
+        ->select('ID, ISDRM, Status_id')
+        ->where('ID', $collection_id)
+        ->get()
+        ->getRow();
 
-        $this->db->transBegin();
-
-        $this->db->table('collectionloanitems')
-            ->where('ID', $loanItem->ID)
-            ->update([
-                'LoanStatus'     => 'Return',
-                'UpdateDate'     => $now,
-                'UpdateTerminal' => $ip,
-            ]);
-
-        $loan = $this->db->table('collectionloans')
-            ->where('ID', $loanItem->CollectionLoan_id)
-            ->get()
-            ->getRow();
-
-        if ($loan) {
-            $this->db->table('collectionloans')
-                ->where('ID', $loanItem->CollectionLoan_id)
-                ->update([
-                    'ReturnCount'    => (int) ($loan->ReturnCount ?? 0) + 1,
-                    'UpdateDate'     => $now,
-                    'UpdateTerminal' => $ip,
-                ]);
-        }
-
-        $this->db->table('collections')
-            ->where('ID', $collection_id)
-            ->update([
-                'Status_id'      => 1,
-                'UpdateDate'     => $now,
-                'UpdateTerminal' => $ip,
-            ]);
-
-        if ($this->db->transStatus() === false) {
-            $this->db->transRollback();
-        } else {
-            $this->db->transCommit();
-        }
+    if (!$collection || (int) $collection->ISDRM !== 1) {
+        return; // bukan koleksi digital, tidak perlu auto-return
     }
+
+    $now = date('Y-m-d H:i:s');
+    $ip  = $this->request->getIPAddress();
+
+    $this->db->transBegin();
+
+    $this->db->table('collectionloanitems')
+        ->where('ID', $loanItem->ID)
+        ->update([
+            'LoanStatus'     => 'Return',
+            'ActualReturn'   => $now,
+            'UpdateDate'     => $now,
+            'UpdateTerminal' => $ip,
+        ]);
+
+    $loan = $this->db->table('collectionloans')
+        ->where('ID', $loanItem->CollectionLoan_id)
+        ->get()
+        ->getRow();
+
+    if ($loan) {
+        $this->db->table('collectionloans')
+            ->where('ID', $loanItem->CollectionLoan_id)
+            ->update([
+                'ReturnCount'    => (int) ($loan->ReturnCount ?? 0) + 1,
+                'UpdateDate'     => $now,
+                'UpdateTerminal' => $ip,
+            ]);
+    }
+
+    $this->db->table('collections')
+        ->where('ID', $collection_id)
+        ->update([
+            'Status_id'      => 1,
+            'UpdateDate'     => $now,
+            'UpdateTerminal' => $ip,
+        ]);
+
+    if ($this->db->transStatus() === false) {
+        $this->db->transRollback();
+    } else {
+        $this->db->transCommit();
+    }
+}
 
     private function _recordDigitalLoan(int $catalog_id, int $member_id)
     {

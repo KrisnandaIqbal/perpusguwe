@@ -55,8 +55,12 @@ $routes->group('anggota', ['namespace' => 'Anggota\Controllers'], function ($sub
     $subroutes->add('printkartubelakang/(:any)', 'AnggotaPrintController::printkartubelakang/$1');
     $subroutes->add('multipleprint',          'AnggotaPrintController::multipleprint');
     $subroutes->add('bebaspustaka/(:any)',    'AnggotaPrintController::bebaspustaka/$1');
-    $subroutes->add('uploadBackground',       'AnggotaPrintController::uploadBackground');
+    $subroutes->post('uploadBackground',      'AnggotaPrintController::uploadBackground');
     $subroutes->add('kirim_kartu_digital',    'AnggotaKartuController::kirim_kartu_digital');
+
+    // === AnggotaExportController ===
+    $subroutes->add('export_xlsx',            'AnggotaExportController::exportXlsx');
+    $subroutes->add('export_pdf',             'AnggotaExportController::exportPdf');
 });
 
 // -----------------------------------------------------------------------
@@ -83,6 +87,9 @@ $routes->group('api/anggota', ['namespace' => 'Anggota\Controllers\Api'], functi
     $subroutes->add('datatable',          'Anggota::datatable');
     $subroutes->add('datatable/(:any)',   'Anggota::datatable/$1');
     $subroutes->add('switch/(:any)',      'Anggota::switch/$1');
+    $subroutes->add('approval_summary/(:num)', 'Anggota::approval_summary/$1');
+    $subroutes->post('minta_perbaikan/(:num)', 'Anggota::minta_perbaikan/$1');
+    $subroutes->post('kirim_ulang_email/(:num)', 'Anggota::kirim_ulang_email/$1');
     $subroutes->add('upload_file',        'Anggota::upload_file');
     $subroutes->add('capture_file',       'Anggota::capture_file');
 });
