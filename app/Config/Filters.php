@@ -102,6 +102,7 @@ class Filters extends BaseConfig
                 'master-template/*',
                 'api/member/*',
                 'bukutamu/*',
+                'anggota/export*',
                 
                 // --- PENGECUALIAN UNTUK CONTROLLER OPAC ---
                 'opac',
