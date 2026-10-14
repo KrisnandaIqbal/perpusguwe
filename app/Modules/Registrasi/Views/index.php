@@ -31,6 +31,7 @@ if (!empty($jenis_identitas)) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
 
 <style>
     /* ─────────────────────────────────────────────────────────────
@@ -1340,10 +1341,11 @@ if (!empty($jenis_identitas)) {
         border-radius: 10px;
     }
 
+    /* Rasio 2:3, sama dengan bingkai foto di kartu anggota */
     .rf-photo-preview img {
-        width: 60px;
+        width: 40px;
         height: 60px;
-        border-radius: 8px;
+        border-radius: 6px;
         object-fit: cover;
         border: 1px solid var(--border-subtle);
     }
@@ -1363,6 +1365,45 @@ if (!empty($jenis_identitas)) {
     .rf-photo-remove:hover {
         background: var(--rose-50);
         border-color: var(--rose-200);
+    }
+
+    .rf-photo-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .rf-photo-recrop {
+        background: transparent;
+        border: 1px solid var(--border-subtle);
+        color: var(--navy-900);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.76rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .rf-photo-recrop:hover {
+        background: var(--bg-page);
+    }
+
+    .rf-photo-recrop:focus-visible,
+    .rf-photo-remove:focus-visible {
+        outline: 2px solid var(--accent-600);
+        outline-offset: 2px;
+    }
+
+    /* Area crop: tinggi dibatasi supaya tombol tetap terlihat di layar HP */
+    .rf-crop-stage {
+        height: min(60vh, 420px);
+        background: var(--bg-page);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .rf-crop-stage img {
+        display: block;
+        max-width: 100%;
     }
 
     /* ─── PDP Agreement Box ─── */
@@ -2494,9 +2535,10 @@ if (!empty($jenis_identitas)) {
                         <div class="rf-field">
                             <div class="rf-field-header">
                                 <label class="rf-label">Foto Profil Pemustaka</label>
-                                <span class="rf-sublabel">Opsional (Maks. 2 MB)</span>
+                                <span class="rf-sublabel">Opsional</span>
                             </div>
-                            
+                            <div class="rf-hint" style="margin-top:0;margin-bottom:8px;">Gunakan pas foto formal dengan latar polos. Format JPG atau PNG, maksimal 2 MB.</div>
+
                             <div class="rf-photo-toggle">
                                 <label id="labelPhotoNo" class="is-checked">
                                     <input type="radio" name="want_photo" id="wantPhotoNo" value="0" checked>
@@ -2518,17 +2560,20 @@ if (!empty($jenis_identitas)) {
                                             <circle cx="12" cy="13" r="4"/>
                                         </svg>
                                     </div>
-                                    <div class="rf-dropzone-text">Pilih foto pasfoto formal</div>
-                                    <div class="rf-dropzone-sub">Format: JPG atau PNG &bull; Maksimal ukuran file 2 MB</div>
+                                    <div class="rf-dropzone-text">Pilih pas foto</div>
+                                    <div class="rf-dropzone-sub">Klik atau seret foto ke sini. Setelah dipilih, Anda bisa mengatur bagian yang dipakai.</div>
                                 </div>
-                                
+
                                 <div class="rf-photo-preview" id="photoPreviewContainer" style="display:none;">
-                                    <img id="photoPreview" src="" alt="Preview Foto">
+                                    <img id="photoPreview" src="" alt="Pratinjau foto untuk kartu anggota">
                                     <div style="flex:1;">
                                         <div style="font-size:0.8rem;font-weight:600;color:var(--navy-900);">Foto terpasang</div>
-                                        <div style="font-size:0.74rem;color:var(--text-muted);">Foto akan dicetak pada kartu anggota digital.</div>
+                                        <div style="font-size:0.74rem;color:var(--text-muted);">Bagian ini yang tampil di kartu anggota digital.</div>
                                     </div>
-                                    <button type="button" class="rf-photo-remove" id="photoRemoveBtn">Hapus</button>
+                                    <div class="rf-photo-actions">
+                                        <button type="button" class="rf-photo-recrop" id="photoRecropBtn">Atur ulang</button>
+                                        <button type="button" class="rf-photo-remove" id="photoRemoveBtn">Hapus</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2767,6 +2812,26 @@ if (!empty($jenis_identitas)) {
             </aside>
         </div>
 
+    </div>
+</div>
+
+<!-- Modal Atur Foto (crop 2:3 untuk kartu anggota) -->
+<div id="modalCrop" class="rf-overlay" role="dialog" aria-modal="true" aria-labelledby="rfCropTitle">
+    <div class="rf-modal">
+        <div class="rf-modal-head">
+            <h3 id="rfCropTitle">Atur Foto</h3>
+            <button type="button" class="rf-modal-close" id="closeCrop" aria-label="Batal">&times;</button>
+        </div>
+        <div class="rf-modal-body">
+            <p style="margin:0 0 12px;">Geser dan perbesar foto sampai kepala dan bahu masuk ke dalam bingkai.</p>
+            <div class="rf-crop-stage">
+                <img id="cropImage" src="" alt="Foto yang sedang diatur">
+            </div>
+        </div>
+        <div class="rf-modal-foot">
+            <button type="button" class="rf-btn rf-btn-ghost" id="btnBatalCrop">Batal</button>
+            <button type="button" class="rf-btn rf-btn-primary" id="btnPakaiCrop">Pakai foto ini</button>
+        </div>
     </div>
 </div>
 
@@ -3010,6 +3075,7 @@ if (!empty($jenis_identitas)) {
 
 <?= $this->section('script') ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('formRegistrasi');
@@ -3261,10 +3327,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labelPhotoNo.classList.add('is-checked');
             labelPhotoYes.classList.remove('is-checked');
             photoUploadContainer.style.display = 'none';
-            photoFileInput.value = '';
-            photoPreview.src = '';
-            photoPreviewContainer.style.display = 'none';
-            photoDropzone.style.display = 'block';
+            resetPhoto();
         }
     }
 
@@ -3299,35 +3362,98 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // ─── Crop Foto ───
+    // Yang dikirim ke server hanya hasil crop (croppedPhoto), bukan file asli dari input
+    const modalCrop = document.getElementById('modalCrop');
+    const cropImage = document.getElementById('cropImage');
+    const btnPakaiCrop = document.getElementById('btnPakaiCrop');
+    const photoRecropBtn = document.getElementById('photoRecropBtn');
+    let cropper = null;
+    let originalPhotoUrl = null;
+    let croppedPhoto = null;
+
     function handlePhotoFile(file) {
+        // File asli tidak ikut terkirim lewat FormData(form)
+        photoFileInput.value = '';
+
         const allowed = ['image/jpeg', 'image/png'];
         if (!allowed.includes(file.type)) {
             alert('Format foto harus berupa JPG atau PNG.');
-            photoFileInput.value = '';
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
             alert('Ukuran file foto maksimal 2 MB.');
-            photoFileInput.value = '';
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            photoPreview.src = e.target.result;
-            photoDropzone.style.display = 'none';
-            photoPreviewContainer.style.display = 'flex';
-        };
-        reader.readAsDataURL(file);
+        if (originalPhotoUrl) URL.revokeObjectURL(originalPhotoUrl);
+        originalPhotoUrl = URL.createObjectURL(file);
+        openCrop();
     }
 
-    photoRemoveBtn.addEventListener('click', function() {
+    function openCrop() {
+        cropImage.src = originalPhotoUrl;
+        modalCrop.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropImage, {
+            aspectRatio: 2 / 3,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 0.9,
+            background: false,
+        });
+        btnPakaiCrop.focus();
+    }
+
+    function closeCrop() {
+        modalCrop.style.display = 'none';
+        document.body.style.overflow = '';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    // 400 x 600 px cukup untuk kartu digital maupun cetak 300 dpi
+    btnPakaiCrop.addEventListener('click', function() {
+        const canvas = cropper.getCroppedCanvas({ width: 400, height: 600, fillColor: '#ffffff', imageSmoothingQuality: 'high' });
+        canvas.toBlob(function(blob) {
+            croppedPhoto = blob;
+            if (photoPreview.src.startsWith('blob:')) URL.revokeObjectURL(photoPreview.src);
+            photoPreview.src = URL.createObjectURL(blob);
+            photoDropzone.style.display = 'none';
+            photoPreviewContainer.style.display = 'flex';
+            closeCrop();
+        }, 'image/jpeg', 0.85);
+    });
+
+    // Batal tanpa foto sebelumnya berarti tidak ada foto; kalau sudah ada, foto lama tetap dipakai
+    function cancelCrop() {
+        closeCrop();
+        if (!croppedPhoto) resetPhoto();
+    }
+
+    document.getElementById('btnBatalCrop').addEventListener('click', cancelCrop);
+    document.getElementById('closeCrop').addEventListener('click', cancelCrop);
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modalCrop.style.display === 'flex') cancelCrop();
+    });
+
+    photoRecropBtn.addEventListener('click', openCrop);
+
+    function resetPhoto() {
         photoFileInput.value = '';
-        photoPreview.src = '';
+        croppedPhoto = null;
+        if (photoPreview.src.startsWith('blob:')) URL.revokeObjectURL(photoPreview.src);
+        photoPreview.removeAttribute('src');
         photoPreviewContainer.style.display = 'none';
         photoDropzone.style.display = 'block';
-    });
+    }
+
+    photoRemoveBtn.addEventListener('click', resetPhoto);
 
     // ─── Syarat & Ketentuan Modal ───
     linkSyarat.addEventListener('click', function(e) {
@@ -3799,8 +3925,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         formData.set('Phone', phoneForSubmit);
 
-        if (photoFileInput.files.length > 0) {
-            formData.set('PhotoFile', photoFileInput.files[0]);
+        if (croppedPhoto) {
+            formData.set('PhotoFile', croppedPhoto, 'foto.jpg');
+        } else {
+            formData.delete('PhotoFile');
         }
 
         axios.post('<?= base_url('registrasi/submit') ?>', formData, {
