@@ -340,19 +340,40 @@ $rda = $request->getGet('rda') ?? 1;
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="jenisIsi">Jenis Isi</label>
-                            <input type="text" class="form-control" name="jenisIsi" id="jenisIsi" placeholder="" value="<?= set_value('jenisIsi') ?>" />
+                            <select class="form-control" name="jenisIsi" id="jenisIsi">
+                                <option value="">-- Pilih Jenis Isi --</option>
+                                <?php
+                                $contentTypes = (new \Base\Models\DataModel('mst_content_type'))->orderBy('content_type')->findAll();
+                                foreach ($contentTypes as $ct): ?>
+                                    <option value="<?= esc($ct->content_type) ?>" <?= (set_value('jenisIsi') == $ct->content_type) ? 'selected' : '' ?>><?= esc($ct->content_type) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="jenisMedia">Jenis Media</label>
-                            <input type="text" class="form-control" name="jenisMedia" id="jenisMedia" placeholder="" value="<?= set_value('jenisMedia') ?>" />
+                            <select class="form-control" name="jenisMedia" id="jenisMedia">
+                                <option value="">-- Pilih Jenis Media --</option>
+                                <?php
+                                $mediaTypes = (new \Base\Models\DataModel('mst_media_type'))->orderBy('media_type')->findAll();
+                                foreach ($mediaTypes as $mt): ?>
+                                    <option value="<?= esc($mt->media_type) ?>" <?= (set_value('jenisMedia') == $mt->media_type) ? 'selected' : '' ?>><?= esc($mt->media_type) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="jenisWadah">Jenis Wadah</label>
-                            <input type="text" class="form-control" name="jenisWadah" id="jenisWadah" placeholder="" value="<?= set_value('jenisWadah') ?>" />
+                            <select class="form-control" name="jenisWadah" id="jenisWadah">
+                                <option value="">-- Pilih Jenis Wadah --</option>
+                                <?php
+                                $carrierTypes = (new \Base\Models\DataModel('mst_carrier_type'))->orderBy('carrier_type')->findAll();
+                                foreach ($carrierTypes as $ct): ?>
+                                    <option value="<?= esc($ct->carrier_type) ?>" <?= (set_value('jenisWadah') == $ct->carrier_type) ? 'selected' : '' ?>><?= esc($ct->carrier_type) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                 <?php endif; ?>

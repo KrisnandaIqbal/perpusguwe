@@ -1,3 +1,10 @@
+# Blokir perayap AI yang membebani OPAC - dipasang 18 Agustus 2026
+SetEnvIfNoCase User-Agent "(ClaudeBot|GPTBot|OAI-SearchBot|ChatGPT-User|GoogleOther|Amazonbot|meta-externalagent|PerplexityBot|Bytespider|CCBot|Applebot-Extended|Diffbot|cohere-ai|anthropic-ai|ImagesiftBot|YouBot|omgili|Scrapy)" perayap_ai
+<RequireAll>
+  Require all granted
+  Require not env perayap_ai
+</RequireAll>
+
 # Disable directory browsing
 Options All -Indexes
 
@@ -76,6 +83,7 @@ ServerSignature Off
 	Header set X-Frame-Options "SAMEORIGIN"
 	Header set X-XSS-Protection "1; mode=block"
 	Header set X-Content-Type-Options "nosniff"
+Header always unset Content-Security-Policy
 	Header set Content-Security-Policy "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.tiny.cloud https://js.hcaptcha.com https://newassets.hcaptcha.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://newassets.hcaptcha.com; img-src 'self' data: blob: https: http:; font-src 'self' data: https:; connect-src 'self' https: blob:; frame-src 'self' https:; worker-src 'self' blob:;"
 	# Prevent browsers from MIME-sniffing the content-type
 	Header set X-Content-Type-Options "nosniff"
@@ -87,3 +95,10 @@ ServerSignature Off
 	Header set Referrer-Policy "strict-origin-when-cross-origin"
 	Header set Permissions-Policy "geolocation=(), midi=(), sync-xhr=(), microphone=(), camera=(self), magnetometer=(), gyroscope=(), fullscreen=(self), payment=()"
 </IfModule>
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php83” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php83 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

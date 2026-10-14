@@ -7,7 +7,6 @@
 .AppleDouble
 .LSOverride
 BUGFIX_NOTES.md
-docs/CHANGELOG_SESSION.md
 docs240526.md
 doc_280526.md
 
@@ -133,3 +132,16 @@ nb-configuration.xml
 /.phpunit.*.cache
 
 public/phpmyadmin/
+
+#-------------------------
+# Custom exclusions (Kemnaker)
+#-------------------------
+inlislitev33.zip
+composer.phar
+composer-setup.php
+error_log
+public/error_log
+*.bak
+-d
+public/test_kartu_real.pdf
+public/test_kartu_real.pdf

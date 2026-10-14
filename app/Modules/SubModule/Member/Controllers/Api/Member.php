@@ -38,9 +38,19 @@ class Member extends \Base\Controllers\BaseResourceController
 
     $email = $this->request->getPost('Email');
     $username = $this->request->getPost('IdentityNo');
-    $password = get_parameter('password-default', 'inlislite=');
+    $password = $this->request->getPost('Password');
+    $passwordConfirm = $this->request->getPost('PasswordConfirm');
+
+    if (strlen($password) < 6) {
+      return $this->simpleResponse(['error' => true, 'message' => 'Password minimal 6 karakter']);
+    }
+    if ($password !== $passwordConfirm) {
+      return $this->simpleResponse(['error' => true, 'message' => 'Password dan konfirmasi password tidak sama']);
+    }
     $activate_hash = bin2hex(random_bytes(16));
     $form_data = $this->request->getPost();
+    unset($form_data['Password']);
+    unset($form_data['PasswordConfirm']);
 
     $response = member_register($email, $username, $password, $activate_hash, $form_data);
     return $this->simpleResponse($response);
@@ -103,7 +113,7 @@ class Member extends \Base\Controllers\BaseResourceController
       } else {
         $hash = bin2hex(random_bytes(16));
         $userModel->update($data->id, ['activate_hash' => $hash]);
-        $response = member_notify($email, $password, $hash, $data);
+        $response = member_notify($email, $data->username, $password, $hash, (array) $data);
       }
     } else {
       $response = [

@@ -192,22 +192,48 @@ class Eksemplar extends \Base\Controllers\BaseResourceController
             $html = '<span class="badge ' . $badgeClass . '" style="min-width: 60px">' . $statusName . '</span>';
             return $html;
         })
-        ->edit('action', function ($row) use ($catalog_id) {
-            // Tombol Edit selalu ditampilkan
-            // Siapkan URL dasar terlebih dahulu
+                ->edit('action', function ($row) use ($catalog_id) {
+            // Jika dipanggil dari konteks modal eksemplar (katalog_edit.php),
+            // $catalog_id akan terisi -> tampilkan tombol modal (tanpa pindah halaman).
+            // Jika dipanggil tanpa catalog_id (halaman datatable eksemplar biasa),
+            // tetap gunakan link edit full-page seperti semula.
+            if (!empty($catalog_id)) {
+                $edit = '<button type="button" class="btn btn-sm btn-primary btn-edit-eksemplar" data-id="' . $row->ID . '" data-toggle="tooltip" data-placement="top" title="Ubah"><i class="pe-7s-note font-weight-bold"> </i></button>';
+                return $edit;
+            }
+
+            // --- Perilaku lama (tidak diubah) ---
             $baseUrl = base_url('eksemplar/edit/' . $row->ID);
-
-            // Gunakan ternary operator untuk menambahkan parameter HANYA jika $catalog_id tidak kosong
-            $finalUrl = !empty($catalog_id) ? $baseUrl . '?catalog_id=' . $catalog_id : $baseUrl;
-
-            // Gabungkan menjadi HTML akhir
+            $finalUrl = $baseUrl;
             $edit = '<a href="' . $finalUrl . '" data-toggle="tooltip" data-placement="top" title="Ubah" class="btn btn-primary show-data"><i class="pe-7s-note font-weight-bold"> </i></a>';
-            
-            // Siapkan variabel delete sebagai string kosong
-            $delete = ""; 
-
-            // Gabungkan tombol edit dan delete (jika ada)
+            $delete = "";
             return $edit . ' ' . $delete;
+        })
+        ->toJson();
+    return $dataTable;
+}
+
+public function datatable_cetaklabel($IsQUARANTINE = 0)
+{
+    $db = db_connect();
+    $builder = $db->table('collections as a')
+        ->select('a.ID, a.ID as action, a.ID as Collection_id')
+        ->select('a.NomorBarcode, a.UpdateDate')
+        ->select('b.Title, b.Author, b.PublishYear, b.CallNumber')
+        ->join('catalogs as b', 'b.ID = a.Catalog_id', 'left')
+        ->where('a.IsQUARANTINE', $IsQUARANTINE)
+        ->groupBy('a.ID', 'DESC');
+
+    $dataTable = DataTable::of($builder)
+        ->addNumbering('no')
+        ->edit('ID', function ($row) {
+            return '<input type="checkbox" class="check" name="ID[]" value="' . $row->ID . '" data-title="' . htmlspecialchars($row->Title ?? '') . '">';
+        })
+        ->edit('NomorBarcode', function ($row) {
+            return '<b>' . $row->NomorBarcode . '</b>';
+        })
+        ->edit('UpdateDate', function ($row) {
+            return $row->UpdateDate ? date('d-m-Y H:i', strtotime($row->UpdateDate)) : '-';
         })
         ->toJson();
     return $dataTable;

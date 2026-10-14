@@ -56,6 +56,7 @@ $routes->group('anggota', ['namespace' => 'Anggota\Controllers'], function ($sub
     $subroutes->add('multipleprint',          'AnggotaPrintController::multipleprint');
     $subroutes->add('bebaspustaka/(:any)',    'AnggotaPrintController::bebaspustaka/$1');
     $subroutes->post('uploadBackground',      'AnggotaPrintController::uploadBackground');
+    $subroutes->add('kirim_kartu_digital',    'AnggotaKartuController::kirim_kartu_digital');
 
     // === AnggotaExportController ===
     $subroutes->add('export_xlsx',            'AnggotaExportController::exportXlsx');

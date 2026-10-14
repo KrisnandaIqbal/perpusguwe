@@ -119,9 +119,10 @@ class KatalogFormController extends \Base\Controllers\BaseController
 
                 $this->katalogRuasModel->where('CatalogId', $catalog_id)->delete();
                 $this->katalogRuasModel->insert_catalog_ruas(data_catalog_ruas($post_merged, $catalog_id));
-
                 $db->transCommit();
-                
+
+                record_history('CREATE', 'biblio', $catalog_id, 'Tambah katalog baru');
+
                 $this->session->setFlashdata('swal_icon', 'success');
                 $this->session->setFlashdata('swal_title', 'Berhasil');
                 $this->session->setFlashdata('swal_text', 'Katalog berhasil disimpan');
@@ -251,7 +252,9 @@ class KatalogFormController extends \Base\Controllers\BaseController
                 $this->katalogRuasModel->insert_catalog_ruas(data_catalog_ruas($post_merged, $catalog_id));
 
                 $db->transCommit();
-                
+
+                record_history('UPDATE', 'biblio', $catalog_id, 'Update katalog');
+
                 $this->session->setFlashdata('swal_icon', 'success');
                 $this->session->setFlashdata('swal_title', 'Berhasil');
                 $this->session->setFlashdata('swal_text', 'Katalog berhasil diperbarui');

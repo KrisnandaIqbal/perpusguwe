@@ -4,7 +4,7 @@ namespace Member\Models;
 
 class UserModel extends \App\Models\BaseModel
 {
-	protected $DBGroup              = 'auth';
+	protected $DBGroup = 'default';
     protected $table      			= 'users';
     protected $primaryKey 			= 'id';
     protected $returnType     		= 'object';

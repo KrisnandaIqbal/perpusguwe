@@ -736,4 +736,305 @@ class EmailNotificationLibrary
         </html>
         HTML;
     }
+
+    /**
+     * Kirim kartu anggota digital ke email.
+     *
+     * @param  object  $member       Row data anggota (Email, Fullname, MemberNo, EndDate)
+     * @param  string  $qrImage      QR code (base64 image)
+     * @param  string  $photoSrc     Foto anggota (base64/URL)
+     * @param  string  $perpusName   Nama perpustakaan
+     * @param  string  $logoBase64   Logo perpustakaan (base64/URL)
+     * @param  string  $jenisAnggota Nama jenis anggota
+     * @return array   ['success' => bool, 'message' => string]
+     */
+    public function sendMemberCard(object $member, string $qrImage, string $photoSrc, string $perpusName, string $logoBase64, string $jenisAnggota): array
+    {
+        if (empty($member->Email)) {
+            return ['success' => false, 'message' => 'Email anggota tidak ditemukan.'];
+        }
+        if (!filter_var($member->Email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Format email tidak valid: ' . $member->Email];
+        }
+
+        $html = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $pdfContent = $dompdf->output();
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'kartu_') . '.pdf';
+        file_put_contents($tempFile, $pdfContent);
+
+        $this->email->initialize($this->smtpConfig);
+        $this->email->clear();
+        $this->email->setFrom($this->fromEmail, $this->fromName);
+        $this->email->setTo($member->Email);
+        $this->email->setSubject('Kartu Anggota Digital - ' . $perpusName);
+        $bodyHtml = '<p>Kepada Yth. ' . esc($member->Fullname) . ',</p>'
+                  . '<p>Terlampir kartu anggota digital Anda dalam format PDF. Mohon disimpan sebagai bukti keanggotaan.</p>'
+                  . '<p>Terima kasih.</p>';
+        $this->email->setMessage($bodyHtml);
+        $this->email->attach($tempFile, 'attachment', 'Kartu-Anggota-' . $member->MemberNo . '.pdf');
+
+        try {
+            $sent = $this->email->send();
+            @unlink($tempFile);
+            log_message('info', '[EmailNotif] Member card PDF to: ' . $member->Email . ' - ' . ($sent ? 'OK' : 'FAILED'));
+            if ($sent) {
+                return ['success' => true, 'message' => 'Kartu berhasil dikirim ke ' . $member->Email];
+            }
+            $debug = $this->email->printDebugger(['headers']);
+            log_message('error', '[EmailNotif] Member card PDF failed: ' . $debug);
+            return ['success' => false, 'message' => 'Gagal mengirim kartu ke ' . $member->Email . '. Cek log untuk detail.'];
+        } catch (\Exception $e) {
+            @unlink($tempFile);
+            log_message('error', '[EmailNotif] Member card PDF exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function buildMemberCardTemplate(object $member, string $qrImage, string $photoSrc, string $perpusName, string $logoBase64, string $jenisAnggota): string
+    {
+        $endDate = !empty($member->EndDate) ? date('d/m/Y', strtotime($member->EndDate)) : '-';
+        return <<<HTML
+        <!DOCTYPE html>
+        <html lang="id">
+        <head><meta charset="UTF-8">
+        <style>
+            @page { margin: 0; }
+            body { margin: 40px; padding: 0; font-family: Helvetica, Arial, sans-serif; }
+            table.wrapper { border-collapse: separate; border-spacing: 20px 0; }
+            table.wrapper td { vertical-align: top; }
+
+            div.card-outer {
+                width: 243pt; height: 153pt;
+                border: 1px solid #000000;
+                border-radius: 10px;
+                overflow: hidden;
+            }
+            table.card { width: 243pt; height: 153pt; border-collapse: collapse; border: none; }
+            td.stripe { width: 81pt; height: 153pt; background-color: #1B3878; padding: 8px; vertical-align: top; }
+            td.main { width: 162pt; height: 153pt; padding: 0; vertical-align: top; }
+            .stripe-logo { width: 18px; height: 18px; }
+            .stripe-title { color: #ffffff; font-size: 7px; font-weight: bold; margin-top: 6px; line-height: 1.3; }
+            .photo-box { margin-top: 14px; }
+            .photo-box img { width: 40px; height: 46px; border: 1px solid #ffffff; }
+            table.header-row { width: 100%; border-collapse: collapse; }
+            table.header-row td { padding: 6px 8px; vertical-align: middle; }
+            .inst-logo { width: 13px; height: 13px; }
+            .inst-name { font-size: 6px; font-weight: bold; color: #1B3878; padding-left: 4px; }
+            .memberno { font-size: 13px; font-weight: bold; color: #1f2937; padding: 4px 8px 0; }
+            .fullname { font-size: 8px; font-weight: bold; color: #1B3878; padding: 2px 8px 0; }
+            .jenis { font-size: 6px; color: #4b5563; padding: 4px 8px 0; }
+            .jenis b { color: #1f2937; }
+            table.footer-row { width: 100%; border-collapse: collapse; margin-top: 4px; }
+            .valid { font-size: 5px; color: #6b7280; padding: 0 8px; }
+            .valid b { color: #1B3878; }
+            .qr-cell { text-align: center; padding: 0 8px; }
+            .qr-cell img { width: 30px; height: 30px; }
+            .qr-cell p { font-size: 4px; color: #9ca3af; margin: 1px 0 0; }
+
+            div.card-back-outer {
+                width: 243pt; height: 153pt;
+                border: 1px solid #000000;
+                border-radius: 10px;
+                overflow: hidden;
+                background-color: #ffffff;
+            }
+            table.card-back { width: 243pt; height: 153pt; border-collapse: collapse; border: none; }
+            table.card-back td { width: 243pt; height: 153pt; text-align: center; vertical-align: middle; }
+            .back-logo { width: 46px; height: 46px; margin-bottom: 6px; }
+            .back-title { font-size: 10px; font-weight: bold; color: #1B3878; }
+        </style>
+        </head>
+        <body>
+            <table class="wrapper">
+                <tr>
+                    <td>
+                        <div class="card-outer">
+                        <table class="card">
+                            <tr>
+                                <td class="stripe">
+                                    <img class="stripe-logo" src="{$logoBase64}">
+                                    <div class="stripe-title">Kartu Anggota<br>Perpustakaan</div>
+                                    <div class="photo-box"><img src="{$photoSrc}"></div>
+                                </td>
+                                <td class="main">
+                                    <table class="header-row">
+                                        <tr>
+                                            <td style="width:16px;"><img class="inst-logo" src="{$logoBase64}"></td>
+                                            <td class="inst-name">{$perpusName}</td>
+                                        </tr>
+                                    </table>
+                                    <div class="memberno">{$member->MemberNo}</div>
+                                    <div class="fullname">{$member->Fullname}</div>
+                                    <div class="jenis"><b>Jenis</b> : {$jenisAnggota}</div>
+                                    <table class="footer-row">
+                                        <tr>
+                                            <td style="width:100pt; vertical-align:bottom;">
+                                                <div class="valid">Berlaku s/d <b>{$endDate}</b></div>
+                                            </td>
+                                            <td class="qr-cell">
+                                                <img src="{$qrImage}">
+                                                <p>Scan</p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="card-back-outer">
+                        <table class="card-back">
+                            <tr>
+                                <td>
+                                    <img class="back-logo" src="{$logoBase64}"><br>
+                                    <span class="back-title">Perpustakaan Kemnaker</span>
+                                </td>
+                            </tr>
+                        </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        HTML;
+    }
+    // ===== NOTIFIKASI KEANGGOTAAN: pendaftaran diterima / disetujui / ditolak =====
+
+    /**
+     * @param object $member  Butuh: Email, Fullname
+     */
+    public function sendRegistrationReceived(object $member): array
+    {
+        $p = 'margin:0 0 16px;color:#374151;font-size:14px;line-height:1.7;';
+        $content = '<p style="' . $p . '">Kepada Yth. <strong>' . esc($member->Fullname) . '</strong>,</p>'
+                 . '<p style="' . $p . '">Usul pendaftaran keanggotaan perpustakaan Anda telah kami terima. Pendaftaran belum aktif sampai diverifikasi oleh pustakawan.</p>'
+                 . '<p style="' . $p . '">Hasil verifikasi akan kami kirimkan ke alamat email ini.</p>';
+
+        return $this->sendMembershipMail(
+            $member->Email ?? '',
+            'Pendaftaran Anggota Diterima - ' . $this->fromName,
+            $this->buildMembershipMailLayout('Pendaftaran Diterima', $content),
+            'Registration received'
+        );
+    }
+
+    /**
+     * @param object $member  Butuh: Email, Fullname, MemberNo, EndDate
+     * Parameter lain sama seperti sendMemberCard().
+     */
+    public function sendMembershipApproved(object $member, string $qrImage, string $photoSrc, string $perpusName, string $logoBase64, string $jenisAnggota): array
+    {
+        if (empty($member->Email) || !filter_var($member->Email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Email anggota tidak valid atau kosong.'];
+        }
+
+        $endDate = !empty($member->EndDate) ? date('d/m/Y', strtotime($member->EndDate)) : '-';
+        $p  = 'margin:0 0 16px;color:#374151;font-size:14px;line-height:1.7;';
+        $td = 'padding:4px 0;font-size:13px;color:#374151;';
+        $content = '<p style="' . $p . '">Kepada Yth. <strong>' . esc($member->Fullname) . '</strong>,</p>'
+                 . '<p style="' . $p . '">Pendaftaran keanggotaan perpustakaan Anda telah <strong>disetujui</strong>. Berikut data keanggotaan Anda:</p>'
+                 . '<table cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 20px;margin-bottom:16px;">'
+                 . '<tr><td style="' . $td . 'width:140px;color:#6b7280;">Nomor Anggota</td><td style="' . $td . 'font-weight:700;">: ' . esc($member->MemberNo) . '</td></tr>'
+                 . '<tr><td style="' . $td . 'color:#6b7280;">Jenis Anggota</td><td style="' . $td . 'font-weight:700;">: ' . esc($jenisAnggota) . '</td></tr>'
+                 . '<tr><td style="' . $td . 'color:#6b7280;">Berlaku s.d.</td><td style="' . $td . 'font-weight:700;">: ' . $endDate . '</td></tr>'
+                 . '</table>'
+                 . '<p style="' . $p . '">Kartu anggota digital terlampir dalam format PDF. Mohon disimpan sebagai bukti keanggotaan.</p>';
+
+        $cardHtml = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml($cardHtml);
+        $dompdf->render();
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'kartu_');
+        file_put_contents($tempFile, $dompdf->output());
+
+        $result = $this->sendMembershipMail(
+            $member->Email,
+            'Keanggotaan Aktif - Kartu Anggota Digital - ' . $perpusName,
+            $this->buildMembershipMailLayout('Keanggotaan Disetujui', $content),
+            'Membership approved + card',
+            $tempFile,
+            'Kartu-Anggota-' . $member->MemberNo . '.pdf'
+        );
+        @unlink($tempFile);
+        return $result;
+    }
+
+    /**
+     * @param object $member  Butuh: Email, Fullname
+     * @param string $reason  Alasan penolakan (boleh kosong)
+     */
+    public function sendRegistrationRejected(object $member, string $reason = ''): array
+    {
+        $p = 'margin:0 0 16px;color:#374151;font-size:14px;line-height:1.7;';
+        $content = '<p style="' . $p . '">Kepada Yth. <strong>' . esc($member->Fullname) . '</strong>,</p>'
+                 . '<p style="' . $p . '">Mohon maaf, usul pendaftaran keanggotaan perpustakaan Anda belum dapat kami setujui.</p>';
+        if (trim($reason) !== '') {
+            $content .= '<p style="' . $p . 'background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;"><strong>Alasan:</strong><br>'
+                      . nl2br(esc($reason)) . '</p>';
+        }
+        $content .= '<p style="' . $p . '">Anda dapat mengajukan pendaftaran kembali setelah data diperbaiki, atau menghubungi pustakawan untuk informasi lebih lanjut.</p>';
+
+        return $this->sendMembershipMail(
+            $member->Email ?? '',
+            'Pendaftaran Anggota Belum Dapat Disetujui - ' . $this->fromName,
+            $this->buildMembershipMailLayout('Pendaftaran Belum Dapat Disetujui', $content),
+            'Registration rejected'
+        );
+    }
+
+    private function sendMembershipMail(string $to, string $subject, string $html, string $logTag, ?string $attachPath = null, ?string $attachName = null): array
+    {
+        if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Email tidak valid atau kosong.'];
+        }
+
+        $this->email->initialize($this->smtpConfig);
+        $this->email->clear(true); // true = lampiran sebelumnya ikut dibersihkan
+        $this->email->setFrom($this->fromEmail, $this->fromName);
+        $this->email->setTo($to);
+        $this->email->setSubject($subject);
+        $this->email->setMessage($html);
+        if ($attachPath) {
+            $this->email->attach($attachPath, 'attachment', $attachName);
+        }
+
+        try {
+            $sent = $this->email->send();
+            log_message('info', '[EmailNotif] ' . $logTag . ' to: ' . $to . ' - ' . ($sent ? 'OK' : 'FAILED'));
+            if ($sent) {
+                return ['success' => true, 'message' => 'Email berhasil dikirim ke ' . $to];
+            }
+            log_message('error', '[EmailNotif] ' . $logTag . ' failed: ' . $this->email->printDebugger(['headers']));
+            return ['success' => false, 'message' => 'Gagal mengirim email ke ' . $to . '. Cek log untuk detail.'];
+        } catch (\Throwable $e) {
+            log_message('error', '[EmailNotif] ' . $logTag . ' exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function buildMembershipMailLayout(string $heading, string $contentHtml): string
+    {
+        $appName = esc($this->fromName);
+        return '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"></head>'
+            . '<body style="margin:0;padding:24px;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">'
+            . '<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">'
+            . '<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">'
+            . '<tr><td style="background:#1e40af;padding:20px 40px;"><p style="margin:0;color:#ffffff;font-size:16px;font-weight:700;">' . $appName . '</p></td></tr>'
+            . '<tr><td style="padding:32px 40px;"><h2 style="margin:0 0 16px;color:#1f2937;font-size:18px;">' . esc($heading) . '</h2>'
+            . $contentHtml
+            . '</td></tr>'
+            . '<tr><td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center;">'
+            . '<p style="margin:0;color:#9ca3af;font-size:12px;">Email ini dikirim otomatis oleh sistem ' . $appName . '.<br>Harap tidak membalas email ini.</p></td></tr>'
+            . '</table></td></tr></table></body></html>';
+    }
 }

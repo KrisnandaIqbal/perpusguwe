@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keanggotaan Online - Perpustakaan</title>
+    <title>Pendaftaran Anggota - Perpustakaan Kemnaker</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
@@ -280,9 +280,9 @@
         <div class="email-content">
             <!-- Header -->
             <div class="header">
-                <img src="<?=$logo_url?>" alt="Perpusnas" class="logo">
-                <h1 class="header-title">Keanggotaan Online</h1>
-                <p class="header-subtitle">Perpustakaan Digital Indonesia</p>
+                <img src="<?=$logo_url?>" alt="Perpustakaan Kemnaker" class="logo">
+                <h1 class="header-title">Perpustakaan Kemnaker</h1>
+                <p class="header-subtitle">Kementerian Ketenagakerjaan RI</p>
             </div>
 
             <!-- Main Content -->
@@ -310,27 +310,23 @@
                         <span class="credentials-label">Nomor Anggota</span>
                         <span class="credentials-value"><?=$username?></span>
                     </div>
-                    <div class="credentials-item">
-                        <span class="credentials-label">Password Sementara</span>
-                        <span class="credentials-value"><?=$password?></span>
-                    </div>
                 </div>
 
                 <!-- Action Section -->
                 <div class="action-section">
                     <p class="action-text">
-                        Klik tombol di bawah untuk mengaktifkan akun Anda dan mulai menjelajahi koleksi perpustakaan digital kami.
+                        Akun Anda sudah aktif dan siap digunakan. Silakan masuk untuk mulai menjelajahi koleksi perpustakaan kami.
                     </p>
                     
-                    <a href="<?=$action_url?>" class="btn-primary" target="_blank">
+                    <a href="<?=$login_url?>" class="btn-primary" target="_blank">
                         <svg width="20" height="20" fill="white" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 8px;">
                             <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
                         </svg>
-                        Verifikasi Pendaftaran
+                        Masuk ke Akun Saya
                     </a>
                     
                     <div class="url-display">
-                        <?=$action_url?>
+                        <?=$login_url?>
                     </div>
                     
                     <p style="font-size: 14px; color: #718096; margin-top: 20px;">

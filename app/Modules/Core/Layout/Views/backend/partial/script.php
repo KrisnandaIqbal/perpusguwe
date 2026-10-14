@@ -23,7 +23,7 @@
 <script src="<?= base_url('assets/vendors'); ?>/datatables/js/responsive.bootstrap.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="https://cdn.tiny.cloud/1/32x284pjuqkz6bpk6b6dnfpxfestvjmqesa33sgixmunt7sh/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="<?= base_url('assets/vendors/tinymce'); ?>/tinymce.min.js" referrerpolicy="origin"></script>
 
 <!--INIT -->
 <script src="<?= base_url('themes/uigniter/js/vendors')?>/blockui.js"></script>

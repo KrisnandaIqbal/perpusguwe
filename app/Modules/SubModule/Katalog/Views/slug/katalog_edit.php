@@ -456,6 +456,64 @@ $rda = $request->getGet('rda') ?? 1;
 		</div>
 	</div>
 
+	
+	<div class="card card-shadow mb-3">
+	<div class="card-header">
+		<div class="custom-title-wrap bar-primary">
+			<div class="custom-title">Daftar Eksemplar</div>
+		</div>
+		<div class="btn-actions-pane-right actions-icon-btn">
+			<button type="button"
+				class="btn btn-primary btn-sm"
+				id="btnTambahEksemplar"
+				data-catalog-id="<?= $catalog->ID ?>">
+				<i class="fa fa-plus mr-2"></i>Tambah Eksemplar
+			</button>
+		</div>
+	</div>
+	<div class="card-body">
+		<div class="table-responsive">
+			<table class="table table-bordered table-striped w-100" id="tableEksemplar">
+				<thead>
+					<tr>
+						<th>No. Barcode</th>
+						<th>Lokasi</th>
+						<th>Status</th>
+						<th>Aksi</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Tambah/Edit Eksemplar -->
+<div class="modal fade" id="modalEksemplar" tabindex="-1" aria-labelledby="modalEksemplarLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="modalEksemplarLabel">Eksemplar</h5>
+				<button type="button" class="btn-close" id="btnCloseEksemplarModal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" id="modalEksemplarBody">
+				<div class="text-center py-4 text-muted">
+					<i class="fa fa-spinner fa-spin mr-2"></i> Memuat form...
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" id="btnBatalEksemplar">Batal</button>
+				<button type="button" class="btn btn-primary" id="btnSimpanEksemplar">
+					<i class="fa fa-save mr-2"></i>Simpan
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+	
+
+
+
 	<div class="card card-shadow mb-3">
 		<div class="card-header">
 			<div class="custom-title-wrap bar-primary">
@@ -568,23 +626,47 @@ $rda = $request->getGet('rda') ?? 1;
 			<div class="row">
 				<?php if ($rda == 1) : ?>
 					<div class="col-md-6">
-						<div class="form-group">
-							<label for="jenisIsi">Jenis Isi</label>
-							<input type="text" class="form-control" name="jenisIsi" id="jenisIsi" placeholder="" value="<?= trim($str_336['a'] ?? '') ?>" />
-						</div>
-					</div>
-					<div class=" col-md-6">
-						<div class="form-group">
-							<label for="jenisMedia">Jenis Media</label>
-							<input type="text" class="form-control" name="jenisMedia" id="jenisMedia" placeholder="" value="<?= trim($str_337['a'] ?? '') ?>" />
-						</div>
-					</div>
-					<div class=" col-md-6">
-						<div class="form-group">
-							<label for="jenisWadah">Jenis Wadah</label>
-							<input type="text" class="form-control" name="jenisWadah" id="jenisWadah" placeholder="" value="<?= trim($str_338['a'] ?? '') ?>" />
-						</div>
-					</div>
+                        <div class="form-group">
+                                <label for="jenisIsi">Jenis Isi</label>
+                                <select class="form-control" name="jenisIsi" id="jenisIsi">
+                                        <option value="">-- Pilih Jenis Isi --</option>
+                                        <?php
+                                        $currentJenisIsi = trim($str_336['a'] ?? '');
+                                        $contentTypes = (new \Base\Models\DataModel('mst_content_type'))->orderBy('content_type')->findAll();
+                                        foreach ($contentTypes as $ct): ?>
+                                                <option value="<?= esc($ct->content_type) ?>" <?= ($currentJenisIsi == $ct->content_type) ? 'selected' : '' ?>><?= esc($ct->content_type) ?></option>
+                                        <?php endforeach; ?>
+                                </select>
+                        </div>
+                </div>
+                <div class="col-md-6">
+                        <div class="form-group">
+                                <label for="jenisMedia">Jenis Media</label>
+                                <select class="form-control" name="jenisMedia" id="jenisMedia">
+                                        <option value="">-- Pilih Jenis Media --</option>
+                                        <?php
+                                        $currentJenisMedia = trim($str_337['a'] ?? '');
+                                        $mediaTypes = (new \Base\Models\DataModel('mst_media_type'))->orderBy('media_type')->findAll();
+                                        foreach ($mediaTypes as $mt): ?>
+                                                <option value="<?= esc($mt->media_type) ?>" <?= ($currentJenisMedia == $mt->media_type) ? 'selected' : '' ?>><?= esc($mt->media_type) ?></option>
+                                        <?php endforeach; ?>
+                                </select>
+                        </div>
+                </div>
+                <div class="col-md-6">
+                        <div class="form-group">
+                                <label for="jenisWadah">Jenis Wadah</label>
+                                <select class="form-control" name="jenisWadah" id="jenisWadah">
+                                        <option value="">-- Pilih Jenis Wadah --</option>
+                                        <?php
+                                        $currentJenisWadah = trim($str_338['a'] ?? '');
+                                        $carrierTypes = (new \Base\Models\DataModel('mst_carrier_type'))->orderBy('carrier_type')->findAll();
+                                        foreach ($carrierTypes as $ct): ?>
+                                                <option value="<?= esc($ct->carrier_type) ?>" <?= ($currentJenisWadah == $ct->carrier_type) ? 'selected' : '' ?>><?= esc($ct->carrier_type) ?></option>
+                                        <?php endforeach; ?>
+                                </select>
+                        </div>
+                </div>
 				<?php endif; ?>
 				<div class=" col-md-6">
 					<div class="form-group">
@@ -930,3 +1012,151 @@ $rda = $request->getGet('rda') ?? 1;
 		</div>
 	</div>
 </div>
+
+
+<script>
+(function waitForJQuery() {
+	if (window.jQuery) {
+		jQuery(function ($) {
+			initEksemplarModal($);
+		});
+	} else {
+		setTimeout(waitForJQuery, 50);
+	}
+})();
+
+function initEksemplarModal($) {
+    	// WAJIB: pindahkan modal jadi anak langsung <body>.
+	// Kalau tidak, modal terjebak di stacking context wrapper tema,
+	// dan backdrop (yang selalu anak <body>) akan menutupi modal
+	// walau z-index modal lebih tinggi secara nominal.
+	var $modalEl = $('#modalEksemplar');
+	if ($modalEl.length && !$modalEl.parent().is('body')) {
+		$modalEl.appendTo('body');
+	}
+	var catalogId = <?= (int) $catalog->ID ?>;
+    
+    	function openEksemplarModal() {
+		var el = document.getElementById('modalEksemplar');
+		if (!document.querySelector('.modal-backdrop')) {
+			var backdrop = document.createElement('div');
+			backdrop.className = 'modal-backdrop fade show';
+			backdrop.addEventListener('click', closeEksemplarModal);
+			document.body.appendChild(backdrop);
+		}
+		el.classList.add('show');
+		el.style.display = 'block';
+		el.setAttribute('aria-modal', 'true');
+		el.removeAttribute('aria-hidden');
+		document.body.classList.add('modal-open');
+	}
+	function closeEksemplarModal() {
+		var el = document.getElementById('modalEksemplar');
+		el.classList.remove('show');
+		el.style.display = 'none';
+		el.removeAttribute('aria-modal');
+		el.setAttribute('aria-hidden', 'true');
+		document.body.classList.remove('modal-open');
+		document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+	}
+	function showLoading() {
+		$('#modalEksemplarBody').html('<div class="text-center py-4 text-muted"><i class="fa fa-spinner fa-spin mr-2"></i> Memuat form...</div>');
+	}
+	function showFormError($form, message) {
+		$form.find('.alert-danger.ajax-error').remove();
+		$form.prepend('<div class="alert alert-danger ajax-error mb-3">' + message + '</div>');
+	}
+
+	var tableEksemplar = $('#tableEksemplar').DataTable({
+		processing: true,
+		serverSide: true,
+		ajax: {
+			url: '<?= site_url('api/eksemplar/datatable/0') ?>/' + catalogId,
+			type: 'POST'
+		},
+		columns: [
+			{ data: 'NomorBarcode' },
+			{ data: 'LocationLibraryName' },
+			{ data: 'StatusName' },
+			{ data: 'action', orderable: false, searchable: false }
+		],
+		language: { emptyTable: 'Belum ada eksemplar untuk katalog ini' }
+	});
+
+	$('#btnTambahEksemplar').on('click', function () {
+		var id = $(this).data('catalog-id');
+		$('#modalEksemplarLabel').text('Tambah Eksemplar');
+		showLoading();
+		openEksemplarModal();
+
+		$.get('<?= site_url('eksemplar/modal-create') ?>/' + id)
+			.done(function (html) { $('#modalEksemplarBody').html(html); })
+			.fail(function () {
+				$('#modalEksemplarBody').html('<div class="alert alert-danger mb-0">Gagal memuat form. Silakan coba lagi.</div>');
+			});
+	});
+
+	$('#tableEksemplar').on('click', '.btn-edit-eksemplar', function () {
+		var id = $(this).data('id');
+		$('#modalEksemplarLabel').text('Edit Eksemplar');
+		showLoading();
+		openEksemplarModal();
+
+		$.get('<?= site_url('eksemplar/modal-edit') ?>/' + id)
+			.done(function (html) { $('#modalEksemplarBody').html(html); })
+			.fail(function () {
+				$('#modalEksemplarBody').html('<div class="alert alert-danger mb-0">Gagal memuat form. Silakan coba lagi.</div>');
+			});
+	});
+
+	$('#modalEksemplarBody').on('submit', 'form', function (e) {
+		e.preventDefault();
+
+		var $form = $(this);
+		var $btnSubmit = $form.find('button[type=submit]');
+		var originalBtnText = $btnSubmit.html();
+
+		$form.find('.alert-danger.ajax-error').remove();
+		$btnSubmit.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-2"></i>Menyimpan...');
+
+		$.ajax({
+			url: $form.attr('action'),
+			type: 'POST',
+			data: new FormData(this),
+			processData: false,
+			contentType: false,
+			dataType: 'json',
+			headers: { 'X-Requested-With': 'XMLHttpRequest' }
+		}).done(function (res) {
+			if (res.success) {
+				closeEksemplarModal();
+				tableEksemplar.ajax.reload(null, false);
+				alert(res.message || 'Eksemplar berhasil disimpan.');
+			} else {
+				showFormError($form, res.message || 'Data gagal disimpan, periksa kembali isian.');
+				if (res.csrf_name && res.csrf_hash) {
+					$form.find('input[name="' + res.csrf_name + '"]').val(res.csrf_hash);
+				}
+			}
+		}).fail(function (xhr) {
+			var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Terjadi kesalahan pada server.';
+			showFormError($form, msg);
+		}).always(function () {
+			$btnSubmit.prop('disabled', false).html(originalBtnText);
+		});
+	});
+	
+	$('#btnSimpanEksemplar').on('click', function () {
+		var $form = $('#modalEksemplarBody').find('form').first();
+		if ($form.length) {
+			$form.trigger('submit');
+		} else {
+			alert('Form tidak ditemukan. Silakan tutup dan buka kembali modal.');
+		}
+	});
+
+	$('#btnCloseEksemplarModal, #btnBatalEksemplar').on('click', function () {
+		closeEksemplarModal();
+	});
+}
+</script>

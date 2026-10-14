@@ -28,6 +28,57 @@ if (!function_exists('get_username')) {
     }
 }
 
+if (!function_exists('record_history')) {
+    /**
+     * Mencatat riwayat perubahan data ke tabel historydata.
+     * Meniru fungsi biblio_log di SLiMS lama.
+     *
+     * @param string      $action     Jenis aksi, misal: 'CREATE', 'UPDATE', 'DELETE'
+     * @param string      $tableName  Nama tabel/modul terkait, misal: 'biblio', 'item'
+     * @param int|string  $idRef      ID record yang diubah
+     * @param string|null $note       Catatan tambahan (opsional)
+     * @return bool True jika berhasil insert, false jika gagal
+     */
+    function record_history($action, $tableName, $idRef, $note = null)
+    {
+        if (empty($action) || empty($tableName) || empty($idRef)) {
+            return false;
+        }
+
+        helper('auth');
+        $currentUserId = user_id();
+
+        $terminal = $_SERVER['REMOTE_ADDR'] ?? '-';
+        $now      = date('Y-m-d H:i:s');
+
+        $data = [
+            'Action'         => $action,
+            'TableName'      => $tableName,
+            'IDRef'          => $idRef,
+            'Note'           => $note,
+            'CreateBy'       => $currentUserId,
+            'CreateDate'     => $now,
+            'CreateTerminal' => $terminal,
+            'UpdateBy'       => null,
+            'UpdateDate'     => null,
+            'UpdateTerminal' => null,
+            'Member_id'      => null,
+            'Branch_id'      => null,
+            'active'         => 1,
+        ];
+
+        try {
+            $db      = \Config\Database::connect();
+            $builder = $db->table('historydata');
+            $builder->insert($data);
+            return true;
+        } catch (\Throwable $e) {
+            log_message('error', 'record_history() gagal: ' . $e->getMessage());
+            return false;
+        }
+    }
+}
+
 if (!function_exists('get_session')) {
     function get_session($name)
     {

@@ -114,7 +114,7 @@ class AnggotaKartuController extends \Base\Controllers\BaseController
             $jenis_row        = $db->table('jenis_anggota')->select('jenisanggota')->where('id', $anggota->JenisAnggota_id)->get()->getRow();
             $members_data[]   = [
                 'anggota'           => $anggota,
-                'photo_base64'      => $photo_base64 ?: 'https://placehold.co/250x280/cccccc/666666?text=FOTO',
+                'photo_base64'      => $photo_base64 ?: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTAiIGhlaWdodD0iMjgwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjY2NjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyOCIgZmlsbD0iIzY2NjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+Rk9UTzwvdGV4dD48L3N2Zz4=',
                 'qr_image'          => $qr_image,
                 'end_date'          => date('d F Y', strtotime($anggota->EndDate)),
                 'jenis_anggota_nama'=> $jenis_row ? $jenis_row->jenisanggota : 'UMUM',
@@ -216,7 +216,7 @@ class AnggotaKartuController extends \Base\Controllers\BaseController
                 continue;
             }
 
-            $photoSrc = 'https://placehold.co/250x280/cccccc/666666?text=FOTO';
+            $photoSrc = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTAiIGhlaWdodD0iMjgwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjY2NjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyOCIgZmlsbD0iIzY2NjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+Rk9UTzwvdGV4dD48L3N2Zz4=';
             if (!empty($member->PhotoUrl)) {
                 $photoPath = ROOTPATH . 'public/uploads/anggota/' . $member->PhotoUrl;
                 if (file_exists($photoPath)) {
