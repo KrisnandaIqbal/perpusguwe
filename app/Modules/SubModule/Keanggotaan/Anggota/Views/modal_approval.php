@@ -112,7 +112,6 @@
         cursor: not-allowed;
         color: #adb5bd;
     }
-
     @media (max-width: 575px) {
         #modal_approval .modal-dialog { max-width: calc(100% - 1rem); margin: 0.5rem auto; }
         #modal_approval .approval-body { flex-direction: column; }

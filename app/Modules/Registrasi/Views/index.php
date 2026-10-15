@@ -2874,6 +2874,14 @@ if (!empty($jenis_identitas)) {
         <div class="rf-modal-body" id="syaratScrollbox">
             <div class="rf-doc-header">
                 <h4 class="rf-doc-title">TATA TERTIB KEANGGOTAAN DAN LAYANAN SIRKULASI<br>PERPUSTAKAAN KEMENTERIAN KETENAGAKERJAAN</h4>
+                <div style="text-align: left; margin-top: 10px;">
+                    <strong>Dasar:</strong>
+                    <ol class="rf-doc-list">
+                        <li>Undang-Undang Nomor 43 Tahun 2007 tentang Perpustakaan.</li>
+                        <li>Peraturan Perpustakaan Nasional Nomor 7 Tahun 2022 tentang Standar Nasional Perpustakaan Khusus.</li>
+                        <li>Undang-Undang Nomor 27 Tahun 2022 tentang Perlindungan Data Pribadi.</li>
+                    </ol>
+                </div>
             </div>
 
             <div class="rf-doc-chapter">BAB I. KETENTUAN UMUM</div>
@@ -3265,7 +3273,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Phone Formatting ───
     const phoneInput = document.getElementById('Phone');
-
     // ─── Custom Dropdown Unit Kerja (100% Responsive / No Overflow) ───
     // ─── Preloaded Sub-Units Data from Server ───
     const subUnitsData = <?= json_encode($sub_units_grouped ?? []) ?>;
