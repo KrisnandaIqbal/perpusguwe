@@ -87,21 +87,23 @@ class AnggotaExportController extends \Base\Controllers\BaseController
             'N1' => 'Agama',
             'O1' => 'Pekerjaan',
             'P1' => 'Nama Institusi',
-            'Q1' => 'Email',
-            'R1' => 'Nomor WhatsApp / HP',
-            'S1' => 'Alamat KTP',
-            'T1' => 'RT / RW KTP',
-            'U1' => 'Kelurahan KTP',
-            'V1' => 'Kecamatan KTP',
-            'W1' => 'Kota KTP',
-            'X1' => 'Provinsi KTP',
-            'Y1' => 'Alamat Domisili',
-            'Z1' => 'RT / RW Domisili',
-            'AA1' => 'Kelurahan Domisili',
-            'AB1' => 'Kecamatan Domisili',
-            'AC1' => 'Kota Domisili',
-            'AD1' => 'Provinsi Domisili',
-            'AE1' => 'Tanggal Dibuat',
+            'Q1' => 'Satuan Kerja / Unit Eselon I',
+            'R1' => 'Biro / Direktorat / Unit',
+            'S1' => 'Email',
+            'T1' => 'Nomor WhatsApp / HP',
+            'U1' => 'Alamat KTP',
+            'V1' => 'RT / RW KTP',
+            'W1' => 'Kelurahan KTP',
+            'X1' => 'Kecamatan KTP',
+            'Y1' => 'Kota KTP',
+            'Z1' => 'Provinsi KTP',
+            'AA1' => 'Alamat Domisili',
+            'AB1' => 'RT / RW Domisili',
+            'AC1' => 'Kelurahan Domisili',
+            'AD1' => 'Kecamatan Domisili',
+            'AE1' => 'Kota Domisili',
+            'AF1' => 'Provinsi Domisili',
+            'AG1' => 'Tanggal Dibuat',
         ];
 
         foreach ($headers as $cell => $value) {
@@ -109,7 +111,7 @@ class AnggotaExportController extends \Base\Controllers\BaseController
         }
 
         // Style Header: Tebal, latar belakang abu-abu terang, teks tengah
-        $headerRange = 'A1:AE1';
+        $headerRange = 'A1:AG1';
         $sheet->getStyle($headerRange)->getFont()->setBold(true);
         $sheet->getStyle($headerRange)->getFill()
             ->setFillType(Fill::FILL_SOLID)
@@ -164,6 +166,8 @@ class AnggotaExportController extends \Base\Controllers\BaseController
                     'msp.Nama as StatusPerkawinan',
                     'ag.Name as Agama',
                     'mp.Pekerjaan as Pekerjaan',
+                    'mu.nama_unit as UnitKerja',
+                    'msu.nama_subunit as SubUnitKerja',
                 ])
                 ->join('status_anggota sa', 'sa.id = m.StatusAnggota_id', 'left')
                 ->join('jenis_anggota ja', 'ja.id = m.JenisAnggota_id', 'left')
@@ -172,6 +176,8 @@ class AnggotaExportController extends \Base\Controllers\BaseController
                 ->join('master_status_perkawinan msp', 'msp.id = m.MaritalStatus_id', 'left')
                 ->join('agama ag', 'ag.ID = m.Agama_id', 'left')
                 ->join('master_pekerjaan mp', 'mp.id = m.Job_id', 'left')
+                ->join('master_unit mu', 'mu.id = m.UnitKerja_id', 'left')
+                ->join('master_subunit msu', 'msu.id = m.SubUnitKerja_id', 'left')
                 ->where('m.IsKeranjang', 0)
                 ->orderBy('m.ID', 'ASC')
                 ->limit($batchSize, $offset);
@@ -212,29 +218,31 @@ class AnggotaExportController extends \Base\Controllers\BaseController
                 $sheet->setCellValue('N' . $rowNum, $item->Agama ?? '-');
                 $sheet->setCellValue('O' . $rowNum, $item->Pekerjaan ?? '-');
                 $sheet->setCellValue('P' . $rowNum, $this->sanitizeSpreadsheetText($item->InstitutionName ?? '-'));
-                $sheet->setCellValue('Q' . $rowNum, $this->sanitizeSpreadsheetText($item->Email ?? '-'));
+                $sheet->setCellValue('Q' . $rowNum, $this->sanitizeSpreadsheetText($item->UnitKerja ?? '-'));
+                $sheet->setCellValue('R' . $rowNum, $this->sanitizeSpreadsheetText($item->SubUnitKerja ?? '-'));
+                $sheet->setCellValue('S' . $rowNum, $this->sanitizeSpreadsheetText($item->Email ?? '-'));
 
                 // Phone explicit string agar leading zero (08...) tidak hilang
-                $sheet->getCell('R' . $rowNum)->setValueExplicit($this->sanitizeSpreadsheetText($item->Phone ?? '-'), DataType::TYPE_STRING);
+                $sheet->getCell('T' . $rowNum)->setValueExplicit($this->sanitizeSpreadsheetText($item->Phone ?? '-'), DataType::TYPE_STRING);
 
-                $sheet->setCellValue('S' . $rowNum, $this->sanitizeSpreadsheetText($item->Address ?? '-'));
+                $sheet->setCellValue('U' . $rowNum, $this->sanitizeSpreadsheetText($item->Address ?? '-'));
                 $rtRw = (!empty($item->RT) || !empty($item->RW)) ? ($item->RT ?? '') . ' / ' . ($item->RW ?? '') : '-';
-                $sheet->setCellValue('T' . $rowNum, $rtRw);
-                $sheet->setCellValue('U' . $rowNum, $this->sanitizeSpreadsheetText($item->Kelurahan ?? '-'));
-                $sheet->setCellValue('V' . $rowNum, $this->sanitizeSpreadsheetText($item->Kecamatan ?? '-'));
-                $sheet->setCellValue('W' . $rowNum, $this->sanitizeSpreadsheetText($item->City ?? '-'));
-                $sheet->setCellValue('X' . $rowNum, $this->sanitizeSpreadsheetText($item->Province ?? '-'));
+                $sheet->setCellValue('V' . $rowNum, $rtRw);
+                $sheet->setCellValue('W' . $rowNum, $this->sanitizeSpreadsheetText($item->Kelurahan ?? '-'));
+                $sheet->setCellValue('X' . $rowNum, $this->sanitizeSpreadsheetText($item->Kecamatan ?? '-'));
+                $sheet->setCellValue('Y' . $rowNum, $this->sanitizeSpreadsheetText($item->City ?? '-'));
+                $sheet->setCellValue('Z' . $rowNum, $this->sanitizeSpreadsheetText($item->Province ?? '-'));
 
-                $sheet->setCellValue('Y' . $rowNum, $this->sanitizeSpreadsheetText($item->AddressNow ?? '-'));
+                $sheet->setCellValue('AA' . $rowNum, $this->sanitizeSpreadsheetText($item->AddressNow ?? '-'));
                 $rtRwNow = (!empty($item->RTNow) || !empty($item->RWNow)) ? ($item->RTNow ?? '') . ' / ' . ($item->RWNow ?? '') : '-';
-                $sheet->setCellValue('Z' . $rowNum, $rtRwNow);
-                $sheet->setCellValue('AA' . $rowNum, $this->sanitizeSpreadsheetText($item->KelurahanNow ?? '-'));
-                $sheet->setCellValue('AB' . $rowNum, $this->sanitizeSpreadsheetText($item->KecamatanNow ?? '-'));
-                $sheet->setCellValue('AC' . $rowNum, $this->sanitizeSpreadsheetText($item->CityNow ?? '-'));
-                $sheet->setCellValue('AD' . $rowNum, $this->sanitizeSpreadsheetText($item->ProvinceNow ?? '-'));
+                $sheet->setCellValue('AB' . $rowNum, $rtRwNow);
+                $sheet->setCellValue('AC' . $rowNum, $this->sanitizeSpreadsheetText($item->KelurahanNow ?? '-'));
+                $sheet->setCellValue('AD' . $rowNum, $this->sanitizeSpreadsheetText($item->KecamatanNow ?? '-'));
+                $sheet->setCellValue('AE' . $rowNum, $this->sanitizeSpreadsheetText($item->CityNow ?? '-'));
+                $sheet->setCellValue('AF' . $rowNum, $this->sanitizeSpreadsheetText($item->ProvinceNow ?? '-'));
 
                 $createDate = !empty($item->CreateDate) ? substr($item->CreateDate, 0, 10) : '-';
-                $sheet->setCellValue('AE' . $rowNum, $createDate);
+                $sheet->setCellValue('AG' . $rowNum, $createDate);
 
                 $rowNum++;
                 $nomorUrut++;
@@ -245,13 +253,13 @@ class AnggotaExportController extends \Base\Controllers\BaseController
 
         // Aktifkan auto-filter (FR-13)
         $lastRow = max($rowNum - 1, 1);
-        $sheet->setAutoFilter('A1:AE' . $lastRow);
+        $sheet->setAutoFilter('A1:AG' . $lastRow);
 
         // Auto-width kolom (FR-13)
         foreach (range('A', 'Z') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
-        foreach (['AA', 'AB', 'AC', 'AD', 'AE'] as $col) {
+        foreach (['AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG'] as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -359,11 +367,13 @@ class AnggotaExportController extends \Base\Controllers\BaseController
                 'ja.jenisanggota as JenisAnggota',
                 'mji.Nama as JenisIdentitas',
                 'mu.nama_unit as UnitKerja',
+                'msu.nama_subunit as SubUnitKerja',
             ])
             ->join('status_anggota sa', 'sa.id = m.StatusAnggota_id', 'left')
             ->join('jenis_anggota ja', 'ja.id = m.JenisAnggota_id', 'left')
             ->join('master_jenis_identitas mji', 'mji.id = m.IdentityType_id', 'left')
             ->join('master_unit mu', 'mu.id = m.UnitKerja_id', 'left')
+            ->join('master_subunit msu', 'msu.id = m.SubUnitKerja_id', 'left')
             ->whereIn('m.ID', $sanitizedIds)
             ->orderBy('m.ID', 'ASC')
             ->get()->getResult();

@@ -6,6 +6,36 @@ $request = service('request');
 <?= $this->extend('App\Views\layout\main'); ?>
 
 <?= $this->section('style'); ?>
+<style>
+    /* Tombol Pratinjau mencolok khusus pendaftar yang masih Menunggu Persetujuan */
+    .btn-preview-pending {
+        background-color: #f7b924 !important;
+        border-color: #f7b924 !important;
+        color: #212529 !important;
+        position: relative;
+        animation: pulse-pending-btn 2s infinite ease-in-out;
+    }
+    .btn-preview-pending:hover {
+        background-color: #e0a800 !important;
+        border-color: #d39e00 !important;
+        color: #212529 !important;
+        transform: scale(1.05);
+    }
+    @keyframes pulse-pending-btn {
+        0% {
+            box-shadow: 0 0 0 0 rgba(247, 185, 36, 0.7);
+            transform: scale(1);
+        }
+        50% {
+            box-shadow: 0 0 0 6px rgba(247, 185, 36, 0);
+            transform: scale(1.04);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(247, 185, 36, 0);
+            transform: scale(1);
+        }
+    }
+</style>
 <?= $this->endSection('style'); ?>
 
 <?= $this->section('page'); ?>
@@ -244,10 +274,23 @@ $request = service('request');
                     type: 'image'
                 });
 
+                $('[data-toggle="tooltip"]').tooltip();
+
                 syncCheckboxesOnDraw();
             },
             "initComplete": function(settings, json) {
 
+            }
+        });
+
+        // Handler klik tombol "Pratinjau dan ubah status" pada kolom Aksi
+        $(document).on('click', '.btn-preview-status', function(e) {
+            e.preventDefault();
+            var summaryUrl = $(this).attr('data-summary');
+            var switchUrl = $(this).attr('data-href');
+            var rejectUrl = $(this).attr('data-reject-href');
+            if (typeof open_member_modal === 'function') {
+                open_member_modal(summaryUrl, switchUrl, rejectUrl);
             }
         });
     });

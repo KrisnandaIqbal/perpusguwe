@@ -603,8 +603,8 @@
       </div>
 
       <div class="form-row">
-        <!-- Satuan Kerja / Unit Kerja -->
-        <div class="col-md-12 mb-2 form-group">
+        <!-- Satuan Kerja / Unit Eselon I Penempatan -->
+        <div class="col-md-6 mb-3 form-group">
           <label for="UnitKerja_id" class="font-weight-bold">Satuan Kerja / Unit Eselon I Penempatan <span class="text-danger">*</span></label>
           <select class="form-control select2" name="UnitKerja_id" id="UnitKerja_id" style="width: 100%;" required>
             <option value="">Pilih Satuan Kerja / Unit Eselon I</option>
@@ -614,7 +614,18 @@
               </option>
             <?php endforeach; ?>
           </select>
-          <small class="form-text text-muted">Direktorat / Satuan Kerja penempatan di Kementerian Ketenagakerjaan.</small>
+          <small class="form-text text-muted">Unit Eselon I penempatan di Kementerian Ketenagakerjaan.</small>
+        </div>
+
+        <!-- Biro / Direktorat / Unit (Sub-Unit Kerja) -->
+        <div class="col-md-6 mb-3 form-group" id="wrapperSubUnitKerjaAdmin" style="display: none;">
+          <label for="SubUnitKerja_id" class="font-weight-bold">
+            Biro / Direktorat / Unit <span class="text-danger" id="reqSubUnitKerjaAdmin">*</span>
+          </label>
+          <select class="form-control select2" name="SubUnitKerja_id" id="SubUnitKerja_id" style="width: 100%;" disabled>
+            <option value="">Pilih unit kerja dahulu</option>
+          </select>
+          <small class="form-text text-muted">Biro, Direktorat, Balai Besar, atau Unit di bawah Eselon I terkait.</small>
         </div>
       </div>
     </div>
@@ -978,13 +989,79 @@ document.addEventListener('DOMContentLoaded', function() {
         // Inisialisasi awal
         syncEditJenisAnggota();
 
-        // Select2 Unit Kerja
+        // Select2 Unit & Sub-Unit Kerja Cascading
+        var adminSubUnitsData = <?= json_encode($sub_units_grouped ?? []) ?>;
+        var initialSubUnitId = <?= json_encode((int) ($anggota->SubUnitKerja_id ?? 0)) ?>;
+
         if ($.fn.select2) {
             $('#UnitKerja_id').select2({
                 placeholder: 'Pilih Satuan Kerja / Unit Eselon I',
                 allowClear: true,
                 width: '100%'
             });
+            $('#SubUnitKerja_id').select2({
+                placeholder: 'Pilih Biro / Direktorat / Unit',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        function updateAdminSubUnits(unitId, selectedSubId) {
+            var $sub = $('#SubUnitKerja_id');
+            var $wrap = $('#wrapperSubUnitKerjaAdmin');
+            var $req = $('#reqSubUnitKerjaAdmin');
+
+            $sub.empty();
+
+            if (!unitId || unitId == '1' || unitId == 1) {
+                // Unit 1 (Kemnaker RI) -> hide & not required
+                $wrap.hide();
+                $req.hide();
+                $sub.prop('disabled', true).prop('required', false);
+                $sub.append(new Option('Pilih unit kerja dahulu', ''));
+                if ($.fn.select2 && $sub.hasClass('select2-hidden-accessible')) {
+                    $sub.val('').trigger('change');
+                }
+                return;
+            }
+
+            var items = adminSubUnitsData[unitId] || [];
+            if (items.length > 0) {
+                $wrap.show();
+                $req.show();
+                $sub.prop('disabled', false).prop('required', true);
+                $sub.append(new Option('-- Pilih Biro / Direktorat / Unit --', ''));
+
+                var matchFound = false;
+                items.forEach(function(item) {
+                    var isSelected = (selectedSubId && parseInt(item.id) === parseInt(selectedSubId));
+                    if (isSelected) matchFound = true;
+                    $sub.append(new Option(item.nama_subunit, item.id, isSelected, isSelected));
+                });
+
+                if ($.fn.select2 && $sub.hasClass('select2-hidden-accessible')) {
+                    $sub.val(matchFound ? selectedSubId : '').trigger('change');
+                }
+            } else {
+                $wrap.hide();
+                $req.hide();
+                $sub.prop('disabled', true).prop('required', false);
+                $sub.append(new Option('Pilih unit kerja dahulu', ''));
+                if ($.fn.select2 && $sub.hasClass('select2-hidden-accessible')) {
+                    $sub.val('').trigger('change');
+                }
+            }
+        }
+
+        $('#UnitKerja_id').on('change', function() {
+            var unitId = $(this).val();
+            updateAdminSubUnits(unitId, null);
+        });
+
+        // Trigger on initial load
+        var curUnit = $('#UnitKerja_id').val();
+        if (curUnit) {
+            updateAdminSubUnits(curUnit, initialSubUnitId);
         }
     }
 
