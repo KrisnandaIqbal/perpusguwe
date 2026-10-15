@@ -55,7 +55,7 @@ $baris = static function (string $label, string $nilai): string {
                                 </p>
                                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
                                     <?= $baris('Jenis anggota', (string) ($member->JenisAnggota ?? '-')) ?>
-                                    <?= $baris('Unit kerja', (string) ($member->UnitKerja ?? '-')) ?>
+                                    <?= $baris('Unit kerja', (string) (get_member_unit_display($member) ?: '-')) ?>
                                     <?= $baris('Tanggal daftar', tgl_indonesia(substr((string) $member->RegisterDate, 0, 10))) ?>
                                 </table>
                                 <p style="margin:0;font-size:15px;line-height:24px;">Anda tidak perlu mendaftar lagi selama menunggu.</p>
@@ -75,33 +75,54 @@ $baris = static function (string $label, string $nilai): string {
 
                             <?php else: ?>
                                 <p style="margin:0 0 16px;font-size:15px;line-height:24px;">
-                                    Petugas sudah memeriksa pendaftaran Anda. Pendaftaran itu belum bisa diterima karena ada yang perlu diperbaiki.
+                                    Petugas perpustakaan telah memeriksa pendaftaran Anda. Pendaftaran tersebut <strong>belum bisa diterima</strong> karena beberapa hal berikut:
                                 </p>
-                                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
-                                    <?= $baris('Alasan', $lainnya ? $catatan : $alasan['label']) ?>
-                                    <?php if (!$lainnya && $catatan !== ''): ?>
-                                        <?= $baris('Catatan petugas', $catatan) ?>
-                                    <?php endif; ?>
-                                </table>
 
-                                <?php if ($alasan['cara'] !== ''): ?>
-                                    <p style="margin:0 0 16px;font-size:15px;line-height:24px;"><?= esc($alasan['cara']) ?></p>
+                                <?php if (!empty($daftar_alasan) && is_array($daftar_alasan)): ?>
+                                    <ul style="margin:0 0 16px 20px;padding:0;font-size:14px;line-height:22px;color:#0D1C2E;">
+                                        <?php foreach ($daftar_alasan as $item): ?>
+                                            <li style="margin-bottom:8px;">
+                                                <strong><?= esc($item['label']) ?></strong>
+                                                <?php if (!empty($item['cara'])): ?>
+                                                    <div style="font-size:13px;color:#4A5563;margin-top:2px;"><?= esc($item['cara']) ?></div>
+                                                <?php endif; ?>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php else: ?>
+                                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+                                        <?= $baris('Alasan', $lainnya ? $catatan : ($alasan['label'] ?? 'Perlu perbaikan data')) ?>
+                                    </table>
+                                    <?php if (!empty($alasan['cara'])): ?>
+                                        <p style="margin:0 0 16px;font-size:14px;line-height:22px;color:#4A5563;"><?= esc($alasan['cara']) ?></p>
+                                    <?php endif; ?>
                                 <?php endif; ?>
 
-                                <?php if ($alasan['daftar_ulang']): ?>
+                                <?php if (!empty($catatan)): ?>
+                                    <div style="margin:0 0 16px;padding:12px 16px;background:#F9FAFB;border-left:4px solid #0D1C2E;font-size:14px;line-height:20px;">
+                                        <strong style="display:block;margin-bottom:4px;color:#0D1C2E;">Catatan Petugas:</strong>
+                                        <span style="color:#4A5563;"><?= nl2br(esc($catatan)) ?></span>
+                                    </div>
+                                <?php endif; ?>
+
+                                <p style="margin:0 0 16px;font-size:14px;line-height:22px;color:#6B7280;">
+                                    Data pendaftaran sebelumnya telah dihapus dari sistem kami.
+                                </p>
+
+                                <?php if ($bisa_daftar_ulang ?? ($alasan['daftar_ulang'] ?? true)): ?>
                                     <p style="margin:0 0 20px;font-size:15px;line-height:24px;">
-                                        Setelah itu, isi lagi formulir pendaftaran. Anda bisa memakai nomor identitas dan alamat email yang sama.
+                                        Anda dapat mengisi kembali formulir pendaftaran online dengan data yang telah disesuaikan:
                                     </p>
                                     <table role="presentation" cellpadding="0" cellspacing="0">
                                         <tr>
-                                            <td style="background:#0D1C2E;">
-                                                <a href="<?= esc($url_daftar, 'attr') ?>" style="display:inline-block;padding:13px 22px;font-size:15px;line-height:20px;font-weight:bold;color:#F0EBE1;text-decoration:none;">Isi lagi formulir pendaftaran</a>
+                                            <td style="background:#0D1C2E;border-radius:6px;">
+                                                <a href="<?= esc($url_daftar, 'attr') ?>" style="display:inline-block;padding:12px 22px;font-size:14px;line-height:20px;font-weight:bold;color:#F0EBE1;text-decoration:none;">Isi Ulang Formulir Pendaftaran</a>
                                             </td>
                                         </tr>
                                     </table>
                                 <?php else: ?>
-                                    <p style="margin:0;font-size:15px;line-height:24px;">
-                                        Kalau menurut Anda ini keliru, hubungi petugas perpustakaan.
+                                    <p style="margin:0;font-size:14px;line-height:22px;color:#4A5563;">
+                                        Jika Anda merasa ini keliru atau membutuhkan informasi lebih lanjut, silakan hubungi petugas perpustakaan.
                                     </p>
                                 <?php endif; ?>
                             <?php endif; ?>

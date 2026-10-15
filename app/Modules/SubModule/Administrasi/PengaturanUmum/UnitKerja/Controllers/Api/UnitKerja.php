@@ -4,155 +4,281 @@ namespace UnitKerja\Controllers\Api;
 
 use CodeIgniter\API\ResponseTrait;
 use App\Libraries\DataTable;
-//use Hermawan\DataTables\DataTable;
+use App\Models\SubUnitModel;
+use UnitKerja\Models\UnitKerjaModel;
 
 class UnitKerja extends \Base\Controllers\BaseResourceController
 {
-	use ResponseTrait;
-	protected $unitkerjaModel;
-	protected $validation;
-	protected $session;
-	protected $modulePath;
-	protected $uploadPath;
+    use ResponseTrait;
 
-	function __construct()
-	{
-		helper(['url', 'text', 'form', 'auth', 'app', 'html']);
-		$this->unitkerjaModel = new \UnitKerja\Models\UnitKerjaModel();
-		$this->validation = \Config\Services::validation();
-		$this->session = session();
-		$this->modulePath = ROOTPATH . 'public/uploads/unitkerja/';
-		$this->uploadPath = WRITEPATH . 'uploads/';
+    protected $unitkerjaModel;
+    protected $subunitModel;
+    protected $session;
 
-		if (!file_exists($this->modulePath)) {
-			mkdir($this->modulePath);
-		}
-	}
+    public function __construct()
+    {
+        helper(['url', 'form', 'auth', 'app', 'anggota']);
+        $this->unitkerjaModel = new UnitKerjaModel();
+        $this->subunitModel   = new SubUnitModel();
+        $this->session        = session();
+    }
 
-	public function datatable($slug = null)
-	{
-		$db = db_connect();
-		$builder = $db->table('master_jenis_identitas as a')
-			->select('a.ID, a.id as action,a.Code,a.Description, a.Nama, a.UpdateDate')
-			->select('a.description,a.sort, a.active');
+    /**
+     * Datatable untuk Sub-Unit Kerja (mendukung filter per unit_id)
+     */
+    public function datatable_subunit()
+    {
+        $db = db_connect();
+        $builder = $db->table('master_subunit as su')
+            ->select('su.id, su.id as action, su.unit_id, su.nama_subunit, su.sort, su.active, su.CreateDate, mu.nama_unit as UnitKerja')
+            ->select('(SELECT COUNT(m.ID) FROM members m WHERE m.SubUnitKerja_id = su.id) as MemberCount')
+            ->join('master_unit mu', 'mu.id = su.unit_id', 'left');
 
-		$dataTable = DataTable::of($builder)
-			->addNumbering('no')
-			->edit('Nama', function ($row) {
-				$html  =  '<b>' . $row->Nama . '</b>';
-				return $html;
-			})
-			->edit('active', function ($row) {
-				$status = $row->active == 1 ? 'Aktif' : 'Non Aktif';
-				$class = $row->active == 1 ? 'success' : 'danger';
-				$html = '<span class="badge badge-' . $class . '  badge-pill">' . $status . '</span>';
-				return $html;
-			})
-			->edit('UpdateDate', function ($row) {
-				$html  =  '<badge class="badge badge-info">' . $row->UpdateDate . '</badge>';
-				return $html;
-			})
-			->edit('action', function ($row) {
-				$edit = '<a href="javascript:void(0);" data-href="' . base_url('api/unit-kerja/detail/' . $row->id) . '" data-toggle="tooltip" data-placement="top" title="Ubah" class="btn btn-primary show-data"><i class="pe-7s-note font-weight-bold"> </i></a>';
-				$active = '<a href="' . base_url('unit-kerja/apply_status/' . $row->id . '?field=active&value=1') . '"  data-id="' . $row->id . '" data-toggle="tooltip" data-placement="top" title="Active" class="btn btn-success active-data"><i class="pe-7s-check font-weight-bold"> </i> </a>';
-				$inactive = '<a href="' . base_url('unit-kerja/apply_status/' . $row->id . '?field=active&value=0') . '" data-id="' . $row->id . '" data-toggle="tooltip" data-placement="top" title="Inactive" class="btn btn-warning draft-data"><i class="pe-7s-close font-weight-bold"> </i> </a>';
-				$delete = '<a href="javascript:void(0);" data-href="' . base_url('unit-kerja/delete/' . $row->id) . '" data-toggle="tooltip" data-placement="top" title="Hapus " class="btn btn-danger remove-data"><i class="pe-7s-trash font-weight-bold"> </i></a>';
-				return $edit . ' ' . $active . ' ' . $inactive . ' ' . $delete;
-			})
-			->toJson();
-		return $dataTable;
-	}
+        $unitId = $this->request->getGet('unit_id');
+        if (!empty($unitId)) {
+            $builder->where('su.unit_id', (int) $unitId);
+        }
 
-	public function index()
-	{
-		$data = $this->unitkerjaModel->findAll();
-		return $this->respond($data, 200);
-	}
+        $dataTable = DataTable::of($builder)
+            ->addNumbering('no')
+            ->edit('nama_subunit', function ($row) {
+                return '<strong>' . esc($row->nama_subunit) . '</strong>';
+            })
+            ->edit('UnitKerja', function ($row) {
+                return '<span class="badge badge-light border text-dark font-weight-normal px-2 py-1">' . esc($row->UnitKerja ?? '-') . '</span>';
+            })
+            ->edit('sort', function ($row) {
+                return '<span class="badge badge-secondary">' . (int) $row->sort . '</span>';
+            })
+            ->edit('MemberCount', function ($row) {
+                if ($row->MemberCount > 0) {
+                    return '<span class="badge badge-info">' . (int) $row->MemberCount . ' anggota</span>';
+                }
+                return '<span class="text-muted small">0 anggota</span>';
+            })
+            ->edit('active', function ($row) {
+                $status = (int) $row->active === 1 ? 'Aktif' : 'Nonaktif';
+                $class  = (int) $row->active === 1 ? 'success' : 'danger';
+                return '<span class="badge badge-' . $class . '">' . $status . '</span>';
+            })
+            ->edit('action', function ($row) {
+                $edit = '<button type="button" data-id="' . $row->id . '" class="btn btn-sm btn-primary btn-edit-subunit" title="Ubah Nama & Urutan"><i class="fa fa-edit"></i></button>';
+                
+                if ((int) $row->active === 1) {
+                    $toggle = '<a href="' . base_url('master-unit-kerja/apply_status_subunit/' . $row->id . '?value=0') . '" class="btn btn-sm btn-warning" title="Nonaktifkan"><i class="fa fa-times"></i></a>';
+                } else {
+                    $toggle = '<a href="' . base_url('master-unit-kerja/apply_status_subunit/' . $row->id . '?value=1') . '" class="btn btn-sm btn-success" title="Aktifkan"><i class="fa fa-check"></i></a>';
+                }
 
-	public function detail($id = null)
-	{
-		$data = $this->unitkerjaModel->find($id);
-		if ($data) {
-			return $this->respond($data);
-		} else {
-			return $this->failNotFound('No Data Found with id ' . $id);
-		}
-	}
+                if ((int) $row->MemberCount > 0) {
+                    $del = '<button type="button" class="btn btn-sm btn-secondary" title="Tidak dapat dihapus karena sudah dipakai anggota" onclick="alertSudahDipakai(' . (int) $row->MemberCount . ')"><i class="fa fa-trash"></i></button>';
+                } else {
+                    $del = '<a href="' . base_url('master-unit-kerja/delete_subunit/' . $row->id) . '" onclick="return confirm(\'Yakin ingin menghapus sub-unit ' . esc($row->nama_subunit, 'js') . '?\')" class="btn btn-sm btn-danger" title="Hapus"><i class="fa fa-trash"></i></a>';
+                }
 
-	public function create()
-	{
-		$save_data = array(
-			'Nama' => $this->request->getPost('Nama'),
-			'Code' => $this->request->getPost('Code'),
-			'Description' => $this->request->getPost('Description'),
-			'Branch_id' => branch_id(),
-			'CreateBy' => user()->id,
-			'UpdateBy' => user()->id
-		);
+                return '<div class="btn-group" role="group">' . $edit . ' ' . $toggle . ' ' . $del . '</div>';
+            })
+            ->toJson();
 
-		$save_data_id = $this->unitkerjaModel->insert($save_data);
-		if ($save_data_id) {
-			$this->session->setFlashdata('swal_icon', 'success');
-			$this->session->setFlashdata('swal_title', 'Berhasil');
-			$this->session->setFlashdata('swal_text', 'Jenis Identitas berhasil disimpan');
-			$response = [
-				'error' => false,
-				'message' => 'Jenis Identitas berhasil disimpan',
-			];
-		} else {
-			$response = [
-				'error' => true,
-				'message' => 'Jenis Identitas gagal disimpan. Silakan coba lagi',
-			];
-		}
+        return $dataTable;
+    }
 
-		return $this->simpleResponse($response);
-	}
+    /**
+     * Endpoint detail sub-unit (untuk modal edit)
+     */
+    public function detail_subunit($id = null)
+    {
+        $data = $this->subunitModel->find($id);
+        if ($data) {
+            $data->member_count = $this->subunitModel->isUsedByMembers((int) $id) ? 1 : 0;
+            return $this->respond($data);
+        }
+        return $this->failNotFound('Sub-Unit Kerja tidak ditemukan');
+    }
 
-	public function edit($id = null)
-	{
-		$update_data = array(
-			'Nama' => $this->request->getPost('Nama'),
-			'Code' => $this->request->getPost('Code'),
-			'Description' => $this->request->getPost('Description'),
-			'Branch_id' => branch_id(),
-			'UpdateBy' => user()->id
-		);
+    /**
+     * Endpoint simpan sub-unit baru
+     */
+    public function create_subunit()
+    {
+        $unitId = (int) $this->request->getPost('unit_id');
+        $nama   = trim((string) $this->request->getPost('nama_subunit'));
+        $sort   = (int) $this->request->getPost('sort');
+        $active = (int) ($this->request->getPost('active') ?? 1);
 
-		$update_data_id = $this->unitkerjaModel->update($id, $update_data);
-		if ($update_data_id) {
-			$this->session->setFlashdata('swal_icon', 'success');
-			$this->session->setFlashdata('swal_title', 'Berhasil');
-			$this->session->setFlashdata('swal_text', 'Jenis Identitas berhasil disimpan');
-			$response = [
-				'error' => false,
-				'message' => 'Jenis Identitas berhasil disimpan',
-			];
-		} else {
-			$response = [
-				'error' => true,
-				'message' => 'Jenis Identitas gagal disimpan. Silakan coba lagi',
-			];
-		}
+        if ($unitId <= 0 || $nama === '') {
+            return $this->fail('Unit kerja induk dan nama sub-unit wajib diisi.');
+        }
 
-		return $this->simpleResponse($response);
-	}
+        $id = $this->subunitModel->insert([
+            'unit_id'      => $unitId,
+            'nama_subunit' => $nama,
+            'sort'         => $sort,
+            'active'       => $active,
+        ]);
 
-	public function delete($id = null)
-	{
-		$data = $this->unitkerjaModel->find($id);
-		if ($data) {
-			$this->unitkerjaModel->delete($id);
-			$response = [
-				'status'   => 200,
-				'error'    => null,
-				'messages' => [
-					'success' => 'Jenis Identitas berhasil dihapus'
-				]
-			];
-			return $this->respondDeleted($response);
-		} else {
-			return $this->failNotFound(lang('UnitKerja.info.not_found') . ' ID:' . $id);
-		}
-	}
+        if ($id) {
+            return $this->respondCreated([
+                'success' => true,
+                'message' => 'Sub-Unit Kerja berhasil ditambahkan',
+                'id'      => $id
+            ]);
+        }
+
+        return $this->fail('Gagal menyimpan Sub-Unit Kerja');
+    }
+
+    /**
+     * Endpoint edit sub-unit
+     */
+    public function edit_subunit($id = null)
+    {
+        $unitId = (int) $this->request->getPost('unit_id');
+        $nama   = trim((string) $this->request->getPost('nama_subunit'));
+        $sort   = (int) $this->request->getPost('sort');
+        $active = (int) ($this->request->getPost('active') ?? 1);
+
+        if (!$id || $nama === '') {
+            return $this->fail('Data tidak valid.');
+        }
+
+        $dataUpdate = [
+            'nama_subunit' => $nama,
+            'sort'         => $sort,
+            'active'       => $active,
+        ];
+
+        if ($unitId > 0) {
+            $dataUpdate['unit_id'] = $unitId;
+        }
+
+        $ok = $this->subunitModel->update($id, $dataUpdate);
+        if ($ok) {
+            return $this->respond([
+                'success' => true,
+                'message' => 'Sub-Unit Kerja berhasil diperbarui'
+            ]);
+        }
+
+        return $this->fail('Gagal memperbarui Sub-Unit Kerja');
+    }
+
+    /**
+     * Endpoint hapus sub-unit (dengan proteksi ketat)
+     */
+    public function delete_subunit($id = null)
+    {
+        if (!$id) {
+            return $this->fail('ID Sub-Unit tidak valid');
+        }
+
+        if ($this->subunitModel->isUsedByMembers((int) $id)) {
+            return $this->fail('Sub-Unit Kerja ini sudah dipakai oleh anggota dan tidak boleh dihapus. Silakan nonaktifkan saja.', 400);
+        }
+
+        $ok = $this->subunitModel->delete($id);
+        if ($ok) {
+            return $this->respondDeleted([
+                'success' => true,
+                'message' => 'Sub-Unit Kerja berhasil dihapus'
+            ]);
+        }
+
+        return $this->fail('Gagal menghapus Sub-Unit Kerja');
+    }
+
+    /**
+     * Endpoint publik ringan untuk dropdown berantai
+     * Mengembalikan list sub-unit aktif milik unit tertentu
+     */
+    public function sub_units($unitId = null)
+    {
+        $list = $this->subunitModel->getActiveByUnitId((int) $unitId);
+        return $this->respond($list, 200);
+    }
+
+    /**
+     * Datatable untuk Unit Kerja Induk (master_unit)
+     */
+    public function datatable()
+    {
+        $db = db_connect();
+        $builder = $db->table('master_unit as mu')
+            ->select('mu.id, mu.id as action, mu.nama_unit, mu.active, mu.CreateDate')
+            ->select('(SELECT COUNT(su.id) FROM master_subunit su WHERE su.unit_id = mu.id) as SubUnitCount')
+            ->select('(SELECT COUNT(m.ID) FROM members m WHERE m.UnitKerja_id = mu.id) as MemberCount');
+
+        $dataTable = DataTable::of($builder)
+            ->addNumbering('no')
+            ->edit('nama_unit', function ($row) {
+                return '<strong>' . esc($row->nama_unit) . '</strong>';
+            })
+            ->edit('SubUnitCount', function ($row) {
+                return '<span class="badge badge-info">' . (int) $row->SubUnitCount . ' Sub-Unit</span>';
+            })
+            ->edit('MemberCount', function ($row) {
+                if ($row->MemberCount > 0) {
+                    return '<span class="badge badge-primary">' . (int) $row->MemberCount . ' anggota</span>';
+                }
+                return '<span class="text-muted small">0 anggota</span>';
+            })
+            ->edit('active', function ($row) {
+                $status = (int) $row->active === 1 ? 'Aktif' : 'Nonaktif';
+                $class  = (int) $row->active === 1 ? 'success' : 'danger';
+                return '<span class="badge badge-' . $class . '">' . $status . '</span>';
+            })
+            ->edit('action', function ($row) {
+                $edit = '<button type="button" data-id="' . $row->id . '" class="btn btn-sm btn-primary btn-edit-unit" title="Ubah Nama Unit"><i class="fa fa-edit"></i></button>';
+                
+                if ((int) $row->active === 1) {
+                    $toggle = '<a href="' . base_url('master-unit-kerja/apply_status/' . $row->id . '?value=0') . '" class="btn btn-sm btn-warning" title="Nonaktifkan"><i class="fa fa-times"></i></a>';
+                } else {
+                    $toggle = '<a href="' . base_url('master-unit-kerja/apply_status/' . $row->id . '?value=1') . '" class="btn btn-sm btn-success" title="Aktifkan"><i class="fa fa-check"></i></a>';
+                }
+
+                return '<div class="btn-group" role="group">' . $edit . ' ' . $toggle . '</div>';
+            })
+            ->toJson();
+
+        return $dataTable;
+    }
+
+    /**
+     * Endpoint detail Unit Kerja Induk
+     */
+    public function detail($id = null)
+    {
+        $data = $this->unitkerjaModel->find($id);
+        if ($data) {
+            return $this->respond($data);
+        }
+        return $this->failNotFound('Unit Kerja tidak ditemukan');
+    }
+
+    /**
+     * Endpoint edit nama Unit Kerja Induk
+     */
+    public function edit($id = null)
+    {
+        $nama   = trim((string) $this->request->getPost('nama_unit'));
+        $active = (int) ($this->request->getPost('active') ?? 1);
+
+        if (!$id || $nama === '') {
+            return $this->fail('Nama unit kerja wajib diisi.');
+        }
+
+        $ok = $this->unitkerjaModel->update($id, [
+            'nama_unit' => $nama,
+            'active'    => $active,
+        ]);
+
+        if ($ok) {
+            return $this->respond([
+                'success' => true,
+                'message' => 'Unit Kerja berhasil diperbarui'
+            ]);
+        }
+
+        return $this->fail('Gagal memperbarui Unit Kerja');
+    }
 }

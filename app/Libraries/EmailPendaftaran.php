@@ -24,9 +24,10 @@ class EmailPendaftaran
     {
         $db     = db_connect();
         $member = $db->table('members as a')
-            ->select('a.*, jenis_anggota.jenisanggota as JenisAnggota, master_unit.nama_unit as UnitKerja')
+            ->select('a.*, jenis_anggota.jenisanggota as JenisAnggota, master_unit.nama_unit as UnitKerja, master_subunit.nama_subunit as SubUnitKerja')
             ->join('jenis_anggota', 'jenis_anggota.id = a.JenisAnggota_id', 'left')
             ->join('master_unit', 'master_unit.id = a.UnitKerja_id', 'left')
+            ->join('master_subunit', 'master_subunit.id = a.SubUnitKerja_id', 'left')
             ->where('a.ID', $memberId)
             ->get()->getRow();
 
@@ -48,6 +49,80 @@ class EmailPendaftaran
         ]);
 
         return $hasil;
+    }
+
+    /**
+     * Mengirim email penolakan pendaftaran sebelum data anggota dihapus dari database.
+     * Menerima data pendaftar dari memori ($member), daftar kode alasan ($alasanCodes), dan catatan petugas.
+     */
+    public function kirimPenolakan(object $member, array $alasanCodes, string $catatan = ''): array
+    {
+        if (empty($member->Email) || !filter_var($member->Email, FILTER_VALIDATE_EMAIL)) {
+            return ['terkirim' => false, 'pesan' => 'Alamat email pendaftar tidak valid atau kosong.'];
+        }
+
+        $smtpUser = getenv('email.SMTPUser') ?: '';
+        $smtpPass = getenv('email.SMTPPass') ?: '';
+        if ($smtpUser === '' || $smtpPass === '') {
+            return ['terkirim' => false, 'pesan' => 'SMTP belum diatur: isi email.SMTPUser dan email.SMTPPass di file .env.'];
+        }
+
+        helper('anggota');
+        $masterAlasan = alasanPerbaikan();
+        $alasanDipilih = [];
+        $bisaDaftarUlang = true;
+
+        foreach ($alasanCodes as $kode) {
+            if (isset($masterAlasan[$kode])) {
+                $alasanDipilih[] = $masterAlasan[$kode];
+                if (isset($masterAlasan[$kode]['daftar_ulang']) && !$masterAlasan[$kode]['daftar_ulang']) {
+                    $bisaDaftarUlang = false;
+                }
+            }
+        }
+
+        if (empty($alasanDipilih)) {
+            $alasanDipilih[] = $masterAlasan['lainnya'] ?? ['label' => 'Perlu perbaikan data', 'cara' => '', 'daftar_ulang' => true];
+        }
+
+        $data = [
+            'jenis'             => self::PERBAIKAN,
+            'member'            => $member,
+            'nama_perpus'       => self::NAMA_PERPUSTAKAAN,
+            'url_daftar'        => base_url('registrasi'),
+            'daftar_alasan'     => $alasanDipilih,
+            'catatan'           => trim($catatan),
+            'bisa_daftar_ulang' => $bisaDaftarUlang,
+        ];
+
+        $subject = 'Pendaftaran Anda belum bisa diterima';
+
+        $email = \Config\Services::email();
+        $email->initialize([
+            'protocol'   => 'smtp',
+            'SMTPHost'   => getenv('email.SMTPHost') ?: 'smtp.gmail.com',
+            'SMTPUser'   => $smtpUser,
+            'SMTPPass'   => $smtpPass,
+            'SMTPPort'   => (int) (getenv('email.SMTPPort') ?: 587),
+            'SMTPCrypto' => env('email.SMTPCrypto', 'tls'),
+            'mailType'   => 'html',
+            'charset'    => 'utf-8',
+            'newline'    => "\r\n",
+        ]);
+        $email->clear(true);
+        $email->setFrom(getenv('email.fromEmail') ?: $smtpUser, getenv('email.fromName') ?: self::NAMA_PERPUSTAKAAN);
+        $email->setTo($member->Email);
+        $email->setSubject($subject);
+        $email->setMessage(view('Anggota\Views\email\pendaftaran', $data, ['debug' => false]));
+
+        if ($email->send()) {
+            log_message('info', '[EmailPendaftaran] Penolakan terkirim ke pendaftar.');
+            return ['terkirim' => true, 'pesan' => 'Email pemberitahuan berhasil dikirim ke pendaftar.'];
+        }
+
+        $debug = $email->printDebugger(['headers']);
+        log_message('error', '[EmailPendaftaran] Penolakan gagal dikirim: ' . $debug);
+        return ['terkirim' => false, 'pesan' => 'Gagal mengirim email pemberitahuan ke pendaftar.'];
     }
 
     /** Mengirim lagi pemberitahuan yang sesuai dengan status anggota saat ini. */
@@ -181,11 +256,13 @@ class EmailPendaftaran
 
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml(view('Anggota\Views\pdf\kartu-anggota-pdf', [
-            'card'      => kartuAnggotaData($member),
-            'logo'      => FCPATH . 'assets/img/kartu/logo-kemnaker.png',
-            'logo_krem' => FCPATH . 'assets/img/kartu/logo-kemnaker-krem.png',
+            'card'            => kartuAnggotaData($member),
+            'logo'            => FCPATH . 'assets/img/kartu/logo-kemnaker.png',
+            'logo_krem'       => FCPATH . 'assets/img/kartu/logo-kemnaker-krem.png',
+            'logo_teks'       => FCPATH . 'assets/img/kartu/logo-kemnaker-teks.png',
+            'logo_teks_putih' => FCPATH . 'assets/img/kartu/logo-kemnaker-teks-putih.png',
             // Garis miring terbalik di path Windows dibaca CSS sebagai karakter escape
-            'fonts'     => str_replace('\\', '/', FCPATH) . 'assets/fonts/plus-jakarta-sans/',
+            'fonts'           => str_replace('\\', '/', FCPATH) . 'assets/fonts/plus-jakarta-sans/',
         ], ['debug' => false]));
         $dompdf->render();
 

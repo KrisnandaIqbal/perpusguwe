@@ -1057,6 +1057,15 @@ if (!empty($jenis_identitas)) {
         border-color: #94a3b8;
     }
 
+    .rf-select-trigger:disabled,
+    .rf-select-trigger.is-disabled {
+        background-color: #f8fafc !important;
+        color: var(--text-muted) !important;
+        cursor: not-allowed !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: none !important;
+    }
+
     .rf-select-trigger:focus,
     .rf-custom-select.is-open .rf-select-trigger {
         outline: none;
@@ -2251,18 +2260,6 @@ if (!empty($jenis_identitas)) {
                     <h1 class="rf-title">Registrasi Keanggotaan Perpustakaan</h1>
                     <p class="rf-lead">Akses koleksi cetak, repositori ilmiah, dan ruang baca digital terpadu melalui Kartu Anggota resmi.</p>
                 </div>
-
-                <div class="rf-pdp-pill" title="Kepatuhan UU Perlindungan Data Pribadi No. 27/2022">
-                    <div class="rf-pdp-icon">
-                        <svg viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="rf-pdp-meta">
-                        <strong>Perlindungan Data UU PDP</strong>
-                        <span>UU No. 27/2022 &bull; Verifikasi 1&times;24 Jam</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -2518,6 +2515,38 @@ if (!empty($jenis_identitas)) {
                             <div class="rf-field-feedback" id="feedback_UnitKerja"></div>
                         </div>
 
+                        <!-- Dropdown Berantai: Sub-Unit Kerja -->
+                        <div class="rf-field" id="wrapperSubUnitKerja">
+                            <div class="rf-field-header">
+                                <label class="rf-label" for="SubUnitKerja_id">
+                                    Biro / Direktorat / Unit <span class="req" id="reqSubUnitKerja">*</span>
+                                </label>
+                                <span class="rf-badge-status" id="badge_SubUnitKerja"></span>
+                            </div>
+                            <div class="rf-custom-select is-disabled" id="customSubUnitKerja">
+                                <!-- Real select for form payload & validation -->
+                                <select class="rf-select-native" id="SubUnitKerja_id" name="SubUnitKerja_id" tabindex="-1" aria-hidden="true" disabled>
+                                    <option value="">Pilih unit kerja dahulu</option>
+                                </select>
+
+                                <!-- Visual Trigger -->
+                                <button type="button" class="rf-select-trigger is-disabled" id="subUnitKerjaTrigger" aria-haspopup="listbox" aria-expanded="false" disabled>
+                                    <span class="rf-select-value is-placeholder" id="subUnitKerjaValue">Pilih unit kerja dahulu</span>
+                                    <svg class="rf-select-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M6 8l4 4 4-4"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div class="rf-select-dropdown" id="subUnitKerjaDropdown" role="listbox" tabindex="-1">
+                                    <div class="rf-select-option is-placeholder" data-value="" role="option">
+                                        <span class="rf-opt-text">Pilih unit kerja dahulu</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rf-field-feedback" id="feedback_SubUnitKerja"></div>
+                        </div>
+
                         <div class="rf-field">
                             <div class="rf-field-header">
                                 <label class="rf-label" for="AddressNow">
@@ -2657,7 +2686,7 @@ if (!empty($jenis_identitas)) {
                             <div class="rf-agree-row">
                                 <input type="checkbox" id="Persetujuan" name="Persetujuan" value="1" disabled required>
                                 <label for="Persetujuan">
-                                    <strong>Pernyataan Pemustaka & Kepatuhan UU PDP:</strong>
+                                    <strong>Pernyataan Pemustaka:</strong>
                                     Saya menyatakan data yang diisi adalah benar dan sah. Saya bersedia menaati tata tertib Perpustakaan serta menyetujui pemrosesan data pribadi untuk administrasi sirkulasi sesuai
                                     <a href="javascript:void(0)" id="linkSyarat">Syarat & Ketentuan Keanggotaan</a>.
                                 </label>
@@ -3244,13 +3273,149 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Phone Formatting ───
     const phoneInput = document.getElementById('Phone');
+    // ─── Custom Dropdown Unit Kerja (100% Responsive / No Overflow) ───
+    // ─── Preloaded Sub-Units Data from Server ───
+    const subUnitsData = <?= json_encode($sub_units_grouped ?? []) ?>;
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
 
     // ─── Custom Dropdown Unit Kerja (100% Responsive / No Overflow) ───
     const customUnitKerja = document.getElementById('customUnitKerja');
     const unitKerjaTrigger = document.getElementById('unitKerjaTrigger');
     const unitKerjaValue = document.getElementById('unitKerjaValue');
-    const unitKerjaOptions = document.querySelectorAll('.rf-select-option');
+    const unitKerjaOptions = document.querySelectorAll('#unitKerjaDropdown .rf-select-option');
     const nativeUnitSelect = document.getElementById('UnitKerja_id');
+
+    // ─── Custom Dropdown Sub-Unit Kerja ───
+    const wrapperSubUnitKerja = document.getElementById('wrapperSubUnitKerja');
+    const customSubUnitKerja = document.getElementById('customSubUnitKerja');
+    const subUnitKerjaTrigger = document.getElementById('subUnitKerjaTrigger');
+    const subUnitKerjaValue = document.getElementById('subUnitKerjaValue');
+    const subUnitKerjaDropdown = document.getElementById('subUnitKerjaDropdown');
+    const nativeSubUnitSelect = document.getElementById('SubUnitKerja_id');
+
+    function resetSubUnitSelection() {
+        if (!nativeSubUnitSelect) return;
+        nativeSubUnitSelect.value = '';
+        nativeSubUnitSelect.innerHTML = '<option value="">Pilih Biro / Direktorat / Unit</option>';
+        if (subUnitKerjaValue) {
+            subUnitKerjaValue.textContent = 'Pilih Biro / Direktorat / Unit';
+            subUnitKerjaValue.classList.add('is-placeholder');
+        }
+        if (subUnitKerjaTrigger) {
+            subUnitKerjaTrigger.classList.remove('has-error', 'is-valid');
+        }
+        if (typeof clearFieldStatus === 'function') {
+            clearFieldStatus(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja);
+        }
+    }
+
+    function updateSubUnitsForUnit(unitId) {
+        resetSubUnitSelection();
+
+        if (!unitId) {
+            // Unit belum dipilih: dropdown bawah nonaktif, teks "Pilih unit kerja dahulu"
+            if (wrapperSubUnitKerja) wrapperSubUnitKerja.style.display = 'block';
+            if (customSubUnitKerja) customSubUnitKerja.classList.add('is-disabled');
+            if (subUnitKerjaTrigger) {
+                subUnitKerjaTrigger.classList.add('is-disabled');
+                subUnitKerjaTrigger.disabled = true;
+            }
+            if (nativeSubUnitSelect) {
+                nativeSubUnitSelect.disabled = true;
+                nativeSubUnitSelect.required = false;
+            }
+            if (subUnitKerjaValue) {
+                subUnitKerjaValue.textContent = 'Pilih unit kerja dahulu';
+                subUnitKerjaValue.classList.add('is-placeholder');
+            }
+            if (subUnitKerjaDropdown) {
+                subUnitKerjaDropdown.innerHTML = '<div class="rf-select-option is-placeholder" data-value="" role="option"><span class="rf-opt-text">Pilih unit kerja dahulu</span></div>';
+            }
+            return;
+        }
+
+        const subs = subUnitsData[unitId] || [];
+        if (subs.length === 0) {
+            // Unit tanpa sub-unit (nomor 1): disembunyikan dan tidak wajib
+            if (wrapperSubUnitKerja) wrapperSubUnitKerja.style.display = 'none';
+            if (customSubUnitKerja) customSubUnitKerja.classList.add('is-disabled');
+            if (subUnitKerjaTrigger) {
+                subUnitKerjaTrigger.classList.add('is-disabled');
+                subUnitKerjaTrigger.disabled = true;
+            }
+            if (nativeSubUnitSelect) {
+                nativeSubUnitSelect.disabled = true;
+                nativeSubUnitSelect.required = false;
+                nativeSubUnitSelect.value = '';
+            }
+        } else {
+            // Unit yang punya sub-unit: ditampilkan, aktif, dan WAJIB dipilih
+            if (wrapperSubUnitKerja) wrapperSubUnitKerja.style.display = 'block';
+            if (customSubUnitKerja) customSubUnitKerja.classList.remove('is-disabled');
+            if (subUnitKerjaTrigger) {
+                subUnitKerjaTrigger.classList.remove('is-disabled');
+                subUnitKerjaTrigger.disabled = false;
+            }
+            if (nativeSubUnitSelect) {
+                nativeSubUnitSelect.disabled = false;
+                nativeSubUnitSelect.required = true;
+            }
+
+            // Build options
+            let optionsHtml = '<div class="rf-select-option is-placeholder" data-value="" role="option"><span class="rf-opt-text">Pilih Biro / Direktorat / Unit</span></div>';
+            let selectHtml = '<option value="">Pilih Biro / Direktorat / Unit</option>';
+
+            subs.forEach(item => {
+                optionsHtml += `
+                    <div class="rf-select-option" data-value="${item.id}" role="option">
+                        <span class="rf-opt-text">${escapeHtml(item.nama_subunit)}</span>
+                        <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3.5 8.5l3 3 6-7"/>
+                        </svg>
+                    </div>
+                `;
+                selectHtml += `<option value="${item.id}">${escapeHtml(item.nama_subunit)}</option>`;
+            });
+
+            if (subUnitKerjaDropdown) subUnitKerjaDropdown.innerHTML = optionsHtml;
+            if (nativeSubUnitSelect) nativeSubUnitSelect.innerHTML = selectHtml;
+
+            // Bind click events on sub-unit options
+            const subOptions = subUnitKerjaDropdown.querySelectorAll('.rf-select-option');
+            subOptions.forEach(opt => {
+                opt.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const val = this.dataset.value;
+                    const text = this.querySelector('.rf-opt-text') ? this.querySelector('.rf-opt-text').textContent.trim() : this.textContent.trim();
+
+                    nativeSubUnitSelect.value = val;
+                    nativeSubUnitSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    subOptions.forEach(o => o.classList.remove('is-selected'));
+                    if (val) {
+                        this.classList.add('is-selected');
+                        subUnitKerjaValue.textContent = text;
+                        subUnitKerjaValue.classList.remove('is-placeholder');
+                        validateSubUnitKerja();
+                    } else {
+                        subUnitKerjaValue.textContent = 'Pilih Biro / Direktorat / Unit';
+                        subUnitKerjaValue.classList.add('is-placeholder');
+                        clearFieldStatus(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja);
+                    }
+
+                    subUnitKerjaTrigger.classList.remove('has-error');
+                    customSubUnitKerja.classList.remove('is-open');
+                    subUnitKerjaTrigger.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
+    }
 
     if (customUnitKerja && unitKerjaTrigger && nativeUnitSelect) {
         unitKerjaTrigger.addEventListener('click', function(e) {
@@ -3284,6 +3449,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 nativeUnitSelect.classList.remove('has-error');
                 customUnitKerja.classList.remove('is-open');
                 unitKerjaTrigger.setAttribute('aria-expanded', 'false');
+
+                // Chaining: Update and reset sub-units
+                updateSubUnitsForUnit(val);
+                validateUnitKerja();
             });
         });
 
@@ -3303,6 +3472,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    if (customSubUnitKerja && subUnitKerjaTrigger) {
+        subUnitKerjaTrigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (subUnitKerjaTrigger.disabled || customSubUnitKerja.classList.contains('is-disabled')) {
+                return;
+            }
+            const isOpen = customSubUnitKerja.classList.contains('is-open');
+            customSubUnitKerja.classList.toggle('is-open', !isOpen);
+            subUnitKerjaTrigger.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!customSubUnitKerja.contains(e.target)) {
+                customSubUnitKerja.classList.remove('is-open');
+                subUnitKerjaTrigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && customSubUnitKerja.classList.contains('is-open')) {
+                customSubUnitKerja.classList.remove('is-open');
+                subUnitKerjaTrigger.setAttribute('aria-expanded', 'false');
+                subUnitKerjaTrigger.focus();
+            }
+        });
+    }
+
     const btnResetForm = document.getElementById('btnReset');
     if (btnResetForm) {
         btnResetForm.addEventListener('click', function() {
@@ -3313,6 +3510,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 unitKerjaOptions.forEach(o => o.classList.remove('is-selected'));
                 if (unitKerjaTrigger) unitKerjaTrigger.classList.remove('has-error');
+                updateSubUnitsForUnit('');
             }, 50);
         });
     }
@@ -3507,6 +3705,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const badgeUnitKerja = document.getElementById('badge_UnitKerja');
     const feedbackUnitKerja = document.getElementById('feedback_UnitKerja');
+
+    const badgeSubUnitKerja = document.getElementById('badge_SubUnitKerja');
+    const feedbackSubUnitKerja = document.getElementById('feedback_SubUnitKerja');
 
     const addressInput = document.getElementById('AddressNow');
     const badgeAddress = document.getElementById('badge_AddressNow');
@@ -3715,6 +3916,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function validateSubUnitKerja() {
+        if (!wrapperSubUnitKerja || wrapperSubUnitKerja.style.display === 'none' || (nativeSubUnitSelect && nativeSubUnitSelect.disabled)) {
+            return null; // Tidak wajib untuk Unit 1 / unit tanpa sub-unit
+        }
+        if (!nativeSubUnitSelect || !nativeSubUnitSelect.value) {
+            setFieldError(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Belum Dipilih', 'Biro / Direktorat / Unit wajib dipilih.');
+            return '<strong>Biro / Direktorat / Unit:</strong> Satuan kerja penempatan spesifik wajib dipilih.';
+        } else {
+            setFieldValid(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Biro / Direktorat terdaftar.');
+            return null;
+        }
+    }
+
     function validateAddress() {
         const val = addressInput.value.trim();
         if (val.length === 0) {
@@ -3868,6 +4082,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // 4. Unit Kerja
         const errUnit = validateUnitKerja();
         if (errUnit) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errUnit });
+
+        // 4b. Sub-Unit Kerja
+        const errSubUnit = validateSubUnitKerja();
+        if (errSubUnit) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errSubUnit });
 
         // 5. Alamat Domisili
         const errAddr = validateAddress();

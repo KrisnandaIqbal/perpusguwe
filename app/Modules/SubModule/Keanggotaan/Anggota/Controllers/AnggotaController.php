@@ -86,6 +86,9 @@ class AnggotaController extends \Base\Controllers\BaseController
         $end_date = $end->add(new \DateInterval('P' . $masa_berlaku . 'D'));
         $this->data['date'] = date_format($start_date, "Y-m-d");
 
+        $this->data['unit_kerja']        = $db->table('master_unit')->where('active', 1)->get()->getResult();
+        $this->data['sub_units_grouped'] = (new \App\Models\SubUnitModel())->getAllActiveGrouped();
+
         $this->data['title'] = 'Tambah Anggota';
 
         $this->validation->setRules([
@@ -149,7 +152,8 @@ class AnggotaController extends \Base\Controllers\BaseController
                 'Job_id'             => $this->request->getPost('Job_id'),
                 'JenisAnggota_id'    => $this->request->getPost('JenisAnggota_id'),
                 'Agama_id'           => $this->request->getPost('Agama_id'),
-                'UnitKerja_id'       => $this->request->getPost('UnitKerja_id'),
+                'UnitKerja_id'       => $this->request->getPost('UnitKerja_id') ?: null,
+                'SubUnitKerja_id'    => ($this->request->getPost('UnitKerja_id') == 1) ? null : ($this->request->getPost('SubUnitKerja_id') ?: null),
                 'Fakultas_id'        => $this->request->getPost('Fakultas_id'),
                 'Kelas_id'           => $this->request->getPost('Kelas_id'),
                 'Jurusan_id'         => $this->request->getPost('Jurusan_id'),
@@ -406,6 +410,7 @@ class AnggotaController extends \Base\Controllers\BaseController
 
         // Data pendukung pendaftaran online Kemnaker
         $this->data['unit_kerja']          = $db->table('master_unit')->where('active', 1)->get()->getResult();
+        $this->data['sub_units_grouped']   = (new \App\Models\SubUnitModel())->getAllActiveGrouped();
         $this->data['jenis_identitas']     = $db->table('master_jenis_identitas')->where('active', 1)->get()->getResult();
         $this->data['jenis_anggota_list']  = $db->table('jenis_anggota')->where('active', 1)->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)->get()->getResult();
         $this->data['status_anggota_list'] = $db->table('status_anggota')->get()->getResult();
@@ -478,6 +483,7 @@ class AnggotaController extends \Base\Controllers\BaseController
                     'JenisAnggota_id'    => $this->request->getPost('JenisAnggota_id') ?? $anggota->JenisAnggota_id,
                     'Agama_id'           => $this->request->getPost('Agama_id') ?? $anggota->Agama_id,
                     'UnitKerja_id'       => $this->request->getPost('UnitKerja_id') ?? $anggota->UnitKerja_id,
+                    'SubUnitKerja_id'    => $this->request->getPost('SubUnitKerja_id') !== null ? ($this->request->getPost('SubUnitKerja_id') ?: null) : ($anggota->SubUnitKerja_id ?? null),
                     'Fakultas_id'        => $this->request->getPost('Fakultas_id') ?? $anggota->Fakultas_id,
                     'Kelas_id'           => $this->request->getPost('Kelas_id') ?? $anggota->Kelas_id,
                     'Jurusan_id'         => $this->request->getPost('Jurusan_id') ?? $anggota->Jurusan_id,
@@ -488,6 +494,19 @@ class AnggotaController extends \Base\Controllers\BaseController
                 // Jangan mengosongkan unit kerja kalau isiannya tidak ikut terkirim
                 if (empty($update_data['UnitKerja_id'])) {
                     unset($update_data['UnitKerja_id']);
+                } else {
+                    helper('anggota');
+                    $subIdCheck = ($update_data['UnitKerja_id'] == 1) ? null : ($update_data['SubUnitKerja_id'] ?? null);
+                    $valUnit = is_valid_unit_subunit($update_data['UnitKerja_id'], $subIdCheck);
+                    if (!$valUnit['valid']) {
+                        $this->session->setFlashdata('swal_icon', 'error');
+                        $this->session->setFlashdata('swal_title', 'Validasi Gagal');
+                        $this->session->setFlashdata('swal_text', $valUnit['message']);
+                        return redirect()->to(base_url('anggota/update/' . $ID . '?slug=keanggotaan'));
+                    }
+                }
+                if (($update_data['UnitKerja_id'] ?? null) == 1) {
+                    $update_data['SubUnitKerja_id'] = null;
                 }
 
                 // Nomor PENDING- dan nomor YYMMDD99999 tidak boleh tertimpa No. Identitas

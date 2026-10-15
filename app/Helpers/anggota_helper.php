@@ -435,34 +435,50 @@ if (!function_exists('statusAnggotaId')) {
 
 if (!function_exists('alasanPerbaikan')) {
     /**
-     * Alasan pendaftaran belum bisa diterima. 'cara' dikirim ke email pendaftar.
+     * Alasan pendaftaran belum bisa diterima (9 alasan resmi).
+     * 'cara' dikirim ke email pendaftar.
      * 'daftar_ulang' false berarti pendaftar tidak diminta mengisi formulir lagi.
      */
-    function alasanPerbaikan(): array {
-        return [
-            'identitas' => [
-                'label'        => 'Nomor identitas tidak valid',
-                'cara'         => 'Periksa lagi nomor identitas Anda: NIP 18 digit untuk ASN, NIK 16 digit untuk Non ASN.',
+    function alasanPerbaikan(bool $includeLegacy = false): array {
+        $reasons = [
+            'nik_salah' => [
+                'label'        => 'Format NIK tidak valid',
+                'cara'         => 'Nomor Induk Kependudukan (NIK) harus berupa 16 digit angka sesuai KTP resmi.',
                 'daftar_ulang' => true,
             ],
-            'unit_kerja' => [
-                'label'        => 'Bukan pegawai atau unit kerja tidak sesuai',
-                'cara'         => 'Pilih unit kerja tempat Anda bertugas saat ini.',
+            'nip_salah' => [
+                'label'        => 'Format NIP tidak valid',
+                'cara'         => 'Nomor Induk Pegawai (NIP) harus berupa 18 digit angka resmi BKN tanpa spasi atau tanda baca.',
                 'daftar_ulang' => true,
             ],
-            'jenis_anggota' => [
-                'label'        => 'Jenis anggota tidak sesuai',
-                'cara'         => 'Pilih jenis anggota yang sesuai dengan status kepegawaian Anda: ASN atau Non ASN.',
+            'nama_tidak_sesuai' => [
+                'label'        => 'Nama lengkap tidak sesuai identitas',
+                'cara'         => 'Masukkan nama lengkap sesuai dengan kartu identitas resmi yang diunggah.',
                 'daftar_ulang' => true,
             ],
-            'tidak_lengkap' => [
-                'label'        => 'Data tidak lengkap',
-                'cara'         => 'Isi kembali formulir pendaftaran dengan data yang lengkap.',
+            'unit_kerja_tidak_sesuai' => [
+                'label'        => 'Unit kerja tidak sesuai penempatan',
+                'cara'         => 'Pilih unit kerja atau satuan kerja tempat Anda bertugas saat ini.',
                 'daftar_ulang' => true,
             ],
-            'ganda' => [
-                'label'        => 'Pendaftaran ganda',
-                'cara'         => 'Anda sudah tercatat dengan pendaftaran lain, jadi tidak perlu mendaftar lagi.',
+            'alamat_belum_jelas' => [
+                'label'        => 'Alamat domisili belum lengkap atau jelas',
+                'cara'         => 'Lengkapi alamat domisili/tempat tinggal saat ini secara jelas.',
+                'daftar_ulang' => true,
+            ],
+            'foto_tidak_sesuai' => [
+                'label'        => 'Pas foto tidak sesuai ketentuan',
+                'cara'         => 'Unggah pas foto formal berpakaian rapi dengan orientasi potret (rasio 2:3) dan wajah terlihat jelas.',
+                'daftar_ulang' => true,
+            ],
+            'whatsapp_tidak_valid' => [
+                'label'        => 'Nomor WhatsApp atau kontak tidak aktif',
+                'cara'         => 'Pastikan nomor telepon/WhatsApp yang didaftarkan aktif dan dapat dihubungi.',
+                'daftar_ulang' => true,
+            ],
+            'data_ganda' => [
+                'label'        => 'Pendaftaran ganda / sudah terdaftar',
+                'cara'         => 'Data Anda sudah tercatat sebelumnya pada sistem perpustakaan, sehingga tidak perlu mendaftar ulang.',
                 'daftar_ulang' => false,
             ],
             'lainnya' => [
@@ -471,6 +487,16 @@ if (!function_exists('alasanPerbaikan')) {
                 'daftar_ulang' => true,
             ],
         ];
+
+        if ($includeLegacy) {
+            $reasons['identitas']     = ['label' => 'Nomor identitas tidak valid', 'cara' => 'Periksa lagi nomor identitas Anda.', 'daftar_ulang' => true];
+            $reasons['unit_kerja']    = ['label' => 'Bukan pegawai atau unit kerja tidak sesuai', 'cara' => 'Pilih unit kerja tempat Anda bertugas.', 'daftar_ulang' => true];
+            $reasons['jenis_anggota'] = ['label' => 'Jenis anggota tidak sesuai', 'cara' => 'Pilih jenis anggota yang sesuai.', 'daftar_ulang' => true];
+            $reasons['tidak_lengkap'] = ['label' => 'Data tidak lengkap', 'cara' => 'Isi kembali formulir pendaftaran dengan data lengkap.', 'daftar_ulang' => true];
+            $reasons['ganda']         = ['label' => 'Pendaftaran ganda', 'cara' => 'Anda sudah tercatat dengan pendaftaran lain.', 'daftar_ulang' => false];
+        }
+
+        return $reasons;
     }
 }
 
@@ -496,12 +522,14 @@ if (!function_exists('kartuAnggotaData')) {
         $isUniversal = (bool) preg_match('/^[0-9]{11}$/', $memberNo);
 
         // PhotoUrl bisa berisi beberapa file dipisah koma; kartu memakai yang pertama
-        $foto = trim(explode(',', (string) $anggota->PhotoUrl)[0]);
-        $foto = $foto !== '' && is_file(FCPATH . 'uploads/anggota/' . $foto) ? base_url('uploads/anggota/' . $foto) : null;
+        $fotoName = trim(explode(',', (string) $anggota->PhotoUrl)[0]);
+        $fotoPath = $fotoName !== '' && is_file(FCPATH . 'uploads/anggota/' . $fotoName) ? FCPATH . 'uploads/anggota/' . $fotoName : null;
+        $fotoUrl  = $fotoPath ? base_url('uploads/anggota/' . $fotoName) : null;
 
         return [
             'nama'        => $anggota->Fullname,
-            'foto'        => $foto,
+            'foto'        => $fotoUrl,
+            'foto_path'   => $fotoPath,
             'member_no'   => $memberNo,
             'nomor_depan' => $isUniversal ? str_pad((string) (int) substr($memberNo, -5), 3, '0', STR_PAD_LEFT) : $memberNo,
             'nomor_urut'  => $isUniversal,
@@ -538,6 +566,165 @@ if (!function_exists('is_form_field_active')) {
         }
 
         return false;
+    }
+}
+
+if (!function_exists('format_unit_kerja')) {
+    /**
+     * Memformat tampilan nama Unit Kerja dan Sub-Unit Kerja secara terpusat.
+     * Sesuai aturan:
+     * - Anggota lama / sub-unit kosong: tampil nama unit saja, atau '-' jika unit kosong.
+     * - Jika unit dan sub-unit ada: "Nama Unit - Nama Sub-Unit".
+     *
+     * @param string|null $unitNama
+     * @param string|null $subUnitNama
+     * @return string
+     */
+    function format_unit_kerja(?string $unitNama, ?string $subUnitNama = null): string
+    {
+        $unit = trim((string) $unitNama);
+        $sub  = trim((string) $subUnitNama);
+
+        if ($unit === '' || $unit === '-') {
+            return '-';
+        }
+
+        if ($sub === '' || $sub === '-') {
+            return $unit;
+        }
+
+        return $unit . ' - ' . $sub;
+    }
+}
+
+if (!function_exists('get_member_unit_display')) {
+    /**
+     * Mengambil dan memformat data unit kerja anggota dari satu fungsi/model bersama.
+     * Menerima object/array anggota (bisa dari tabel members atau query JOIN).
+     * Jika field string nama belum ada di query, fungsi ini mengambil dari database
+     * dengan caching memori agar cepat dan tidak membebani database.
+     *
+     * Format pengembalian ($format):
+     * - 'combined' (default): "Nama Unit - Nama Sub-Unit" (atau "-" jika kosong)
+     * - 'unit'              : "Nama Unit" (atau "-")
+     * - 'subunit'           : "Nama Sub-Unit" (atau "-")
+     * - 'array'             : ['unit' => ..., 'subunit' => ..., 'full' => ...]
+     *
+     * @param mixed $member Object atau array data anggota
+     * @param string $format 'combined' | 'unit' | 'subunit' | 'array'
+     * @return string|array
+     */
+    function get_member_unit_display($member, string $format = 'combined')
+    {
+        static $unitCache = [];
+        static $subUnitCache = [];
+
+        if (empty($member)) {
+            $empty = ['unit' => '-', 'subunit' => '-', 'full' => '-'];
+            return $format === 'array' ? $empty : '-';
+        }
+
+        // Ekstraksi nilai string nama jika sudah di-JOIN
+        $unitNama    = is_object($member) ? ($member->UnitKerja ?? null) : ($member['UnitKerja'] ?? null);
+        $subUnitNama = is_object($member) ? ($member->SubUnitKerja ?? null) : ($member['SubUnitKerja'] ?? null);
+
+        // Ekstraksi ID
+        $unitId    = is_object($member) ? ($member->UnitKerja_id ?? null) : ($member['UnitKerja_id'] ?? null);
+        $subUnitId = is_object($member) ? ($member->SubUnitKerja_id ?? null) : ($member['SubUnitKerja_id'] ?? null);
+
+        $db = null;
+
+        // Ambil nama unit jika belum ada di record
+        if (empty($unitNama) && !empty($unitId)) {
+            $unitId = (int) $unitId;
+            if (!isset($unitCache[$unitId])) {
+                $db = $db ?? db_connect();
+                $u = $db->table('master_unit')->select('nama_unit')->where('id', $unitId)->get()->getRow();
+                $unitCache[$unitId] = $u ? $u->nama_unit : null;
+            }
+            $unitNama = $unitCache[$unitId];
+        }
+
+        // Ambil nama sub-unit jika belum ada di record
+        if (empty($subUnitNama) && !empty($subUnitId)) {
+            $subUnitId = (int) $subUnitId;
+            if (!isset($subUnitCache[$subUnitId])) {
+                $db = $db ?? db_connect();
+                $su = $db->table('master_subunit')->select('nama_subunit')->where('id', $subUnitId)->get()->getRow();
+                $subUnitCache[$subUnitId] = $su ? $su->nama_subunit : null;
+            }
+            $subUnitNama = $subUnitCache[$subUnitId];
+        }
+
+        $unitClean = trim((string) $unitNama);
+        if ($unitClean === '') $unitClean = '-';
+
+        $subClean = trim((string) $subUnitNama);
+        if ($subClean === '') $subClean = '-';
+
+        $full = format_unit_kerja($unitClean !== '-' ? $unitClean : null, $subClean !== '-' ? $subClean : null);
+
+        if ($format === 'unit') {
+            return $unitClean;
+        }
+        if ($format === 'subunit') {
+            return $subClean;
+        }
+        if ($format === 'array') {
+            return [
+                'unit'    => $unitClean,
+                'subunit' => $subClean,
+                'full'    => $full
+            ];
+        }
+
+        return $full;
+    }
+}
+
+if (!function_exists('is_valid_unit_subunit')) {
+    /**
+     * Memvalidasi di server apakah pilihan unit dan sub-unit sah.
+     * Aturan:
+     * - Unit belum dipilih / 0: tidak valid
+     * - Unit yang punya sub-unit (unit 2-8): sub-unit wajib diisi, aktif, dan milik unit itu
+     * - Unit tanpa sub-unit (unit 1): sub-unit boleh kosong / null
+     *
+     * @param int|null $unitId
+     * @param int|null $subUnitId
+     * @return array{valid: bool, message: string}
+     */
+    function is_valid_unit_subunit($unitId, $subUnitId = null): array
+    {
+        $unitId = (int) $unitId;
+        if ($unitId <= 0) {
+            return ['valid' => false, 'message' => 'Unit kerja wajib dipilih.'];
+        }
+
+        $db = db_connect();
+        $unit = $db->table('master_unit')->where('id', $unitId)->where('active', 1)->get()->getRow();
+        if (!$unit) {
+            return ['valid' => false, 'message' => 'Unit kerja yang dipilih tidak terdaftar atau tidak aktif.'];
+        }
+
+        $model = new \App\Models\SubUnitModel();
+        $hasSub = $model->unitHasSubUnits($unitId);
+
+        if (!$hasSub) {
+            // Unit 1 tidak punya sub-unit -> valid
+            return ['valid' => true, 'message' => 'Valid'];
+        }
+
+        $subUnitId = (int) $subUnitId;
+        if ($subUnitId <= 0) {
+            return ['valid' => false, 'message' => 'Biro / Direktorat / Unit wajib dipilih.'];
+        }
+
+        if (!$model->isValidSubUnit($unitId, $subUnitId)) {
+            return ['valid' => false, 'message' => 'Biro / Direktorat / Unit yang dipilih tidak sesuai dengan unit kerja penempatan.'];
+        }
+
+        return ['valid' => true, 'message' => 'Valid'];
     }
 }
 

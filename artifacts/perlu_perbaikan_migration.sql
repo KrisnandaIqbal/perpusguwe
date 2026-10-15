@@ -3,7 +3,7 @@
 
 -- 1. Status baru
 INSERT INTO `status_anggota` (`Nama`, `Branch_id`, `active`)
-SELECT 'Perlu Perbaikan', (SELECT `Branch_id` FROM `status_anggota` s WHERE s.`Nama` = 'Menunggu' LIMIT 1), 1
+SELECT 'Perlu Perbaikan', (SELECT `Branch_id` FROM `status_anggota` s WphHERE s.`Nama` = 'Menunggu' LIMIT 1), 1
 WHERE NOT EXISTS (
     SELECT 1 FROM `status_anggota` WHERE `Nama` = 'Perlu Perbaikan'
 );

@@ -42,7 +42,17 @@ class Registrasi extends BaseController
                                        ->where('active', 1)
                                        ->get()->getResult();
 
+        $subUnitModel = new \App\Models\SubUnitModel();
+        $data['sub_units_grouped'] = $subUnitModel->getAllActiveGrouped();
+
         return view('Registrasi\Views\index', $data);
+    }
+
+    public function sub_units($unitId = null)
+    {
+        $subUnitModel = new \App\Models\SubUnitModel();
+        $list = $subUnitModel->getActiveByUnitId((int) $unitId);
+        return $this->response->setJSON($list);
     }
 
     public function submit()
@@ -56,6 +66,7 @@ class Registrasi extends BaseController
         $identityTypeId = $this->request->getPost('IdentityType_id');
         $identityNo = $this->request->getPost('IdentityNo');
         $unitKerjaId = $this->request->getPost('UnitKerja_id');
+        $subUnitKerjaId = $this->request->getPost('SubUnitKerja_id');
         $address = $this->request->getPost('AddressNow');
         $email = $this->request->getPost('Email');
         $phone = $this->request->getPost('Phone');
@@ -71,6 +82,16 @@ class Registrasi extends BaseController
             'Phone' => 'required',
             'Persetujuan' => 'required',
         ];
+
+        // Validasi di SERVER: sub-unit harus benar-benar milik unit yang dipilih
+        helper('anggota');
+        $unitCheck = is_valid_unit_subunit($unitKerjaId, $subUnitKerjaId);
+        if (!$unitCheck['valid']) {
+            return $this->respond([
+                'success' => false,
+                'message' => $unitCheck['message']
+            ]);
+        }
 
         // Conditional Rules
         // Check if ASN or Non-ASN
@@ -194,6 +215,7 @@ class Registrasi extends BaseController
             'IdentityType_id' => $identityTypeId,
             'IdentityNo' => $identityNo,
             'UnitKerja_id' => $unitKerjaId,
+            'SubUnitKerja_id' => !empty($subUnitKerjaId) ? (int) $subUnitKerjaId : null,
             'AddressNow' => $address,
             'Email' => $email,
             'NoHp' => $phone,

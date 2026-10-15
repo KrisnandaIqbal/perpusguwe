@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `master_unit` (
 -- 2. Insert Data Unit Kerja (Sesuai Kemnaker) jika belum ada
 INSERT INTO `master_unit` (`nama_unit`, `CreateDate`)
 SELECT * FROM (
-    SELECT 'Kementerian Ketenagakerjaan Republik Indonesia' AS nama_unit, NOW() AS CreateDate UNION ALL
+    SELECT 'Kementerian Ketenagakerjaan' AS nama_unit, NOW() AS CreateDate UNION ALL
     SELECT 'Sekretariat Jenderal', NOW() UNION ALL
     SELECT 'Inspektorat Jenderal', NOW() UNION ALL
     SELECT 'Barenbang', NOW() UNION ALL

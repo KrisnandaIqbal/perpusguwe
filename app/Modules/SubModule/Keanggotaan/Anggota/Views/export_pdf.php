@@ -330,7 +330,7 @@ foreach ($membersData as $item):
             <tr>
                 <td class="data-label">Satuan Kerja / Unit Penempatan</td>
                 <td class="data-separator">:</td>
-                <td class="data-value"><strong><?= htmlspecialchars($m->UnitKerja ?? 'Kementerian Ketenagakerjaan RI') ?></strong></td>
+                <td class="data-value"><strong><?= htmlspecialchars(format_unit_kerja($m->UnitKerja ?? null, $m->SubUnitKerja ?? null) ?: 'Kementerian Ketenagakerjaan RI') ?></strong></td>
             </tr>
         </table>
 

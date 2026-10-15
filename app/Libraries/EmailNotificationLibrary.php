@@ -757,13 +757,17 @@ class EmailNotificationLibrary
             return ['success' => false, 'message' => 'Format email tidak valid: ' . $member->Email];
         }
 
-        $html = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
-
-        $dompdf = new \Dompdf\Dompdf();
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->loadHtml($html);
-        $dompdf->render();
-        $pdfContent = $dompdf->output();
+        try {
+            $pdfContent = (new \App\Libraries\EmailPendaftaran())->kartuPdf($member);
+        } catch (\Throwable $e) {
+            log_message('error', '[EmailNotif] kartuPdf fallback: ' . $e->getMessage());
+            $html = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->loadHtml($html);
+            $dompdf->render();
+            $pdfContent = $dompdf->output();
+        }
 
         $tempFile = tempnam(sys_get_temp_dir(), 'kartu_') . '.pdf';
         file_put_contents($tempFile, $pdfContent);
@@ -948,14 +952,20 @@ class EmailNotificationLibrary
                  . '</table>'
                  . '<p style="' . $p . '">Kartu anggota digital terlampir dalam format PDF. Mohon disimpan sebagai bukti keanggotaan.</p>';
 
-        $cardHtml = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
-        $dompdf = new \Dompdf\Dompdf();
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->loadHtml($cardHtml);
-        $dompdf->render();
+        try {
+            $pdfContent = (new \App\Libraries\EmailPendaftaran())->kartuPdf($member);
+        } catch (\Throwable $e) {
+            log_message('error', '[EmailNotif] kartuPdf fallback: ' . $e->getMessage());
+            $cardHtml = $this->buildMemberCardTemplate($member, $qrImage, $photoSrc, $perpusName, $logoBase64, $jenisAnggota);
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->loadHtml($cardHtml);
+            $dompdf->render();
+            $pdfContent = $dompdf->output();
+        }
 
         $tempFile = tempnam(sys_get_temp_dir(), 'kartu_');
-        file_put_contents($tempFile, $dompdf->output());
+        file_put_contents($tempFile, $pdfContent);
 
         $result = $this->sendMembershipMail(
             $member->Email,

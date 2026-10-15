@@ -97,8 +97,12 @@ class AnggotaImportController extends \Base\Controllers\BaseController
                 'status anggota'                 => 'StatusAnggota_id',
                 'nama institusi'                 => 'InstitutionName',
                 'alamat institusi'               => 'InstitutionAddress',
-                'no telp institusi'              => 'InstitutionPhone',
                 'unit kerja'                     => 'UnitKerja_id',
+                'satuan kerja'                   => 'UnitKerja_id',
+                'unit kerja eselon i'            => 'UnitKerja_id',
+                'sub unit kerja'                 => 'SubUnitKerja_id',
+                'biro / direktorat / unit'       => 'SubUnitKerja_id',
+                'subunit kerja'                  => 'SubUnitKerja_id',
                 'tahun ajaran'                   => 'TahunAjaran',
                 'fakultas'                       => 'Fakultas_id',
                 'kelas'                          => 'Kelas_id',
@@ -151,8 +155,31 @@ class AnggotaImportController extends \Base\Controllers\BaseController
                             $row_data = $db->table('master_jenis_identitas')->like('Nama', $cellValue)->get()->getRow();
                             $memberData['IdentityType_id'] = $row_data ? $row_data->id : null;
                         } elseif ($dbColumnName == 'UnitKerja_id') {
-                            $row_data = $db->table('departments')->like('Name', $cellValue)->get()->getRow();
-                            $memberData['UnitKerja_id'] = $row_data ? $row_data->ID : null;
+                            $cellValue = trim((string) $cellValue);
+                            if ($cellValue !== '') {
+                                $row_data = $db->table('master_unit')
+                                    ->groupStart()
+                                        ->where('id', $cellValue)
+                                        ->orLike('nama_unit', $cellValue)
+                                    ->groupEnd()
+                                    ->get()->getRow();
+                                $memberData['UnitKerja_id'] = $row_data ? $row_data->id : null;
+                            }
+                        } elseif ($dbColumnName == 'SubUnitKerja_id') {
+                            $cellValue = trim((string) $cellValue);
+                            if ($cellValue !== '') {
+                                $unitIdRef = $memberData['UnitKerja_id'] ?? null;
+                                $suQuery = $db->table('master_subunit');
+                                if (!empty($unitIdRef)) {
+                                    $suQuery->where('unit_id', $unitIdRef);
+                                }
+                                $suQuery->groupStart()
+                                    ->where('id', $cellValue)
+                                    ->orLike('nama_subunit', $cellValue)
+                                ->groupEnd();
+                                $row_data = $suQuery->get()->getRow();
+                                $memberData['SubUnitKerja_id'] = $row_data ? $row_data->id : null;
+                            }
                         } elseif ($dbColumnName == 'Fakultas_id') {
                             $row_data = $db->table('master_fakultas')->like('Nama', $cellValue)->get()->getRow();
                             $memberData['Fakultas_id'] = $row_data ? $row_data->id : null;
@@ -177,6 +204,11 @@ class AnggotaImportController extends \Base\Controllers\BaseController
 
                     if (empty($memberData['RegisterDate'])) {
                         $memberData['RegisterDate'] = date('Y-m-d');
+                    }
+
+                    // Jika unit kerja adalah Unit 1 (Kementerian Ketenagakerjaan RI), kosongkan sub-unit
+                    if (($memberData['UnitKerja_id'] ?? null) == 1) {
+                        $memberData['SubUnitKerja_id'] = null;
                     }
 
                     $memberModel->insert($memberData);
