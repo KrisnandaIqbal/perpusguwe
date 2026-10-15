@@ -209,26 +209,80 @@ class AnggotaController extends \Base\Controllers\BaseController
                 $save_data['KelurahanNow'] = $region->name;
             }
 
-            $files = (array) $this->request->getPost('PhotoUrl');
-            if (count($files)) {
-                $listed_file = [];
-                foreach ($files as $uuid => $name) {
-                    if (file_exists($this->uploadPath . $name)) {
-                        $file = new File($this->uploadPath . $name);
-                        $newFileName = $file->getRandomName();
-                        $file->move($this->modulePath, $newFileName);
-                        $listed_file[] = $newFileName;
+            // Format nama foto sesuai Nomor Anggota (MemberNo)
+            $cleanMemberNo = preg_replace('/[^a-zA-Z0-9_-]/', '_', trim((string)$MemberNo));
+            if (empty($cleanMemberNo)) {
+                $cleanMemberNo = 'member_' . time();
+            }
+
+            $directFile = $this->request->getFile('file_image');
+            if ($directFile && $directFile->isValid() && !$directFile->hasMoved()) {
+                $ext = strtolower($directFile->guessExtension() ?: 'jpg');
+                $finalFileName = $cleanMemberNo . '.' . $ext;
+                if (!file_exists($this->modulePath)) {
+                    mkdir($this->modulePath, 0755, true);
+                }
+                $destPath = $this->modulePath . $finalFileName;
+                if (file_exists($destPath)) {
+                    @unlink($destPath);
+                }
+                $directFile->move($this->modulePath, $finalFileName, true);
+                @touch($destPath);
+                $save_data['PhotoUrl'] = $finalFileName;
+            } else {
+                $files = (array) ($this->request->getPost('file_image') ?? $this->request->getPost('PhotoUrl'));
+                if (!empty($files)) {
+                    $files = array_reverse($files, true);
+                    foreach ($files as $uuid => $name) {
+                        if (empty($name)) continue;
+                        $name = basename($name);
+                        $sourcePath = '';
+                        if (file_exists($this->uploadPath . $name)) {
+                            $sourcePath = $this->uploadPath . $name;
+                        } elseif (file_exists($this->modulePath . $name) && $name !== $cleanMemberNo . '.' . strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
+                            $sourcePath = $this->modulePath . $name;
+                        }
+
+                        if ($sourcePath) {
+                            $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION) ?: 'jpg');
+                            $finalFileName = $cleanMemberNo . '.' . $ext;
+
+                            if (!file_exists($this->modulePath)) {
+                                mkdir($this->modulePath, 0755, true);
+                            }
+
+                            $destPath = $this->modulePath . $finalFileName;
+                            if (realpath($sourcePath) !== realpath($destPath)) {
+                                if (file_exists($destPath)) {
+                                    @unlink($destPath);
+                                }
+                                if (!@rename($sourcePath, $destPath)) {
+                                    @copy($sourcePath, $destPath);
+                                    @unlink($sourcePath);
+                                }
+                            }
+                            @touch($destPath);
+
+                            $save_data['PhotoUrl'] = $finalFileName;
+                            break;
+                        }
                     }
                 }
-                $save_data['PhotoUrl'] = implode(',', $listed_file);
             }
 
             $base64_string = $this->request->getPost('camera_image');
             if (!empty($base64_string)) {
-                $file = new File($this->uploadPath);
-                $newFileName = $file->getRandomName() . '.jpg';
-                base64_to_jpeg($base64_string, $this->modulePath . $newFileName);
-                $save_data['PhotoUrl'] = $newFileName;
+                $finalFileName = $cleanMemberNo . '.jpg';
+                if (!file_exists($this->modulePath)) {
+                    mkdir($this->modulePath, 0755, true);
+                }
+                $destPath = $this->modulePath . $finalFileName;
+                if (file_exists($destPath)) {
+                    @unlink($destPath);
+                }
+                base64_to_jpeg($base64_string, $destPath);
+                @touch($destPath);
+                $save_data['PhotoUrl'] = $finalFileName;
             }
 
             $newAnggotaId = $this->anggotaModel->protect(false)->insert($save_data);
@@ -493,30 +547,115 @@ class AnggotaController extends \Base\Controllers\BaseController
                     $update_data['KelurahanNow'] = $region->name;
                 }
 
+                // Format nama foto sesuai Nomor Anggota (MemberNo)
+                $cleanMemberNo = preg_replace('/[^a-zA-Z0-9_-]/', '_', trim((string)$MemberNo));
+                if (empty($cleanMemberNo)) {
+                    $cleanMemberNo = 'member_' . $ID;
+                }
+
                 $is_camera = $this->request->getPost('is_camera');
                 if ($is_camera) {
                     $base64_string = $this->request->getPost('camera_image');
                     if (!empty($base64_string)) {
-                        $file = new File($this->uploadPath);
-                        $newFileName = $file->getRandomName() . '.jpg';
-                        base64_to_jpeg($base64_string, $this->modulePath . $newFileName);
-                        $update_data['PhotoUrl'] = $newFileName;
+                        $finalFileName = $cleanMemberNo . '.jpg';
+                        if (!file_exists($this->modulePath)) {
+                            mkdir($this->modulePath, 0755, true);
+                        }
+                        if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
+                            @unlink($this->modulePath . $anggota->PhotoUrl);
+                        }
+                        $destPath = $this->modulePath . $finalFileName;
+                        if (file_exists($destPath)) {
+                            @unlink($destPath);
+                        }
+                        base64_to_jpeg($base64_string, $destPath);
+                        @touch($destPath);
+                        $update_data['PhotoUrl'] = $finalFileName;
                     }
                 } else {
-                    $files = (array) $this->request->getPost('file_image');
-                    if (count($files)) {
-                        $listed_file = [];
-                        foreach ($files as $uuid => $name) {
-                            if (file_exists($this->modulePath . $name)) {
-                                $listed_file[] = $name;
-                            } elseif (file_exists($this->uploadPath . $name)) {
-                                $file = new File($this->uploadPath . $name);
-                                $newFileName = $file->getRandomName();
-                                $file->move($this->modulePath, $newFileName);
-                                $listed_file[] = $newFileName;
+                    // Cek jika ada upload langsung via file_image
+                    $directFile = $this->request->getFile('file_image');
+                    if ($directFile && $directFile->isValid() && !$directFile->hasMoved()) {
+                        $ext = strtolower($directFile->guessExtension() ?: 'jpg');
+                        $finalFileName = $cleanMemberNo . '.' . $ext;
+                        if (!file_exists($this->modulePath)) {
+                            mkdir($this->modulePath, 0755, true);
+                        }
+                        if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
+                            @unlink($this->modulePath . $anggota->PhotoUrl);
+                        }
+                        $destPath = $this->modulePath . $finalFileName;
+                        if (file_exists($destPath)) {
+                            @unlink($destPath);
+                        }
+                        $directFile->move($this->modulePath, $finalFileName, true);
+                        @touch($destPath);
+                        $update_data['PhotoUrl'] = $finalFileName;
+                    } else {
+                        // Dari Dropzone (file_image[uuid] = filename)
+                        $files = (array) $this->request->getPost('file_image');
+                        if (!empty($files)) {
+                            // Ambil yang paling baru
+                            $files = array_reverse($files, true);
+                            foreach ($files as $uuid => $name) {
+                                if (empty($name)) continue;
+                                $name = basename($name);
+                                $sourcePath = '';
+                                if (file_exists($this->uploadPath . $name)) {
+                                    $sourcePath = $this->uploadPath . $name;
+                                } elseif (file_exists($this->modulePath . $name) && $name !== $cleanMemberNo . '.' . strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
+                                    $sourcePath = $this->modulePath . $name;
+                                }
+
+                                if ($sourcePath) {
+                                    $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION) ?: 'jpg');
+                                    $finalFileName = $cleanMemberNo . '.' . $ext;
+
+                                    if (!file_exists($this->modulePath)) {
+                                        mkdir($this->modulePath, 0755, true);
+                                    }
+
+                                    // Hapus foto lama jika berbeda nama/ekstensi
+                                    if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
+                                        @unlink($this->modulePath . $anggota->PhotoUrl);
+                                    }
+
+                                    $destPath = $this->modulePath . $finalFileName;
+                                    if (realpath($sourcePath) !== realpath($destPath)) {
+                                        if (file_exists($destPath)) {
+                                            @unlink($destPath);
+                                        }
+                                        if (!@rename($sourcePath, $destPath)) {
+                                            @copy($sourcePath, $destPath);
+                                            @unlink($sourcePath);
+                                        }
+                                    }
+                                    @touch($destPath);
+
+                                    $update_data['PhotoUrl'] = $finalFileName;
+                                    break;
+                                }
                             }
                         }
-                        $update_data['PhotoUrl'] = implode(',', $listed_file);
+                    }
+                }
+
+                // Jika tidak ada foto baru diunggah tapi nomor anggota berubah dan sudah ada foto lama,
+                // sinkronkan nama file foto yang sudah ada dengan nomor anggota baru.
+                if (empty($update_data['PhotoUrl']) && !empty($anggota->PhotoUrl)) {
+                    $oldPhotoPath = $this->modulePath . $anggota->PhotoUrl;
+                    if (file_exists($oldPhotoPath)) {
+                        $oldExt = strtolower(pathinfo($anggota->PhotoUrl, PATHINFO_EXTENSION) ?: 'jpg');
+                        $renamedPhoto = $cleanMemberNo . '.' . $oldExt;
+                        if ($renamedPhoto !== $anggota->PhotoUrl) {
+                            $newPhotoPath = $this->modulePath . $renamedPhoto;
+                            if (file_exists($newPhotoPath)) {
+                                @unlink($newPhotoPath);
+                            }
+                            if (@rename($oldPhotoPath, $newPhotoPath)) {
+                                $update_data['PhotoUrl'] = $renamedPhoto;
+                            }
+                        }
                     }
                 }
 
@@ -814,5 +953,75 @@ class AnggotaController extends \Base\Controllers\BaseController
             'collections' => $collectionIds,
             'locations'   => $locationIds,
         ]);
+    }
+
+    /**
+     * Upload handler untuk Dropzone foto anggota
+     */
+    public function do_upload()
+    {
+        $response = [
+            'success' => false,
+            'data'    => '',
+            'msg'     => 'Foto gagal diunggah.'
+        ];
+
+        $file = $this->request->getFile('file');
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            $mime = $file->getMimeType();
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!in_array($mime, $allowedMimes)) {
+                $response['msg'] = 'Format file tidak didukung. Harap unggah format JPG atau PNG.';
+                return $this->response->setJSON($response);
+            }
+
+            if (!file_exists($this->uploadPath)) {
+                mkdir($this->uploadPath, 0755, true);
+            }
+
+            $file->move($this->uploadPath);
+
+            $data = [
+                'name' => $file->getName(),
+                'type' => $file->getClientMimeType(),
+            ];
+
+            $response = [
+                'success' => true,
+                'data'    => $data,
+                'msg'     => 'Foto berhasil diunggah.'
+            ];
+        } else {
+            $response['msg'] = $file ? $file->getErrorString() : 'Tidak ada file yang diunggah.';
+        }
+
+        return $this->response->setJSON($response);
+    }
+
+    /**
+     * Delete handler jika file dibatalkan di Dropzone
+     */
+    public function do_delete()
+    {
+        $response = [
+            'success' => false,
+            'data'    => '',
+            'msg'     => 'File gagal dihapus.'
+        ];
+
+        $name = $this->request->getPost('name');
+        if (!empty($name)) {
+            $baseName = basename($name);
+            if (file_exists($this->uploadPath . $baseName)) {
+                @unlink($this->uploadPath . $baseName);
+            }
+            $response = [
+                'success' => true,
+                'data'    => '',
+                'msg'     => 'File berhasil dihapus.'
+            ];
+        }
+
+        return $this->response->setJSON($response);
     }
 }

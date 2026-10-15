@@ -41,6 +41,8 @@ $routes->group('anggota', ['namespace' => 'Anggota\Controllers'], function ($sub
     $subroutes->add('pulihkan_keranjang',     'AnggotaController::pulihkan_keranjang');
     $subroutes->add('hapus_permanen',         'AnggotaController::hapus_permanen');
     $subroutes->add('profile',                'AnggotaController::profile');
+    $subroutes->add('do_upload',              'AnggotaController::do_upload');
+    $subroutes->add('do_delete',              'AnggotaController::do_delete');
 
     // === AnggotaOnlineController ===
     $subroutes->add('online',                 'AnggotaOnlineController::online');

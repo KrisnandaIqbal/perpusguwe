@@ -1,3 +1,20 @@
+<style>
+#file_pendukung .dz-preview .dz-image {
+    position: relative;
+    width: 120px;
+    height: 180px;
+    aspect-ratio: 2/3;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+#file_pendukung .dz-preview .dz-image img {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+}
+</style>
 <div class="modal fade" id="modal_upload" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">

@@ -233,6 +233,212 @@
 		return false;
 	}
 
+	/* ========================================================
+	   GLOBAL IMAGE CROPPER (Rasio 2:3 - Auto Mulai dari Tengah)
+	   ======================================================== */
+	var _activeCropper = null;
+	var _cropperOnApply = null;
+	var _cropperOnCancel = null;
+	var _cropperObjectUrl = null;
+
+	function ensureCropperModalDOM() {
+		if (document.getElementById('globalImageCropperModal')) return;
+
+		var modalHtml = `
+		<div id="globalImageCropperModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.88); z-index:99999999; justify-content:center; align-items:center; padding:15px; box-sizing:border-box;">
+			<div style="position:relative; background:#ffffff; border-radius:14px; max-width:92vw; width:680px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.6);">
+				
+				<!-- Header -->
+				<div style="display:flex; align-items:center; justify-content:space-between; padding:12px 18px; background:#1e293b; color:#ffffff;">
+					<div style="font-weight:600; font-size:15px; display:flex; align-items:center; gap:8px;">
+						<i class="fa fa-crop text-info"></i>
+						<span>Sesuaikan / Potong Pas Foto (Rasio 2:3)</span>
+					</div>
+					<button type="button" id="cropperCloseTopBtn" style="background:none; border:none; color:#ffffff; font-size:24px; line-height:1; cursor:pointer; opacity:0.85; padding:0 4px;" title="Batal (ESC)">&times;</button>
+				</div>
+
+				<!-- Cropper Stage -->
+				<div style="background:#0b1120; width:100%; height:380px; max-height:55vh; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+					<img id="cropperImageSource" src="" alt="Crop Area" style="max-width:100%; max-height:100%; display:block;">
+				</div>
+
+				<!-- Toolbar -->
+				<div style="background:#1e293b; padding:8px 16px; border-top:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+					<div style="display:flex; align-items:center; gap:6px;">
+						<button type="button" class="btn btn-sm btn-dark text-white border-secondary" id="cropperBtnZoomIn" title="Perbesar"><i class="fa fa-search-plus"></i></button>
+						<button type="button" class="btn btn-sm btn-dark text-white border-secondary" id="cropperBtnZoomOut" title="Perkecil"><i class="fa fa-search-minus"></i></button>
+						<button type="button" class="btn btn-sm btn-dark text-white border-secondary" id="cropperBtnRotateLeft" title="Putar Kiri 90°"><i class="fa fa-rotate-left"></i></button>
+						<button type="button" class="btn btn-sm btn-dark text-white border-secondary" id="cropperBtnRotateRight" title="Putar Kanan 90°"><i class="fa fa-rotate-right"></i></button>
+						<button type="button" class="btn btn-sm btn-dark text-white border-secondary" id="cropperBtnReset" title="Reset Posisi Tengah"><i class="fa fa-refresh mr-1"></i> Reset</button>
+					</div>
+					<div style="display:flex; align-items:center; gap:6px;">
+						<button type="button" class="btn btn-sm btn-info text-white" id="cropperBtnRatio23" title="Kunci Pas Foto 2:3"><i class="fa fa-lock mr-1"></i> 2:3 (Pas Foto)</button>
+						<button type="button" class="btn btn-sm btn-outline-light" id="cropperBtnRatioFree" title="Rasio Bebas"><i class="fa fa-unlock mr-1"></i> Bebas</button>
+					</div>
+				</div>
+
+				<!-- Footer -->
+				<div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+					<div style="font-size:12px; color:#64748b;">
+						<i class="fa fa-info-circle text-primary mr-1"></i> Otomatis mulai dari tengah. Geser & sesuaikan sesuai kebutuhan.
+					</div>
+					<div style="display:flex; align-items:center; gap:8px;">
+						<button type="button" class="btn btn-sm btn-secondary" id="cropperBtnCancel" style="padding:5px 16px;">Batal</button>
+						<button type="button" class="btn btn-sm btn-primary" id="cropperBtnApply" style="padding:5px 20px;">
+							<i class="fa fa-check mr-1"></i> Gunakan Foto Ini
+						</button>
+					</div>
+				</div>
+
+			</div>
+		</div>`;
+
+		$('body').append(modalHtml);
+
+		$('#cropperBtnZoomIn').on('click', function() { if (_activeCropper) _activeCropper.zoom(0.1); });
+		$('#cropperBtnZoomOut').on('click', function() { if (_activeCropper) _activeCropper.zoom(-0.1); });
+		$('#cropperBtnRotateLeft').on('click', function() { if (_activeCropper) _activeCropper.rotate(-90); });
+		$('#cropperBtnRotateRight').on('click', function() { if (_activeCropper) _activeCropper.rotate(90); });
+		$('#cropperBtnReset').on('click', function() { if (_activeCropper) _activeCropper.reset(); });
+		
+		$('#cropperBtnRatio23').on('click', function() {
+			if (_activeCropper) {
+				_activeCropper.setAspectRatio(2 / 3);
+				$('#cropperBtnRatio23').addClass('btn-info text-white').removeClass('btn-outline-light');
+				$('#cropperBtnRatioFree').addClass('btn-outline-light').removeClass('btn-info text-white');
+			}
+		});
+
+		$('#cropperBtnRatioFree').on('click', function() {
+			if (_activeCropper) {
+				_activeCropper.setAspectRatio(NaN);
+				$('#cropperBtnRatioFree').addClass('btn-info text-white').removeClass('btn-outline-light');
+				$('#cropperBtnRatio23').addClass('btn-outline-light').removeClass('btn-info text-white');
+			}
+		});
+
+		$('#cropperCloseTopBtn, #cropperBtnCancel').on('click', function() {
+			closeCropperModal();
+			if (typeof _cropperOnCancel === 'function') {
+				_cropperOnCancel();
+			}
+		});
+
+		$('#cropperBtnApply').on('click', function() {
+			if (!_activeCropper) return;
+			var canvas = _activeCropper.getCroppedCanvas({
+				width: 600,
+				height: 900,
+				imageSmoothingEnabled: true,
+				imageSmoothingQuality: 'high'
+			});
+			if (!canvas) return;
+
+			var croppedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+			canvas.toBlob(function(blob) {
+				closeCropperModal();
+				if (typeof _cropperOnApply === 'function') {
+					_cropperOnApply(blob, croppedDataUrl);
+				}
+			}, 'image/jpeg', 0.92);
+		});
+	}
+
+	function openImageCropper(imageSource, onApplyCallback, onCancelCallback) {
+		if (typeof Cropper === 'undefined') {
+			console.warn('Cropper.js belum tersedia, melanjutkan file tanpa crop.');
+			if (typeof onApplyCallback === 'function') {
+				onApplyCallback(imageSource, typeof imageSource === 'string' ? imageSource : '');
+			}
+			return;
+		}
+
+		ensureCropperModalDOM();
+
+		_cropperOnApply = onApplyCallback;
+		_cropperOnCancel = onCancelCallback;
+
+		var modal = document.getElementById('globalImageCropperModal');
+		var targetImg = document.getElementById('cropperImageSource');
+		if (!modal || !targetImg) return;
+
+		if (_activeCropper) {
+			_activeCropper.destroy();
+			_activeCropper = null;
+		}
+
+		if (_cropperObjectUrl) {
+			URL.revokeObjectURL(_cropperObjectUrl);
+			_cropperObjectUrl = null;
+		}
+
+		var imgSrc = '';
+		if (typeof imageSource === 'string') {
+			imgSrc = imageSource;
+		} else if (imageSource instanceof Blob) {
+			_cropperObjectUrl = URL.createObjectURL(imageSource);
+			imgSrc = _cropperObjectUrl;
+		}
+
+		targetImg.src = imgSrc;
+		modal.style.display = 'flex';
+		document.body.style.overflow = 'hidden';
+
+		var initCropper = function() {
+			if (_activeCropper) {
+				_activeCropper.destroy();
+			}
+			_activeCropper = new Cropper(targetImg, {
+				aspectRatio: 2 / 3, // Otomatis rasio 2:3
+				viewMode: 1, // Batasi crop box tidak keluar dari gambar
+				dragMode: 'move',
+				autoCrop: true,
+				autoCropArea: 0.85, // Area 85%, otomatis terpusat di tengah
+				center: true,
+				guides: true,
+				highlight: true,
+				cropBoxMovable: true, // Pengguna bebas menggeser
+				cropBoxResizable: true, // Pengguna bebas mengubah ukuran
+				toggleDragModeOnDblclick: false,
+				responsive: true,
+				checkOrientation: true
+			});
+			targetImg.removeEventListener('load', initCropper);
+		};
+
+		if (targetImg.complete && targetImg.naturalWidth > 0) {
+			initCropper();
+		} else {
+			targetImg.addEventListener('load', initCropper);
+		}
+	}
+
+	function closeCropperModal() {
+		var modal = document.getElementById('globalImageCropperModal');
+		if (modal) {
+			modal.style.display = 'none';
+			document.body.style.overflow = '';
+		}
+		if (_activeCropper) {
+			_activeCropper.destroy();
+			_activeCropper = null;
+		}
+		if (_cropperObjectUrl) {
+			URL.revokeObjectURL(_cropperObjectUrl);
+			_cropperObjectUrl = null;
+		}
+	}
+
+	$(document).on('keydown', function(e) {
+		var modal = document.getElementById('globalImageCropperModal');
+		if (modal && modal.style.display === 'flex' && (e.key === 'Escape' || e.keyCode === 27)) {
+			closeCropperModal();
+			if (typeof _cropperOnCancel === 'function') {
+				_cropperOnCancel();
+			}
+		}
+	});
+
 	/* Dropzone*/
 	Dropzone.autoDiscover = false;
 
@@ -252,8 +458,46 @@
 			paramName: paramName,
 			maxFiles: maxFiles,
 			maxFilesize: maxFilesize,
+			maxThumbnailFilesize: maxFilesize || 10,
+			thumbnailWidth: 120,
+			thumbnailHeight: 180,
 			addRemoveLinks: true,
 			acceptedFiles: acceptedFiles,
+			transformFile: function(file, done) {
+				var isImage = (file.type && file.type.match(/^image\//)) || (file.name && file.name.match(/\.(jpg|jpeg|png)$/i));
+				var shouldCrop = isImage && (routePath === 'anggota' || acceptedFiles.indexOf('.jpg') !== -1 || acceptedFiles.indexOf('image') !== -1);
+
+				if (!shouldCrop || typeof openImageCropper !== 'function') {
+					return done(file);
+				}
+
+				openImageCropper(file, function(croppedBlob, croppedDataUrl) {
+					var fileName = file.name || ('cropped_' + new Date().getTime() + '.jpg');
+					var transformedFile;
+					try {
+						transformedFile = new File([croppedBlob], fileName, {
+							type: 'image/jpeg',
+							lastModified: Date.now()
+						});
+					} catch(e) {
+						croppedBlob.name = fileName;
+						transformedFile = croppedBlob;
+					}
+
+					if (file.previewElement) {
+						var blobUrl = URL.createObjectURL(croppedBlob);
+						file.previewElement.setAttribute('data-blob-url', blobUrl);
+						var imgEl = file.previewElement.querySelector('img[data-dz-thumbnail], img');
+						if (imgEl) {
+							imgEl.src = blobUrl;
+						}
+					}
+
+					done(transformedFile);
+				}, function() {
+					myDropzone.removeFile(file);
+				});
+			},
 			renameFile: function(file) {
 				var filename = new Date().getTime() + '_' + file.name.toLowerCase().replace(' ', '_');
 				console.log("renameFile");
@@ -267,6 +511,17 @@
 				done();
 			},
 			init: function() {
+				this.on("addedfile", function(file) {
+					if (maxFiles === 1 && this.files.length > 1) {
+						this.removeFile(this.files[0]);
+					}
+					try {
+						if (file && file.previewElement && window.URL && typeof window.URL.createObjectURL === 'function') {
+							var blobUrl = URL.createObjectURL(file);
+							file.previewElement.setAttribute('data-blob-url', blobUrl);
+						}
+					} catch (e) {}
+				});
 				this.on("maxfilesexceeded", function(file) {
 					console.log("max files exceeded");
 					console.log(file);
@@ -276,17 +531,23 @@
 				console.log('success');
 				console.log(response);
 
-				var uuid = file.upload.uuid;
-				var value = response.data.name;
+				var uuid = file.upload ? file.upload.uuid : new Date().getTime();
+				var value = (response && response.data && response.data.name) ? response.data.name : '';
 				var name = domID + '[' + uuid + ']';
 
-				$('#' + domID + '_listed').append('<input type="hidden" name="' + name + '" value="' + value + '" />');
+				if (maxFiles === 1) {
+					$('#' + domID + '_listed').empty();
+				}
+				if (value) {
+					$('#' + domID + '_listed').append('<input type="hidden" name="' + name + '" value="' + value + '" />');
+					if (file.previewElement) {
+						file.previewElement.setAttribute('data-full-url', BASEURL + '/uploads/' + value);
+					}
+				}
 			},
 			removedfile: function(file) {
 				console.log('removedfile');
-				// console.log(file);
 				var name = "";
-
 				var path = WRITEPATH + '/' + 'uploads';
 
 				if (writePath) {
@@ -307,12 +568,14 @@
 					dataType: 'html'
 				});
 
-				$('input[name="' + domID + '[' + file.upload.uuid + ']"]').remove();
+				if (file.upload && file.upload.uuid) {
+					$('input[name="' + domID + '[' + file.upload.uuid + ']"]').remove();
+				} else if (maxFiles === 1) {
+					$('#' + domID + '_listed').empty();
+				}
 
 				var _ref;
 				return (_ref = file.previewElement) != null ? _ref.parentNode.removeChild(file.previewElement) : void 0;
-				return true;
-
 			}
 		});
 

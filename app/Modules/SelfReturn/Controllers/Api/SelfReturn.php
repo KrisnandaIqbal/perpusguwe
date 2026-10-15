@@ -7,7 +7,7 @@ use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Files\File;
 use \Hermawan\DataTables\DataTable;
 
-class SelfReturn extends \App\Controllers\BaseResourceController
+class SelfReturn extends \Base\Controllers\BaseResourceController
 {
 	use ResponseTrait;
 	protected $pengembalianModel;

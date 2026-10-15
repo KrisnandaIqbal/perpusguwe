@@ -261,7 +261,8 @@
 
         .front-photo {
             width: 15mm;
-            height: 17mm;
+            height: 22.5mm;
+            aspect-ratio: 2/3;
             /* border: 2mm solid white; */
             object-fit: cover;
             border-radius: 0;

@@ -495,8 +495,13 @@ if (!function_exists('kartuAnggotaData')) {
         // No. Anggota YYMMDD99999: sisi depan menampilkan nomor urutnya saja (001, 002, ...)
         $isUniversal = (bool) preg_match('/^[0-9]{11}$/', $memberNo);
 
+        // PhotoUrl bisa berisi beberapa file dipisah koma; kartu memakai yang pertama
+        $foto = trim(explode(',', (string) $anggota->PhotoUrl)[0]);
+        $foto = $foto !== '' && is_file(FCPATH . 'uploads/anggota/' . $foto) ? base_url('uploads/anggota/' . $foto) : null;
+
         return [
             'nama'        => $anggota->Fullname,
+            'foto'        => $foto,
             'member_no'   => $memberNo,
             'nomor_depan' => $isUniversal ? str_pad((string) (int) substr($memberNo, -5), 3, '0', STR_PAD_LEFT) : $memberNo,
             'nomor_urut'  => $isUniversal,

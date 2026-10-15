@@ -12,6 +12,21 @@
 	$query = $builder->get();
 	$member_categories = $query->getResult();
 	helper('date_id');
+
+	$default = base_url('uploads/default/nophoto.jpg');
+	$photoVersion = '';
+	if (!empty($member->PhotoUrl)) {
+		$memberPhotoPath = ROOTPATH . 'public/uploads/anggota/' . $member->PhotoUrl;
+		if (!file_exists($memberPhotoPath)) {
+			$memberPhotoPath = FCPATH . 'uploads/anggota/' . $member->PhotoUrl;
+		}
+		if (file_exists($memberPhotoPath)) {
+			$photoVersion = '?v=' . filemtime($memberPhotoPath);
+		}
+		$image = base_url('uploads/anggota/' . $member->PhotoUrl . $photoVersion);
+	} else {
+		$image = $default;
+	}
 ?>
 <?=$this->section('style');?>
 <style>
@@ -101,12 +116,9 @@
 				<div class="dropdown-menu-header-inner bg-night-sky text-light">
 					<div class="menu-header-image" style="background-image: url('<?= base_url('themes/uigniter') ?>/images/dropdown-header/abstract2.jpg')"></div>
 					<div class="menu-header-content btn-pane-right">
-						<div class="avatar-icon-wrapper mr-2 avatar-icon-xl">
-							<div class="avatar-icon">
-							<?php 
-								$default = base_url('uploads/default/nophoto.jpg');
-								$image = (!empty($member->PhotoUrl)) ? base_url('uploads/anggota/' . $member->PhotoUrl) : $default;
-							?>
+						<div class="avatar-icon-wrapper mr-3" style="cursor: pointer;" onclick="if(typeof openSimplePopup === 'function') openSimplePopup('<?= esc($image, 'attr') ?>', 'Pas Foto <?= esc($member->Fullname ?? 'Anggota', 'attr') ?>');" title="Klik untuk melihat preview foto">
+							<div class="avatar-icon overflow-hidden shadow-sm" style="width: 52px; height: 78px; aspect-ratio: 2/3; border-radius: 8px; background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center;">
+								<img src="<?=$image?>" onerror="this.onerror=null;this.src='<?=$default?>';" alt="<?= esc($member->Fullname ?? 'Avatar') ?>" style="width: 100%; height: 100%; aspect-ratio: 2/3; object-fit: cover; display: block;">
 							</div>
 						</div>
 						<div>
@@ -131,8 +143,8 @@
 								<div class="tab-pane show active" id="tab1" role="tabpanel">
 									<div class="card">
 										<div class="card-horizontal">
-											<div class="img-square-wrapper">
-												<img width="280" src="<?=$image?>" onerror="this.onerror=null;this.src='<?=$default?>';" alt="User Profile">
+											<div class="img-square-wrapper" style="cursor: pointer; width: 220px; min-width: 220px; height: 330px; aspect-ratio: 2/3; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-right: 20px; display: flex; align-items: center; justify-content: center; background: #f8fafc;" onclick="if(typeof openSimplePopup === 'function') openSimplePopup('<?= esc($image, 'attr') ?>', 'Pas Foto <?= esc($member->Fullname ?? 'Anggota', 'attr') ?>');" title="Klik untuk melihat preview foto">
+												<img src="<?=$image?>" onerror="this.onerror=null;this.src='<?=$default?>';" alt="User Profile" style="width: 100%; height: 100%; aspect-ratio: 2/3; object-fit: cover; display: block;">
 											</div>
 											<div class="card-body">	
 												<div class="row">

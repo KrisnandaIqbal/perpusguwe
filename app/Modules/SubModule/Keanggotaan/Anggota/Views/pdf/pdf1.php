@@ -346,8 +346,9 @@
         }
         
         .member-photo {
-            width: 250px;
-            height: 280px;
+            width: 200px;
+            height: 300px;
+            aspect-ratio: 2/3;
             border: 8px solid white;
             object-fit: cover;
             border-radius: 16px;
