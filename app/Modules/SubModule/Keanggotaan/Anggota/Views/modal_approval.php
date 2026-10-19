@@ -152,10 +152,20 @@
                                 <dt>Email</dt><dd data-field="Email"></dd>
                                 <dt>No. HP</dt><dd data-field="Phone"></dd>
                                 <dt>Tgl. daftar</dt><dd data-field="RegisterDate"></dd>
+                                <dt id="dt_approval_masa_berlaku">Masa berlaku</dt><dd id="dd_approval_masa_berlaku" class="text-primary font-weight-bold">-</dd>
                             </dl>
                         </div>
                         <p id="approval_sebelumnya" class="alert alert-warning mt-3 mb-0" style="display:none"></p>
-                        <p id="approval_note" class="alert alert-light border mt-3 mb-0 py-2 px-3 text-muted" style="font-size: 13px; line-height: 1.4;">
+
+                        <!-- Banner Preview Masa Berlaku Sebelum Konfirmasi -->
+                        <div id="approval_masa_berlaku_box" class="alert alert-info border mt-3 mb-0 py-2 px-3 text-dark d-flex align-items-center" style="display:none; font-size: 13px; line-height: 1.4; gap: 8px;">
+                            <i class="fa fa-calendar-check-o text-info fa-lg"></i>
+                            <div>
+                                <span id="approval_masa_berlaku_text"></span>
+                            </div>
+                        </div>
+
+                        <p id="approval_note" class="alert alert-light border mt-2 mb-0 py-2 px-3 text-muted" style="font-size: 13px; line-height: 1.4;">
                             <i class="fa fa-info-circle text-info mr-1"></i> Setelah disetujui, No. Anggota dibuat otomatis dan kartu anggota dikirim ke email pendaftar.
                         </p>
                     </div>
@@ -407,6 +417,15 @@
         $('#approval_sebelumnya')
             .text(data.PerbaikanSebelumnya ? 'Pendaftaran ini pernah diminta diperbaiki: ' + data.PerbaikanSebelumnya : '')
             .toggle(!!data.PerbaikanSebelumnya);
+
+        if (data.MasaBerlakuPreview) {
+            $('#dd_approval_masa_berlaku').text(data.MasaBerlakuDurasi + ' (s/d ' + data.MasaBerlakuEndDate + ')');
+            $('#approval_masa_berlaku_text').html(data.MasaBerlakuPreview);
+            $('#approval_masa_berlaku_box').show();
+        } else {
+            $('#dd_approval_masa_berlaku').text('-');
+            $('#approval_masa_berlaku_box').hide();
+        }
 
         $('#approval_reject_form').off('submit')[0].reset();
         $('.approval-alasan-cb').prop('checked', false);

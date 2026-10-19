@@ -529,7 +529,7 @@ class AnggotaController extends \Base\Controllers\BaseController
 
                 // Nomor PENDING- dan nomor YYMMDD99999 tidak boleh tertimpa No. Identitas
                 helper('anggota');
-                $approval = memberApprovalData($ID, $update_data['StatusAnggota_id']);
+                $approval = memberApprovalData($ID, $update_data['StatusAnggota_id'], $update_data);
                 if ($approval) {
                     $update_data = array_merge($update_data, $approval);
                 } elseif (preg_match('/^(PENDING-|[0-9]{11}$)/', (string) $anggota->MemberNo)) {
