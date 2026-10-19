@@ -168,7 +168,7 @@ class AnggotaController extends \Base\Controllers\BaseController
 
             $newJenisId = $save_data['JenisAnggota_id'] ?? null;
             if ($newJenisId) {
-                $newJa = $this->db->table('jenis_anggota')->where('id', $newJenisId)->get()->getRow();
+                $newJa = $db->table('jenis_anggota')->where('id', $newJenisId)->get()->getRow();
                 if ($newJa && (stripos($newJa->jenisanggota, 'ASN') !== false && stripos($newJa->jenisanggota, 'Non') === false)) {
                     $save_data['status_non_asn'] = null;
                 }
@@ -423,6 +423,7 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->data['jenis_identitas']     = $db->table('master_jenis_identitas')->where('active', 1)->get()->getResult();
         $this->data['jenis_anggota_list']  = $db->table('jenis_anggota')->where('active', 1)->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)->get()->getResult();
         $this->data['status_anggota_list'] = $db->table('status_anggota')->get()->getResult();
+        $this->data['jenis_kelamin_list']  = $db->table('jenis_kelamin')->where('active', 1)->orderBy('ID', 'ASC')->get()->getResult();
 
         $_nipId = '';
         $_nikId = '';
@@ -443,6 +444,11 @@ class AnggotaController extends \Base\Controllers\BaseController
                 'label'  => 'Fullname',
                 'rules'  => 'required',
                 'errors' => ['required' => 'Nama Tidak boleh kosong'],
+            ],
+            'Sex_id' => [
+                'label'  => 'Jenis Kelamin',
+                'rules'  => 'required',
+                'errors' => ['required' => 'Jenis Kelamin wajib dipilih'],
             ],
             'JenisAnggota_id' => [
                 'label'  => 'Jenis Anggota',
@@ -486,7 +492,7 @@ class AnggotaController extends \Base\Controllers\BaseController
                     'TahunAjaran'        => $this->request->getPost('TahunAjaran') ?? $anggota->TahunAjaran,
                     'IdentityType_id'    => $this->request->getPost('IdentityType_id') ?? $anggota->IdentityType_id,
                     'MaritalStatus_id'   => $this->request->getPost('MaritalStatus_id') ?? $anggota->MaritalStatus_id,
-                    'Sex_id'             => $this->request->getPost('Sex_id') ?? $anggota->Sex_id,
+                    'Sex_id'             => !empty($this->request->getPost('Sex_id')) ? (int) $this->request->getPost('Sex_id') : ($anggota->Sex_id ?? null),
                     'JenjangPendidikan_id' => $this->request->getPost('JenjangPendidikan_id') ?? $anggota->JenjangPendidikan_id,
                     'Job_id'             => $this->request->getPost('Job_id') ?? $anggota->Job_id,
                     'JenisAnggota_id'    => $this->request->getPost('JenisAnggota_id') ?? $anggota->JenisAnggota_id,
@@ -521,7 +527,7 @@ class AnggotaController extends \Base\Controllers\BaseController
 
                 $curJenisId = $update_data['JenisAnggota_id'] ?? ($anggota->JenisAnggota_id ?? null);
                 if ($curJenisId) {
-                    $curJa = $this->db->table('jenis_anggota')->where('id', $curJenisId)->get()->getRow();
+                    $curJa = $db->table('jenis_anggota')->where('id', $curJenisId)->get()->getRow();
                     if ($curJa && (stripos($curJa->jenisanggota, 'ASN') !== false && stripos($curJa->jenisanggota, 'Non') === false)) {
                         $update_data['status_non_asn'] = null;
                     }

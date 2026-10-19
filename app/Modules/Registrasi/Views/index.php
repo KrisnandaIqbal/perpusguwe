@@ -656,6 +656,152 @@ if (!empty($jenis_identitas)) {
         box-shadow: var(--ring-focus);
     }
 
+    /* ─── Gender Radio Cards ─── */
+    .rf-gender-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        outline: none;
+    }
+
+    .rf-gender-card {
+        position: relative;
+        cursor: pointer;
+        margin-bottom: 0;
+        user-select: none;
+    }
+
+    .rf-gender-card input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+    }
+
+    .rf-gender-card-inner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: #ffffff;
+        border: 1.5px solid var(--border-card);
+        border-radius: 12px;
+        transition: all var(--transition-fast);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        min-height: 58px;
+    }
+
+    .rf-gender-card:hover .rf-gender-card-inner {
+        border-color: #94a3b8;
+        background: #fafbfe;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+    }
+
+    .rf-gender-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all var(--transition-fast);
+    }
+
+    .rf-gender-icon-male {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1d4ed8;
+    }
+
+    .rf-gender-icon-female {
+        background: #fdf2f8;
+        border: 1px solid #fbcfe8;
+        color: #be185d;
+    }
+
+    .rf-gender-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .rf-gender-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .rf-gender-title {
+        font-family: var(--font-heading);
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--navy-900);
+        line-height: 1.25;
+    }
+
+    .rf-gender-subtitle {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        line-height: 1.2;
+        margin-top: 2px;
+    }
+
+    .rf-gender-radio-mark {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--border-input);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-fast);
+        background: #ffffff;
+        flex-shrink: 0;
+        color: transparent;
+    }
+
+    .rf-gender-radio-mark svg {
+        width: 10px;
+        height: 10px;
+        stroke-width: 3;
+        transition: transform var(--transition-fast);
+        transform: scale(0.6);
+    }
+
+    /* Selected state */
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner {
+        border-color: var(--accent-600);
+        background-color: #f8faff;
+        box-shadow: 0 0 0 1px var(--accent-600), 0 4px 16px -2px rgba(37, 99, 235, 0.14);
+    }
+
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner .rf-gender-radio-mark {
+        border-color: var(--accent-600);
+        background: var(--accent-600);
+        color: #ffffff;
+    }
+
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner .rf-gender-radio-mark svg {
+        transform: scale(1);
+    }
+
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner .rf-gender-title {
+        color: var(--accent-700);
+    }
+
+    .rf-gender-card input[type="radio"]:focus-visible + .rf-gender-card-inner {
+        box-shadow: var(--ring-focus);
+    }
+
+    /* Error state for group */
+    .rf-gender-group.has-error .rf-gender-card-inner {
+        border-color: var(--rose-600);
+        background: #fffafa;
+    }
+
     /* ─── Form Fields & Controls ─── */
     .rf-field {
         margin-bottom: 20px;
@@ -2043,9 +2189,10 @@ if (!empty($jenis_identitas)) {
     }
 
     @media (max-width: 640px) {
-        .rf-radio-cards {
+        .rf-radio-cards,
+        .rf-gender-group {
             grid-template-columns: 1fr;
-            gap: 12px;
+            gap: 10px;
         }
 
         .rf-card-choice {
@@ -2488,6 +2635,55 @@ if (!empty($jenis_identitas)) {
                                 </span>
                             </div>
                             <div class="rf-field-feedback" id="feedback_Fullname"></div>
+                        </div>
+
+                        <!-- Field Jenis Kelamin -->
+                        <div class="rf-field" id="fieldSex">
+                            <div class="rf-field-header">
+                                <label class="rf-label">
+                                    Jenis Kelamin <span class="req">*</span>
+                                </label>
+                                <span class="rf-badge-status" id="badge_Sex"></span>
+                            </div>
+                            <div class="rf-gender-group" id="sexRadioGroup" tabindex="-1">
+                                <?php if (!empty($jenis_kelamin)): ?>
+                                    <?php foreach ($jenis_kelamin as $jk): ?>
+                                    <label class="rf-gender-card" for="sex_<?= $jk->ID ?>">
+                                        <input type="radio" name="Sex_id" id="sex_<?= $jk->ID ?>" value="<?= $jk->ID ?>" data-label="<?= esc($jk->Name) ?>" required>
+                                        <div class="rf-gender-card-inner">
+                                            <div class="rf-gender-icon rf-gender-icon-<?= $jk->ID == 1 ? 'male' : 'female' ?>">
+                                                <?php if ($jk->ID == 1): ?>
+                                                <!-- Mars / Male Icon -->
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="10" cy="14" r="5"></circle>
+                                                    <line x1="19" y1="5" x2="13.6" y2="10.4"></line>
+                                                    <line x1="19" y1="5" x2="14" y2="5"></line>
+                                                    <line x1="19" y1="5" x2="19" y2="10"></line>
+                                                </svg>
+                                                <?php else: ?>
+                                                <!-- Venus / Female Icon -->
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="9" r="5"></circle>
+                                                    <line x1="12" y1="14" x2="12" y2="21"></line>
+                                                    <line x1="9" y1="18" x2="15" y2="18"></line>
+                                                </svg>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="rf-gender-content">
+                                                <span class="rf-gender-title"><?= esc($jk->Name) ?></span>
+                                                <span class="rf-gender-subtitle"><?= $jk->ID == 1 ? 'Laki-laki sipil / kedinasan' : 'Perempuan sipil / kedinasan' ?></span>
+                                            </div>
+                                            <div class="rf-gender-radio-mark" aria-hidden="true">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M3.5 8.5l3 3 6-7"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                            <div class="rf-field-feedback" id="feedback_Sex"></div>
                         </div>
 
                         <div class="rf-field">
@@ -3911,6 +4107,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const badgeFullname = document.getElementById('badge_Fullname');
     const feedbackFullname = document.getElementById('feedback_Fullname');
 
+    const sexRadios = document.querySelectorAll('input[name="Sex_id"]');
+    const sexGroup = document.getElementById('sexRadioGroup');
+    const badgeSex = document.getElementById('badge_Sex');
+    const feedbackSex = document.getElementById('feedback_Sex');
+
     const addressInput = document.getElementById('AddressNow');
     const badgeAddress = document.getElementById('badge_AddressNow');
     const feedbackAddress = document.getElementById('feedback_AddressNow');
@@ -4027,6 +4228,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (unitKerjaTrigger) unitKerjaTrigger.classList.remove('has-error', 'is-valid');
 
                 clearFieldStatus(fullnameInput, badgeFullname, feedbackFullname);
+                sexRadios.forEach(r => { r.checked = false; });
+                clearFieldStatus(sexGroup, badgeSex, feedbackSex);
                 clearFieldStatus(addressInput, badgeAddress, feedbackAddress);
                 clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
                 clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
@@ -4119,6 +4322,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return '<strong>Nama Lengkap:</strong> Wajib diisi minimal 3 karakter sesuai identitas.';
         } else {
             setFieldValid(fullnameInput, badgeFullname, feedbackFullname, 'Sesuai format nama sipil resmi.');
+            return null;
+        }
+    }
+
+    function validateJenisKelamin() {
+        const checked = document.querySelector('input[name="Sex_id"]:checked');
+        if (!checked) {
+            setFieldError(sexGroup, badgeSex, feedbackSex, 'Belum Dipilih', 'Jenis kelamin wajib dipilih.');
+            return '<strong>Jenis Kelamin:</strong> Jenis kelamin wajib dipilih.';
+        } else {
+            const label = checked.getAttribute('data-label') || 'Terpilih';
+            setFieldValid(sexGroup, badgeSex, feedbackSex, 'Jenis kelamin: ' + label + '.');
             return null;
         }
     }
@@ -4244,6 +4459,12 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             clearFieldStatus(fullnameInput, badgeFullname, feedbackFullname);
         }
+    });
+
+    sexRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            validateJenisKelamin();
+        });
     });
 
     addressInput.addEventListener('input', function() {
@@ -4379,6 +4600,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // 3. Fullname
         const errName = validateFullname();
         if (errName) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errName });
+
+        // 3b. Jenis Kelamin
+        const errSex = validateJenisKelamin();
+        if (errSex) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errSex });
 
         // 4. Unit Kerja
         const errUnit = validateUnitKerja();
@@ -4533,6 +4758,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                             setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', value);
                         }
+                        if (key === 'Sex_id') {
+                            if (sexGroup) {
+                                sexGroup.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = sexGroup;
+                            }
+                            setFieldError(sexGroup, badgeSex, feedbackSex, 'Belum Dipilih', value);
+                        }
                     }
                 } else if (res && res.message) {
                     if (res.message.includes('WhatsApp') || res.message.includes('telepon')) {
@@ -4562,7 +4794,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (firstErrorEl) {
                     firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    if (typeof firstErrorEl.focus === 'function') {
+                    if (firstErrorEl === sexGroup && sexRadios.length > 0) {
+                        sexRadios[0].focus();
+                    } else if (typeof firstErrorEl.focus === 'function') {
                         firstErrorEl.focus();
                     }
                 }

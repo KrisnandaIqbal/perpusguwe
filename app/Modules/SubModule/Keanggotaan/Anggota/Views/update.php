@@ -762,6 +762,14 @@ $jenis_anggota = get_ref_single('jenis_anggota', 'id=' . $member->JenisAnggota_i
 					}
 				});
 
+				// Validasi Radio Jenis Kelamin jika ada di form
+				if ($('input[name="Sex_id"]').length > 0 && !$('input[name="Sex_id"]:checked').val()) {
+					errors.push('Jenis Kelamin');
+					if (!firstErrorField) {
+						firstErrorField = $('#adminSexCards');
+					}
+				}
+
 				if (errors.length > 0) {
 					// Reset flag
 					isValidating = false;
@@ -785,6 +793,8 @@ $jenis_anggota = get_ref_single('jenis_anggota', 'id=' . $member->JenisAnggota_i
 							setTimeout(() => {
 								if (firstErrorField.hasClass('select2-hidden-accessible')) {
 									firstErrorField.select2('open');
+								} else if (firstErrorField.is('div')) {
+									firstErrorField.find('input[type="radio"]').first().focus();
 								} else {
 									firstErrorField.focus();
 								}
