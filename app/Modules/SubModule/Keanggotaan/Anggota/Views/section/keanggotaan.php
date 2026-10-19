@@ -607,7 +607,7 @@
           <label for="Fullname" class="font-weight-bold">Nama Lengkap (Tanpa Gelar) <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="Fullname" name="Fullname" 
                  placeholder="Contoh: Raden Satria Pamungkas" 
-                 value="<?= set_value('Fullname', $anggota->Fullname ?? ''); ?>" required />
+                 value="<?= set_value('Fullname', $anggota->Fullname ?? ''); ?>" pattern="<?= esc(\App\Validation\NamaRules::POLA, 'attr') ?>" title="Hanya huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung" required />
           <small class="form-text text-muted">Nama pemustaka sesuai kartu tanda pengenal kedinasan / KTP.</small>
         </div>
       </div>

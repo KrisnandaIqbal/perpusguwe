@@ -94,8 +94,8 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->validation->setRules([
             'Fullname' => [
                 'label'  => 'Fullname',
-                'rules'  => 'required',
-                'errors' => ['required' => 'Nama Tidak boleh kosong'],
+                'rules'  => 'required|nama_orang',
+                'errors' => ['required' => 'Nama Tidak boleh kosong', 'nama_orang' => 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung'],
             ],
             'Email' => [
                 'label'  => 'Email',
@@ -442,8 +442,8 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->validation->setRules([
             'Fullname' => [
                 'label'  => 'Fullname',
-                'rules'  => 'required',
-                'errors' => ['required' => 'Nama Tidak boleh kosong'],
+                'rules'  => 'required|nama_orang',
+                'errors' => ['required' => 'Nama Tidak boleh kosong', 'nama_orang' => 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung'],
             ],
             'Sex_id' => [
                 'label'  => 'Jenis Kelamin',

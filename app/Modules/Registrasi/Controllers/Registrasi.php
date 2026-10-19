@@ -132,7 +132,7 @@ class Registrasi extends BaseController
         // Validation Rules
         $rules = [
             'JenisAnggota_id' => 'required',
-            'Fullname' => 'required|min_length[3]',
+            'Fullname' => 'required|min_length[3]|nama_orang',
             'Sex_id' => 'required',
             'UnitKerja_id' => 'required',
             'AddressNow' => 'required',
@@ -142,6 +142,9 @@ class Registrasi extends BaseController
         ];
 
         $messages = [
+            'Fullname' => [
+                'nama_orang' => 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung.'
+            ],
             'Sex_id' => [
                 'required' => 'Jenis kelamin wajib dipilih.'
             ]
@@ -197,10 +200,12 @@ class Registrasi extends BaseController
         }
 
         if (!$this->validate($rules, $messages)) {
+            $errors = $this->validator->getErrors();
             return $this->respond([
                 'success' => false,
-                'message' => 'Validasi gagal, mohon lengkapi semua field yang wajib.',
-                'errors' => $this->validator->getErrors()
+                // Nama berisi simbol bukan soal field kosong, jadi pesannya disebut langsung
+                'message' => $errors['Fullname'] ?? 'Validasi gagal, mohon lengkapi semua field yang wajib.',
+                'errors' => $errors
             ]);
         }
 
