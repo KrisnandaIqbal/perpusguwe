@@ -55,6 +55,56 @@ class Registrasi extends BaseController
         return $this->response->setJSON($list);
     }
 
+    public function check_duplicate()
+    {
+        $field = (string) $this->request->getPost('field');
+        $value = trim((string) $this->request->getPost('value'));
+
+        if (!in_array($field, ['Phone', 'Email', 'IdentityNo'], true) || empty($value)) {
+            return $this->respond(['registered' => false]);
+        }
+
+        helper('anggota');
+        $perbaikanId = statusAnggotaId('Perlu Perbaikan');
+
+        $builder = $this->db->table('members')
+            ->select('ID, IdentityNo, Email, Phone, NoHp, MemberNo, StatusAnggota_id');
+
+        if ($field === 'Phone') {
+            $normalized = IdentityValidator::normalizePhone($value);
+            $builder->groupStart()
+                ->where('Phone', $normalized)
+                ->orWhere('NoHp', $normalized)
+            ->groupEnd();
+        } elseif ($field === 'Email') {
+            $builder->where('Email', $value);
+        } elseif ($field === 'IdentityNo') {
+            $builder->where('IdentityNo', $value);
+        }
+
+        $rows = $builder->get()->getResult();
+
+        foreach ($rows as $row) {
+            $bolehUlang = $perbaikanId
+                && (int) $row->StatusAnggota_id === $perbaikanId
+                && strpos((string) $row->MemberNo, 'PENDING-') === 0;
+
+            if (!$bolehUlang) {
+                $messages = [
+                    'Phone'      => 'Nomor WhatsApp ini sudah terdaftar.',
+                    'Email'      => 'Email sudah terdaftar sebelumnya.',
+                    'IdentityNo' => 'Nomor Identitas sudah terdaftar sebelumnya.',
+                ];
+                return $this->respond([
+                    'registered' => true,
+                    'message'    => $messages[$field],
+                ]);
+            }
+        }
+
+        return $this->respond(['registered' => false]);
+    }
+
     public function submit()
     {
         if (strtolower($this->request->getMethod()) !== 'post') {
@@ -174,8 +224,13 @@ class Registrasi extends BaseController
         $ulang = null;
 
         $sama = $this->db->table('members')
-            ->select('ID, IdentityNo, Email, MemberNo, StatusAnggota_id, PhotoUrl')
-            ->groupStart()->where('IdentityNo', $identityNo)->orWhere('Email', $email)->groupEnd()
+            ->select('ID, IdentityNo, Email, Phone, NoHp, MemberNo, StatusAnggota_id, PhotoUrl')
+            ->groupStart()
+                ->where('IdentityNo', $identityNo)
+                ->orWhere('Email', $email)
+                ->orWhere('Phone', $phone)
+                ->orWhere('NoHp', $phone)
+            ->groupEnd()
             ->get()->getResult();
 
         foreach ($sama as $row) {
@@ -184,11 +239,21 @@ class Registrasi extends BaseController
                 && strpos((string) $row->MemberNo, 'PENDING-') === 0;
 
             if (!$bolehUlang) {
+                if ($row->IdentityNo === $identityNo) {
+                    $field = 'IdentityNo';
+                    $msg   = 'Nomor Identitas sudah terdaftar sebelumnya.';
+                } elseif ($row->Email === $email) {
+                    $field = 'Email';
+                    $msg   = 'Email sudah terdaftar sebelumnya.';
+                } else {
+                    $field = 'Phone';
+                    $msg   = 'Nomor WhatsApp ini sudah terdaftar.';
+                }
+
                 return $this->respond([
                     'success' => false,
-                    'message' => $row->IdentityNo === $identityNo
-                        ? 'Nomor Identitas sudah terdaftar sebelumnya.'
-                        : 'Email sudah terdaftar sebelumnya.'
+                    'message' => $msg,
+                    'errors'  => [$field => $msg]
                 ]);
             }
 

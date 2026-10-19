@@ -3897,13 +3897,13 @@ document.addEventListener('DOMContentLoaded', function() {
     btnSetujuSyarat.addEventListener('click', function() {
         cbPersetujuan.disabled = false;
         cbPersetujuan.checked = true;
-        btnSubmit.disabled = false;
+        updateSubmitButtonState();
         closeModal();
         validatePersetujuan();
     });
 
     cbPersetujuan.addEventListener('change', function() {
-        btnSubmit.disabled = !this.checked;
+        updateSubmitButtonState();
     });
 
     // Elements for Validation
@@ -3991,6 +3991,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    let isPhoneDuplicate = false;
+    let isEmailDuplicate = false;
+
+    function updateSubmitButtonState() {
+        if (!cbPersetujuan || !cbPersetujuan.checked || isPhoneDuplicate || isEmailDuplicate) {
+            btnSubmit.disabled = true;
+        } else {
+            btnSubmit.disabled = false;
+        }
+    }
+
     // ─── Form Reset Handler (Bersihkan Formulir Secara Menyeluruh) ───
     const resetBtnEl = document.getElementById('btnReset');
     if (resetBtnEl) {
@@ -4030,6 +4041,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 hideAndResetStatusNonAsn();
 
+                isPhoneDuplicate = false;
+                isEmailDuplicate = false;
                 btnSubmit.disabled = true;
                 wantPhotoNo.checked = true;
                 syncPhotoToggle();
@@ -4189,7 +4202,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setFieldError(phoneInput, badgePhone, feedbackPhone, 'Format Nomor Tidak Valid', 'Nomor harus nomor seluler / WhatsApp yang valid (diawali 08 atau 62, 9–13 digit).');
             return '<strong>Kontak Pemohon:</strong> Format nomor Telepon / WhatsApp tidak valid (harus nomor seluler diawali 08 atau 62).';
         } else {
-            setFieldValid(phoneInput, badgePhone, feedbackPhone, 'Nomor WhatsApp terverifikasi.');
+            setFieldValid(phoneInput, badgePhone, feedbackPhone, 'Format nomor WhatsApp valid.');
             return null;
         }
     }
@@ -4246,6 +4259,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     emailInput.addEventListener('input', function() {
         const val = this.value.trim();
+        isEmailDuplicate = false;
         if (val.length === 0) {
             clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
         } else {
@@ -4256,11 +4270,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
             }
         }
+        updateSubmitButtonState();
+    });
+
+    emailInput.addEventListener('blur', function() {
+        const val = this.value.trim();
+        if (val.length === 0) return;
+        const err = validateEmail();
+        if (err) return;
+
+        const formData = new FormData();
+        formData.append('field', 'Email');
+        formData.append('value', val);
+
+        axios.post('<?= base_url('registrasi/check-duplicate') ?>', formData, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            const res = response.data;
+            if (res && res.registered) {
+                isEmailDuplicate = true;
+                setFieldError(emailInput, badgeEmail, feedbackEmail, 'Sudah Terdaftar', res.message || 'Email sudah terdaftar sebelumnya.');
+                updateSubmitButtonState();
+            } else {
+                isEmailDuplicate = false;
+                setFieldValid(emailInput, badgeEmail, feedbackEmail, 'Format email valid untuk aktivasi akun.');
+                updateSubmitButtonState();
+            }
+        })
+        .catch(() => {});
     });
 
     phoneInput.addEventListener('input', function() {
         this.value = this.value.replace(/\D/g, '');
         if (this.classList.contains('has-error')) this.classList.remove('has-error');
+        isPhoneDuplicate = false;
         const raw = this.value;
         if (raw.length === 0) {
             clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
@@ -4269,6 +4313,44 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
         }
+        updateSubmitButtonState();
+    });
+
+    phoneInput.addEventListener('blur', function() {
+        const raw = this.value.replace(/\D/g, '');
+        if (raw.length === 0) return;
+        const err = validatePhone();
+        if (err) return;
+
+        let checkVal = raw;
+        if (checkVal.startsWith('62')) {
+            checkVal = checkVal.slice(2);
+        }
+        if (checkVal.startsWith('0')) {
+            checkVal = checkVal.slice(1);
+        }
+        checkVal = '0' + checkVal;
+
+        const formData = new FormData();
+        formData.append('field', 'Phone');
+        formData.append('value', checkVal);
+
+        axios.post('<?= base_url('registrasi/check-duplicate') ?>', formData, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            const res = response.data;
+            if (res && res.registered) {
+                isPhoneDuplicate = true;
+                setFieldError(phoneInput, badgePhone, feedbackPhone, 'Sudah Terdaftar', res.message || 'Nomor WhatsApp ini sudah terdaftar.');
+                updateSubmitButtonState();
+            } else {
+                isPhoneDuplicate = false;
+                setFieldValid(phoneInput, badgePhone, feedbackPhone, 'Format nomor WhatsApp valid.');
+                updateSubmitButtonState();
+            }
+        })
+        .catch(() => {});
     });
 
     cbPersetujuan.addEventListener('change', function() {
@@ -4316,11 +4398,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 6. Email
         const errEmail = validateEmail();
-        if (errEmail) errorItems.push({ sec: 'section-3', step: 'section-3', msg: errEmail });
+        if (errEmail) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: errEmail });
+        } else if (isEmailDuplicate) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: '<strong>Alamat Email:</strong> Email sudah terdaftar sebelumnya.' });
+        }
 
         // 7. Phone
         const errPhone = validatePhone();
-        if (errPhone) errorItems.push({ sec: 'section-3', step: 'section-3', msg: errPhone });
+        if (errPhone) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: errPhone });
+        } else if (isPhoneDuplicate) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: '<strong>Kontak Pemohon:</strong> Nomor WhatsApp ini sudah terdaftar.' });
+        }
 
         // 8. Persetujuan
         const errAgree = validatePersetujuan();
@@ -4350,7 +4440,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Normalisasi nomor telepon ke format 08xx untuk submit
-        const rawPhone = phoneInput.value.replace(/\D/g, '');
+        let rawPhone = phoneInput.value.replace(/\D/g, '');
+        if (rawPhone.startsWith('62')) rawPhone = rawPhone.slice(2);
+        if (rawPhone.startsWith('0')) rawPhone = rawPhone.slice(1);
         const phoneForSubmit = '0' + rawPhone;
 
         // Button Loading State
@@ -4384,23 +4476,94 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = res.redirect;
             } else {
                 showAlert(res && res.message ? res.message : 'Terjadi kesalahan, silakan periksa formulir.', 'error');
+                let firstErrorEl = null;
+
                 if (res && res.errors) {
                     for (const [key, value] of Object.entries(res.errors)) {
                         const field = document.getElementById(key);
-                        if (field) field.classList.add('has-error');
+                        if (field) {
+                            field.classList.add('has-error');
+                            field.classList.remove('is-valid');
+                            if (!firstErrorEl) firstErrorEl = field;
+                        }
+                        if (key === 'Phone') {
+                            isPhoneDuplicate = true;
+                            setFieldError(phoneInput, badgePhone, feedbackPhone, 'Sudah Terdaftar', value);
+                            if (!firstErrorEl) firstErrorEl = phoneInput;
+                        }
+                        if (key === 'Email') {
+                            isEmailDuplicate = true;
+                            setFieldError(emailInput, badgeEmail, feedbackEmail, 'Sudah Terdaftar', value);
+                            if (!firstErrorEl) firstErrorEl = emailInput;
+                        }
+                        if (key === 'IdentityNo') {
+                            digitCount.className = 'rf-digit-badge is-error';
+                            digitCount.textContent = 'Sudah Terdaftar';
+                            inputIdentityNo.classList.add('has-error');
+                            inputIdentityNo.classList.remove('is-valid');
+                            feedbackIdentityNo.className = 'rf-field-feedback is-error';
+                            feedbackIdentityNo.style.display = 'flex';
+                            feedbackIdentityNo.innerHTML = `
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>${value}</span>
+                            `;
+                            if (!firstErrorEl) firstErrorEl = inputIdentityNo;
+                        }
                         if (key === 'UnitKerja_id') {
                             const ut = document.getElementById('unitKerjaTrigger');
-                            if (ut) ut.classList.add('has-error');
+                            if (ut) {
+                                ut.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = ut;
+                            }
                         }
                         if (key === 'SubUnitKerja_id') {
                             const sut = document.getElementById('subUnitKerjaTrigger');
-                            if (sut) sut.classList.add('has-error');
+                            if (sut) {
+                                sut.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = sut;
+                            }
                         }
                         if (key === 'status_non_asn') {
                             const st = document.getElementById('statusNonAsnTrigger');
-                            if (st) st.classList.add('has-error');
+                            if (st) {
+                                st.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = st;
+                            }
                             setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', value);
                         }
+                    }
+                } else if (res && res.message) {
+                    if (res.message.includes('WhatsApp') || res.message.includes('telepon')) {
+                        isPhoneDuplicate = true;
+                        setFieldError(phoneInput, badgePhone, feedbackPhone, 'Sudah Terdaftar', res.message);
+                        firstErrorEl = phoneInput;
+                    } else if (res.message.includes('Email')) {
+                        isEmailDuplicate = true;
+                        setFieldError(emailInput, badgeEmail, feedbackEmail, 'Sudah Terdaftar', res.message);
+                        firstErrorEl = emailInput;
+                    } else if (res.message.includes('Identitas') || res.message.includes('NIK') || res.message.includes('NIP')) {
+                        digitCount.className = 'rf-digit-badge is-error';
+                        digitCount.textContent = 'Sudah Terdaftar';
+                        inputIdentityNo.classList.add('has-error');
+                        inputIdentityNo.classList.remove('is-valid');
+                        feedbackIdentityNo.className = 'rf-field-feedback is-error';
+                        feedbackIdentityNo.style.display = 'flex';
+                        feedbackIdentityNo.innerHTML = `
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>${res.message}</span>
+                        `;
+                        firstErrorEl = inputIdentityNo;
+                    }
+                }
+
+                if (firstErrorEl) {
+                    firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (typeof firstErrorEl.focus === 'function') {
+                        firstErrorEl.focus();
                     }
                 }
                 resetSubmitBtn();
