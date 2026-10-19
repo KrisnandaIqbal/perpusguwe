@@ -124,8 +124,8 @@
         /* Tinggi 36 px membuat simbolnya selebar 24 px, sama dengan logo sisi belakang */
         .front .logo { width: auto; height: 36px; }
 
-        /* Foto mengisi sisa tinggi kolom, lebarnya mengikuti rasio pas foto 2:3 */
-        .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }
+        /* Foto mengisi sisa tinggi kolom, menjorok 32 px (x = 50 di kartu), lebarnya mengikuti rasio pas foto 2:3 */
+        .front .foto { margin-left: 32px; flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }
         /* Tanpa foto: nama dan nomor tetap di bawah, ruang di bawah logo dibiarkan kosong */
         .front .tanpa-foto .nama { margin-top: auto; }
 
@@ -134,7 +134,8 @@
         .front .nama .label { font-size: 7px; line-height: 10.5px; letter-spacing: 1.12px; opacity: 0.4; }
         .front .nama .value { padding-top: 3px; font-size: 11px; font-weight: 800; line-height: 13.2px; }
         /* Pemecahan baris dan singkatan diatur namaKartuBaris(); elipsis hanya jaga-jaga kalau huruf lebih lebar dari perkiraan */
-        .front .nama .baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Padding bawah dibalas margin negatif: batas potong overflow turun 4 px supaya ekor g, j, y tidak terpotong, posisi baris tetap */
+        .front .nama .baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 4px; margin-bottom: -4px; }
         /* Nama lebih dari 2 kata: dua baris 14 px, jarak baris 16 px supaya tetap terbaca sebagai satu nama */
         .front .nama.is-dua .value { font-size: 14px; line-height: 16px; letter-spacing: -0.14px; }
 

@@ -48,7 +48,8 @@ class KartuPng
 
         if (!empty($card['foto_path']) && is_file($card['foto_path'])) {
             $fotoH = $duaBaris ? $namaTop - 10 - 60 : 64;
-            $this->foto($img, $card['foto_path'], 18, 60, $fotoH * 2 / 3, $fotoH, 3);
+            // Menjorok 32 px dari kolom kiri (x = 50)
+            $this->foto($img, $card['foto_path'], 50, 60, $fotoH * 2 / 3, $fotoH, 3);
         }
 
         $this->teks($img, 'NAMA', 'Bold', 7, '#8A8B8A', 18, $namaTop, 10.5, 1.12);

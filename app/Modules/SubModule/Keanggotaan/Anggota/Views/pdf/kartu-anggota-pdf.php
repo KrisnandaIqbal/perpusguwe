@@ -85,8 +85,8 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         // Foto berhenti 10 px di atas nama, jadi lebih pendek kalau nama dua baris (rasio 2:3 tetap)
         $fotoH   = $duaBaris ? $namaTop - 10 - 60 : 64;
         ?>
-        /* Foto anggota dengan rasio 2:3, rata kiri dengan logo, nama, dan nomor */
-        .front .foto-box { left: <?= $pt(18) ?>; top: <?= $pt(60) ?>; width: <?= $pt($fotoH * 2 / 3) ?>; height: <?= $pt($fotoH) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
+        /* Foto anggota dengan rasio 2:3, menjorok 32 px dari kolom kiri (x = 50) */
+        .front .foto-box { left: <?= $pt(50) ?>; top: <?= $pt(60) ?>; width: <?= $pt($fotoH * 2 / 3) ?>; height: <?= $pt($fotoH) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
         .front .foto-box img { width: 100%; height: 100%; display: block; }
 
         .front .nama { left: <?= $pt(18) ?>; top: <?= $pt($namaTop) ?>; width: <?= $pt(145) ?>; }
