@@ -251,9 +251,10 @@ class Anggota extends \Base\Controllers\BaseResourceController
 	{
 		$db = db_connect();
 		$row = $db->table('members as a')
-			->select('a.ID, a.MemberNo, a.JenisAnggota_id, a.StatusAnggota_id, a.Fullname, a.IdentityNo, a.status_non_asn, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, a.EndDate, a.AlasanPerbaikan, a.CatatanPerbaikan, a.NotifJenis, a.NotifTerkirim, a.NotifDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja, master_subunit.nama_subunit as SubUnitKerja, status_anggota.Nama as StatusAnggota')
+			->select('a.ID, a.MemberNo, a.JenisAnggota_id, a.StatusAnggota_id, a.Fullname, a.IdentityNo, a.Sex_id, a.status_non_asn, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, a.EndDate, a.AlasanPerbaikan, a.CatatanPerbaikan, a.NotifJenis, a.NotifTerkirim, a.NotifDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, jenis_kelamin.Name as JenisKelamin, master_unit.nama_unit as UnitKerja, master_subunit.nama_subunit as SubUnitKerja, status_anggota.Nama as StatusAnggota')
 			->join('jenis_anggota', 'jenis_anggota.id = a.JenisAnggota_id', 'left')
 			->join('master_jenis_identitas', 'master_jenis_identitas.id = a.IdentityType_id', 'left')
+			->join('jenis_kelamin', 'jenis_kelamin.ID = a.Sex_id', 'left')
 			->join('master_unit', 'master_unit.id = a.UnitKerja_id', 'left')
 			->join('master_subunit', 'master_subunit.id = a.SubUnitKerja_id', 'left')
 			->join('status_anggota', 'status_anggota.id = a.StatusAnggota_id', 'left')
@@ -299,6 +300,8 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'JenisIdentitas'      => $row->JenisIdentitas,
 			'IdentityNo'          => $row->IdentityNo,
 			'Fullname'            => $row->Fullname,
+			'Sex_id'              => $row->Sex_id,
+			'JenisKelamin'        => $row->JenisKelamin ?? '-',
 			'UnitKerja'           => $formattedUnit ?: ($row->UnitKerja ?: '-'),
 			'UnitKerjaInduk'      => $row->UnitKerja,
 			'SubUnitKerja'        => $row->SubUnitKerja,

@@ -45,6 +45,11 @@ class Registrasi extends BaseController
         $subUnitModel = new \App\Models\SubUnitModel();
         $data['sub_units_grouped'] = $subUnitModel->getAllActiveGrouped();
 
+        $data['jenis_kelamin'] = $this->db->table('jenis_kelamin')
+                                           ->where('active', 1)
+                                           ->orderBy('ID', 'ASC')
+                                           ->get()->getResult();
+
         return view('Registrasi\Views\index', $data);
     }
 
@@ -113,6 +118,7 @@ class Registrasi extends BaseController
 
         $jenisAnggotaId = $this->request->getPost('JenisAnggota_id');
         $fullname = $this->request->getPost('Fullname');
+        $sexId = $this->request->getPost('Sex_id');
         $identityTypeId = $this->request->getPost('IdentityType_id');
         $identityNo = $this->request->getPost('IdentityNo');
         $unitKerjaId = $this->request->getPost('UnitKerja_id');
@@ -127,11 +133,18 @@ class Registrasi extends BaseController
         $rules = [
             'JenisAnggota_id' => 'required',
             'Fullname' => 'required|min_length[3]',
+            'Sex_id' => 'required',
             'UnitKerja_id' => 'required',
             'AddressNow' => 'required',
             'Email' => 'required|valid_email',
             'Phone' => 'required',
             'Persetujuan' => 'required',
+        ];
+
+        $messages = [
+            'Sex_id' => [
+                'required' => 'Jenis kelamin wajib dipilih.'
+            ]
         ];
 
         // Validasi di SERVER: sub-unit harus benar-benar milik unit yang dipilih
@@ -183,11 +196,24 @@ class Registrasi extends BaseController
             $statusNonAsn = null;
         }
 
-        if (!$this->validate($rules)) {
+        if (!$this->validate($rules, $messages)) {
             return $this->respond([
                 'success' => false,
                 'message' => 'Validasi gagal, mohon lengkapi semua field yang wajib.',
                 'errors' => $this->validator->getErrors()
+            ]);
+        }
+
+        // Validasi Jenis Kelamin ke tabel master (active = 1)
+        $validSex = $this->db->table('jenis_kelamin')
+            ->where('ID', (int) $sexId)
+            ->where('active', 1)
+            ->get()->getRow();
+        if (!$validSex) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Pilihan jenis kelamin tidak valid.',
+                'errors' => ['Sex_id' => 'Pilihan jenis kelamin tidak valid.']
             ]);
         }
 
@@ -291,6 +317,7 @@ class Registrasi extends BaseController
         $dataInsert = [
             'JenisAnggota_id' => $jenisAnggotaId,
             'Fullname' => $fullname,
+            'Sex_id' => (int) $sexId,
             'IdentityType_id' => $identityTypeId,
             'IdentityNo' => $identityNo,
             'UnitKerja_id' => $unitKerjaId,
