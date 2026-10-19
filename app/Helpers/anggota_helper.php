@@ -632,6 +632,29 @@ if (!function_exists('tanggalKartu')) {
     }
 }
 
+if (!function_exists('namaKartu')) {
+    /**
+     * Nama untuk kartu: kata yang diketik huruf kecil semua atau kapital semua jadi huruf besar di awal.
+     * Kata yang huruf besar-kecilnya sudah campur (McDonald) dianggap sengaja dan dibiarkan.
+     * Data di database tidak diubah.
+     */
+    function namaKartu(string $nama): string {
+        $kata = preg_split('/\s+/u', trim($nama), -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($kata as &$k) {
+            $kecil = mb_strtolower($k);
+            if ($k !== $kecil && $k !== mb_strtoupper($k)) {
+                continue;
+            }
+
+            // Huruf setelah tanda hubung dan titik ikut besar (Siti-Nur, S.Kom); setelah apostrof tidak (Ma'ruf)
+            $k = preg_replace_callback('/(^|[-.])(\p{L})/u', fn ($m) => $m[1] . mb_strtoupper($m[2]), $kecil);
+        }
+
+        return implode(' ', $kata);
+    }
+}
+
 if (!function_exists('kartuAnggotaData')) {
     /** Isi kartu anggota, dipakai halaman cetak dan lampiran PDF di email persetujuan. */
     function kartuAnggotaData(object $anggota): array {
@@ -645,8 +668,12 @@ if (!function_exists('kartuAnggotaData')) {
         $fotoPath = $fotoName !== '' && is_file(FCPATH . 'uploads/anggota/' . $fotoName) ? FCPATH . 'uploads/anggota/' . $fotoName : null;
         $fotoUrl  = $fotoPath ? base_url('uploads/anggota/' . $fotoName) : null;
 
+        $nama = namaKartu((string) $anggota->Fullname);
+
         return [
-            'nama'        => $anggota->Fullname,
+            'nama'        => $nama,
+            // Nama satu kata dicetak seukuran nomor anggota; batas 12 huruf supaya tetap muat di kolom kiri
+            'nama_pendek' => !str_contains($nama, ' ') && mb_strlen($nama) <= 12,
             'foto'        => $fotoUrl,
             'foto_path'   => $fotoPath,
             'member_no'   => $memberNo,

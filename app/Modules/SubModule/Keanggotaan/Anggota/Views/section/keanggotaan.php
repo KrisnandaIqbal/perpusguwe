@@ -514,8 +514,6 @@
     <?php if (!$is_anggota) : ?>
       <a target="_blank" href="<?= base_url('anggota/printanggota/' . $anggota->ID . '?slug=template-1'); ?>" data-toggle="tooltip" data-placement="top" title="Cetak Kartu" class="btn btn-primary"><i class="fa fa-print"></i> Cetak Kartu Anggota
       </a>
-      <a href="javascript:void(0);" data-href="<?= base_url('anggota/printkartubelakang/' . $anggota->ID . '?slug=template-2'); ?>" data-toggle="tooltip" data-placement="top" title="Cetak Kartu Belakang" class="btn btn-outline-primary remove-data"><i class="fa fa-print"></i> Cetak Kartu Belakang
-      </a>
       <a href="javascript:void(0);" data-href="<?= base_url('anggota/bebaspustaka/' . $anggota->ID); ?>" data-toggle="tooltip" data-placement="top" title="Cetak Bebas Pustaka" class="btn btn-outline-secondary cetak-kartu"><i class="fa fa-file-text"></i> Cetak Bebas Pustaka
       </a>
     <?php endif; ?>
