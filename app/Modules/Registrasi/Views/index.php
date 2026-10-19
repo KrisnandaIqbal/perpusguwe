@@ -2500,7 +2500,7 @@ if (!empty($jenis_identitas)) {
                             <div class="rf-custom-select" id="customUnitKerja">
                                 <!-- Real select for form payload & validation -->
                                 <select class="rf-select-native" id="UnitKerja_id" name="UnitKerja_id" required tabindex="-1" aria-hidden="true">
-                                    <option value="">Pilih Satuan Kerja / Unit Eselon II</option>
+                                    <option value="">Pilih Satuan Kerja / Unit Eselon I</option>
                                     <?php foreach ($unit_kerja as $uk): ?>
                                         <option value="<?= $uk->id ?>"><?= esc($uk->nama_unit) ?></option>
                                     <?php endforeach; ?>
@@ -2508,7 +2508,7 @@ if (!empty($jenis_identitas)) {
 
                                 <!-- Visual Trigger (Strictly 100% width) -->
                                 <button type="button" class="rf-select-trigger" id="unitKerjaTrigger" aria-haspopup="listbox" aria-expanded="false">
-                                    <span class="rf-select-value is-placeholder" id="unitKerjaValue">Pilih Satuan Kerja / Unit Eselon II</span>
+                                    <span class="rf-select-value is-placeholder" id="unitKerjaValue">Pilih Satuan Kerja / Unit Eselon I</span>
                                     <svg class="rf-select-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M6 8l4 4 4-4"/>
                                     </svg>
@@ -2517,7 +2517,7 @@ if (!empty($jenis_identitas)) {
                                 <!-- Dropdown Menu (Strictly 100% width, never overflows) -->
                                 <div class="rf-select-dropdown" id="unitKerjaDropdown" role="listbox" tabindex="-1">
                                     <div class="rf-select-option is-placeholder" data-value="" role="option">
-                                        <span class="rf-opt-text">Pilih Satuan Kerja / Unit Eselon II</span>
+                                        <span class="rf-opt-text">Pilih Satuan Kerja / Unit Eselon I</span>
                                     </div>
                                     <?php foreach ($unit_kerja as $uk): ?>
                                         <div class="rf-select-option" data-value="<?= $uk->id ?>" role="option">
@@ -3584,7 +3584,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitKerjaValue.textContent = text;
                     unitKerjaValue.classList.remove('is-placeholder');
                 } else {
-                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon II';
+                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon I';
                     unitKerjaValue.classList.add('is-placeholder');
                 }
 
@@ -3713,7 +3713,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnResetForm.addEventListener('click', function() {
             setTimeout(() => {
                 if (unitKerjaValue) {
-                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon II';
+                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon I';
                     unitKerjaValue.classList.add('is-placeholder');
                 }
                 unitKerjaOptions.forEach(o => o.classList.remove('is-selected'));
@@ -4009,7 +4009,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 feedbackIdentityNo.innerHTML = '';
 
                 if (unitKerjaValue) {
-                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon II';
+                    unitKerjaValue.textContent = 'Pilih Satuan Kerja / Unit Eselon I';
                     unitKerjaValue.classList.add('is-placeholder');
                 }
                 unitKerjaOptions.forEach(o => o.classList.remove('is-selected'));
