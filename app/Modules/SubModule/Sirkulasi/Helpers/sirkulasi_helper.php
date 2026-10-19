@@ -1,4 +1,8 @@
 <?php
+if (file_exists(APPPATH . 'Helpers/sirkulasi_helper.php')) {
+    require_once APPPATH . 'Helpers/sirkulasi_helper.php';
+}
+
 if (!function_exists('get_pad_number')) {
     function get_pad_number($counter, $prefix = 'TRX-', $zero_length = 4)
     {        

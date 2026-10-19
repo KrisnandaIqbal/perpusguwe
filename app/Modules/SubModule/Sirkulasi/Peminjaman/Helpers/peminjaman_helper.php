@@ -1,4 +1,6 @@
 <?php 
+helper('sirkulasi');
+
 if (!function_exists('get_cart_loan')) {
 	function get_cart_loan($member_no = false)
 	{
