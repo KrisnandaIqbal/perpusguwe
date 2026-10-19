@@ -2536,7 +2536,7 @@ if (!empty($jenis_identitas)) {
                         <div class="rf-field" id="wrapperSubUnitKerja">
                             <div class="rf-field-header">
                                 <label class="rf-label" for="SubUnitKerja_id">
-                                    Biro / Direktorat / Unit <span class="req" id="reqSubUnitKerja">*</span>
+                                    Biro / Direktorat / Unit (Eselon II) <span class="req" id="reqSubUnitKerja">*</span>
                                 </label>
                                 <span class="rf-badge-status" id="badge_SubUnitKerja"></span>
                             </div>
@@ -4125,8 +4125,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return null; // Tidak wajib untuk Unit 1 / unit tanpa sub-unit
         }
         if (!nativeSubUnitSelect || !nativeSubUnitSelect.value) {
-            setFieldError(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Belum Dipilih', 'Biro / Direktorat / Unit wajib dipilih.');
-            return '<strong>Biro / Direktorat / Unit:</strong> Satuan kerja penempatan spesifik wajib dipilih.';
+            setFieldError(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Belum Dipilih', 'Biro / Direktorat / Unit (Eselon II) wajib dipilih.');
+            return '<strong>Biro / Direktorat / Unit (Eselon II):</strong> Satuan kerja penempatan spesifik wajib dipilih.';
         } else {
             setFieldValid(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Biro / Direktorat terdaftar.');
             return null;
