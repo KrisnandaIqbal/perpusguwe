@@ -71,6 +71,18 @@
   border: 1px solid #bbf7d0;
 }
 
+.admin-choice-icon.icon-male {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.admin-choice-icon.icon-female {
+  background: #fdf2f8;
+  color: #db2777;
+  border: 1px solid #fbcfe8;
+}
+
 .admin-choice-text {
   display: flex;
   flex-direction: column;
@@ -600,6 +612,57 @@
         </div>
       </div>
 
+      <!-- Jenis Kelamin Interactive Cards -->
+      <div class="form-group mb-3">
+        <label class="font-weight-bold d-block mb-2">Jenis Kelamin <span class="text-danger">*</span></label>
+        <div class="admin-choice-cards" id="adminSexCards">
+          <?php 
+            $currentSexId = set_value('Sex_id', $anggota->Sex_id ?? '');
+            $sexList = !empty($jenis_kelamin_list) ? $jenis_kelamin_list : get_table('jenis_kelamin', 'ID, Name', 'active = 1', 'data');
+            foreach (($sexList ?? []) as $jk) : 
+              $isMale = ($jk->ID == 1);
+              $isChecked = ((string)$jk->ID === (string)$currentSexId);
+          ?>
+            <div class="admin-choice-card-item">
+              <input type="radio" name="Sex_id" id="sex_adm_<?= $jk->ID ?>" 
+                     value="<?= $jk->ID ?>" 
+                     class="admin-choice-input" 
+                     <?= $isChecked ? 'checked' : '' ?> required>
+              <label for="sex_adm_<?= $jk->ID ?>" class="admin-choice-card <?= $isMale ? 'is-male' : 'is-female' ?>">
+                <div class="admin-choice-content">
+                  <div class="admin-choice-icon <?= $isMale ? 'icon-male' : 'icon-female' ?>">
+                    <?php if ($isMale) : ?>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="10" cy="14" r="5"></circle>
+                        <line x1="19" y1="5" x2="13.6" y2="10.4"></line>
+                        <line x1="19" y1="5" x2="14" y2="5"></line>
+                        <line x1="19" y1="5" x2="19" y2="10"></line>
+                      </svg>
+                    <?php else : ?>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="9" r="5"></circle>
+                        <line x1="12" y1="14" x2="12" y2="21"></line>
+                        <line x1="9" y1="18" x2="15" y2="18"></line>
+                      </svg>
+                    <?php endif; ?>
+                  </div>
+                  <div class="admin-choice-text">
+                    <span class="admin-choice-title"><?= esc($jk->Name) ?></span>
+                    <span class="admin-choice-sub"><?= $isMale ? 'Laki-laki sipil / kedinasan' : 'Perempuan sipil / kedinasan' ?></span>
+                  </div>
+                </div>
+                <div class="admin-choice-radio-indicator">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              </label>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <small class="form-text text-muted mt-1">Pilih jenis kelamin pemustaka sesuai identitas kependudukan / kedinasan.</small>
+      </div>
+
       <div class="form-row">
         <!-- Satuan Kerja / Unit Eselon I Penempatan -->
         <div class="col-md-6 mb-3 form-group">
@@ -857,22 +920,13 @@
       <div class="card-body bg-light border-top">
         <p class="text-muted small mb-3">Data di bawah ini tersimpan di database bawaan INLISLite dan dapat disesuaikan jika diperlukan secara khusus:</p>
         <div class="form-row">
-          <div class="col-md-4 mb-2">
+          <div class="col-md-6 mb-2">
             <label class="small">Tempat Lahir</label>
             <input type="text" class="form-control form-control-sm" name="PlaceOfBirth" value="<?= set_value('PlaceOfBirth', $anggota->PlaceOfBirth ?? ''); ?>" placeholder="Kota Kelahiran">
           </div>
-          <div class="col-md-4 mb-2">
+          <div class="col-md-6 mb-2">
             <label class="small">Tanggal Lahir</label>
             <input type="date" class="form-control form-control-sm" name="DateOfBirth" value="<?= substr($anggota->DateOfBirth ?? '', 0, 10); ?>">
-          </div>
-          <div class="col-md-4 mb-2">
-            <label class="small">Jenis Kelamin</label>
-            <select class="form-control form-control-sm" name="Sex_id">
-              <option value="">Pilih</option>
-              <?php foreach (get_table('jenis_kelamin', 'ID, Name', null, 'data') as $jk) : ?>
-                <option value="<?= $jk->ID ?>" <?= ($jk->ID == ($anggota->Sex_id ?? '')) ? 'selected' : '' ?>><?= esc($jk->Name) ?></option>
-              <?php endforeach; ?>
-            </select>
           </div>
         </div>
         <div class="form-row">
