@@ -17,7 +17,7 @@
                                 <div class="position-relative form-group">
                                     <label for="name">Nama Anggota*</label>
                                     <div>
-                                        <input type="text" class="form-control" id="Fullname" name="Fullname" placeholder="Nama Anggota" value="<?= set_value('Fullname', $anggota->Fullname); ?>" required />
+                                        <input type="text" class="form-control" id="Fullname" name="Fullname" placeholder="Nama Anggota" value="<?= set_value('Fullname', $anggota->Fullname); ?>" pattern="<?= esc(\App\Validation\NamaRules::POLA, 'attr') ?>" title="Hanya huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung" required />
                                     </div>
                                 </div>
                             </div>

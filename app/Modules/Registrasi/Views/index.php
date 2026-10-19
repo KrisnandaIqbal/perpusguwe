@@ -2622,7 +2622,7 @@ if (!empty($jenis_identitas)) {
                             </div>
                             <div class="rf-input-wrap">
                                 <input type="text" class="rf-input" id="Fullname" name="Fullname"
-                                       placeholder="Contoh: Raden Satria Pamungkas" required autocomplete="name">
+                                       placeholder="Contoh: Raden Satria Pamungkas" required autocomplete="name" pattern="<?= esc(\App\Validation\NamaRules::POLA, 'attr') ?>" title="Hanya huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung">
                                 <span class="rf-input-icon is-error">
                                     <svg viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
@@ -4311,6 +4311,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Pola sama dengan aturan nama_orang di server (App\Validation\NamaRules)
+    const polaNama = new RegExp('^(?:' + <?= json_encode(\App\Validation\NamaRules::POLA) ?> + ')$', 'u');
+
     function validateFullname() {
         const val = fullnameInput.value.trim();
         if (val.length === 0) {
@@ -4320,6 +4323,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (val.length < 3) {
             setFieldError(fullnameInput, badgeFullname, feedbackFullname, 'Minimal 3 Karakter', 'Nama lengkap minimal 3 karakter sesuai identitas.');
             return '<strong>Nama Lengkap:</strong> Wajib diisi minimal 3 karakter sesuai identitas.';
+        } else if (!polaNama.test(val)) {
+            setFieldError(fullnameInput, badgeFullname, feedbackFullname, 'Format Tidak Valid', 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung.');
+            return '<strong>Nama Lengkap:</strong> Hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung.';
         } else {
             setFieldValid(fullnameInput, badgeFullname, feedbackFullname, 'Sesuai format nama sipil resmi.');
             return null;
