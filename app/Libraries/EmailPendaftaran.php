@@ -227,6 +227,13 @@ class EmailPendaftaran
 
         if ($jenis === self::DISETUJUI) {
             $email->attach($this->kartuPdf($member), 'attachment', 'kartu-anggota-' . $member->MemberNo . '.pdf', 'application/pdf');
+
+            // Gambar per sisi berpojok transparan, enak disimpan dan ditunjukkan dari HP
+            helper('anggota');
+            $card = kartuAnggotaData($member);
+            $png  = new KartuPng();
+            $email->attach($png->depan($card), 'attachment', 'kartu-anggota-' . $member->MemberNo . '-depan.png', 'image/png');
+            $email->attach($png->belakang($card), 'attachment', 'kartu-anggota-' . $member->MemberNo . '-belakang.png', 'image/png');
         }
 
         if ($email->send()) {

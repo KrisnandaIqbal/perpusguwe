@@ -200,8 +200,10 @@
             <a class="back-link" href="<?= base_url('anggota') ?>">&larr; Daftar Anggota</a>
             <div class="heading">
                 <h1>Cetak Kartu Anggota</h1>
-                <p><?= $jumlah ?> kartu &middot; depan dan belakang &middot; 85,6 &times; 54 mm</p>
+                <?php if ($jumlah): ?><p><?= $jumlah ?> kartu &middot; depan dan belakang &middot; 85,6 &times; 54 mm</p><?php endif; ?>
             </div>
+            <?php // Tanpa kartu tidak ada yang bisa dicetak, jadi tombol cetak dan tipsnya tidak ditampilkan ?>
+            <?php if ($jumlah): ?>
             <div class="actions">
                 <details class="tips">
                     <summary class="btn btn-ghost"><span class="tips-icon" aria-hidden="true">?</span>Tips cetak</summary>
@@ -214,8 +216,9 @@
                         <p>Kartu tercetak seukuran kartu ATM (85,6 &times; 54 mm), depan dan belakang berdampingan.</p>
                     </div>
                 </details>
-                <button type="button" class="btn" onclick="window.print()" <?= $jumlah ? '' : 'disabled' ?>>Cetak <?= $jumlah ?> kartu</button>
+                <button type="button" class="btn" onclick="window.print()">Cetak <?= $jumlah ?> kartu</button>
             </div>
+            <?php endif; ?>
         </div>
     </header>
 
