@@ -119,45 +119,7 @@ if ($photoFileName) {
   cursor: pointer;
   transition: transform 0.2s ease;
 }
-#photo:hover {
-  transform: scale(1.02);
-}
 
-#video {
-  border: 1px solid black;
-  box-shadow: 2px 2px 3px black;
-  width:320px;
-  height:240px;
-}
-#canvas {
-  display:none;
-}
-.camera {
-  width: 340px;
-  display:inline-block;
-}
-.output {
-  width: 340px;
-  display:inline-block;
-}
-#startbutton {
-  display:block;
-  position:relative;
-  margin-left:auto;
-  margin-right:auto;
-  bottom:32px;
-  background-color: rgba(0, 150, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0px 0px 1px 2px rgba(0, 0, 0, 0.2);
-  font-size: 14px;
-  font-family: "Lucida Grande", "Arial", sans-serif;
-  color: rgba(255, 255, 255, 1.0);
-}
-.contentarea {
-  font-size: 16px;
-  font-family: "Lucida Grande", "Arial", sans-serif;
-  width: 760px;
-}
 
 @keyframes popupZoomIn {
     0% {
@@ -218,20 +180,9 @@ if ($photoFileName) {
 						</div>
 						<?php endif; ?>
 
-						<!-- Form Opsi Upload / Kamera -->
+						<!-- Form Upload Foto -->
 						<div class="form-row">
 							<div class="col-md-12">
-								<div class="form-group mb-2">
-									<div class="form-relative form-check">
-										<label class="form-check-label">
-											<input type="checkbox" name="is_camera" id="is_camera" class="form-check-input"> Centang jika ingin mengambil foto lewat kamera
-										</label>
-									</div>
-									<small class="help-block with-errors"></small>
-								</div>
-							</div>
-
-							<div class="col-md-12 is_upload">
 								<div class="position-relative form-group mb-0">
 									<label for="file_image" class="font-weight-bold">
 										<?= $hasExistingPhoto ? 'Ganti File Foto' : 'Unggah File Foto' ?>
@@ -245,31 +196,6 @@ if ($photoFileName) {
 									</div>
 								</div>
 							</div>
-
-							<div class="col-md-12 is_camera" style="display:none">
-								<div class="position-relative form-group mb-0">
-									<label for="file_image" class="font-weight-bold">Ambil Foto dari Kamera</label>
-									<div>
-										<div class="row contentarea">
-											<div class="col-auto">
-												<div class="camera">
-													<video id="video">Video stream not available.</video>
-													<button type="button" id="startbutton">Capture</button> 
-												</div>
-												<canvas id="canvas"></canvas>
-											</div>
-											<div class="col-auto">
-												<div class="output">
-													<img id="photo" alt="Hasil tangkapan kamera akan muncul di sini." title="Klik untuk memperbesar hasil capture">
-													<input type="hidden" name="camera_image" id="camera_image" value=""> <br>
-													<small class="text-muted"><i class="fa fa-search-plus mr-1"></i> Klik gambar di atas untuk melihat preview ukuran penuh</small>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							
 						</div>
 					</div>
 				</div>
@@ -434,124 +360,5 @@ document.addEventListener('click', function(e) {
         return;
     }
 
-    // 2. Cek apakah yang diklik adalah hasil foto kamera (#photo)
-    if (e.target && e.target.id === 'photo') {
-        var camSrc = e.target.getAttribute('src');
-        if (camSrc && camSrc.length > 50 && !camSrc.startsWith('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAW')) {
-            e.preventDefault();
-            e.stopPropagation();
-            openSimplePopup(camSrc, 'Preview Hasil Jepretan Kamera');
-        }
-        return;
-    }
 }, true); // useCapture = true agar menangkap klik sebelum Dropzone mengintersepsi!
-
-// Toggle kamera murni vanilla JS
-document.addEventListener('DOMContentLoaded', function() {
-    var camCheck = document.getElementById('is_camera');
-    if (camCheck) {
-        camCheck.addEventListener('change', function() {
-            var isCam = document.querySelectorAll('.is_camera');
-            var isUp = document.querySelectorAll('.is_upload');
-            if (this.checked) {
-                isCam.forEach(function(el) { el.style.display = ''; });
-                isUp.forEach(function(el) { el.style.display = 'none'; });
-            } else {
-                isCam.forEach(function(el) { el.style.display = 'none'; });
-                isUp.forEach(function(el) { el.style.display = ''; });
-            }
-        });
-    }
-});
-
-// Kamera startup
-(function() {
-    var width = 350;
-    var height = 0;
-    var streaming = false;
-    var video = null;
-    var canvas = null;
-    var photo = null;
-    var startbutton = null;
-    var camera_image = null;
-
-    function startup() {
-        video = document.getElementById('video');
-        canvas = document.getElementById('canvas');
-        photo = document.getElementById('photo');
-        camera_image = document.getElementById('camera_image');
-        startbutton = document.getElementById('startbutton');
-
-        if (!video || !canvas || !photo) return;
-
-        navigator.mediaDevices.getUserMedia({video: true, audio: false})
-        .then(function(stream) {
-            video.srcObject = stream;
-            video.play();
-        })
-        .catch(function(err) {
-            console.log("Kamera tidak aktif/tersedia: " + err);
-        });
-
-        video.addEventListener('canplay', function(ev){
-            if (!streaming) {
-                height = video.videoHeight / (video.videoWidth/width);
-                if (isNaN(height)) {
-                    height = width / (4/3);
-                }
-                video.setAttribute('width', width);
-                video.setAttribute('height', height);
-                canvas.setAttribute('width', width);
-                canvas.setAttribute('height', height);
-                streaming = true;
-            }
-        }, false);
-
-        if (startbutton) {
-            startbutton.addEventListener('click', function(ev){
-                takepicture();
-                ev.preventDefault();
-            }, false);
-        }
-        
-        clearphoto();
-    }
-
-    function clearphoto() {
-        if (!canvas || !photo) return;
-        var context = canvas.getContext('2d');
-        context.fillStyle = "#AAA";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        var data = canvas.toDataURL('image/png');
-        photo.setAttribute('src', data);
-    }
-
-    function takepicture() {
-        if (!canvas || !photo || !camera_image) return;
-        var context = canvas.getContext('2d');
-        if (width && height) {
-            canvas.width = width;
-            canvas.height = height;
-            context.drawImage(video, 0, 0, width, height);
-            var rawData = canvas.toDataURL('image/jpeg', 0.95);
-            if (typeof openImageCropper === 'function') {
-                openImageCropper(rawData, function(blob, croppedDataUrl) {
-                    photo.setAttribute('src', croppedDataUrl);
-                    camera_image.setAttribute('value', croppedDataUrl);
-                });
-            } else {
-                photo.setAttribute('src', rawData);
-                camera_image.setAttribute('value', rawData);
-            }
-        } else {
-            clearphoto();
-        }
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startup);
-    } else {
-        startup();
-    }
-})();
 </script>
