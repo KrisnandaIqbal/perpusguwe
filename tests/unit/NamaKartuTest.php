@@ -37,4 +37,24 @@ final class NamaKartuTest extends CIUnitTestCase
             'spasi berlebih dirapikan'  => ['  andra   wijaya ', 'Andra Wijaya'],
         ];
     }
+
+    /** @dataProvider barisProvider */
+    public function testNamaKartuBaris(string $nama, array $harapan)
+    {
+        $this->assertSame($harapan, namaKartuBaris($nama));
+    }
+
+    public function barisProvider(): array
+    {
+        return [
+            'satu kata satu baris'                    => ['Andra', ['Andra']],
+            'dua kata satu baris'                     => ['Rizky Ramadhan', ['Rizky Ramadhan']],
+            'tiga kata dua baris, panjang seimbang'   => ['Krisnanda Muhammad Iqbal', ['Krisnanda', 'Muhammad Iqbal']],
+            'empat kata yang muat tidak disingkat'    => ['Muhammad Rizky Ramadhan Saputra', ['Muhammad Rizky', 'Ramadhan Saputra']],
+            'kepanjangan: kata terakhir disingkat'    => ['Muhammad Rizky Ramadhan Saputra Wijayakusuma', ['Muhammad Rizky', 'Ramadhan S. W.']],
+            'masih kepanjangan: singkat kata sebelum' => ['Muhammad Rizky Ramadhan Saputrawijaya Kusumaningrat', ['Muhammad Rizky', 'Ramadhan S. K.']],
+            'satu kata kepanjangan dibiarkan'         => ['Krisnandamuhammadiqbalsaputra', ['Krisnandamuhammadiqbalsaputra']],
+            'dua kata kepanjangan'                    => ['Krisnandamuhammad Iqbalsaputrawijaya', ['Krisnandamuhammad I.']],
+        ];
+    }
 }

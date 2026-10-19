@@ -72,18 +72,25 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         .front .motif { left: <?= $pt(168) ?>; top: <?= $pt(3) ?>; width: <?= $pt(210) ?>; height: <?= $pt(210) ?>; opacity: 0.85; }
         .front .logo { left: <?= $pt(18) ?>; top: <?= $pt(14) ?>; width: <?= $pt(26.65) ?>; height: <?= $pt(36) ?>; }
 
-        /* Foto anggota dengan rasio 2:3, rata kiri dengan logo, nama, dan nomor */
-        .front .foto-box { left: <?= $pt(18) ?>; top: <?= $pt(60) ?>; width: <?= $pt(42.67) ?>; height: <?= $pt(64) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
-        .front .foto-box img { width: 100%; height: 100%; display: block; }
-
         <?php
         // Nama satu kata dibesarkan (tetap di bawah nomor 18 px); naik 4 px supaya jaraknya ke nomor tetap lega
         $pendek  = !empty($card['nama_pendek']);
-        $namaPx  = $pendek ? ($card['nomor_urut'] ? 16 : 13) : 11;
+        $baris   = $card['nama_baris'] ?? [$card['nama']];
+        $duaBaris = count($baris) > 1;
+        $namaPx  = $duaBaris ? 14 : ($pendek ? ($card['nomor_urut'] ? 16 : 13) : 11);
+        $namaLh  = $duaBaris ? 16 : $namaPx * 1.2;
+        // Dua baris: blok nama (label 10,5 + jarak 3 + 2 x 16) berakhir 10 px di atas nomor (171), sama seperti halaman cetak
+        $namaTop = $duaBaris ? 171 - 10 - (10.5 + 3 + 32) : ($pendek ? 130 : 134);
+        // Foto berhenti 10 px di atas nama, jadi lebih pendek kalau nama dua baris (rasio 2:3 tetap)
+        $fotoH   = $duaBaris ? $namaTop - 10 - 60 : 64;
         ?>
-        .front .nama { left: <?= $pt(18) ?>; top: <?= $pt($pendek ? 130 : 134) ?>; width: <?= $pt(145) ?>; }
+        /* Foto anggota dengan rasio 2:3, rata kiri dengan logo, nama, dan nomor */
+        .front .foto-box { left: <?= $pt(18) ?>; top: <?= $pt(60) ?>; width: <?= $pt($fotoH * 2 / 3) ?>; height: <?= $pt($fotoH) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
+        .front .foto-box img { width: 100%; height: 100%; display: block; }
+
+        .front .nama { left: <?= $pt(18) ?>; top: <?= $pt($namaTop) ?>; width: <?= $pt(145) ?>; }
         .front .nama .label { font-size: <?= $pt(7) ?>; line-height: <?= $lh(10.5) ?>; letter-spacing: <?= $pt(1.12) ?>; color: #8A8B8A; }
-        .front .nama .value { padding-top: <?= $pt(3) ?>; font-size: <?= $pt($namaPx) ?>; line-height: <?= $lh($namaPx * 1.2) ?>; white-space: nowrap; overflow: hidden; color: #0D1C2E; }
+        .front .nama .value { padding-top: <?= $pt(3) ?>; font-size: <?= $pt($namaPx) ?>; line-height: <?= $lh($namaLh) ?>; white-space: nowrap; overflow: hidden; color: #0D1C2E; }
 
         .front .nomor { left: <?= $pt(19) ?>; top: <?= $pt(171) ?>; }
         .front .nomor .label { font-size: <?= $pt(7) ?>; line-height: <?= $lh(7) ?>; letter-spacing: <?= $pt(1.26) ?>; color: #7F8286; }
@@ -130,7 +137,7 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
 
         <div class="abs nama">
             <div class="label">Nama</div>
-            <div class="value"><?= esc($card['nama']) ?></div>
+            <div class="value"><?= implode('<br>', array_map('esc', $baris)) ?></div>
         </div>
 
         <div class="abs nomor">

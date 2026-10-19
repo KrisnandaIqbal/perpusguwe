@@ -132,8 +132,11 @@
         /* Berhenti sebelum motif besar yang mulai di 168 px */
         .front .nama { max-width: 150px; }
         .front .nama .label { font-size: 7px; line-height: 10.5px; letter-spacing: 1.12px; opacity: 0.4; }
-        .front .nama .value { padding-top: 3px; font-size: 11px; font-weight: 800; line-height: 13.2px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .front .nama .value { padding-top: 3px; font-size: 11px; font-weight: 800; line-height: 13.2px; }
+        /* Pemecahan baris dan singkatan diatur namaKartuBaris(); elipsis hanya jaga-jaga kalau huruf lebih lebar dari perkiraan */
+        .front .nama .baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Nama lebih dari 2 kata: dua baris 14 px, jarak baris 16 px supaya tetap terbaca sebagai satu nama */
+        .front .nama.is-dua .value { font-size: 14px; line-height: 16px; letter-spacing: -0.14px; }
 
         .front .kolom > .nomor { margin-left: 1px; }
         .front .nomor { display: inline-flex; flex-direction: column; align-items: flex-start; }
@@ -281,9 +284,9 @@
                                 <img class="foto" src="<?= esc($card['foto'], 'attr') ?>" alt="Foto <?= esc($card['nama'], 'attr') ?>">
                             <?php endif; ?>
 
-                            <div class="nama <?= $card['nama_pendek'] ? 'is-pendek' : '' ?> <?= $card['nomor_urut'] ? '' : 'is-full' ?>">
+                            <div class="nama <?= $card['nama_pendek'] ? 'is-pendek' : '' ?> <?= count($card['nama_baris']) > 1 ? 'is-dua' : '' ?> <?= $card['nomor_urut'] ? '' : 'is-full' ?>">
                                 <div class="label">Nama</div>
-                                <div class="value"><?= esc($card['nama']) ?></div>
+                                <div class="value"><?php foreach ($card['nama_baris'] as $baris): ?><span class="baris"><?= esc($baris) ?></span><?php endforeach; ?></div>
                             </div>
 
                             <div class="nomor <?= $card['nomor_urut'] ? '' : 'is-full' ?>">

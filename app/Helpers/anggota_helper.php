@@ -655,6 +655,52 @@ if (!function_exists('namaKartu')) {
     }
 }
 
+if (!function_exists('namaKartuBaris')) {
+    /**
+     * Baris nama di sisi depan kartu.
+     * Lebih dari 2 kata dipecah jadi 2 baris yang panjangnya seimbang (Krisnanda / Muhammad Iqbal).
+     * Kalau tetap tidak muat, kata disingkat jadi inisial mulai dari kata terakhir (Saputra jadi S.);
+     * kata pertama tidak pernah disingkat.
+     * Batas dihitung per huruf: 24 huruf untuk satu baris 11 px, 18 huruf per baris untuk dua baris 14 px.
+     */
+    function namaKartuBaris(string $nama): array {
+        $kata = preg_split('/\s+/u', trim($nama), -1, PREG_SPLIT_NO_EMPTY);
+        if (count($kata) <= 1) {
+            return $kata;
+        }
+
+        $duaBaris = count($kata) > 2;
+        $batas    = $duaBaris ? 18 : 24;
+
+        for ($i = count($kata) - 1; ; $i--) {
+            $baris = $duaBaris ? namaKartuPecahSeimbang($kata) : [implode(' ', $kata)];
+            $muat  = max(array_map('mb_strlen', $baris)) <= $batas;
+
+            if ($muat || $i < 1) {
+                return $baris;
+            }
+
+            $kata[$i] = mb_substr($kata[$i], 0, 1) . '.';
+        }
+    }
+
+    /** Titik potong dua baris yang membuat baris terpanjang sependek mungkin. */
+    function namaKartuPecahSeimbang(array $kata): array {
+        $terbaik = null;
+
+        for ($k = 1; $k < count($kata); $k++) {
+            $baris = [implode(' ', array_slice($kata, 0, $k)), implode(' ', array_slice($kata, $k))];
+            $panjang = max(mb_strlen($baris[0]), mb_strlen($baris[1]));
+
+            if ($terbaik === null || $panjang < $terbaik[0]) {
+                $terbaik = [$panjang, $baris];
+            }
+        }
+
+        return $terbaik[1];
+    }
+}
+
 if (!function_exists('kartuAnggotaData')) {
     /** Isi kartu anggota, dipakai halaman cetak dan lampiran PDF di email persetujuan. */
     function kartuAnggotaData(object $anggota): array {
@@ -672,6 +718,7 @@ if (!function_exists('kartuAnggotaData')) {
 
         return [
             'nama'        => $nama,
+            'nama_baris'  => namaKartuBaris($nama),
             // Nama satu kata dicetak seukuran nomor anggota; batas 12 huruf supaya tetap muat di kolom kiri
             'nama_pendek' => !str_contains($nama, ' ') && mb_strlen($nama) <= 12,
             'foto'        => $fotoUrl,
