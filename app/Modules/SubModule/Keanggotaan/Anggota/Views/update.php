@@ -328,30 +328,6 @@ $jenis_anggota = get_ref_single('jenis_anggota', 'id=' . $member->JenisAnggota_i
 	.table-bordered td {
 		background-color: #ffffff;
 	}
-
-	/* ========================================
-   CAMERA SECTION
-   ======================================== */
-
-	.is_camera,
-	.is_upload {
-		transition: all 0.3s ease;
-	}
-
-	#video,
-	#photo {
-		border-radius: 0.25rem;
-		box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-	}
-
-	#startbutton {
-		transition: all 0.2s ease;
-	}
-
-	#startbutton:hover {
-		background-color: rgba(0, 180, 0, 0.6);
-		transform: scale(1.05);
-	}
 </style>
 <?= $this->endSection('style'); ?>
 
