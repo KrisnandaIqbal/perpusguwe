@@ -251,7 +251,7 @@ class Anggota extends \Base\Controllers\BaseResourceController
 	{
 		$db = db_connect();
 		$row = $db->table('members as a')
-			->select('a.ID, a.MemberNo, a.StatusAnggota_id, a.Fullname, a.IdentityNo, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, a.EndDate, a.AlasanPerbaikan, a.CatatanPerbaikan, a.NotifJenis, a.NotifTerkirim, a.NotifDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja, master_subunit.nama_subunit as SubUnitKerja, status_anggota.Nama as StatusAnggota')
+			->select('a.ID, a.MemberNo, a.StatusAnggota_id, a.Fullname, a.IdentityNo, a.status_non_asn, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, a.EndDate, a.AlasanPerbaikan, a.CatatanPerbaikan, a.NotifJenis, a.NotifTerkirim, a.NotifDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja, master_subunit.nama_subunit as SubUnitKerja, status_anggota.Nama as StatusAnggota')
 			->join('jenis_anggota', 'jenis_anggota.id = a.JenisAnggota_id', 'left')
 			->join('master_jenis_identitas', 'master_jenis_identitas.id = a.IdentityType_id', 'left')
 			->join('master_unit', 'master_unit.id = a.UnitKerja_id', 'left')
@@ -291,6 +291,8 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'StatusAnggota_id'    => $row->StatusAnggota_id,
 			'StatusAnggota'       => $row->StatusAnggota ?? '-',
 			'JenisAnggota'        => $row->JenisAnggota,
+			'StatusNonAsn'        => !empty($row->status_non_asn) ? ucfirst($row->status_non_asn) : null,
+			'status_non_asn'      => !empty($row->status_non_asn) ? ucfirst($row->status_non_asn) : null,
 			'JenisIdentitas'      => $row->JenisIdentitas,
 			'IdentityNo'          => $row->IdentityNo,
 			'Fullname'            => $row->Fullname,

@@ -67,6 +67,7 @@ class Registrasi extends BaseController
         $identityNo = $this->request->getPost('IdentityNo');
         $unitKerjaId = $this->request->getPost('UnitKerja_id');
         $subUnitKerjaId = $this->request->getPost('SubUnitKerja_id');
+        $statusNonAsn = $this->request->getPost('status_non_asn');
         $address = $this->request->getPost('AddressNow');
         $email = $this->request->getPost('Email');
         $phone = $this->request->getPost('Phone');
@@ -109,6 +110,16 @@ class Registrasi extends BaseController
             if ($nikType) {
                 $identityTypeId = $nikType->id;
             }
+
+            // Validasi ketat Status Non-ASN: wajib dan hanya boleh 'staf' atau 'magang'
+            $statusNonAsn = strtolower(trim((string) $statusNonAsn));
+            if (!in_array($statusNonAsn, ['staf', 'magang'], true)) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Status Non-ASN wajib dipilih (Staf atau Magang).',
+                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf atau Magang.']
+                ]);
+            }
         } else {
             // ASN strictly uses NIP
             $nipType = $this->db->table('master_jenis_identitas')->like('Nama', 'NIP')->get()->getRow();
@@ -117,6 +128,9 @@ class Registrasi extends BaseController
             } else {
                 $rules['IdentityType_id'] = 'required';
             }
+
+            // Tipe ASN: abaikan input apa pun dan simpan NULL
+            $statusNonAsn = null;
         }
 
         if (!$this->validate($rules)) {
@@ -216,6 +230,7 @@ class Registrasi extends BaseController
             'IdentityNo' => $identityNo,
             'UnitKerja_id' => $unitKerjaId,
             'SubUnitKerja_id' => !empty($subUnitKerjaId) ? (int) $subUnitKerjaId : null,
+            'status_non_asn' => $statusNonAsn,
             'AddressNow' => $address,
             'Email' => $email,
             'NoHp' => $phone,

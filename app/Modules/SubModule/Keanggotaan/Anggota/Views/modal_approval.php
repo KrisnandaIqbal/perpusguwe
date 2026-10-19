@@ -144,6 +144,7 @@
                             <img class="approval-photo" id="approval_photo" src="" alt="Foto pendaftar" title="Klik untuk melihat foto ukuran penuh" onclick="if(this.src && typeof openSimplePopup === 'function') openSimplePopup(this.src, 'Pas Foto Pendaftar');">
                             <dl class="approval-data">
                                 <dt>Jenis anggota</dt><dd data-field="JenisAnggota"></dd>
+                                <dt id="dt_approval_status_non_asn" style="display:none;">Status Non-ASN</dt><dd id="dd_approval_status_non_asn" data-field="StatusNonAsn" style="display:none;"></dd>
                                 <dt data-field="JenisIdentitas"></dt><dd data-field="IdentityNo"></dd>
                                 <dt>Nama lengkap</dt><dd data-field="Fullname"></dd>
                                 <dt>Unit kerja</dt><dd data-field="UnitKerja"></dd>
@@ -174,6 +175,7 @@
                                 <div class="font-weight-bold text-dark text-truncate" id="approval_reject_nama" style="font-size: 15px; margin-bottom: 2px;"></div>
                                 <div class="text-muted text-truncate mb-1">
                                     <span class="badge badge-secondary" id="approval_reject_jenis"></span>
+                                    <span class="badge badge-info ml-1" id="approval_reject_status_non_asn" style="display:none;"></span>
                                     <span class="ml-1 font-weight-bold text-dark" id="approval_reject_identitas"></span>
                                 </div>
                                 <div class="text-muted text-truncate" id="approval_reject_unit_wrapper">
@@ -224,6 +226,7 @@
                                 <dt>Nama lengkap</dt><dd id="approval_member_fullname"></dd>
                                 <dt>Status saat ini</dt><dd id="approval_member_status_badge"></dd>
                                 <dt>Jenis anggota</dt><dd id="approval_member_jenis"></dd>
+                                <dt id="dt_member_status_non_asn" style="display:none;">Status Non-ASN</dt><dd id="approval_member_status_non_asn" style="display:none;"></dd>
                                 <dt id="approval_member_identitas_label">Identitas</dt><dd id="approval_member_identitas_val"></dd>
                                 <dt>Unit kerja</dt><dd id="approval_member_unit"></dd>
                                 <dt>Alamat</dt><dd id="approval_member_alamat"></dd>
@@ -389,6 +392,13 @@
         }
         $('#approval_reject_nama').text(data.Fullname || '-');
         $('#approval_reject_jenis').text(data.JenisAnggota || '-');
+        if (data.StatusNonAsn) {
+            $('#dt_approval_status_non_asn, #dd_approval_status_non_asn').show();
+            $('#approval_reject_status_non_asn').text(data.StatusNonAsn).show();
+        } else {
+            $('#dt_approval_status_non_asn, #dd_approval_status_non_asn').hide();
+            $('#approval_reject_status_non_asn').hide();
+        }
         $('#approval_reject_identitas').text((data.JenisIdentitas ? data.JenisIdentitas + ': ' : '') + (data.IdentityNo || '-'));
         $('#approval_reject_unit').text(data.UnitKerja || '-');
         $('#approval_reject_unit_wrapper').toggle(!!data.UnitKerja);
@@ -515,6 +525,12 @@
         $('#approval_member_fullname').text(data.Fullname || '-');
         $('#approval_member_status_badge').html(getStatusBadgeHtml(data.StatusAnggota));
         $('#approval_member_jenis').text(data.JenisAnggota || '-');
+        if (data.StatusNonAsn) {
+            $('#dt_member_status_non_asn').show();
+            $('#approval_member_status_non_asn').text(data.StatusNonAsn).show();
+        } else {
+            $('#dt_member_status_non_asn, #approval_member_status_non_asn').hide();
+        }
         $('#approval_member_identitas_label').text(data.JenisIdentitas || 'No. Identitas');
         $('#approval_member_identitas_val').text(data.IdentityNo || '-');
         $('#approval_member_unit').text(data.UnitKerja || '-');

@@ -1138,6 +1138,23 @@ if (!empty($jenis_identitas)) {
         }
     }
 
+    #wrapperStatusNonAsn {
+        transition: opacity 220ms ease, transform 220ms ease;
+    }
+    #wrapperStatusNonAsn.rf-anim-show {
+        animation: rfSlideFadeIn 220ms ease-out forwards;
+    }
+    @keyframes rfSlideFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .rf-custom-select.is-open .rf-select-dropdown {
         display: block;
     }
@@ -2547,6 +2564,52 @@ if (!empty($jenis_identitas)) {
                             <div class="rf-field-feedback" id="feedback_SubUnitKerja"></div>
                         </div>
 
+                        <!-- Dropdown Ketiga: Status Non-ASN (Hanya tampil jika tipe = Non-ASN dan Biro sudah dipilih) -->
+                        <div class="rf-field" id="wrapperStatusNonAsn" style="display: none;">
+                            <div class="rf-field-header">
+                                <label class="rf-label" for="status_non_asn">
+                                    Status Non-ASN <span class="req" id="reqStatusNonAsn">*</span>
+                                </label>
+                                <span class="rf-badge-status" id="badge_status_non_asn"></span>
+                            </div>
+                            <div class="rf-custom-select is-disabled" id="customStatusNonAsn">
+                                <!-- Real select for form payload & validation -->
+                                <select class="rf-select-native" id="status_non_asn" name="status_non_asn" tabindex="-1" aria-hidden="true" disabled>
+                                    <option value="">Pilih status</option>
+                                    <option value="staf">Staf</option>
+                                    <option value="magang">Magang</option>
+                                </select>
+
+                                <!-- Visual Trigger -->
+                                <button type="button" class="rf-select-trigger is-disabled" id="statusNonAsnTrigger" aria-haspopup="listbox" aria-expanded="false" disabled>
+                                    <span class="rf-select-value is-placeholder" id="statusNonAsnValue">Pilih status</span>
+                                    <svg class="rf-select-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M6 8l4 4 4-4"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div class="rf-select-dropdown" id="statusNonAsnDropdown" role="listbox" tabindex="-1">
+                                    <div class="rf-select-option is-placeholder" data-value="" role="option">
+                                        <span class="rf-opt-text">Pilih status</span>
+                                    </div>
+                                    <div class="rf-select-option" data-value="staf" role="option">
+                                        <span class="rf-opt-text">Staf</span>
+                                        <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3.5 8.5l3 3 6-7"/>
+                                        </svg>
+                                    </div>
+                                    <div class="rf-select-option" data-value="magang" role="option">
+                                        <span class="rf-opt-text">Magang</span>
+                                        <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3.5 8.5l3 3 6-7"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rf-field-feedback" id="feedback_status_non_asn"></div>
+                        </div>
+
                         <div class="rf-field">
                             <div class="rf-field-header">
                                 <label class="rf-label" for="AddressNow">
@@ -3223,6 +3286,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         updateDigitCount();
+        if (typeof updateStatusNonAsnVisibility === 'function') {
+            updateStatusNonAsnVisibility();
+        }
     }
 
     jaRadios.forEach(radio => {
@@ -3230,15 +3296,6 @@ document.addEventListener('DOMContentLoaded', function() {
             applyJenisAnggota(this);
         });
     });
-
-    // Inisialisasi awal (default ke opsi ASN jika ada)
-    const activeRadio = document.querySelector('input[name="JenisAnggota_id"]:checked');
-    if (activeRadio) {
-        applyJenisAnggota(activeRadio);
-    } else if (jaRadios.length > 0) {
-        jaRadios[0].checked = true;
-        applyJenisAnggota(jaRadios[0]);
-    }
 
     // ─── Live Digit Counter & Formatting (Strict Limit) ───
     inputIdentityNo.addEventListener('input', function() {
@@ -3290,6 +3347,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitKerjaValue = document.getElementById('unitKerjaValue');
     const unitKerjaOptions = document.querySelectorAll('#unitKerjaDropdown .rf-select-option');
     const nativeUnitSelect = document.getElementById('UnitKerja_id');
+    const badgeUnitKerja = document.getElementById('badge_UnitKerja');
+    const feedbackUnitKerja = document.getElementById('feedback_UnitKerja');
 
     // ─── Custom Dropdown Sub-Unit Kerja ───
     const wrapperSubUnitKerja = document.getElementById('wrapperSubUnitKerja');
@@ -3298,6 +3357,88 @@ document.addEventListener('DOMContentLoaded', function() {
     const subUnitKerjaValue = document.getElementById('subUnitKerjaValue');
     const subUnitKerjaDropdown = document.getElementById('subUnitKerjaDropdown');
     const nativeSubUnitSelect = document.getElementById('SubUnitKerja_id');
+    const badgeSubUnitKerja = document.getElementById('badge_SubUnitKerja');
+    const feedbackSubUnitKerja = document.getElementById('feedback_SubUnitKerja');
+
+    // ─── Custom Dropdown Status Non-ASN (Staf / Magang) ───
+    const wrapperStatusNonAsn = document.getElementById('wrapperStatusNonAsn');
+    const customStatusNonAsn = document.getElementById('customStatusNonAsn');
+    const statusNonAsnTrigger = document.getElementById('statusNonAsnTrigger');
+    const statusNonAsnValue = document.getElementById('statusNonAsnValue');
+    const statusNonAsnDropdown = document.getElementById('statusNonAsnDropdown');
+    const nativeStatusNonAsnSelect = document.getElementById('status_non_asn');
+    const badgeStatusNonAsn = document.getElementById('badge_status_non_asn');
+    const feedbackStatusNonAsn = document.getElementById('feedback_status_non_asn');
+
+    function resetStatusNonAsnSelection() {
+        if (!nativeStatusNonAsnSelect) return;
+        nativeStatusNonAsnSelect.value = '';
+        if (statusNonAsnValue) {
+            statusNonAsnValue.textContent = 'Pilih status';
+            statusNonAsnValue.classList.add('is-placeholder');
+        }
+        if (statusNonAsnDropdown) {
+            const opts = statusNonAsnDropdown.querySelectorAll('.rf-select-option');
+            opts.forEach(o => o.classList.remove('is-selected'));
+        }
+        if (statusNonAsnTrigger) {
+            statusNonAsnTrigger.classList.remove('has-error', 'is-valid');
+        }
+        if (typeof clearFieldStatus === 'function') {
+            clearFieldStatus(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn);
+        }
+    }
+
+    function hideAndResetStatusNonAsn() {
+        resetStatusNonAsnSelection();
+        if (wrapperStatusNonAsn) {
+            wrapperStatusNonAsn.style.display = 'none';
+            wrapperStatusNonAsn.classList.remove('rf-anim-show');
+        }
+        if (nativeStatusNonAsnSelect) {
+            nativeStatusNonAsnSelect.disabled = true;
+            nativeStatusNonAsnSelect.required = false;
+            nativeStatusNonAsnSelect.value = '';
+        }
+        if (customStatusNonAsn) {
+            customStatusNonAsn.classList.add('is-disabled');
+            customStatusNonAsn.classList.remove('is-open');
+        }
+        if (statusNonAsnTrigger) {
+            statusNonAsnTrigger.classList.add('is-disabled');
+            statusNonAsnTrigger.disabled = true;
+            statusNonAsnTrigger.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function showStatusNonAsn() {
+        if (wrapperStatusNonAsn && wrapperStatusNonAsn.style.display === 'none') {
+            wrapperStatusNonAsn.style.display = 'block';
+            wrapperStatusNonAsn.classList.remove('rf-anim-show');
+            void wrapperStatusNonAsn.offsetWidth; // Force reflow for smooth animation
+            wrapperStatusNonAsn.classList.add('rf-anim-show');
+        }
+        if (nativeStatusNonAsnSelect) {
+            nativeStatusNonAsnSelect.disabled = false;
+            nativeStatusNonAsnSelect.required = true;
+        }
+        if (customStatusNonAsn) {
+            customStatusNonAsn.classList.remove('is-disabled');
+        }
+        if (statusNonAsnTrigger) {
+            statusNonAsnTrigger.classList.remove('is-disabled');
+            statusNonAsnTrigger.disabled = false;
+        }
+    }
+
+    function updateStatusNonAsnVisibility() {
+        const biroFilled = nativeSubUnitSelect && !nativeSubUnitSelect.disabled && nativeSubUnitSelect.value !== '';
+        if (isNonAsn && biroFilled) {
+            showStatusNonAsn();
+        } else {
+            hideAndResetStatusNonAsn();
+        }
+    }
 
     function resetSubUnitSelection() {
         if (!nativeSubUnitSelect) return;
@@ -3313,6 +3454,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof clearFieldStatus === 'function') {
             clearFieldStatus(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja);
         }
+        updateStatusNonAsnVisibility();
     }
 
     function updateSubUnitsForUnit(unitId) {
@@ -3412,6 +3554,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     subUnitKerjaTrigger.classList.remove('has-error');
                     customSubUnitKerja.classList.remove('is-open');
                     subUnitKerjaTrigger.setAttribute('aria-expanded', 'false');
+                    updateStatusNonAsnVisibility();
                 });
             });
         }
@@ -3498,6 +3641,71 @@ document.addEventListener('DOMContentLoaded', function() {
                 subUnitKerjaTrigger.focus();
             }
         });
+    }
+
+    if (customStatusNonAsn && statusNonAsnTrigger && statusNonAsnDropdown && nativeStatusNonAsnSelect) {
+        statusNonAsnTrigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (statusNonAsnTrigger.disabled || customStatusNonAsn.classList.contains('is-disabled')) {
+                return;
+            }
+            const isOpen = customStatusNonAsn.classList.contains('is-open');
+            customStatusNonAsn.classList.toggle('is-open', !isOpen);
+            statusNonAsnTrigger.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+        });
+
+        const statusOptions = statusNonAsnDropdown.querySelectorAll('.rf-select-option');
+        statusOptions.forEach(opt => {
+            opt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const val = this.dataset.value;
+                const text = this.querySelector('.rf-opt-text') ? this.querySelector('.rf-opt-text').textContent.trim() : this.textContent.trim();
+
+                nativeStatusNonAsnSelect.value = val;
+                nativeStatusNonAsnSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+                statusOptions.forEach(o => o.classList.remove('is-selected'));
+                if (val) {
+                    this.classList.add('is-selected');
+                    statusNonAsnValue.textContent = text;
+                    statusNonAsnValue.classList.remove('is-placeholder');
+                    validateStatusNonAsn();
+                } else {
+                    statusNonAsnValue.textContent = 'Pilih status';
+                    statusNonAsnValue.classList.add('is-placeholder');
+                    clearFieldStatus(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn);
+                }
+
+                statusNonAsnTrigger.classList.remove('has-error');
+                customStatusNonAsn.classList.remove('is-open');
+                statusNonAsnTrigger.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!customStatusNonAsn.contains(e.target)) {
+                customStatusNonAsn.classList.remove('is-open');
+                statusNonAsnTrigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && customStatusNonAsn.classList.contains('is-open')) {
+                customStatusNonAsn.classList.remove('is-open');
+                statusNonAsnTrigger.setAttribute('aria-expanded', 'false');
+                statusNonAsnTrigger.focus();
+            }
+        });
+    }
+
+    // Inisialisasi awal jenis anggota & status Non-ASN setelah seluruh dropdown & elemen siap
+    const activeRadio = document.querySelector('input[name="JenisAnggota_id"]:checked');
+    if (activeRadio) {
+        applyJenisAnggota(activeRadio);
+    } else if (jaRadios.length > 0) {
+        jaRadios[0].checked = true;
+        applyJenisAnggota(jaRadios[0]);
     }
 
     const btnResetForm = document.getElementById('btnReset');
@@ -3703,12 +3911,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const badgeFullname = document.getElementById('badge_Fullname');
     const feedbackFullname = document.getElementById('feedback_Fullname');
 
-    const badgeUnitKerja = document.getElementById('badge_UnitKerja');
-    const feedbackUnitKerja = document.getElementById('feedback_UnitKerja');
-
-    const badgeSubUnitKerja = document.getElementById('badge_SubUnitKerja');
-    const feedbackSubUnitKerja = document.getElementById('feedback_SubUnitKerja');
-
     const addressInput = document.getElementById('AddressNow');
     const badgeAddress = document.getElementById('badge_AddressNow');
     const feedbackAddress = document.getElementById('feedback_AddressNow');
@@ -3826,6 +4028,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 persetujuanFeedback.style.display = 'none';
                 persetujuanFeedback.innerHTML = '';
 
+                hideAndResetStatusNonAsn();
+
                 btnSubmit.disabled = true;
                 wantPhotoNo.checked = true;
                 syncPhotoToggle();
@@ -3925,6 +4129,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return '<strong>Biro / Direktorat / Unit:</strong> Satuan kerja penempatan spesifik wajib dipilih.';
         } else {
             setFieldValid(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Biro / Direktorat terdaftar.');
+            return null;
+        }
+    }
+
+    function validateStatusNonAsn() {
+        if (!wrapperStatusNonAsn || wrapperStatusNonAsn.style.display === 'none' || (nativeStatusNonAsnSelect && nativeStatusNonAsnSelect.disabled)) {
+            return null; // Tidak wajib jika disembunyikan/disabled (misal ASN atau biro belum dipilih)
+        }
+        const val = nativeStatusNonAsnSelect ? nativeStatusNonAsnSelect.value : '';
+        if (!val || (val !== 'staf' && val !== 'magang')) {
+            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', 'Status Non-ASN wajib dipilih (Staf atau Magang).');
+            return '<strong>Status Non-ASN:</strong> Status pemustaka Non-ASN wajib dipilih (Staf atau Magang).';
+        } else {
+            const labelText = val === 'magang' ? 'Magang' : 'Staf';
+            setFieldValid(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Status Non-ASN terverifikasi: ' + labelText + '.');
             return null;
         }
     }
@@ -4087,6 +4306,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const errSubUnit = validateSubUnitKerja();
         if (errSubUnit) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errSubUnit });
 
+        // 4c. Status Non-ASN
+        const errStatusNonAsn = validateStatusNonAsn();
+        if (errStatusNonAsn) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errStatusNonAsn });
+
         // 5. Alamat Domisili
         const errAddr = validateAddress();
         if (errAddr) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errAddr });
@@ -4168,6 +4391,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (key === 'UnitKerja_id') {
                             const ut = document.getElementById('unitKerjaTrigger');
                             if (ut) ut.classList.add('has-error');
+                        }
+                        if (key === 'SubUnitKerja_id') {
+                            const sut = document.getElementById('subUnitKerjaTrigger');
+                            if (sut) sut.classList.add('has-error');
+                        }
+                        if (key === 'status_non_asn') {
+                            const st = document.getElementById('statusNonAsnTrigger');
+                            if (st) st.classList.add('has-error');
+                            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', value);
                         }
                     }
                 }
