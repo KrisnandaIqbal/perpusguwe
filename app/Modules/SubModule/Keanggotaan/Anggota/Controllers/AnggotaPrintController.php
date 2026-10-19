@@ -27,7 +27,7 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
     {
         $anggota = db_connect()->table('members m')->select('m.*')->where('m.id', $id)->get()->getRow();
         if (!$anggota) {
-            throw new \Exception('Data anggota tidak ditemukan');
+            return $this->renderKartu([], 'Data anggota tidak ditemukan. Mungkin sudah dihapus atau tautannya salah.');
         }
 
         return $this->renderKartu([$anggota]);
@@ -52,11 +52,15 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
         $member_ids = $this->request->getPost('member_ids');
 
         if (!$member_ids || !is_array($member_ids)) {
-            throw new \Exception('ID anggota tidak valid');
+            return $this->renderKartu([], 'Belum ada anggota yang dipilih. Centang anggotanya dulu di Daftar Anggota, lalu klik Cetak.');
         }
 
         $members = db_connect()->table('members m')->select('m.*')
             ->whereIn('m.id', $member_ids)->orderBy('m.MemberNo', 'ASC')->get()->getResult();
+
+        if (!$members) {
+            return $this->renderKartu([], 'Anggota yang dipilih tidak ditemukan. Mungkin sudah dihapus; muat ulang Daftar Anggota lalu pilih lagi.');
+        }
 
         return $this->renderKartu($members);
     }
@@ -69,7 +73,7 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
      * Kartu hanya dicetak untuk anggota berstatus Aktif yang sudah punya No. Anggota.
      * Pendaftar yang belum disetujui (PENDING-) dilewati dan disebut di halaman cetak.
      */
-    private function renderKartu(array $members)
+    private function renderKartu(array $members, ?string $pesan = null)
     {
         $db    = db_connect();
         $aktif = $db->table('status_anggota')->where('Nama', 'Aktif')->get()->getRow();
@@ -85,12 +89,14 @@ class AnggotaPrintController extends \Base\Controllers\BaseController
                 continue;
             }
 
-            $cards[] = kartuAnggotaData($anggota);
+            // id dipakai halaman cetak untuk tautan ke data anggota
+            $cards[] = kartuAnggotaData($anggota) + ['id' => $anggota->ID ?? $anggota->id ?? null];
         }
 
         return view('Anggota\Views\pdf\kartu-anggota', [
             'cards'   => $cards,
             'skipped' => $skipped,
+            'pesan'   => $pesan,
             'logo'    => base_url('assets/img/kartu/logo-kemnaker.png'),
         ]);
     }

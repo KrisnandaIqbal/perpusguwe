@@ -76,9 +76,14 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         .front .foto-box { left: <?= $pt(31.5) ?>; top: <?= $pt(60) ?>; width: <?= $pt(42.67) ?>; height: <?= $pt(64) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
         .front .foto-box img { width: 100%; height: 100%; display: block; }
 
-        .front .nama { left: <?= $pt(18) ?>; top: <?= $pt(134) ?>; width: <?= $pt(145) ?>; }
+        <?php
+        // Nama satu kata dibesarkan (tetap di bawah nomor 18 px); naik 4 px supaya jaraknya ke nomor tetap lega
+        $pendek  = !empty($card['nama_pendek']);
+        $namaPx  = $pendek ? ($card['nomor_urut'] ? 16 : 13) : 11;
+        ?>
+        .front .nama { left: <?= $pt(18) ?>; top: <?= $pt($pendek ? 130 : 134) ?>; width: <?= $pt(145) ?>; }
         .front .nama .label { font-size: <?= $pt(7) ?>; line-height: <?= $lh(10.5) ?>; letter-spacing: <?= $pt(1.12) ?>; color: #8A8B8A; }
-        .front .nama .value { padding-top: <?= $pt(3) ?>; font-size: <?= $pt(11) ?>; line-height: <?= $lh(13.2) ?>; white-space: nowrap; overflow: hidden; color: #0D1C2E; }
+        .front .nama .value { padding-top: <?= $pt(3) ?>; font-size: <?= $pt($namaPx) ?>; line-height: <?= $lh($namaPx * 1.2) ?>; white-space: nowrap; overflow: hidden; color: #0D1C2E; }
 
         .front .nomor { left: <?= $pt(19) ?>; top: <?= $pt(171) ?>; }
         .front .nomor .label { font-size: <?= $pt(7) ?>; line-height: <?= $lh(7) ?>; letter-spacing: <?= $pt(1.26) ?>; color: #7F8286; }
