@@ -49,12 +49,15 @@ final class NamaKartuTest extends CIUnitTestCase
         return [
             'satu kata satu baris'                    => ['Andra', ['Andra']],
             'dua kata satu baris'                     => ['Rizky Ramadhan', ['Rizky Ramadhan']],
+            'tepat 15 huruf satu baris'               => ['Krisnanda Iqbal', ['Krisnanda Iqbal']],
+            'dua kata lebih dari 15 huruf dua baris'  => ['Bambang Sutrisno', ['Bambang', 'Sutrisno']],
             'tiga kata dua baris, panjang seimbang'   => ['Krisnanda Muhammad Iqbal', ['Krisnanda', 'Muhammad Iqbal']],
-            'empat kata yang muat tidak disingkat'    => ['Muhammad Rizky Ramadhan Saputra', ['Muhammad Rizky', 'Ramadhan Saputra']],
+            'empat kata yang muat tidak disingkat'    => ['Siti Nur Aisyah Putri', ['Siti Nur', 'Aisyah Putri']],
+            'empat kata, kata terakhir disingkat'     => ['Muhammad Rizky Ramadhan Saputra', ['Muhammad Rizky', 'Ramadhan S.']],
             'kepanjangan: kata terakhir disingkat'    => ['Muhammad Rizky Ramadhan Saputra Wijayakusuma', ['Muhammad Rizky', 'Ramadhan S. W.']],
             'masih kepanjangan: singkat kata sebelum' => ['Muhammad Rizky Ramadhan Saputrawijaya Kusumaningrat', ['Muhammad Rizky', 'Ramadhan S. K.']],
             'satu kata kepanjangan dibiarkan'         => ['Krisnandamuhammadiqbalsaputra', ['Krisnandamuhammadiqbalsaputra']],
-            'dua kata kepanjangan'                    => ['Krisnandamuhammad Iqbalsaputrawijaya', ['Krisnandamuhammad I.']],
+            'dua kata kepanjangan'                    => ['Krisnandamuhammad Iqbalsaputrawijaya', ['Krisnandamuhammad', 'I.']],
         ];
     }
 }

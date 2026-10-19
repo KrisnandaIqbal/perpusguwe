@@ -42,19 +42,20 @@ class KartuPng
         $baris    = $card['nama_baris'] ?? [$card['nama']];
         $duaBaris = count($baris) > 1;
         $urut     = !empty($card['nomor_urut']);
-        $namaPx   = $duaBaris ? 14 : (!empty($card['nama_pendek']) ? ($urut ? 16 : 13) : 11);
-        $namaLh   = $duaBaris ? 16 : $namaPx * 1.2;
-        $namaTop  = $duaBaris ? 171 - 10 - (10.5 + 3 + 32) : (!empty($card['nama_pendek']) ? 130 : 134);
+        $namaLh   = $duaBaris ? 18 : 19.2;
+        // Blok nama (label 10,5 + jarak 3 + baris) berakhir 10 px di atas nomor (171)
+        $namaTop  = 171 - 10 - (10.5 + 3 + count($baris) * $namaLh);
 
         if (!empty($card['foto_path']) && is_file($card['foto_path'])) {
-            $fotoH = $duaBaris ? $namaTop - 10 - 60 : 64;
-            // Menjorok 32 px dari kolom kiri (x = 50)
-            $this->foto($img, $card['foto_path'], 50, 60, $fotoH * 2 / 3, $fotoH, 3);
+            // Foto persegi, berhenti 10 px di atas nama, jadi lebih kecil kalau nama dua baris
+            $fotoH = $namaTop - 10 - 60;
+            // Rata kiri dengan logo, nama, dan nomor
+            $this->foto($img, $card['foto_path'], 18, 60, $fotoH, $fotoH, 3);
         }
 
         $this->teks($img, 'NAMA', 'Bold', 7, '#8A8B8A', 18, $namaTop, 10.5, 1.12);
         foreach ($baris as $i => $isi) {
-            $this->teks($img, $isi, 'ExtraBold', $namaPx, '#0D1C2E', 18, $namaTop + 13.5 + $i * $namaLh, $namaLh, 0, 'kiri', 145);
+            $this->teks($img, $isi, 'ExtraBold', 16, '#0D1C2E', 18, $namaTop + 13.5 + $i * $namaLh, $namaLh, -0.16, 'kiri', 145);
         }
 
         $this->teks($img, 'NO. ANGGOTA', 'Bold', 7, '#7F8286', 19, 171, 7, 1.26);
