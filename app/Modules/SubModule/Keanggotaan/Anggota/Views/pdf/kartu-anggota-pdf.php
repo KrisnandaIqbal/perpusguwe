@@ -63,7 +63,8 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         body { font-family: "PJS Bold", Helvetica, sans-serif; font-weight: normal; }
         .value { font-family: "PJS ExtraBold", Helvetica, sans-serif; }
 
-        .card { position: relative; width: <?= $pt(342) ?>; height: <?= $pt(216) ?>; overflow: hidden; }
+        /* Sudut membulat 12 px seperti halaman cetak, supaya terlihat seperti kartu fisik; isi ikut terpotong melengkung */
+        .card { position: relative; width: <?= $pt(342) ?>; height: <?= $pt(216) ?>; overflow: hidden; border-radius: <?= $pt(12) ?>; }
         .abs { position: absolute; }
         .label { text-transform: uppercase; white-space: nowrap; font-family: "PJS Bold", Helvetica, sans-serif; }
 
