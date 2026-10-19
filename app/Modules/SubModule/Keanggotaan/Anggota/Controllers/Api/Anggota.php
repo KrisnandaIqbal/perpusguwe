@@ -24,7 +24,7 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		$this->anggotaModel = new \Anggota\Models\AnggotaModel();
 		$this->regionModel = new \Region\Models\RegionModel();
 		$this->validation = \Config\Services::validation();
-		$this->session = session();
+		$this->session = is_cli() ? null : session();
 		$this->modulePath = ROOTPATH . 'public/uploads/anggota/';
 		$this->uploadPath = WRITEPATH . 'uploads/';
 
@@ -251,7 +251,7 @@ class Anggota extends \Base\Controllers\BaseResourceController
 	{
 		$db = db_connect();
 		$row = $db->table('members as a')
-			->select('a.ID, a.MemberNo, a.StatusAnggota_id, a.Fullname, a.IdentityNo, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, a.EndDate, a.AlasanPerbaikan, a.CatatanPerbaikan, a.NotifJenis, a.NotifTerkirim, a.NotifDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja, master_subunit.nama_subunit as SubUnitKerja, status_anggota.Nama as StatusAnggota')
+			->select('a.ID, a.MemberNo, a.JenisAnggota_id, a.StatusAnggota_id, a.Fullname, a.IdentityNo, a.status_non_asn, a.AddressNow, a.Email, a.NoHp, a.Phone, a.PhotoUrl, a.RegisterDate, a.EndDate, a.AlasanPerbaikan, a.CatatanPerbaikan, a.NotifJenis, a.NotifTerkirim, a.NotifDate, jenis_anggota.jenisanggota as JenisAnggota, master_jenis_identitas.Nama as JenisIdentitas, master_unit.nama_unit as UnitKerja, master_subunit.nama_subunit as SubUnitKerja, status_anggota.Nama as StatusAnggota')
 			->join('jenis_anggota', 'jenis_anggota.id = a.JenisAnggota_id', 'left')
 			->join('master_jenis_identitas', 'master_jenis_identitas.id = a.IdentityType_id', 'left')
 			->join('master_unit', 'master_unit.id = a.UnitKerja_id', 'left')
@@ -267,6 +267,9 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		helper('anggota');
 		$alasan     = alasanPerbaikan(true)[$row->AlasanPerbaikan] ?? null;
 		$sebelumnya = $alasan ? trim($alasan['label'] . '. ' . $row->CatatanPerbaikan) : null;
+
+		// Hitung preview masa berlaku (terhitung dari tanggal hari ini saat petugas memeriksa)
+		$mbPreview  = hitungMasaBerlaku($row->JenisAnggota_id ?? $row->JenisAnggota, $row->status_non_asn, date('Y-m-d H:i:s'), $row->RegisterDate);
 
 		// Daftar status anggota untuk pilihan radio ubah status
 		$statusList = $db->table('status_anggota')->select('id, Nama')->orderBy('id', 'ASC')->get()->getResultArray();
@@ -291,6 +294,8 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'StatusAnggota_id'    => $row->StatusAnggota_id,
 			'StatusAnggota'       => $row->StatusAnggota ?? '-',
 			'JenisAnggota'        => $row->JenisAnggota,
+			'StatusNonAsn'        => !empty($row->status_non_asn) ? ucfirst($row->status_non_asn) : null,
+			'status_non_asn'      => !empty($row->status_non_asn) ? ucfirst($row->status_non_asn) : null,
 			'JenisIdentitas'      => $row->JenisIdentitas,
 			'IdentityNo'          => $row->IdentityNo,
 			'Fullname'            => $row->Fullname,
@@ -304,6 +309,10 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'PhotoUrl'            => !empty($row->PhotoUrl) ? base_url('uploads/anggota/' . $row->PhotoUrl) : null,
 			'RegisterDate'        => $row->RegisterDate,
 			'EndDate'             => !empty($row->EndDate) ? date('d/m/Y', strtotime($row->EndDate)) : '-',
+			'MasaBerlakuPreview'  => $mbPreview['preview_text'],
+			'MasaBerlakuDurasi'   => $mbPreview['durasi'],
+			'MasaBerlakuEndDate'  => $mbPreview['end_date_formatted'],
+			'MasaBerlakuLabel'    => $mbPreview['label_status'],
 			'PerbaikanSebelumnya' => $sebelumnya,
 			'EmailInfo'           => $emailInfo,
 			'BisaKirimUlang'      => $bisaKirimUlang,

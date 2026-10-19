@@ -319,6 +319,13 @@ foreach ($membersData as $item):
                 <td class="data-separator">:</td>
                 <td class="data-value"><?= htmlspecialchars($m->JenisAnggota ?? '-') ?></td>
             </tr>
+            <?php if (!empty($m->status_non_asn)): ?>
+            <tr>
+                <td class="data-label">Status Non-ASN</td>
+                <td class="data-separator">:</td>
+                <td class="data-value"><strong><?= htmlspecialchars(ucfirst($m->status_non_asn)) ?></strong></td>
+            </tr>
+            <?php endif; ?>
             <tr>
                 <td class="data-label"><?= $identityLabel ?></td>
                 <td class="data-separator">:</td>

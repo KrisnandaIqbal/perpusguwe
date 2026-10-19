@@ -395,16 +395,132 @@ if (!function_exists('generateUniversalMemberNumber')) {
     }
 }
 
+if (!function_exists('addMonthsClamped')) {
+    /**
+     * Tambahkan sejumlah bulan ke objek tanggal tanpa overflow ke bulan berikutnya.
+     * (Contoh: 31 Agustus + 6 bulan = 28/29 Februari, 31 Maret + 6 bulan = 30 September).
+     */
+    function addMonthsClamped(\DateTimeInterface $date, int $months): \DateTime {
+        $target = new \DateTime($date->format('Y-m-d H:i:s'));
+        $day = (int) $target->format('d');
+        $target->modify("first day of +{$months} month");
+        $maxDays = (int) $target->format('t');
+        $targetDay = min($day, $maxDays);
+        $target->setDate((int) $target->format('Y'), (int) $target->format('m'), $targetDay);
+        return $target;
+    }
+}
+
+if (!function_exists('isJenisAnggotaAsn')) {
+    /**
+     * Cek apakah tipe/kategori jenis anggota adalah ASN.
+     */
+    function isJenisAnggotaAsn($tipe): bool {
+        if (is_object($tipe)) {
+            $name = $tipe->jenisanggota ?? $tipe->JenisAnggota ?? '';
+            if ($name === '' && isset($tipe->JenisAnggota_id)) {
+                $tipe = $tipe->JenisAnggota_id;
+            } else {
+                $tipe = $name;
+            }
+        }
+        if (is_numeric($tipe)) {
+            $row = db_connect()->table('jenis_anggota')->select('jenisanggota')->where('id', (int) $tipe)->get()->getRow();
+            $tipe = $row->jenisanggota ?? '';
+        }
+        $str = strtoupper(trim((string) $tipe));
+        return (strpos($str, 'ASN') !== false && strpos($str, 'NON') === false);
+    }
+}
+
+if (!function_exists('hitungMasaBerlaku')) {
+    /**
+     * Menghitung masa berlaku keanggotaan berdasarkan aturan bisnis:
+     * - ASN: tetap pakai logika lama (+1 year dari RegisterDate).
+     * - Non-ASN + Magang: +6 bulan dari tanggal konfirmasi petugas (clamped akhir bulan).
+     * - Non-ASN + Staf: +1 tahun dari tanggal konfirmasi petugas (clamped).
+     * - Non-ASN + status_non_asn NULL: fallback +1 tahun dari tanggal konfirmasi + log warning.
+     *
+     * @param mixed $tipe (JenisAnggota_id / nama jenis / object member)
+     * @param string|null $statusNonAsn ('staf' | 'magang' | null)
+     * @param string|\DateTimeInterface|null $tanggalKonfirmasi (default: now)
+     * @param string|null $registerDate (tanggal pendaftaran online)
+     * @return array{end_date: string, end_date_formatted: string, durasi: string, label_status: string, preview_text: string}
+     */
+    function hitungMasaBerlaku($tipe, ?string $statusNonAsn = null, $tanggalKonfirmasi = null, ?string $registerDate = null): array {
+        $isAsn = isJenisAnggotaAsn($tipe);
+
+        if ($isAsn) {
+            // Aturan 1: ASN tetap pakai logika lama (+1 year dari RegisterDate), jangan diubah
+            $daftar = !empty($registerDate) ? strtotime($registerDate) : time();
+            $endDate = date('Y-m-d 00:00:00', strtotime('+1 year', $daftar));
+            $formatted = date('d-m-Y', strtotime($endDate));
+
+            return [
+                'end_date'           => $endDate,
+                'end_date_formatted' => $formatted,
+                'durasi'             => '1 tahun',
+                'label_status'       => 'ASN',
+                'preview_text'       => 'Status: ASN. Masa berlaku: 1 tahun, berakhir ' . $formatted . '.',
+            ];
+        }
+
+        // Aturan 2: Non-ASN (staf & magang) dihitung dari TANGGAL KONFIRMASI (saat approve)
+        if ($tanggalKonfirmasi instanceof \DateTimeInterface) {
+            $dtKonfirmasi = new \DateTime($tanggalKonfirmasi->format('Y-m-d H:i:s'));
+        } elseif (!empty($tanggalKonfirmasi)) {
+            $dtKonfirmasi = new \DateTime($tanggalKonfirmasi);
+        } else {
+            $dtKonfirmasi = new \DateTime();
+        }
+
+        $cleanStatus = strtolower(trim((string) $statusNonAsn));
+
+        if ($cleanStatus === 'magang') {
+            // Non-ASN + magang: masa berlaku 6 bulan sejak konfirmasi petugas
+            $targetDt = addMonthsClamped($dtKonfirmasi, 6);
+            $durasi = '6 bulan';
+            $labelStatus = 'Non-ASN (Magang)';
+        } elseif ($cleanStatus === 'staf') {
+            // Non-ASN + staf: masa berlaku 1 tahun sejak konfirmasi petugas
+            $targetDt = addMonthsClamped($dtKonfirmasi, 12);
+            $durasi = '1 tahun';
+            $labelStatus = 'Non-ASN (Staf)';
+        } else {
+            // Fallback jika status_non_asn NULL pada pendaftar Non-ASN (data lama)
+            log_message('warning', 'Pendaftar Non-ASN tanpa status_non_asn saat konfirmasi, fallback masa berlaku 1 tahun.');
+            $targetDt = addMonthsClamped($dtKonfirmasi, 12);
+            $durasi = '1 tahun';
+            $labelStatus = 'Non-ASN';
+        }
+
+        $endDate = $targetDt->format('Y-m-d 00:00:00');
+        $formatted = $targetDt->format('d-m-Y');
+
+        return [
+            'end_date'           => $endDate,
+            'end_date_formatted' => $formatted,
+            'durasi'             => $durasi,
+            'label_status'       => $labelStatus,
+            'preview_text'       => 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.',
+        ];
+    }
+}
+
 if (!function_exists('memberApprovalData')) {
     /**
      * Data tambahan saat anggota pendaftaran online (MemberNo PENDING-...) disetujui,
      * yaitu ketika statusnya diubah menjadi Aktif. Selain itu mengembalikan array kosong.
-     * Masa berlaku (EndDate) dihitung satu tahun dari tanggal pendaftaran.
+     * Masa berlaku (EndDate) dihitung sesuai aturan bisnis terpusat via hitungMasaBerlaku().
      */
-    function memberApprovalData($memberId, $newStatusId) {
+    function memberApprovalData($memberId, $newStatusId, array $overrides = []) {
         $db = db_connect();
 
-        $member = $db->table('members')->select('MemberNo, RegisterDate')->where('ID', $memberId)->get()->getRow();
+        $member = $db->table('members')
+            ->select('ID, MemberNo, JenisAnggota_id, status_non_asn, RegisterDate')
+            ->where('ID', $memberId)
+            ->get()->getRow();
+
         if (!$member || strpos((string) $member->MemberNo, 'PENDING-') !== 0) {
             return [];
         }
@@ -414,14 +530,17 @@ if (!function_exists('memberApprovalData')) {
             return [];
         }
 
-        $daftar = !empty($member->RegisterDate) ? strtotime($member->RegisterDate) : time();
+        $jenisId = $overrides['JenisAnggota_id'] ?? $member->JenisAnggota_id;
+        $statusNonAsn = array_key_exists('status_non_asn', $overrides) ? $overrides['status_non_asn'] : $member->status_non_asn;
+        $now = date('Y-m-d H:i:s');
+        $masaBerlaku = hitungMasaBerlaku($jenisId, $statusNonAsn, $now, $member->RegisterDate);
 
         return [
             'MemberNo'       => generateUniversalMemberNumber(),
-            'TglPersetujuan' => date('Y-m-d H:i:s'),
-            'TglKeputusan'   => date('Y-m-d H:i:s'),
+            'TglPersetujuan' => $now,
+            'TglKeputusan'   => $now,
             'KeputusanBy'    => login_id(),
-            'EndDate'        => date('Y-m-d 00:00:00', strtotime('+1 year', $daftar)),
+            'EndDate'        => $masaBerlaku['end_date'],
         ];
     }
 }

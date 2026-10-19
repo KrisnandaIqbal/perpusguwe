@@ -627,6 +627,19 @@
           </select>
           <small class="form-text text-muted">Biro, Direktorat, Balai Besar, atau Unit di bawah Eselon I terkait.</small>
         </div>
+
+        <!-- Status Non-ASN (Staf / Magang) -->
+        <div class="col-md-6 mb-3 form-group" id="wrapperStatusNonAsnAdmin" style="display: none;">
+          <label for="status_non_asn" class="font-weight-bold">
+            Status Non-ASN <span class="text-danger" id="reqStatusNonAsnAdmin">*</span>
+          </label>
+          <select class="form-control select2" name="status_non_asn" id="status_non_asn_admin" style="width: 100%;">
+            <option value="">Pilih status</option>
+            <option value="staf" <?= (($anggota->status_non_asn ?? '') === 'staf') ? 'selected' : '' ?>>Staf</option>
+            <option value="magang" <?= (($anggota->status_non_asn ?? '') === 'magang') ? 'selected' : '' ?>>Magang</option>
+          </select>
+          <small class="form-text text-muted">Status penugasan untuk anggota kategori Non-ASN.</small>
+        </div>
       </div>
     </div>
   </div>
@@ -1004,6 +1017,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 allowClear: true,
                 width: '100%'
             });
+            $('#status_non_asn_admin').select2({
+                placeholder: 'Pilih status',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        function updateAdminStatusNonAsn() {
+            var selectedOpt = $('input[name="JenisAnggota_id"]:checked');
+            var text = (selectedOpt.data('name') || selectedOpt.siblings('label').find('.admin-choice-title').text() || '').toLowerCase();
+            var isNonAsn = !(text.includes('asn') && !text.includes('non'));
+            var subVal = $('#SubUnitKerja_id').val();
+            var $wrap = $('#wrapperStatusNonAsnAdmin');
+            var $sel = $('#status_non_asn_admin');
+
+            if (isNonAsn && subVal) {
+                $wrap.show();
+                $sel.prop('disabled', false);
+            } else {
+                $wrap.hide();
+                $sel.prop('disabled', true);
+            }
         }
 
         function updateAdminSubUnits(unitId, selectedSubId) {
@@ -1056,6 +1091,15 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#UnitKerja_id').on('change', function() {
             var unitId = $(this).val();
             updateAdminSubUnits(unitId, null);
+            updateAdminStatusNonAsn();
+        });
+
+        $('#SubUnitKerja_id').on('change', function() {
+            updateAdminStatusNonAsn();
+        });
+
+        $('input[name="JenisAnggota_id"]').on('change', function() {
+            updateAdminStatusNonAsn();
         });
 
         // Trigger on initial load
@@ -1063,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (curUnit) {
             updateAdminSubUnits(curUnit, initialSubUnitId);
         }
+        updateAdminStatusNonAsn();
     }
 
     if (window.jQuery) {

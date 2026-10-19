@@ -154,6 +154,7 @@ class AnggotaController extends \Base\Controllers\BaseController
                 'Agama_id'           => $this->request->getPost('Agama_id'),
                 'UnitKerja_id'       => $this->request->getPost('UnitKerja_id') ?: null,
                 'SubUnitKerja_id'    => ($this->request->getPost('UnitKerja_id') == 1) ? null : ($this->request->getPost('SubUnitKerja_id') ?: null),
+                'status_non_asn'     => $this->request->getPost('status_non_asn') ?: null,
                 'Fakultas_id'        => $this->request->getPost('Fakultas_id'),
                 'Kelas_id'           => $this->request->getPost('Kelas_id'),
                 'Jurusan_id'         => $this->request->getPost('Jurusan_id'),
@@ -164,6 +165,14 @@ class AnggotaController extends \Base\Controllers\BaseController
                 'CreateBy'           => login_id(),
                 'Branch_id'          => branch_id(),
             ];
+
+            $newJenisId = $save_data['JenisAnggota_id'] ?? null;
+            if ($newJenisId) {
+                $newJa = $this->db->table('jenis_anggota')->where('id', $newJenisId)->get()->getRow();
+                if ($newJa && (stripos($newJa->jenisanggota, 'ASN') !== false && stripos($newJa->jenisanggota, 'Non') === false)) {
+                    $save_data['status_non_asn'] = null;
+                }
+            }
 
             $province = $this->request->getPost('Province');
             if (!empty($province)) {
@@ -484,6 +493,7 @@ class AnggotaController extends \Base\Controllers\BaseController
                     'Agama_id'           => $this->request->getPost('Agama_id') ?? $anggota->Agama_id,
                     'UnitKerja_id'       => $this->request->getPost('UnitKerja_id') ?? $anggota->UnitKerja_id,
                     'SubUnitKerja_id'    => $this->request->getPost('SubUnitKerja_id') !== null ? ($this->request->getPost('SubUnitKerja_id') ?: null) : ($anggota->SubUnitKerja_id ?? null),
+                    'status_non_asn'     => $this->request->getPost('status_non_asn') !== null ? ($this->request->getPost('status_non_asn') ?: null) : ($anggota->status_non_asn ?? null),
                     'Fakultas_id'        => $this->request->getPost('Fakultas_id') ?? $anggota->Fakultas_id,
                     'Kelas_id'           => $this->request->getPost('Kelas_id') ?? $anggota->Kelas_id,
                     'Jurusan_id'         => $this->request->getPost('Jurusan_id') ?? $anggota->Jurusan_id,
@@ -509,9 +519,17 @@ class AnggotaController extends \Base\Controllers\BaseController
                     $update_data['SubUnitKerja_id'] = null;
                 }
 
+                $curJenisId = $update_data['JenisAnggota_id'] ?? ($anggota->JenisAnggota_id ?? null);
+                if ($curJenisId) {
+                    $curJa = $this->db->table('jenis_anggota')->where('id', $curJenisId)->get()->getRow();
+                    if ($curJa && (stripos($curJa->jenisanggota, 'ASN') !== false && stripos($curJa->jenisanggota, 'Non') === false)) {
+                        $update_data['status_non_asn'] = null;
+                    }
+                }
+
                 // Nomor PENDING- dan nomor YYMMDD99999 tidak boleh tertimpa No. Identitas
                 helper('anggota');
-                $approval = memberApprovalData($ID, $update_data['StatusAnggota_id']);
+                $approval = memberApprovalData($ID, $update_data['StatusAnggota_id'], $update_data);
                 if ($approval) {
                     $update_data = array_merge($update_data, $approval);
                 } elseif (preg_match('/^(PENDING-|[0-9]{11}$)/', (string) $anggota->MemberNo)) {

@@ -363,6 +363,9 @@ function npp_kelurahan_id()
 
 function login_id()
 {
+	if (is_cli()) {
+		return 1;
+	}
 	return session()->get('logged_in') ?? 0;
 }
 function logged_in()
