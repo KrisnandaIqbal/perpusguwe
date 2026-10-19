@@ -618,7 +618,7 @@
         <!-- Biro / Direktorat / Unit (Sub-Unit Kerja) -->
         <div class="col-md-6 mb-3 form-group" id="wrapperSubUnitKerjaAdmin" style="display: none;">
           <label for="SubUnitKerja_id" class="font-weight-bold">
-            Biro / Direktorat / Unit <span class="text-danger" id="reqSubUnitKerjaAdmin">*</span>
+            Biro / Direktorat / Unit (Eselon II) <span class="text-danger" id="reqSubUnitKerjaAdmin">*</span>
           </label>
           <select class="form-control select2" name="SubUnitKerja_id" id="SubUnitKerja_id" style="width: 100%;" disabled>
             <option value="">Pilih unit kerja dahulu</option>

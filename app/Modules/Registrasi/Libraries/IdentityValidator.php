@@ -10,10 +10,12 @@ class IdentityValidator
      */
     public static function normalizePhone($phone)
     {
-        $phone = preg_replace('/[^0-9]/', '', $phone);
+        $phone = preg_replace('/[^0-9]/', '', (string) $phone);
         
         if (substr($phone, 0, 2) === '62') {
             $phone = '0' . substr($phone, 2);
+        } elseif (substr($phone, 0, 1) === '8') {
+            $phone = '0' . $phone;
         }
         
         return $phone;
