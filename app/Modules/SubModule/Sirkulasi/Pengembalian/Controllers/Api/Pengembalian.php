@@ -40,6 +40,7 @@ class Pengembalian extends \Base\Controllers\BaseResourceController
 		}
 
 		helper('reference');
+		helper('sirkulasi');
 		helper('pengembalian');
 	}
 
@@ -121,32 +122,14 @@ class Pengembalian extends \Base\Controllers\BaseResourceController
 				return '<span class="badge badge-info badge-pill">' . esc($row->ActualReturn) . '</span>';
 			})
 			->edit('LateDays', function ($row) {
-				// 4. Perbaikan Logika Hari Telat
 				if (empty($row->DueDate) || empty($row->ActualReturn)) {
 					return '<span class="badge badge-secondary badge-pill">-</span>';
 				}
 
-				$due = \Carbon\Carbon::parse($row->DueDate)->startOfDay();
-				$return = \Carbon\Carbon::parse($row->ActualReturn)->startOfDay();
+				$lateDays = hitungHariKerjaTerlambat($row->DueDate, $row->ActualReturn);
 
-				// Pengecekan: Jika dikembalikan tepat waktu atau lebih awal
-				if ($return->lte($due)) {
+				if ($lateDays <= 0) {
 					return '<span class="badge badge-success badge-pill">Tepat Waktu</span>';
-				}
-
-				// Jika telat, hitung hari kerja saja
-				$periods = \Carbon\CarbonPeriod::create($due->addDay(), $return);
-				$lateDays = 0;
-
-				foreach ($periods as $period) {
-					// 6 dan 7 adalah Sabtu dan Minggu
-					if (!in_array($period->format('N'), ['6', '7'])) {
-						$lateDays++;
-					}
-				}
-
-				if ($lateDays == 0) {
-					return '<span class="badge badge-info badge-pill">0 hari</span>';
 				}
 
 				$diff_class = $lateDays <= 3 ? 'warning' : 'danger';
@@ -295,39 +278,8 @@ class Pengembalian extends \Base\Controllers\BaseResourceController
 				return $html;
 			})
 			->edit('LateDays', function ($row) {
-				if ($row->DueDate > date('Y-m-d')) {
-					$periods = \Carbon\CarbonPeriod::create(date('Y-m-d'), $row->DueDate);
-					$dates = [];
-					foreach ($periods as $period) {
-						if (in_array($period->format('N'), ['6', '7'])) continue;
-						$dates[] = $period->format('Y-m-d');
-					}
-
-					$diff = '-' . count($dates);
-					if (count($dates) <= 3) {
-						if (count($dates) == 0) {
-							$diff_class = 'info';
-							$diff = '+' . count($dates);
-						} else {
-							$diff_class = 'warning';
-						}
-					} else {
-						$diff_class = 'secondary';
-					}
-				} else {
-					$periods = \Carbon\CarbonPeriod::create($row->DueDate, date('Y-m-d'));
-					$dates = [];
-					foreach ($periods as $period) {
-						if (in_array($period->format('N'), ['6', '7'])) continue;
-						$dates[] = $period->format('Y-m-d');
-					}
-
-					$diff = '+' . count($dates);
-					$diff_class = 'danger';
-				}
-
-				$html  =  '<badge class="badge badge-' . $diff_class . ' badge-pill">' . $diff . ' hari</badge>';
-				return $html;
+				$info = hitungSisaHariKerjaPinjam($row->DueDate);
+				return '<span class="badge badge-' . $info['badge_class'] . ' badge-pill">' . $info['text'] . '</span>';
 			})
 			->edit('UpdateDate', function ($row) {
 				$html  =  '<badge class="badge badge-info badge-pill">' . $row->UpdateDate . '</badge>';

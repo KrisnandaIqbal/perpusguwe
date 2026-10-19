@@ -40,6 +40,7 @@ class Peminjaman extends \Base\Controllers\BaseController
 		$this->cart = new \App\Libraries\Cart();
 
 		helper('reference');
+		helper('sirkulasi');
 		helper('peminjaman');
 		helper('member');
 		helper('menu');
@@ -615,7 +616,7 @@ private function getDayName($day_index)
 
             $collection_loan_id = get_pad_number($increment, date('ymd'), 5);
             $loanDate = $inputLoanDate ? date('Y-m-d', strtotime($inputLoanDate)) . ' ' . date('H:i:s') : date('Y-m-d H:i:s');
-            $dueDate = date('Y-m-d H:i:s', strtotime($loanDate . " +{$loanDays} days"));
+            $dueDate = hitungJatuhTempoHariKerja($loanDate, $loanDays);
             
             // Create collection loan record
             $loanData = [
@@ -788,32 +789,6 @@ private function getDayName($day_index)
 {
     $db = db_connect();
 
-    // --- Ambil pengaturan hari libur weekend ---
-    $settingsData = $this->settingModel
-        ->select('Name, Value')
-        ->whereIn('Name', ['IsSaturdayHoliday', 'IsSundayHoliday'])
-        ->findAll();
-
-    $settings          = array_column($settingsData, 'Value', 'Name');
-    $isSaturdayHoliday = $settings['IsSaturdayHoliday'] ?? 'True';
-    $isSundayHoliday   = $settings['IsSundayHoliday']   ?? 'True';
-
-    $weekendDaysToIgnore = [];
-    if ($isSaturdayHoliday !== 'False') $weekendDaysToIgnore[] = '6';
-    if ($isSundayHoliday   !== 'False') $weekendDaysToIgnore[] = '7';
-
-    // --- Ambil hari libur nasional/kustom ---
-    $holidayRows = $db->table('holidays as h')
-        ->select('h.Dates')
-        ->where('h.active', 1)
-        ->get()
-        ->getResult();
-
-    $holidayList = [];
-    foreach ($holidayRows as $holiday) {
-        $holidayList[date('Y-m-d', strtotime($holiday->Dates))] = true;
-    }
-
     // --- Query pinjaman yang sudah melewati jatuh tempo ---
     $today = date('Y-m-d');
     $rows  = $db->table('collectionloans cl')
@@ -839,28 +814,9 @@ private function getDayName($day_index)
         ->get()
         ->getResult();
 
-    // --- Hitung hari terlambat per row (tanpa hari libur) ---
+    // --- Hitung hari terlambat per row memakai helper hari kerja ---
     foreach ($rows as &$row) {
-        $periods  = \Carbon\CarbonPeriod::create($row->DueDate, $today);
-        $lateDates = [];
-
-        foreach ($periods as $period) {
-            $currentDayOfWeek = $period->format('N');
-            $currentDate      = $period->format('Y-m-d');
-
-            // Lewati tanggal jatuh tempo itu sendiri
-            if ($currentDate == $row->DueDate) continue;
-
-            // Lewati weekend yang dianggap libur
-            if (in_array($currentDayOfWeek, $weekendDaysToIgnore)) continue;
-
-            // Lewati hari libur nasional/kustom
-            if (isset($holidayList[$currentDate])) continue;
-
-            $lateDates[] = $currentDate;
-        }
-
-        $row->LateDays = count($lateDates); // Integer hari terlambat
+        $row->LateDays = hitungHariKerjaTerlambat($row->DueDate, $today);
     }
     unset($row);
 
@@ -919,37 +875,8 @@ public function sendNotification(int $id): \CodeIgniter\HTTP\ResponseInterface
         ]);
     }
 
-    // Hitung hari terlambat untuk buku ini saja
-    $settingsData = $this->settingModel
-        ->select('Name, Value')
-        ->whereIn('Name', ['IsSaturdayHoliday', 'IsSundayHoliday'])
-        ->findAll();
-
-    $settings          = array_column($settingsData, 'Value', 'Name');
-    $isSaturdayHoliday = $settings['IsSaturdayHoliday'] ?? 'True';
-    $isSundayHoliday   = $settings['IsSundayHoliday']   ?? 'True';
-
-    $weekendDaysToIgnore = [];
-    if ($isSaturdayHoliday !== 'False') $weekendDaysToIgnore[] = '6';
-    if ($isSundayHoliday   !== 'False') $weekendDaysToIgnore[] = '7';
-
-    $holidayList = [];
-    $holidayRows = $db->table('holidays as h')->select('h.Dates')->where('h.active', 1)->get()->getResult();
-    foreach ($holidayRows as $h) {
-        $holidayList[date('Y-m-d', strtotime($h->Dates))] = true;
-    }
-
-    $periods   = \Carbon\CarbonPeriod::create($row->DueDate, $today);
-    $lateDates = [];
-    foreach ($periods as $period) {
-        $dow  = $period->format('N');
-        $date = $period->format('Y-m-d');
-        if ($date == $row->DueDate) continue;
-        if (in_array($dow, $weekendDaysToIgnore)) continue;
-        if (isset($holidayList[$date])) continue;
-        $lateDates[] = $date;
-    }
-    $lateDays = count($lateDates);
+    // Hitung hari terlambat untuk buku ini saja memakai helper hari kerja
+    $lateDays = hitungHariKerjaTerlambat($row->DueDate, $today);
 
     // Kirim email
     $emailLib = new \App\Libraries\EmailNotificationLibrary();

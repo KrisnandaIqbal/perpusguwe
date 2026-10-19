@@ -41,6 +41,7 @@ class Pengembalian extends \Base\Controllers\BaseController
 
 
 		helper('reference');
+		helper('sirkulasi');
 		helper('peminjaman');
 		helper('pengembalian');
 	}
@@ -101,8 +102,8 @@ class Pengembalian extends \Base\Controllers\BaseController
         $formattedItems = [];
 
         foreach ($allItems as $item) {
-            $dueDate = new \DateTime($item->DueDate);
-            $isOverdue = $today > $dueDate;
+            $daysOverdue = hitungHariKerjaTerlambat($item->DueDate, $today);
+            $isOverdue   = ($daysOverdue > 0);
             
             $formattedItems[] = [
                 'id' => $item->ID, // Primary key collectionloanitems
@@ -112,7 +113,7 @@ class Pengembalian extends \Base\Controllers\BaseController
                 'loan_date' => $item->LoanDate,
                 'due_date' => $item->DueDate,
                 'is_overdue' => $isOverdue,
-                'days_overdue' => $isOverdue ? $today->diff($dueDate)->days : 0
+                'days_overdue' => $daysOverdue
             ];
         }
 
@@ -192,10 +193,8 @@ class Pengembalian extends \Base\Controllers\BaseController
             if (!$collectionLoanId) $collectionLoanId = $item->CollectionLoan_id;
             if (!$memberId)         $memberId         = $item->member_id;
 
-            $dueDate           = new \DateTime($item->DueDate);
-            $actualReturnDate  = new \DateTime($returnDate);
-            $isOverdue         = $actualReturnDate > $dueDate;
-            $lateDays          = $isOverdue ? $actualReturnDate->diff($dueDate)->days : 0;
+            $lateDays          = hitungHariKerjaTerlambat($item->DueDate, $actualReturnDate);
+            $isOverdue         = ($lateDays > 0);
 
             // Update loan item
             $this->db->table('collectionloanitems')

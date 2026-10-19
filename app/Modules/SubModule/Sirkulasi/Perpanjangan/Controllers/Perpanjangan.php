@@ -40,6 +40,7 @@ class Perpanjangan extends \Base\Controllers\BaseController
 
 
 		helper('reference');
+		helper('sirkulasi');
 		helper('peminjaman');
 		helper('perpanjangan');
 	}
@@ -115,7 +116,7 @@ public function checkBook()
             'due_date'      => $item->DueDate,
             'extend_count'  => $extendCount,
             'is_overdue'    => $isOverdue,
-            'days_overdue'  => $isOverdue ? $today->diff($dueDate)->days : 0,
+            'days_overdue'  => hitungHariKerjaTerlambat($item->DueDate, $today),
         ];
     }
 
@@ -167,10 +168,9 @@ public function processExtend()
             if (!$collectionLoanId) $collectionLoanId = $item->CollectionLoan_id;
             if (!$memberId)         $memberId         = $item->member_id;
 
-            // Hitung DueDate baru dari DueDate saat ini
-            $currentDueDate = new \DateTime($item->DueDate);
-            $newDueDate     = clone $currentDueDate;
-            $newDueDate->modify('+' . $extendDays . ' days');
+            // Hitung DueDate baru dari DueDate saat ini berdasarkan hari kerja
+            $newDueDateStr  = hitungJatuhTempoHariKerja($item->DueDate, $extendDays);
+            $newDueDate     = new \DateTime($newDueDateStr);
 
             // Insert ke collectionloanextends
             $db->table('collectionloanextends')->insert([
