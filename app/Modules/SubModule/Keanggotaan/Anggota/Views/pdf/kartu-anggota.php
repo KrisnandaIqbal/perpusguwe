@@ -123,8 +123,6 @@
         .front .kolom { left: 18px; top: 14px; width: 150px; height: 186px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
         /* Tinggi 36 px membuat simbolnya selebar 24 px, sama dengan logo sisi belakang */
         .front .logo { width: auto; height: 36px; }
-        /* Foto mulai dari tengah tulisan KEMNAKER pada logo */
-        .front .kolom > .foto { margin-left: 13.5px; }
 
         /* Foto mengisi sisa tinggi kolom, lebarnya mengikuti rasio pas foto 2:3 */
         .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }

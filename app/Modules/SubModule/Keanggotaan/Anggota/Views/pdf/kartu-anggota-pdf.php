@@ -72,8 +72,8 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         .front .motif { left: <?= $pt(168) ?>; top: <?= $pt(3) ?>; width: <?= $pt(210) ?>; height: <?= $pt(210) ?>; opacity: 0.85; }
         .front .logo { left: <?= $pt(18) ?>; top: <?= $pt(14) ?>; width: <?= $pt(26.65) ?>; height: <?= $pt(36) ?>; }
 
-        /* Foto anggota dengan rasio 2:3 */
-        .front .foto-box { left: <?= $pt(31.5) ?>; top: <?= $pt(60) ?>; width: <?= $pt(42.67) ?>; height: <?= $pt(64) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
+        /* Foto anggota dengan rasio 2:3, rata kiri dengan logo, nama, dan nomor */
+        .front .foto-box { left: <?= $pt(18) ?>; top: <?= $pt(60) ?>; width: <?= $pt(42.67) ?>; height: <?= $pt(64) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
         .front .foto-box img { width: 100%; height: 100%; display: block; }
 
         <?php
