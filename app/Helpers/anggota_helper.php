@@ -658,10 +658,10 @@ if (!function_exists('namaKartu')) {
 if (!function_exists('namaKartuBaris')) {
     /**
      * Baris nama di sisi depan kartu.
-     * Lebih dari 2 kata dipecah jadi 2 baris yang panjangnya seimbang (Krisnanda / Muhammad Iqbal).
+     * Nama dicetak 16 px; yang lebih dari 15 huruf dipecah jadi 2 baris yang panjangnya seimbang (Krisnanda / Muhammad Iqbal).
      * Kalau tetap tidak muat, kata disingkat jadi inisial mulai dari kata terakhir (Saputra jadi S.);
      * kata pertama tidak pernah disingkat.
-     * Batas dihitung per huruf: 24 huruf untuk satu baris 11 px, 18 huruf per baris untuk dua baris 14 px.
+     * Batas dihitung per huruf: 15 huruf per baris, sekitar 145 px pada 16 px.
      */
     function namaKartuBaris(string $nama): array {
         $kata = preg_split('/\s+/u', trim($nama), -1, PREG_SPLIT_NO_EMPTY);
@@ -669,11 +669,11 @@ if (!function_exists('namaKartuBaris')) {
             return $kata;
         }
 
-        $duaBaris = count($kata) > 2;
-        $batas    = $duaBaris ? 18 : 24;
+        $batas = 15;
 
         for ($i = count($kata) - 1; ; $i--) {
-            $baris = $duaBaris ? namaKartuPecahSeimbang($kata) : [implode(' ', $kata)];
+            $satu  = implode(' ', $kata);
+            $baris = mb_strlen($satu) <= $batas ? [$satu] : namaKartuPecahSeimbang($kata);
             $muat  = max(array_map('mb_strlen', $baris)) <= $batas;
 
             if ($muat || $i < 1) {
@@ -719,8 +719,6 @@ if (!function_exists('kartuAnggotaData')) {
         return [
             'nama'        => $nama,
             'nama_baris'  => namaKartuBaris($nama),
-            // Nama satu kata dicetak seukuran nomor anggota; batas 12 huruf supaya tetap muat di kolom kiri
-            'nama_pendek' => !str_contains($nama, ' ') && mb_strlen($nama) <= 12,
             'foto'        => $fotoUrl,
             'foto_path'   => $fotoPath,
             'member_no'   => $memberNo,

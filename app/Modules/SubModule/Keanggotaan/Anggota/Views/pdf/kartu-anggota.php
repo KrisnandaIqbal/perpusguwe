@@ -124,29 +124,26 @@
         /* Tinggi 36 px membuat simbolnya selebar 24 px, sama dengan logo sisi belakang */
         .front .logo { width: auto; height: 36px; }
 
-        /* Foto mengisi sisa tinggi kolom, lebarnya mengikuti rasio pas foto 2:3 */
-        .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }
+        /* Foto persegi mengisi sisa tinggi kolom */
+        .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 1; border-radius: 3px; object-fit: cover; object-position: center top; }
         /* Tanpa foto: nama dan nomor tetap di bawah, ruang di bawah logo dibiarkan kosong */
         .front .tanpa-foto .nama { margin-top: auto; }
 
         /* Berhenti sebelum motif besar yang mulai di 168 px */
         .front .nama { max-width: 150px; }
         .front .nama .label { font-size: 7px; line-height: 10.5px; letter-spacing: 1.12px; opacity: 0.4; }
-        .front .nama .value { padding-top: 3px; font-size: 11px; font-weight: 800; line-height: 13.2px; }
+        .front .nama .value { padding-top: 3px; font-size: 16px; font-weight: 800; line-height: 19.2px; letter-spacing: -0.16px; }
         /* Pemecahan baris dan singkatan diatur namaKartuBaris(); elipsis hanya jaga-jaga kalau huruf lebih lebar dari perkiraan */
-        .front .nama .baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        /* Nama lebih dari 2 kata: dua baris 14 px, jarak baris 16 px supaya tetap terbaca sebagai satu nama */
-        .front .nama.is-dua .value { font-size: 14px; line-height: 16px; letter-spacing: -0.14px; }
+        /* Padding bawah dibalas margin negatif: batas potong overflow turun 4 px supaya ekor g, j, y tidak terpotong, posisi baris tetap */
+        .front .nama .baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 4px; margin-bottom: -4px; }
+        /* Nama dua baris: jarak baris 18 px supaya tetap terbaca sebagai satu nama */
+        .front .nama.is-dua .value { line-height: 18px; }
 
         .front .kolom > .nomor { margin-left: 1px; }
         .front .nomor { display: inline-flex; flex-direction: column; align-items: flex-start; }
         .front .nomor .label { align-self: flex-start; font-size: 7px; line-height: 7px; letter-spacing: 1.26px; opacity: 0.45; }
         .front .nomor .value { padding-top: 4px; font-size: 18px; font-weight: 800; line-height: 18px; letter-spacing: -0.18px; }
         .front .nomor.is-full .value { padding-top: 8px; font-size: 13px; line-height: 18px; letter-spacing: 0; }
-
-        /* Nama satu kata dibesarkan supaya tidak timpang dengan nomor, tapi tetap di bawah nomor (18 px) */
-        .front .nama.is-pendek .value { font-size: 16px; line-height: 16.8px; }
-        .front .nama.is-pendek.is-full .value { font-size: 13px; line-height: 15.6px; }
 
         .front .tegak { right: 13.5px; top: 18px; display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
             font-size: 5.5px; font-weight: 700; line-height: 6px; opacity: 0.35; }
@@ -287,7 +284,7 @@
                                 <img class="foto" src="<?= esc($card['foto'], 'attr') ?>" alt="Foto <?= esc($card['nama'], 'attr') ?>">
                             <?php endif; ?>
 
-                            <div class="nama <?= $card['nama_pendek'] ? 'is-pendek' : '' ?> <?= count($card['nama_baris']) > 1 ? 'is-dua' : '' ?> <?= $card['nomor_urut'] ? '' : 'is-full' ?>">
+                            <div class="nama <?= count($card['nama_baris']) > 1 ? 'is-dua' : '' ?>">
                                 <div class="label">Nama</div>
                                 <div class="value"><?php foreach ($card['nama_baris'] as $baris): ?><span class="baris"><?= esc($baris) ?></span><?php endforeach; ?></div>
                             </div>
