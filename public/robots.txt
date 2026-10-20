@@ -6,6 +6,7 @@ User-agent: ChatGPT-User
 User-agent: GoogleOther
 User-agent: Amazonbot
 User-agent: meta-externalagent
+User-agent: meta-webindexer
 User-agent: PerplexityBot
 User-agent: Bytespider
 User-agent: CCBot
