@@ -25,9 +25,11 @@ trait AnggotaBase
     public $regionModel;
     public $settingModel;
     public $password;
+    public $db;
 
     protected function initAnggotaBase(): void
     {
+        $this->db                        = \Config\Database::connect();
         $this->anggotaModel              = new \Anggota\Models\AnggotaModel();
         $this->lokasiperpustakaanModel   = new \LokasiPerpustakaan\Models\LokasiPerpustakaanModel();
         $this->anggotahakaksesModel      = new \Anggota\Models\Anggotahakakses();

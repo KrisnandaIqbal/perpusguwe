@@ -18,6 +18,7 @@ class SelfLoan extends \App\Controllers\BaseController
         $this->session = service('session');
         
         helper('reference');
+        helper('sirkulasi');
         helper('peminjaman');
         helper('member');
         helper('selfloan');
@@ -566,7 +567,7 @@ class SelfLoan extends \App\Controllers\BaseController
 
             $collection_loan_id = get_pad_number($increment, $todayPrefix, 5);
             $loanDate = date('Y-m-d H:i:s');
-            $dueDate = date('Y-m-d H:i:s', strtotime("+{$loanDays} days"));
+            $dueDate = hitungJatuhTempoHariKerja($loanDate, $loanDays);
             $locationId = $this->request->getCookie('Location_id') ?: 1;
             
             // Create collection loan record

@@ -656,6 +656,152 @@ if (!empty($jenis_identitas)) {
         box-shadow: var(--ring-focus);
     }
 
+    /* ─── Gender Radio Cards ─── */
+    .rf-gender-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        outline: none;
+    }
+
+    .rf-gender-card {
+        position: relative;
+        cursor: pointer;
+        margin-bottom: 0;
+        user-select: none;
+    }
+
+    .rf-gender-card input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+    }
+
+    .rf-gender-card-inner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: #ffffff;
+        border: 1.5px solid var(--border-card);
+        border-radius: 12px;
+        transition: all var(--transition-fast);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        min-height: 58px;
+    }
+
+    .rf-gender-card:hover .rf-gender-card-inner {
+        border-color: #94a3b8;
+        background: #fafbfe;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+    }
+
+    .rf-gender-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all var(--transition-fast);
+    }
+
+    .rf-gender-icon-male {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1d4ed8;
+    }
+
+    .rf-gender-icon-female {
+        background: #fdf2f8;
+        border: 1px solid #fbcfe8;
+        color: #be185d;
+    }
+
+    .rf-gender-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .rf-gender-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .rf-gender-title {
+        font-family: var(--font-heading);
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--navy-900);
+        line-height: 1.25;
+    }
+
+    .rf-gender-subtitle {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        line-height: 1.2;
+        margin-top: 2px;
+    }
+
+    .rf-gender-radio-mark {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--border-input);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-fast);
+        background: #ffffff;
+        flex-shrink: 0;
+        color: transparent;
+    }
+
+    .rf-gender-radio-mark svg {
+        width: 10px;
+        height: 10px;
+        stroke-width: 3;
+        transition: transform var(--transition-fast);
+        transform: scale(0.6);
+    }
+
+    /* Selected state */
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner {
+        border-color: var(--accent-600);
+        background-color: #f8faff;
+        box-shadow: 0 0 0 1px var(--accent-600), 0 4px 16px -2px rgba(37, 99, 235, 0.14);
+    }
+
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner .rf-gender-radio-mark {
+        border-color: var(--accent-600);
+        background: var(--accent-600);
+        color: #ffffff;
+    }
+
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner .rf-gender-radio-mark svg {
+        transform: scale(1);
+    }
+
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner .rf-gender-title {
+        color: var(--accent-700);
+    }
+
+    .rf-gender-card input[type="radio"]:focus-visible + .rf-gender-card-inner {
+        box-shadow: var(--ring-focus);
+    }
+
+    /* Error state for group */
+    .rf-gender-group.has-error .rf-gender-card-inner {
+        border-color: var(--rose-600);
+        background: #fffafa;
+    }
+
     /* ─── Form Fields & Controls ─── */
     .rf-field {
         margin-bottom: 20px;
@@ -2043,9 +2189,10 @@ if (!empty($jenis_identitas)) {
     }
 
     @media (max-width: 640px) {
-        .rf-radio-cards {
+        .rf-radio-cards,
+        .rf-gender-group {
             grid-template-columns: 1fr;
-            gap: 12px;
+            gap: 10px;
         }
 
         .rf-card-choice {
@@ -2475,7 +2622,7 @@ if (!empty($jenis_identitas)) {
                             </div>
                             <div class="rf-input-wrap">
                                 <input type="text" class="rf-input" id="Fullname" name="Fullname"
-                                       placeholder="Contoh: Raden Satria Pamungkas" required autocomplete="name">
+                                       placeholder="Contoh: Raden Satria Pamungkas" required autocomplete="name" pattern="<?= esc(\App\Validation\NamaRules::POLA, 'attr') ?>" title="Hanya huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung">
                                 <span class="rf-input-icon is-error">
                                     <svg viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
@@ -2488,6 +2635,55 @@ if (!empty($jenis_identitas)) {
                                 </span>
                             </div>
                             <div class="rf-field-feedback" id="feedback_Fullname"></div>
+                        </div>
+
+                        <!-- Field Jenis Kelamin -->
+                        <div class="rf-field" id="fieldSex">
+                            <div class="rf-field-header">
+                                <label class="rf-label">
+                                    Jenis Kelamin <span class="req">*</span>
+                                </label>
+                                <span class="rf-badge-status" id="badge_Sex"></span>
+                            </div>
+                            <div class="rf-gender-group" id="sexRadioGroup" tabindex="-1">
+                                <?php if (!empty($jenis_kelamin)): ?>
+                                    <?php foreach ($jenis_kelamin as $jk): ?>
+                                    <label class="rf-gender-card" for="sex_<?= $jk->ID ?>">
+                                        <input type="radio" name="Sex_id" id="sex_<?= $jk->ID ?>" value="<?= $jk->ID ?>" data-label="<?= esc($jk->Name) ?>" required>
+                                        <div class="rf-gender-card-inner">
+                                            <div class="rf-gender-icon rf-gender-icon-<?= $jk->ID == 1 ? 'male' : 'female' ?>">
+                                                <?php if ($jk->ID == 1): ?>
+                                                <!-- Mars / Male Icon -->
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="10" cy="14" r="5"></circle>
+                                                    <line x1="19" y1="5" x2="13.6" y2="10.4"></line>
+                                                    <line x1="19" y1="5" x2="14" y2="5"></line>
+                                                    <line x1="19" y1="5" x2="19" y2="10"></line>
+                                                </svg>
+                                                <?php else: ?>
+                                                <!-- Venus / Female Icon -->
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="9" r="5"></circle>
+                                                    <line x1="12" y1="14" x2="12" y2="21"></line>
+                                                    <line x1="9" y1="18" x2="15" y2="18"></line>
+                                                </svg>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="rf-gender-content">
+                                                <span class="rf-gender-title"><?= esc($jk->Name) ?></span>
+                                                <span class="rf-gender-subtitle"><?= $jk->ID == 1 ? 'Laki-laki sipil / kedinasan' : 'Perempuan sipil / kedinasan' ?></span>
+                                            </div>
+                                            <div class="rf-gender-radio-mark" aria-hidden="true">
+                                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M3.5 8.5l3 3 6-7"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                            <div class="rf-field-feedback" id="feedback_Sex"></div>
                         </div>
 
                         <div class="rf-field">
@@ -2536,7 +2732,7 @@ if (!empty($jenis_identitas)) {
                         <div class="rf-field" id="wrapperSubUnitKerja">
                             <div class="rf-field-header">
                                 <label class="rf-label" for="SubUnitKerja_id">
-                                    Biro / Direktorat / Unit <span class="req" id="reqSubUnitKerja">*</span>
+                                    Biro / Direktorat / Unit (Eselon II) <span class="req" id="reqSubUnitKerja">*</span>
                                 </label>
                                 <span class="rf-badge-status" id="badge_SubUnitKerja"></span>
                             </div>
@@ -2937,14 +3133,6 @@ if (!empty($jenis_identitas)) {
         <div class="rf-modal-body" id="syaratScrollbox">
             <div class="rf-doc-header">
                 <h4 class="rf-doc-title">TATA TERTIB KEANGGOTAAN DAN LAYANAN SIRKULASI<br>PERPUSTAKAAN KEMENTERIAN KETENAGAKERJAAN</h4>
-                <div style="text-align: left; margin-top: 10px;">
-                    <strong>Dasar:</strong>
-                    <ol class="rf-doc-list">
-                        <li>Undang-Undang Nomor 43 Tahun 2007 tentang Perpustakaan.</li>
-                        <li>Peraturan Perpustakaan Nasional Nomor 7 Tahun 2022 tentang Standar Nasional Perpustakaan Khusus.</li>
-                        <li>Undang-Undang Nomor 27 Tahun 2022 tentang Perlindungan Data Pribadi.</li>
-                    </ol>
-                </div>
             </div>
 
             <div class="rf-doc-chapter">BAB I. KETENTUAN UMUM</div>
@@ -3897,19 +4085,24 @@ document.addEventListener('DOMContentLoaded', function() {
     btnSetujuSyarat.addEventListener('click', function() {
         cbPersetujuan.disabled = false;
         cbPersetujuan.checked = true;
-        btnSubmit.disabled = false;
+        updateSubmitButtonState();
         closeModal();
         validatePersetujuan();
     });
 
     cbPersetujuan.addEventListener('change', function() {
-        btnSubmit.disabled = !this.checked;
+        updateSubmitButtonState();
     });
 
     // Elements for Validation
     const fullnameInput = document.getElementById('Fullname');
     const badgeFullname = document.getElementById('badge_Fullname');
     const feedbackFullname = document.getElementById('feedback_Fullname');
+
+    const sexRadios = document.querySelectorAll('input[name="Sex_id"]');
+    const sexGroup = document.getElementById('sexRadioGroup');
+    const badgeSex = document.getElementById('badge_Sex');
+    const feedbackSex = document.getElementById('feedback_Sex');
 
     const addressInput = document.getElementById('AddressNow');
     const badgeAddress = document.getElementById('badge_AddressNow');
@@ -3991,6 +4184,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    let isPhoneDuplicate = false;
+    let isEmailDuplicate = false;
+
+    function updateSubmitButtonState() {
+        if (!cbPersetujuan || !cbPersetujuan.checked || isPhoneDuplicate || isEmailDuplicate) {
+            btnSubmit.disabled = true;
+        } else {
+            btnSubmit.disabled = false;
+        }
+    }
+
     // ─── Form Reset Handler (Bersihkan Formulir Secara Menyeluruh) ───
     const resetBtnEl = document.getElementById('btnReset');
     if (resetBtnEl) {
@@ -4016,6 +4220,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (unitKerjaTrigger) unitKerjaTrigger.classList.remove('has-error', 'is-valid');
 
                 clearFieldStatus(fullnameInput, badgeFullname, feedbackFullname);
+                sexRadios.forEach(r => { r.checked = false; });
+                clearFieldStatus(sexGroup, badgeSex, feedbackSex);
                 clearFieldStatus(addressInput, badgeAddress, feedbackAddress);
                 clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
                 clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
@@ -4030,6 +4236,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 hideAndResetStatusNonAsn();
 
+                isPhoneDuplicate = false;
+                isEmailDuplicate = false;
                 btnSubmit.disabled = true;
                 wantPhotoNo.checked = true;
                 syncPhotoToggle();
@@ -4095,6 +4303,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Pola sama dengan aturan nama_orang di server (App\Validation\NamaRules)
+    const polaNama = new RegExp('^(?:' + <?= json_encode(\App\Validation\NamaRules::POLA) ?> + ')$', 'u');
+
     function validateFullname() {
         const val = fullnameInput.value.trim();
         if (val.length === 0) {
@@ -4104,8 +4315,23 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (val.length < 3) {
             setFieldError(fullnameInput, badgeFullname, feedbackFullname, 'Minimal 3 Karakter', 'Nama lengkap minimal 3 karakter sesuai identitas.');
             return '<strong>Nama Lengkap:</strong> Wajib diisi minimal 3 karakter sesuai identitas.';
+        } else if (!polaNama.test(val)) {
+            setFieldError(fullnameInput, badgeFullname, feedbackFullname, 'Format Tidak Valid', 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung.');
+            return '<strong>Nama Lengkap:</strong> Hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung.';
         } else {
             setFieldValid(fullnameInput, badgeFullname, feedbackFullname, 'Sesuai format nama sipil resmi.');
+            return null;
+        }
+    }
+
+    function validateJenisKelamin() {
+        const checked = document.querySelector('input[name="Sex_id"]:checked');
+        if (!checked) {
+            setFieldError(sexGroup, badgeSex, feedbackSex, 'Belum Dipilih', 'Jenis kelamin wajib dipilih.');
+            return '<strong>Jenis Kelamin:</strong> Jenis kelamin wajib dipilih.';
+        } else {
+            const label = checked.getAttribute('data-label') || 'Terpilih';
+            setFieldValid(sexGroup, badgeSex, feedbackSex, 'Jenis kelamin: ' + label + '.');
             return null;
         }
     }
@@ -4125,8 +4351,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return null; // Tidak wajib untuk Unit 1 / unit tanpa sub-unit
         }
         if (!nativeSubUnitSelect || !nativeSubUnitSelect.value) {
-            setFieldError(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Belum Dipilih', 'Biro / Direktorat / Unit wajib dipilih.');
-            return '<strong>Biro / Direktorat / Unit:</strong> Satuan kerja penempatan spesifik wajib dipilih.';
+            setFieldError(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Belum Dipilih', 'Biro / Direktorat / Unit (Eselon II) wajib dipilih.');
+            return '<strong>Biro / Direktorat / Unit (Eselon II):</strong> Satuan kerja penempatan spesifik wajib dipilih.';
         } else {
             setFieldValid(subUnitKerjaTrigger, badgeSubUnitKerja, feedbackSubUnitKerja, 'Biro / Direktorat terdaftar.');
             return null;
@@ -4189,7 +4415,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setFieldError(phoneInput, badgePhone, feedbackPhone, 'Format Nomor Tidak Valid', 'Nomor harus nomor seluler / WhatsApp yang valid (diawali 08 atau 62, 9–13 digit).');
             return '<strong>Kontak Pemohon:</strong> Format nomor Telepon / WhatsApp tidak valid (harus nomor seluler diawali 08 atau 62).';
         } else {
-            setFieldValid(phoneInput, badgePhone, feedbackPhone, 'Nomor WhatsApp terverifikasi.');
+            setFieldValid(phoneInput, badgePhone, feedbackPhone, 'Format nomor WhatsApp valid.');
             return null;
         }
     }
@@ -4233,6 +4459,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    sexRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            validateJenisKelamin();
+        });
+    });
+
     addressInput.addEventListener('input', function() {
         const val = this.value.trim();
         if (val.length === 0) {
@@ -4246,6 +4478,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     emailInput.addEventListener('input', function() {
         const val = this.value.trim();
+        isEmailDuplicate = false;
         if (val.length === 0) {
             clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
         } else {
@@ -4256,11 +4489,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearFieldStatus(emailInput, badgeEmail, feedbackEmail);
             }
         }
+        updateSubmitButtonState();
+    });
+
+    emailInput.addEventListener('blur', function() {
+        const val = this.value.trim();
+        if (val.length === 0) return;
+        const err = validateEmail();
+        if (err) return;
+
+        const formData = new FormData();
+        formData.append('field', 'Email');
+        formData.append('value', val);
+
+        axios.post('<?= base_url('registrasi/check-duplicate') ?>', formData, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            const res = response.data;
+            if (res && res.registered) {
+                isEmailDuplicate = true;
+                setFieldError(emailInput, badgeEmail, feedbackEmail, 'Sudah Terdaftar', res.message || 'Email sudah terdaftar sebelumnya.');
+                updateSubmitButtonState();
+            } else {
+                isEmailDuplicate = false;
+                setFieldValid(emailInput, badgeEmail, feedbackEmail, 'Format email valid untuk aktivasi akun.');
+                updateSubmitButtonState();
+            }
+        })
+        .catch(() => {});
     });
 
     phoneInput.addEventListener('input', function() {
         this.value = this.value.replace(/\D/g, '');
         if (this.classList.contains('has-error')) this.classList.remove('has-error');
+        isPhoneDuplicate = false;
         const raw = this.value;
         if (raw.length === 0) {
             clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
@@ -4269,6 +4532,44 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             clearFieldStatus(phoneInput, badgePhone, feedbackPhone);
         }
+        updateSubmitButtonState();
+    });
+
+    phoneInput.addEventListener('blur', function() {
+        const raw = this.value.replace(/\D/g, '');
+        if (raw.length === 0) return;
+        const err = validatePhone();
+        if (err) return;
+
+        let checkVal = raw;
+        if (checkVal.startsWith('62')) {
+            checkVal = checkVal.slice(2);
+        }
+        if (checkVal.startsWith('0')) {
+            checkVal = checkVal.slice(1);
+        }
+        checkVal = '0' + checkVal;
+
+        const formData = new FormData();
+        formData.append('field', 'Phone');
+        formData.append('value', checkVal);
+
+        axios.post('<?= base_url('registrasi/check-duplicate') ?>', formData, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            const res = response.data;
+            if (res && res.registered) {
+                isPhoneDuplicate = true;
+                setFieldError(phoneInput, badgePhone, feedbackPhone, 'Sudah Terdaftar', res.message || 'Nomor WhatsApp ini sudah terdaftar.');
+                updateSubmitButtonState();
+            } else {
+                isPhoneDuplicate = false;
+                setFieldValid(phoneInput, badgePhone, feedbackPhone, 'Format nomor WhatsApp valid.');
+                updateSubmitButtonState();
+            }
+        })
+        .catch(() => {});
     });
 
     cbPersetujuan.addEventListener('change', function() {
@@ -4298,6 +4599,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const errName = validateFullname();
         if (errName) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errName });
 
+        // 3b. Jenis Kelamin
+        const errSex = validateJenisKelamin();
+        if (errSex) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errSex });
+
         // 4. Unit Kerja
         const errUnit = validateUnitKerja();
         if (errUnit) errorItems.push({ sec: 'section-2', step: 'section-2', msg: errUnit });
@@ -4316,11 +4621,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 6. Email
         const errEmail = validateEmail();
-        if (errEmail) errorItems.push({ sec: 'section-3', step: 'section-3', msg: errEmail });
+        if (errEmail) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: errEmail });
+        } else if (isEmailDuplicate) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: '<strong>Alamat Email:</strong> Email sudah terdaftar sebelumnya.' });
+        }
 
         // 7. Phone
         const errPhone = validatePhone();
-        if (errPhone) errorItems.push({ sec: 'section-3', step: 'section-3', msg: errPhone });
+        if (errPhone) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: errPhone });
+        } else if (isPhoneDuplicate) {
+            errorItems.push({ sec: 'section-3', step: 'section-3', msg: '<strong>Kontak Pemohon:</strong> Nomor WhatsApp ini sudah terdaftar.' });
+        }
 
         // 8. Persetujuan
         const errAgree = validatePersetujuan();
@@ -4350,7 +4663,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Normalisasi nomor telepon ke format 08xx untuk submit
-        const rawPhone = phoneInput.value.replace(/\D/g, '');
+        let rawPhone = phoneInput.value.replace(/\D/g, '');
+        if (rawPhone.startsWith('62')) rawPhone = rawPhone.slice(2);
+        if (rawPhone.startsWith('0')) rawPhone = rawPhone.slice(1);
         const phoneForSubmit = '0' + rawPhone;
 
         // Button Loading State
@@ -4384,23 +4699,103 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = res.redirect;
             } else {
                 showAlert(res && res.message ? res.message : 'Terjadi kesalahan, silakan periksa formulir.', 'error');
+                let firstErrorEl = null;
+
                 if (res && res.errors) {
                     for (const [key, value] of Object.entries(res.errors)) {
                         const field = document.getElementById(key);
-                        if (field) field.classList.add('has-error');
+                        if (field) {
+                            field.classList.add('has-error');
+                            field.classList.remove('is-valid');
+                            if (!firstErrorEl) firstErrorEl = field;
+                        }
+                        if (key === 'Phone') {
+                            isPhoneDuplicate = true;
+                            setFieldError(phoneInput, badgePhone, feedbackPhone, 'Sudah Terdaftar', value);
+                            if (!firstErrorEl) firstErrorEl = phoneInput;
+                        }
+                        if (key === 'Email') {
+                            isEmailDuplicate = true;
+                            setFieldError(emailInput, badgeEmail, feedbackEmail, 'Sudah Terdaftar', value);
+                            if (!firstErrorEl) firstErrorEl = emailInput;
+                        }
+                        if (key === 'IdentityNo') {
+                            digitCount.className = 'rf-digit-badge is-error';
+                            digitCount.textContent = 'Sudah Terdaftar';
+                            inputIdentityNo.classList.add('has-error');
+                            inputIdentityNo.classList.remove('is-valid');
+                            feedbackIdentityNo.className = 'rf-field-feedback is-error';
+                            feedbackIdentityNo.style.display = 'flex';
+                            feedbackIdentityNo.innerHTML = `
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>${value}</span>
+                            `;
+                            if (!firstErrorEl) firstErrorEl = inputIdentityNo;
+                        }
                         if (key === 'UnitKerja_id') {
                             const ut = document.getElementById('unitKerjaTrigger');
-                            if (ut) ut.classList.add('has-error');
+                            if (ut) {
+                                ut.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = ut;
+                            }
                         }
                         if (key === 'SubUnitKerja_id') {
                             const sut = document.getElementById('subUnitKerjaTrigger');
-                            if (sut) sut.classList.add('has-error');
+                            if (sut) {
+                                sut.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = sut;
+                            }
                         }
                         if (key === 'status_non_asn') {
                             const st = document.getElementById('statusNonAsnTrigger');
-                            if (st) st.classList.add('has-error');
+                            if (st) {
+                                st.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = st;
+                            }
                             setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', value);
                         }
+                        if (key === 'Sex_id') {
+                            if (sexGroup) {
+                                sexGroup.classList.add('has-error');
+                                if (!firstErrorEl) firstErrorEl = sexGroup;
+                            }
+                            setFieldError(sexGroup, badgeSex, feedbackSex, 'Belum Dipilih', value);
+                        }
+                    }
+                } else if (res && res.message) {
+                    if (res.message.includes('WhatsApp') || res.message.includes('telepon')) {
+                        isPhoneDuplicate = true;
+                        setFieldError(phoneInput, badgePhone, feedbackPhone, 'Sudah Terdaftar', res.message);
+                        firstErrorEl = phoneInput;
+                    } else if (res.message.includes('Email')) {
+                        isEmailDuplicate = true;
+                        setFieldError(emailInput, badgeEmail, feedbackEmail, 'Sudah Terdaftar', res.message);
+                        firstErrorEl = emailInput;
+                    } else if (res.message.includes('Identitas') || res.message.includes('NIK') || res.message.includes('NIP')) {
+                        digitCount.className = 'rf-digit-badge is-error';
+                        digitCount.textContent = 'Sudah Terdaftar';
+                        inputIdentityNo.classList.add('has-error');
+                        inputIdentityNo.classList.remove('is-valid');
+                        feedbackIdentityNo.className = 'rf-field-feedback is-error';
+                        feedbackIdentityNo.style.display = 'flex';
+                        feedbackIdentityNo.innerHTML = `
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>${res.message}</span>
+                        `;
+                        firstErrorEl = inputIdentityNo;
+                    }
+                }
+
+                if (firstErrorEl) {
+                    firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (firstErrorEl === sexGroup && sexRadios.length > 0) {
+                        sexRadios[0].focus();
+                    } else if (typeof firstErrorEl.focus === 'function') {
+                        firstErrorEl.focus();
                     }
                 }
                 resetSubmitBtn();

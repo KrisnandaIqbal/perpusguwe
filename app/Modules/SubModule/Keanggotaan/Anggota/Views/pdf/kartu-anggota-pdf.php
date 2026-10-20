@@ -44,6 +44,9 @@ if (!empty($card['foto_path']) && is_file($card['foto_path'])) {
     }
 }
 
+// dompdf tidak mengenal object-fit: ukuran asli foto dipakai untuk memotongnya manual di kotak persegi
+$fotoUkuran = $fotoSrc ? @getimagesizefromstring(base64_decode(substr($fotoSrc, strpos($fotoSrc, ',') + 1))) : false;
+
 $logoFront = !empty($logo_teks) && file_exists($logo_teks) ? $logo_teks : $logo;
 $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_teks_putih : (!empty($logo_krem) ? $logo_krem : $logo);
 ?>
@@ -63,7 +66,8 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         body { font-family: "PJS Bold", Helvetica, sans-serif; font-weight: normal; }
         .value { font-family: "PJS ExtraBold", Helvetica, sans-serif; }
 
-        .card { position: relative; width: <?= $pt(342) ?>; height: <?= $pt(216) ?>; overflow: hidden; }
+        /* Sudut membulat 12 px seperti halaman cetak, supaya terlihat seperti kartu fisik; isi ikut terpotong melengkung */
+        .card { position: relative; width: <?= $pt(342) ?>; height: <?= $pt(216) ?>; overflow: hidden; border-radius: <?= $pt(12) ?>; }
         .abs { position: absolute; }
         .label { text-transform: uppercase; white-space: nowrap; font-family: "PJS Bold", Helvetica, sans-serif; }
 
@@ -72,13 +76,29 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         .front .motif { left: <?= $pt(168) ?>; top: <?= $pt(3) ?>; width: <?= $pt(210) ?>; height: <?= $pt(210) ?>; opacity: 0.85; }
         .front .logo { left: <?= $pt(18) ?>; top: <?= $pt(14) ?>; width: <?= $pt(26.65) ?>; height: <?= $pt(36) ?>; }
 
-        /* Foto anggota dengan rasio 2:3 */
-        .front .foto-box { left: <?= $pt(31.5) ?>; top: <?= $pt(60) ?>; width: <?= $pt(42.67) ?>; height: <?= $pt(64) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
-        .front .foto-box img { width: 100%; height: 100%; display: block; }
+        <?php
+        // Nama 16 px; jarak baris 18 px kalau dua baris supaya tetap terbaca sebagai satu nama
+        $baris   = $card['nama_baris'] ?? [$card['nama']];
+        $namaLh  = count($baris) > 1 ? 18 : 19.2;
+        // Blok nama (label 10,5 + jarak 3 + baris) berakhir 10 px di atas nomor (171), sama seperti halaman cetak
+        $namaTop = 171 - 10 - (10.5 + 3 + count($baris) * $namaLh);
+        // Foto persegi, berhenti 10 px di atas nama, jadi lebih kecil kalau nama dua baris
+        $fotoH   = $namaTop - 10 - 60;
+        // Foto diperbesar sampai menutup kotak: lebih lebar dipotong di tengah, lebih tinggi dipotong dari bawah (sama dengan KartuPng)
+        [$fotoW, $fotoT] = [$fotoH, $fotoH];
+        if ($fotoUkuran && $fotoUkuran[0] > 0 && $fotoUkuran[1] > 0) {
+            $skala  = max($fotoH / $fotoUkuran[0], $fotoH / $fotoUkuran[1]);
+            $fotoW  = $fotoUkuran[0] * $skala;
+            $fotoT  = $fotoUkuran[1] * $skala;
+        }
+        ?>
+        /* Foto anggota persegi, rata kiri dengan logo, nama, dan nomor */
+        .front .foto-box { left: <?= $pt(18) ?>; top: <?= $pt(60) ?>; width: <?= $pt($fotoH) ?>; height: <?= $pt($fotoH) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
+        .front .foto-box img { width: <?= $pt($fotoW) ?>; height: <?= $pt($fotoT) ?>; margin-left: <?= $pt(($fotoH - $fotoW) / 2) ?>; display: block; }
 
-        .front .nama { left: <?= $pt(18) ?>; top: <?= $pt(134) ?>; width: <?= $pt(145) ?>; }
+        .front .nama { left: <?= $pt(18) ?>; top: <?= $pt($namaTop) ?>; width: <?= $pt(145) ?>; }
         .front .nama .label { font-size: <?= $pt(7) ?>; line-height: <?= $lh(10.5) ?>; letter-spacing: <?= $pt(1.12) ?>; color: #8A8B8A; }
-        .front .nama .value { padding-top: <?= $pt(3) ?>; font-size: <?= $pt(11) ?>; line-height: <?= $lh(13.2) ?>; white-space: nowrap; overflow: hidden; color: #0D1C2E; }
+        .front .nama .value { padding-top: <?= $pt(3) ?>; font-size: <?= $pt(16) ?>; line-height: <?= $lh($namaLh) ?>; letter-spacing: <?= $pt(-0.16) ?>; white-space: nowrap; overflow: hidden; color: #0D1C2E; }
 
         .front .nomor { left: <?= $pt(19) ?>; top: <?= $pt(171) ?>; }
         .front .nomor .label { font-size: <?= $pt(7) ?>; line-height: <?= $lh(7) ?>; letter-spacing: <?= $pt(1.26) ?>; color: #7F8286; }
@@ -125,7 +145,7 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
 
         <div class="abs nama">
             <div class="label">Nama</div>
-            <div class="value"><?= esc($card['nama']) ?></div>
+            <div class="value"><?= implode('<br>', array_map('esc', $baris)) ?></div>
         </div>
 
         <div class="abs nomor">

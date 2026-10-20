@@ -147,6 +147,7 @@
                                 <dt id="dt_approval_status_non_asn" style="display:none;">Status Non-ASN</dt><dd id="dd_approval_status_non_asn" data-field="StatusNonAsn" style="display:none;"></dd>
                                 <dt data-field="JenisIdentitas"></dt><dd data-field="IdentityNo"></dd>
                                 <dt>Nama lengkap</dt><dd data-field="Fullname"></dd>
+                                <dt>Jenis kelamin</dt><dd data-field="JenisKelamin"></dd>
                                 <dt>Unit kerja</dt><dd data-field="UnitKerja"></dd>
                                 <dt>Alamat</dt><dd data-field="AddressNow"></dd>
                                 <dt>Email</dt><dd data-field="Email"></dd>
@@ -234,6 +235,7 @@
                             <dl class="approval-data">
                                 <dt>No. Anggota</dt><dd id="approval_member_no" class="text-primary font-weight-bold"></dd>
                                 <dt>Nama lengkap</dt><dd id="approval_member_fullname"></dd>
+                                <dt>Jenis kelamin</dt><dd id="approval_member_jenis_kelamin"></dd>
                                 <dt>Status saat ini</dt><dd id="approval_member_status_badge"></dd>
                                 <dt>Jenis anggota</dt><dd id="approval_member_jenis"></dd>
                                 <dt id="dt_member_status_non_asn" style="display:none;">Status Non-ASN</dt><dd id="approval_member_status_non_asn" style="display:none;"></dd>
@@ -542,6 +544,7 @@
         // Isi data detail
         $('#approval_member_no').text(data.MemberNo || '-');
         $('#approval_member_fullname').text(data.Fullname || '-');
+        $('#approval_member_jenis_kelamin').text(data.JenisKelamin || '-');
         $('#approval_member_status_badge').html(getStatusBadgeHtml(data.StatusAnggota));
         $('#approval_member_jenis').text(data.JenisAnggota || '-');
         if (data.StatusNonAsn) {

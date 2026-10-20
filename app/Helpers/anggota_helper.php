@@ -632,6 +632,75 @@ if (!function_exists('tanggalKartu')) {
     }
 }
 
+if (!function_exists('namaKartu')) {
+    /**
+     * Nama untuk kartu: kata yang diketik huruf kecil semua atau kapital semua jadi huruf besar di awal.
+     * Kata yang huruf besar-kecilnya sudah campur (McDonald) dianggap sengaja dan dibiarkan.
+     * Data di database tidak diubah.
+     */
+    function namaKartu(string $nama): string {
+        $kata = preg_split('/\s+/u', trim($nama), -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($kata as &$k) {
+            $kecil = mb_strtolower($k);
+            if ($k !== $kecil && $k !== mb_strtoupper($k)) {
+                continue;
+            }
+
+            // Huruf setelah tanda hubung dan titik ikut besar (Siti-Nur, S.Kom); setelah apostrof tidak (Ma'ruf)
+            $k = preg_replace_callback('/(^|[-.])(\p{L})/u', fn ($m) => $m[1] . mb_strtoupper($m[2]), $kecil);
+        }
+
+        return implode(' ', $kata);
+    }
+}
+
+if (!function_exists('namaKartuBaris')) {
+    /**
+     * Baris nama di sisi depan kartu.
+     * Nama dicetak 16 px; yang lebih dari 15 huruf dipecah jadi 2 baris yang panjangnya seimbang (Krisnanda / Muhammad Iqbal).
+     * Kalau tetap tidak muat, kata disingkat jadi inisial mulai dari kata terakhir (Saputra jadi S.);
+     * kata pertama tidak pernah disingkat.
+     * Batas dihitung per huruf: 15 huruf per baris, sekitar 145 px pada 16 px.
+     */
+    function namaKartuBaris(string $nama): array {
+        $kata = preg_split('/\s+/u', trim($nama), -1, PREG_SPLIT_NO_EMPTY);
+        if (count($kata) <= 1) {
+            return $kata;
+        }
+
+        $batas = 15;
+
+        for ($i = count($kata) - 1; ; $i--) {
+            $satu  = implode(' ', $kata);
+            $baris = mb_strlen($satu) <= $batas ? [$satu] : namaKartuPecahSeimbang($kata);
+            $muat  = max(array_map('mb_strlen', $baris)) <= $batas;
+
+            if ($muat || $i < 1) {
+                return $baris;
+            }
+
+            $kata[$i] = mb_substr($kata[$i], 0, 1) . '.';
+        }
+    }
+
+    /** Titik potong dua baris yang membuat baris terpanjang sependek mungkin. */
+    function namaKartuPecahSeimbang(array $kata): array {
+        $terbaik = null;
+
+        for ($k = 1; $k < count($kata); $k++) {
+            $baris = [implode(' ', array_slice($kata, 0, $k)), implode(' ', array_slice($kata, $k))];
+            $panjang = max(mb_strlen($baris[0]), mb_strlen($baris[1]));
+
+            if ($terbaik === null || $panjang < $terbaik[0]) {
+                $terbaik = [$panjang, $baris];
+            }
+        }
+
+        return $terbaik[1];
+    }
+}
+
 if (!function_exists('kartuAnggotaData')) {
     /** Isi kartu anggota, dipakai halaman cetak dan lampiran PDF di email persetujuan. */
     function kartuAnggotaData(object $anggota): array {
@@ -645,8 +714,11 @@ if (!function_exists('kartuAnggotaData')) {
         $fotoPath = $fotoName !== '' && is_file(FCPATH . 'uploads/anggota/' . $fotoName) ? FCPATH . 'uploads/anggota/' . $fotoName : null;
         $fotoUrl  = $fotoPath ? base_url('uploads/anggota/' . $fotoName) : null;
 
+        $nama = namaKartu((string) $anggota->Fullname);
+
         return [
-            'nama'        => $anggota->Fullname,
+            'nama'        => $nama,
+            'nama_baris'  => namaKartuBaris($nama),
             'foto'        => $fotoUrl,
             'foto_path'   => $fotoPath,
             'member_no'   => $memberNo,

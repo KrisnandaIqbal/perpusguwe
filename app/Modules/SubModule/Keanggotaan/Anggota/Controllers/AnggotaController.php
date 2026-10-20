@@ -94,8 +94,8 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->validation->setRules([
             'Fullname' => [
                 'label'  => 'Fullname',
-                'rules'  => 'required',
-                'errors' => ['required' => 'Nama Tidak boleh kosong'],
+                'rules'  => 'required|nama_orang',
+                'errors' => ['required' => 'Nama Tidak boleh kosong', 'nama_orang' => 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung'],
             ],
             'Email' => [
                 'label'  => 'Email',
@@ -168,7 +168,7 @@ class AnggotaController extends \Base\Controllers\BaseController
 
             $newJenisId = $save_data['JenisAnggota_id'] ?? null;
             if ($newJenisId) {
-                $newJa = $this->db->table('jenis_anggota')->where('id', $newJenisId)->get()->getRow();
+                $newJa = $db->table('jenis_anggota')->where('id', $newJenisId)->get()->getRow();
                 if ($newJa && (stripos($newJa->jenisanggota, 'ASN') !== false && stripos($newJa->jenisanggota, 'Non') === false)) {
                     $save_data['status_non_asn'] = null;
                 }
@@ -423,6 +423,7 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->data['jenis_identitas']     = $db->table('master_jenis_identitas')->where('active', 1)->get()->getResult();
         $this->data['jenis_anggota_list']  = $db->table('jenis_anggota')->where('active', 1)->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)->get()->getResult();
         $this->data['status_anggota_list'] = $db->table('status_anggota')->get()->getResult();
+        $this->data['jenis_kelamin_list']  = $db->table('jenis_kelamin')->where('active', 1)->orderBy('ID', 'ASC')->get()->getResult();
 
         $_nipId = '';
         $_nikId = '';
@@ -441,8 +442,13 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->validation->setRules([
             'Fullname' => [
                 'label'  => 'Fullname',
+                'rules'  => 'required|nama_orang',
+                'errors' => ['required' => 'Nama Tidak boleh kosong', 'nama_orang' => 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung'],
+            ],
+            'Sex_id' => [
+                'label'  => 'Jenis Kelamin',
                 'rules'  => 'required',
-                'errors' => ['required' => 'Nama Tidak boleh kosong'],
+                'errors' => ['required' => 'Jenis Kelamin wajib dipilih'],
             ],
             'JenisAnggota_id' => [
                 'label'  => 'Jenis Anggota',
@@ -486,7 +492,7 @@ class AnggotaController extends \Base\Controllers\BaseController
                     'TahunAjaran'        => $this->request->getPost('TahunAjaran') ?? $anggota->TahunAjaran,
                     'IdentityType_id'    => $this->request->getPost('IdentityType_id') ?? $anggota->IdentityType_id,
                     'MaritalStatus_id'   => $this->request->getPost('MaritalStatus_id') ?? $anggota->MaritalStatus_id,
-                    'Sex_id'             => $this->request->getPost('Sex_id') ?? $anggota->Sex_id,
+                    'Sex_id'             => !empty($this->request->getPost('Sex_id')) ? (int) $this->request->getPost('Sex_id') : ($anggota->Sex_id ?? null),
                     'JenjangPendidikan_id' => $this->request->getPost('JenjangPendidikan_id') ?? $anggota->JenjangPendidikan_id,
                     'Job_id'             => $this->request->getPost('Job_id') ?? $anggota->Job_id,
                     'JenisAnggota_id'    => $this->request->getPost('JenisAnggota_id') ?? $anggota->JenisAnggota_id,
@@ -521,7 +527,7 @@ class AnggotaController extends \Base\Controllers\BaseController
 
                 $curJenisId = $update_data['JenisAnggota_id'] ?? ($anggota->JenisAnggota_id ?? null);
                 if ($curJenisId) {
-                    $curJa = $this->db->table('jenis_anggota')->where('id', $curJenisId)->get()->getRow();
+                    $curJa = $db->table('jenis_anggota')->where('id', $curJenisId)->get()->getRow();
                     if ($curJa && (stripos($curJa->jenisanggota, 'ASN') !== false && stripos($curJa->jenisanggota, 'Non') === false)) {
                         $update_data['status_non_asn'] = null;
                     }
@@ -590,88 +596,67 @@ class AnggotaController extends \Base\Controllers\BaseController
                     $cleanMemberNo = 'member_' . $ID;
                 }
 
-                $is_camera = $this->request->getPost('is_camera');
-                if ($is_camera) {
-                    $base64_string = $this->request->getPost('camera_image');
-                    if (!empty($base64_string)) {
-                        $finalFileName = $cleanMemberNo . '.jpg';
-                        if (!file_exists($this->modulePath)) {
-                            mkdir($this->modulePath, 0755, true);
-                        }
-                        if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
-                            @unlink($this->modulePath . $anggota->PhotoUrl);
-                        }
-                        $destPath = $this->modulePath . $finalFileName;
-                        if (file_exists($destPath)) {
-                            @unlink($destPath);
-                        }
-                        base64_to_jpeg($base64_string, $destPath);
-                        @touch($destPath);
-                        $update_data['PhotoUrl'] = $finalFileName;
+                // Cek jika ada upload langsung via file_image
+                $directFile = $this->request->getFile('file_image');
+                if ($directFile && $directFile->isValid() && !$directFile->hasMoved()) {
+                    $ext = strtolower($directFile->guessExtension() ?: 'jpg');
+                    $finalFileName = $cleanMemberNo . '.' . $ext;
+                    if (!file_exists($this->modulePath)) {
+                        mkdir($this->modulePath, 0755, true);
                     }
+                    if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
+                        @unlink($this->modulePath . $anggota->PhotoUrl);
+                    }
+                    $destPath = $this->modulePath . $finalFileName;
+                    if (file_exists($destPath)) {
+                        @unlink($destPath);
+                    }
+                    $directFile->move($this->modulePath, $finalFileName, true);
+                    @touch($destPath);
+                    $update_data['PhotoUrl'] = $finalFileName;
                 } else {
-                    // Cek jika ada upload langsung via file_image
-                    $directFile = $this->request->getFile('file_image');
-                    if ($directFile && $directFile->isValid() && !$directFile->hasMoved()) {
-                        $ext = strtolower($directFile->guessExtension() ?: 'jpg');
-                        $finalFileName = $cleanMemberNo . '.' . $ext;
-                        if (!file_exists($this->modulePath)) {
-                            mkdir($this->modulePath, 0755, true);
-                        }
-                        if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
-                            @unlink($this->modulePath . $anggota->PhotoUrl);
-                        }
-                        $destPath = $this->modulePath . $finalFileName;
-                        if (file_exists($destPath)) {
-                            @unlink($destPath);
-                        }
-                        $directFile->move($this->modulePath, $finalFileName, true);
-                        @touch($destPath);
-                        $update_data['PhotoUrl'] = $finalFileName;
-                    } else {
-                        // Dari Dropzone (file_image[uuid] = filename)
-                        $files = (array) $this->request->getPost('file_image');
-                        if (!empty($files)) {
-                            // Ambil yang paling baru
-                            $files = array_reverse($files, true);
-                            foreach ($files as $uuid => $name) {
-                                if (empty($name)) continue;
-                                $name = basename($name);
-                                $sourcePath = '';
-                                if (file_exists($this->uploadPath . $name)) {
-                                    $sourcePath = $this->uploadPath . $name;
-                                } elseif (file_exists($this->modulePath . $name) && $name !== $cleanMemberNo . '.' . strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
-                                    $sourcePath = $this->modulePath . $name;
+                    // Dari Dropzone (file_image[uuid] = filename)
+                    $files = (array) $this->request->getPost('file_image');
+                    if (!empty($files)) {
+                        // Ambil yang paling baru
+                        $files = array_reverse($files, true);
+                        foreach ($files as $uuid => $name) {
+                            if (empty($name)) continue;
+                            $name = basename($name);
+                            $sourcePath = '';
+                            if (file_exists($this->uploadPath . $name)) {
+                                $sourcePath = $this->uploadPath . $name;
+                            } elseif (file_exists($this->modulePath . $name) && $name !== $cleanMemberNo . '.' . strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
+                                $sourcePath = $this->modulePath . $name;
+                            }
+
+                            if ($sourcePath) {
+                                $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION) ?: 'jpg');
+                                $finalFileName = $cleanMemberNo . '.' . $ext;
+
+                                if (!file_exists($this->modulePath)) {
+                                    mkdir($this->modulePath, 0755, true);
                                 }
 
-                                if ($sourcePath) {
-                                    $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION) ?: 'jpg');
-                                    $finalFileName = $cleanMemberNo . '.' . $ext;
-
-                                    if (!file_exists($this->modulePath)) {
-                                        mkdir($this->modulePath, 0755, true);
-                                    }
-
-                                    // Hapus foto lama jika berbeda nama/ekstensi
-                                    if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
-                                        @unlink($this->modulePath . $anggota->PhotoUrl);
-                                    }
-
-                                    $destPath = $this->modulePath . $finalFileName;
-                                    if (realpath($sourcePath) !== realpath($destPath)) {
-                                        if (file_exists($destPath)) {
-                                            @unlink($destPath);
-                                        }
-                                        if (!@rename($sourcePath, $destPath)) {
-                                            @copy($sourcePath, $destPath);
-                                            @unlink($sourcePath);
-                                        }
-                                    }
-                                    @touch($destPath);
-
-                                    $update_data['PhotoUrl'] = $finalFileName;
-                                    break;
+                                // Hapus foto lama jika berbeda nama/ekstensi
+                                if (!empty($anggota->PhotoUrl) && $anggota->PhotoUrl !== $finalFileName && file_exists($this->modulePath . $anggota->PhotoUrl)) {
+                                    @unlink($this->modulePath . $anggota->PhotoUrl);
                                 }
+
+                                $destPath = $this->modulePath . $finalFileName;
+                                if (realpath($sourcePath) !== realpath($destPath)) {
+                                    if (file_exists($destPath)) {
+                                        @unlink($destPath);
+                                    }
+                                    if (!@rename($sourcePath, $destPath)) {
+                                        @copy($sourcePath, $destPath);
+                                        @unlink($sourcePath);
+                                    }
+                                }
+                                @touch($destPath);
+
+                                $update_data['PhotoUrl'] = $finalFileName;
+                                break;
                             }
                         }
                     }

@@ -328,30 +328,6 @@ $jenis_anggota = get_ref_single('jenis_anggota', 'id=' . $member->JenisAnggota_i
 	.table-bordered td {
 		background-color: #ffffff;
 	}
-
-	/* ========================================
-   CAMERA SECTION
-   ======================================== */
-
-	.is_camera,
-	.is_upload {
-		transition: all 0.3s ease;
-	}
-
-	#video,
-	#photo {
-		border-radius: 0.25rem;
-		box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-	}
-
-	#startbutton {
-		transition: all 0.2s ease;
-	}
-
-	#startbutton:hover {
-		background-color: rgba(0, 180, 0, 0.6);
-		transform: scale(1.05);
-	}
 </style>
 <?= $this->endSection('style'); ?>
 
@@ -762,6 +738,14 @@ $jenis_anggota = get_ref_single('jenis_anggota', 'id=' . $member->JenisAnggota_i
 					}
 				});
 
+				// Validasi Radio Jenis Kelamin jika ada di form
+				if ($('input[name="Sex_id"]').length > 0 && !$('input[name="Sex_id"]:checked').val()) {
+					errors.push('Jenis Kelamin');
+					if (!firstErrorField) {
+						firstErrorField = $('#adminSexCards');
+					}
+				}
+
 				if (errors.length > 0) {
 					// Reset flag
 					isValidating = false;
@@ -785,6 +769,8 @@ $jenis_anggota = get_ref_single('jenis_anggota', 'id=' . $member->JenisAnggota_i
 							setTimeout(() => {
 								if (firstErrorField.hasClass('select2-hidden-accessible')) {
 									firstErrorField.select2('open');
+								} else if (firstErrorField.is('div')) {
+									firstErrorField.find('input[type="radio"]').first().focus();
 								} else {
 									firstErrorField.focus();
 								}

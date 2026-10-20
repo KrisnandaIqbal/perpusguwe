@@ -45,6 +45,11 @@ class Registrasi extends BaseController
         $subUnitModel = new \App\Models\SubUnitModel();
         $data['sub_units_grouped'] = $subUnitModel->getAllActiveGrouped();
 
+        $data['jenis_kelamin'] = $this->db->table('jenis_kelamin')
+                                           ->where('active', 1)
+                                           ->orderBy('ID', 'ASC')
+                                           ->get()->getResult();
+
         return view('Registrasi\Views\index', $data);
     }
 
@@ -55,6 +60,56 @@ class Registrasi extends BaseController
         return $this->response->setJSON($list);
     }
 
+    public function check_duplicate()
+    {
+        $field = (string) $this->request->getPost('field');
+        $value = trim((string) $this->request->getPost('value'));
+
+        if (!in_array($field, ['Phone', 'Email', 'IdentityNo'], true) || empty($value)) {
+            return $this->respond(['registered' => false]);
+        }
+
+        helper('anggota');
+        $perbaikanId = statusAnggotaId('Perlu Perbaikan');
+
+        $builder = $this->db->table('members')
+            ->select('ID, IdentityNo, Email, Phone, NoHp, MemberNo, StatusAnggota_id');
+
+        if ($field === 'Phone') {
+            $normalized = IdentityValidator::normalizePhone($value);
+            $builder->groupStart()
+                ->where('Phone', $normalized)
+                ->orWhere('NoHp', $normalized)
+            ->groupEnd();
+        } elseif ($field === 'Email') {
+            $builder->where('Email', $value);
+        } elseif ($field === 'IdentityNo') {
+            $builder->where('IdentityNo', $value);
+        }
+
+        $rows = $builder->get()->getResult();
+
+        foreach ($rows as $row) {
+            $bolehUlang = $perbaikanId
+                && (int) $row->StatusAnggota_id === $perbaikanId
+                && strpos((string) $row->MemberNo, 'PENDING-') === 0;
+
+            if (!$bolehUlang) {
+                $messages = [
+                    'Phone'      => 'Nomor WhatsApp ini sudah terdaftar.',
+                    'Email'      => 'Email sudah terdaftar sebelumnya.',
+                    'IdentityNo' => 'Nomor Identitas sudah terdaftar sebelumnya.',
+                ];
+                return $this->respond([
+                    'registered' => true,
+                    'message'    => $messages[$field],
+                ]);
+            }
+        }
+
+        return $this->respond(['registered' => false]);
+    }
+
     public function submit()
     {
         if (strtolower($this->request->getMethod()) !== 'post') {
@@ -63,6 +118,7 @@ class Registrasi extends BaseController
 
         $jenisAnggotaId = $this->request->getPost('JenisAnggota_id');
         $fullname = $this->request->getPost('Fullname');
+        $sexId = $this->request->getPost('Sex_id');
         $identityTypeId = $this->request->getPost('IdentityType_id');
         $identityNo = $this->request->getPost('IdentityNo');
         $unitKerjaId = $this->request->getPost('UnitKerja_id');
@@ -76,12 +132,22 @@ class Registrasi extends BaseController
         // Validation Rules
         $rules = [
             'JenisAnggota_id' => 'required',
-            'Fullname' => 'required|min_length[3]',
+            'Fullname' => 'required|min_length[3]|nama_orang',
+            'Sex_id' => 'required',
             'UnitKerja_id' => 'required',
             'AddressNow' => 'required',
             'Email' => 'required|valid_email',
             'Phone' => 'required',
             'Persetujuan' => 'required',
+        ];
+
+        $messages = [
+            'Fullname' => [
+                'nama_orang' => 'Nama hanya boleh berisi huruf A-Z, spasi, titik, koma, apostrof, dan tanda hubung.'
+            ],
+            'Sex_id' => [
+                'required' => 'Jenis kelamin wajib dipilih.'
+            ]
         ];
 
         // Validasi di SERVER: sub-unit harus benar-benar milik unit yang dipilih
@@ -133,11 +199,26 @@ class Registrasi extends BaseController
             $statusNonAsn = null;
         }
 
-        if (!$this->validate($rules)) {
+        if (!$this->validate($rules, $messages)) {
+            $errors = $this->validator->getErrors();
             return $this->respond([
                 'success' => false,
-                'message' => 'Validasi gagal, mohon lengkapi semua field yang wajib.',
-                'errors' => $this->validator->getErrors()
+                // Nama berisi simbol bukan soal field kosong, jadi pesannya disebut langsung
+                'message' => $errors['Fullname'] ?? 'Validasi gagal, mohon lengkapi semua field yang wajib.',
+                'errors' => $errors
+            ]);
+        }
+
+        // Validasi Jenis Kelamin ke tabel master (active = 1)
+        $validSex = $this->db->table('jenis_kelamin')
+            ->where('ID', (int) $sexId)
+            ->where('active', 1)
+            ->get()->getRow();
+        if (!$validSex) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Pilihan jenis kelamin tidak valid.',
+                'errors' => ['Sex_id' => 'Pilihan jenis kelamin tidak valid.']
             ]);
         }
 
@@ -174,8 +255,13 @@ class Registrasi extends BaseController
         $ulang = null;
 
         $sama = $this->db->table('members')
-            ->select('ID, IdentityNo, Email, MemberNo, StatusAnggota_id, PhotoUrl')
-            ->groupStart()->where('IdentityNo', $identityNo)->orWhere('Email', $email)->groupEnd()
+            ->select('ID, IdentityNo, Email, Phone, NoHp, MemberNo, StatusAnggota_id, PhotoUrl')
+            ->groupStart()
+                ->where('IdentityNo', $identityNo)
+                ->orWhere('Email', $email)
+                ->orWhere('Phone', $phone)
+                ->orWhere('NoHp', $phone)
+            ->groupEnd()
             ->get()->getResult();
 
         foreach ($sama as $row) {
@@ -184,11 +270,21 @@ class Registrasi extends BaseController
                 && strpos((string) $row->MemberNo, 'PENDING-') === 0;
 
             if (!$bolehUlang) {
+                if ($row->IdentityNo === $identityNo) {
+                    $field = 'IdentityNo';
+                    $msg   = 'Nomor Identitas sudah terdaftar sebelumnya.';
+                } elseif ($row->Email === $email) {
+                    $field = 'Email';
+                    $msg   = 'Email sudah terdaftar sebelumnya.';
+                } else {
+                    $field = 'Phone';
+                    $msg   = 'Nomor WhatsApp ini sudah terdaftar.';
+                }
+
                 return $this->respond([
                     'success' => false,
-                    'message' => $row->IdentityNo === $identityNo
-                        ? 'Nomor Identitas sudah terdaftar sebelumnya.'
-                        : 'Email sudah terdaftar sebelumnya.'
+                    'message' => $msg,
+                    'errors'  => [$field => $msg]
                 ]);
             }
 
@@ -226,6 +322,7 @@ class Registrasi extends BaseController
         $dataInsert = [
             'JenisAnggota_id' => $jenisAnggotaId,
             'Fullname' => $fullname,
+            'Sex_id' => (int) $sexId,
             'IdentityType_id' => $identityTypeId,
             'IdentityNo' => $identityNo,
             'UnitKerja_id' => $unitKerjaId,
