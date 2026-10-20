@@ -98,11 +98,12 @@ class Pengembalian extends \Base\Controllers\BaseController
             ->get()->getResult();
 
         $inputReturnDate = $this->request->getPost('returnDate');
-        $today = $inputReturnDate ? new \DateTime($inputReturnDate) : new \DateTime();
+        $actualReturnDate = $inputReturnDate ? new \DateTime($inputReturnDate) : new \DateTime();
+        $today = $actualReturnDate;
         $formattedItems = [];
 
         foreach ($allItems as $item) {
-            $daysOverdue = hitungHariKerjaTerlambat($item->DueDate, $today);
+            $daysOverdue = hitungHariKerjaTerlambat($item->DueDate, $actualReturnDate);
             $isOverdue   = ($daysOverdue > 0);
             
             $formattedItems[] = [
@@ -183,6 +184,7 @@ class Pengembalian extends \Base\Controllers\BaseController
         }
 
         $returnDate       = $inputReturnDate ? date('Y-m-d', strtotime($inputReturnDate)) . ' ' . date('H:i:s') : date('Y-m-d H:i:s');
+        $actualReturnDate = new \DateTime($returnDate);
         $returnedCount    = 0;
         $violationCount   = 0;
         $totalDenda       = 0;
