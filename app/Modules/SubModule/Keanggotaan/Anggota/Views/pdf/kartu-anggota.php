@@ -124,8 +124,8 @@
         /* Tinggi 36 px membuat simbolnya selebar 24 px, sama dengan logo sisi belakang */
         .front .logo { width: auto; height: 36px; }
 
-        /* Foto persegi mengisi sisa tinggi kolom */
-        .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 1; border-radius: 3px; object-fit: cover; object-position: center top; }
+        /* Foto 2:3 seperti pas foto di pendaftaran, mengisi sisa tinggi kolom */
+        .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }
         /* Tanpa foto: nama dan nomor tetap di bawah, ruang di bawah logo dibiarkan kosong */
         .front .tanpa-foto .nama { margin-top: auto; }
 

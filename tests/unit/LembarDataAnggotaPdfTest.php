@@ -54,12 +54,14 @@ final class LembarDataAnggotaPdfTest extends CIUnitTestCase
             '(NIP)',
             'Kementerian Ketenagakerjaan RI',
             'Halaman 1 dari',
+            '3 &times; 4',
         ] as $dihapus) {
             $this->assertStringNotContainsString($dihapus, $html);
         }
 
         $this->assertStringContainsString('Nomor Induk Pegawai', $html);
         $this->assertStringContainsString('Dicetak dari Sistem Perpustakaan Kemnaker RI pada:', $html);
+        $this->assertStringContainsString('Pasfoto<br>2 &times; 3', $html);
     }
 
     public function testNikTanpaKeteranganDalamKurung(): void

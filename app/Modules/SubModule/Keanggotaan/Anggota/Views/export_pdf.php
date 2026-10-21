@@ -120,9 +120,10 @@
             border-left: 1px solid #e2e8f0;
             background-color: #fbfbfa;
         }
+        /* Pasfoto 2:3, sama dengan foto yang dipotong saat pendaftaran */
         .photo-box {
-            width: 95px;
-            height: 125px;
+            width: 84px;
+            height: 126px;
             border: 1px solid #cbd5e0;
             background-color: #edf2f7;
             text-align: center;
@@ -132,8 +133,8 @@
             margin: 0 auto;
         }
         .photo-img {
-            width: 95px;
-            height: 125px;
+            width: 84px;
+            height: 126px;
             object-fit: cover;
             border: 1px solid #cbd5e0;
         }
@@ -288,7 +289,7 @@ foreach ($membersData as $item):
                             <table style="width: 100%; height: 100%;">
                                 <tr>
                                     <td style="text-align: center; vertical-align: middle;">
-                                        Pasfoto<br>3 &times; 4
+                                        Pasfoto<br>2 &times; 3
                                     </td>
                                 </tr>
                             </table>

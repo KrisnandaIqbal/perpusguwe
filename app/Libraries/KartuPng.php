@@ -47,10 +47,10 @@ class KartuPng
         $namaTop  = 171 - 10 - (10.5 + 3 + count($baris) * $namaLh);
 
         if (!empty($card['foto_path']) && is_file($card['foto_path'])) {
-            // Foto persegi, berhenti 10 px di atas nama, jadi lebih kecil kalau nama dua baris
+            // Foto 2:3 seperti pas foto di pendaftaran, berhenti 10 px di atas nama, jadi lebih kecil kalau nama dua baris
             $fotoH = $namaTop - 10 - 60;
             // Rata kiri dengan logo, nama, dan nomor
-            $this->foto($img, $card['foto_path'], 18, 60, $fotoH, $fotoH, 3);
+            $this->foto($img, $card['foto_path'], 18, 60, $fotoH * 2 / 3, $fotoH, 3);
         }
 
         $this->teks($img, 'NAMA', 'Bold', 7, '#8A8B8A', 18, $namaTop, 10.5, 1.12);
