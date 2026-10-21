@@ -4,6 +4,7 @@ namespace BukuTamu\Controllers\Api;
 
 use CodeIgniter\API\ResponseTrait;
 use App\Libraries\DataTable;
+use GuestBook\Libraries\IsianTamu;
 //use Hermawan\DataTables\DataTable;
 
 class BukuTamu extends \Base\Controllers\BaseResourceController
@@ -31,6 +32,7 @@ class BukuTamu extends \Base\Controllers\BaseResourceController
 		}
 
 		helper('bukutamu');
+		helper('anggota');
 	}
 
 	public function datatable()
@@ -42,20 +44,25 @@ class BukuTamu extends \Base\Controllers\BaseResourceController
 			->select('a.id, a.id as action')
 			->select('a.CreateDate as VisitDate')
 			->select('a.Nama as Member_name, a.NoAnggota as Member_no')
+			->select('a.HP as Visitor_phone, a.UnitLainnya as Visitor_unit, mu.nama_unit as Unit_name, ms.nama_subunit as SubUnit_name')
 			->select('a.Location_id, locations.Name as Location_name')
 			->select('location_library.Name as LocationLibrary_name')
 			->join('locations', 'locations.ID = a.Location_id', 'left')
 			->join('location_library', 'location_library.ID = locations.LocationLibrary_id', 'left')
+			->join('master_unit mu', 'mu.id = a.UnitKerja_id', 'left')
+			->join('master_subunit ms', 'ms.id = a.SubUnitKerja_id', 'left')
 			->where('a.NoAnggota IS NOT NULL');
 
 		$dataTable = DataTable::of($builder)
 			->addNumbering('no')
+			->edit('Visitor_unit', fn ($row) => esc(IsianTamu::teksUnit($row->Unit_name, $row->SubUnit_name, $row->Visitor_unit)))
+			->edit('Visitor_phone', fn ($row) => esc($row->Visitor_phone ?: '-'))
 			->edit('VisitDate', function ($row) {
 				$html   = '<b>' . $row->VisitDate . '</b>';
 				return $html;
 			})
 			->edit('Member_name', function ($row) {
-				$html   = '<b>' . $row->Member_name . '</b>';
+				$html   = '<b>' . esc($row->Member_name) . '</b>';
 				return $html;
 			})
 			->edit('Member_no', function ($row) {
@@ -87,6 +94,7 @@ public function non_anggota_datatable()
         ->select('a.id, a.id as action')
         ->select('a.CreateDate as VisitDate')
         ->select('a.Nama as Visitor_name')
+        ->select('a.HP as Visitor_phone, a.UnitLainnya as Visitor_unit, mu.nama_unit as Unit_name, ms.nama_subunit as SubUnit_name')
         ->select('a.Profesi_id, a.PendidikanTerakhir_id, a.Jeniskelamin_id')
         ->select('l.Name as Location_name')
         ->select('ll.Name as LocationLibrary_name')
@@ -98,16 +106,20 @@ public function non_anggota_datatable()
         ->join('master_pekerjaan mp', 'mp.ID = a.Profesi_id', 'left')
         ->join('master_pendidikan mpd', 'mpd.ID = a.PendidikanTerakhir_id', 'left')
         ->join('jenis_kelamin jk', 'jk.ID = a.Jeniskelamin_id', 'left')
+        ->join('master_unit mu', 'mu.id = a.UnitKerja_id', 'left')
+        ->join('master_subunit ms', 'ms.id = a.SubUnitKerja_id', 'left')
         ->where('a.NoAnggota IS NULL');
-    
+
     $dataTable = DataTable::of($builder)
         ->addNumbering('no')
+        ->edit('Visitor_unit', fn ($row) => esc(IsianTamu::teksUnit($row->Unit_name, $row->SubUnit_name, $row->Visitor_unit)))
+        ->edit('Visitor_phone', fn ($row) => esc($row->Visitor_phone ?: '-'))
         ->edit('VisitDate', function ($row) {
             $html   = '<b>' . $row->VisitDate . '</b>';
             return $html;
         })
         ->edit('Visitor_name', function ($row) {
-            $html   = '<b>' . $row->Visitor_name . '</b>';
+            $html   = '<b>' . esc($row->Visitor_name) . '</b>';
             return $html;
         })
         ->edit('action', function ($row) {
@@ -136,7 +148,7 @@ public function non_anggota_datatable()
 				return $html;
 			})
 			->edit('Group_chief', function ($row) {
-				$html   = '<b>' . $row->Group_chief . '</b>';
+				$html   = '<b>' . esc($row->Group_chief) . '</b>';
 				return $html;
 			})
 			->edit('action', function ($row) {

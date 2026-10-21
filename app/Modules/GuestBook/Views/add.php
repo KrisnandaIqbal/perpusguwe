@@ -263,6 +263,34 @@
 		text-align: center;
 	}
 
+	.tamu-judul {
+		color: var(--primary);
+		font-size: 1.5rem;
+		font-weight: 600;
+		margin-bottom: 8px;
+	}
+
+	.tamu-sub {
+		color: #5a6268;
+		margin-bottom: 25px;
+	}
+
+	.tamu-form {
+		max-width: 640px;
+		margin: 0 auto;
+	}
+
+	.tamu-hitung {
+		margin: 15px 0 0;
+		color: #5a6268;
+	}
+
+	.alert-error-custom {
+		background: #f8d7da;
+		color: #721c24;
+		text-align: left;
+	}
+
 	.save-btn {
 		background: linear-gradient(135deg, var(--primary), var(--primary-dark));
 		color: white;
@@ -385,6 +413,13 @@
 		</div>
 
 		<?php if (empty($member)) : ?>
+			<?php if (!empty($message)) : ?>
+				<div class="alert-custom alert-error-custom" role="alert">
+					<i class="fas fa-exclamation-circle"></i>
+					<div><?= esc(strip_tags($message)) ?></div>
+				</div>
+			<?php endif; ?>
+
 			<!-- Search Section -->
 			<div class="search-section">
 				<h2 class="search-title">Cari Anggota Perpustakaan</h2>
@@ -422,38 +457,54 @@
 			
 			<!-- Action Section -->
 			<div class="action-section">
-				<form id="frm_store_anggota" method="post" action="<?php echo base_url('buku-tamu/store_anggota'); ?>">
+				<h2 class="tamu-judul">Data Kunjungan</h2>
+				<p class="tamu-sub">Periksa nama, unit, dan nomor WhatsApp Anda. Ubah kalau ada yang tidak sesuai.</p>
+
+				<?php if (!empty($errors)) : ?>
+					<div class="alert-custom alert-error-custom" role="alert">
+						<i class="fas fa-exclamation-circle"></i>
+						<div>Periksa lagi isian yang ditandai merah.</div>
+					</div>
+				<?php endif; ?>
+
+				<form id="frm_store_anggota" class="tamu-form" method="post" action="<?php echo base_url('buku-tamu/store_anggota'); ?>">
 					<?= csrf_field() ?>
-					<input type="hidden" name="member_no" value="<?= $member->MemberNo ?>">
+					<input type="hidden" name="member_no" value="<?= esc($member->MemberNo, 'attr') ?>">
+
+					<?= view('GuestBook\Views\isian_tamu', [
+						'isian'             => $isian,
+						'errors'            => $errors,
+						'unit_kerja'        => $unit_kerja,
+						'sub_units_grouped' => $sub_units_grouped,
+					]) ?>
 
 					<?php if ($SettingBukuTamu == 1) : ?>
-
-						<?php // PERBAIKAN: Menambahkan tanda kutip pembuka pada class 
-						?>
-						<div class="form-group">
-							<div class="col-md-12" style="padding-left: 0; text-align: center; !important;">
-								<div class="position-relative form-group">
-									<label for="TujuanKunjungan_id">Tujuan Kunjungan</label>
-									<select class="form-control" name="TujuanKunjungan_id" id="TujuanKunjungan_id" style="width: 50%; text-align: center; margin-top: 10px; margin-left: 270px; !important;">
-										<option value="" disabled selected> ----- Pilih ----- </option>
-										  <?php foreach ($tujuan_kunjungan as $row) : ?>
-											<?php // PERBAIKAN: Menyamakan ID dengan id 
-											?>
-											<option value="<?= $row->ID ?>" <?= set_select('TujuanKunjungan_id', $row->ID) ?>><?= $row->TujuanKunjungan ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
+						<div class="isian-tamu">
+							<div class="form-group">
+								<label for="TujuanKunjungan_id">Tujuan Kunjungan</label>
+								<select class="form-control" name="TujuanKunjungan_id" id="TujuanKunjungan_id">
+									<option value="" disabled selected>Pilih tujuan kunjungan</option>
+									<?php foreach ($tujuan_kunjungan as $row) : ?>
+										<option value="<?= $row->ID ?>" <?= set_select('TujuanKunjungan_id', $row->ID) ?>><?= esc($row->TujuanKunjungan) ?></option>
+									<?php endforeach; ?>
+								</select>
 							</div>
-						</div><br>
+						</div>
 					<?php endif; ?>
 
-			
+					<button type="submit" class="save-btn" id="simpanKunjungan">
+						<i class="fas fa-save"></i>
+						Simpan Kunjungan
+					</button>
 				</form>
-				
-				</p> 
-				<p style="text-align:center; color: #e74c3c; font-size: 1rem;">
-					Otomatis tersimpan dalam <strong><span id="countdown">10</span></strong> detik...
-				</p>
+
+				<?php if (!empty($isian_lengkap)) : ?>
+					<p class="tamu-hitung" id="pesanHitung" aria-live="polite">
+						Tersimpan otomatis dalam <strong><span id="countdown">10</span></strong> detik. Sentuh salah satu isian untuk mengubahnya.
+					</p>
+				<?php else : ?>
+					<p class="tamu-hitung">Lengkapi isian yang masih kosong, lalu tekan Simpan Kunjungan.</p>
+				<?php endif; ?>
 			</div>
 
 
@@ -524,37 +575,47 @@
 
 <?php if (!empty($member)) : ?>
 <script>
+    const storeForm = document.getElementById('frm_store_anggota');
+    const selectEl  = document.getElementById('TujuanKunjungan_id');
+    let timer = null;
+
+    <?php if (!empty($isian_lengkap)) : ?>
     let countdown = 10;
-    let timer;
-
     const countdownEl = document.getElementById('countdown');
-    const storeForm   = document.getElementById('frm_store_anggota');
 
-    function startTimer() {
-        timer = setInterval(() => {
-            countdown--;
-            if (countdownEl) countdownEl.textContent = countdown;
+    timer = setInterval(() => {
+        countdown--;
+        if (countdownEl) countdownEl.textContent = countdown;
 
-            if (countdown <= 0) {
-                clearInterval(timer);
-                const select = document.getElementById('TujuanKunjungan_id');
-                if (select && !select.value) {
-                    select.value = '<?= $tujuan_kunjungan[0]->ID ?? '' ?>';
-                }
-                if (storeForm) storeForm.submit();
+        if (countdown <= 0) {
+            clearInterval(timer);
+            if (selectEl && !selectEl.value) {
+                selectEl.value = '<?= $tujuan_kunjungan[0]->ID ?? '' ?>';
             }
-        }, 1000);
-    }
+            storeForm.submit();
+        }
+    }, 1000);
 
-    const selectEl = document.getElementById('TujuanKunjungan_id');
+    // Anggota yang mulai mengubah isian butuh waktu: hitung mundur berhenti, simpan lewat tombol
+    storeForm.querySelectorAll('input:not([type=hidden]), select').forEach((el) => {
+        if (el === selectEl) return;
+        el.addEventListener('focus', () => {
+            if (timer === null) return;
+            clearInterval(timer);
+            timer = null;
+            document.getElementById('pesanHitung').textContent = 'Simpan otomatis dihentikan. Tekan Simpan Kunjungan setelah selesai.';
+        });
+    });
+    <?php endif; ?>
+
+    // Memilih tujuan langsung menyimpan, selama isian lain belum diubah
     if (selectEl) {
         selectEl.addEventListener('change', function() {
+            if (timer === null) return;
             clearInterval(timer);
-            if (storeForm) storeForm.submit();
+            storeForm.submit();
         });
     }
-
-    startTimer();
 </script>
 <?php endif; ?>
 

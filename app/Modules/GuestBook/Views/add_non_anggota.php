@@ -409,90 +409,13 @@
 			<form id="frm_create" method="post" action="<?= base_url('buku-tamu/non_anggota') ?>">
 				<?= csrf_field() ?>
 				
-				<!-- Nama Pengunjung -->
-				<div class="form-group">
-					<label for="Nama" class="required">Nama Pengunjung</label>
-					<input type="text" 
-						   class="form-control <?= session('errors.Nama') ? 'is-invalid' : '' ?>" 
-						   name="Nama" 
-						   id="Nama" 
-						   placeholder="Masukkan nama lengkap Anda"
-						   value="<?= old('Nama') ?>" 
-						   required>
-					<?php if (session('errors.Nama')) : ?>
-						<div class="invalid-feedback"><?= session('errors.Nama') ?></div>
-					<?php endif; ?>
-				</div>
+				<?= view('GuestBook\Views\isian_tamu', [
+					'isian'             => $isian,
+					'errors'            => $errors,
+					'unit_kerja'        => $unit_kerja,
+					'sub_units_grouped' => $sub_units_grouped,
+				]) ?>
 
-				<!-- Row 1: Pekerjaan, Pendidikan, Jenis Kelamin -->
-				<div class="form-row-3">
-					<div class="form-group">
-						<label for="Profesi_id" class="required">Pekerjaan</label>
-						<select class="form-control <?= session('errors.Profesi_id') ? 'is-invalid' : '' ?>" 
-								name="Profesi_id" 
-								id="Profesi_id" 
-								required>
-							<option value="">-- Pilih Pekerjaan --</option>
-							<?php foreach (get_ref_table('master_pekerjaan', 'id, pekerjaan', null, 'data') as $row) : ?>
-								<option value="<?= $row->id ?>" <?= old('Profesi_id') == $row->id ? 'selected' : '' ?>>
-									<?= $row->pekerjaan ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-						<?php if (session('errors.Profesi_id')) : ?>
-							<div class="invalid-feedback"><?= session('errors.Profesi_id') ?></div>
-						<?php endif; ?>
-					</div>
-
-					<div class="form-group">
-						<label for="PendidikanTerakhir_id" class="required">Pendidikan Terakhir</label>
-						<select class="form-control <?= session('errors.PendidikanTerakhir_id') ? 'is-invalid' : '' ?>" 
-								name="PendidikanTerakhir_id" 
-								id="PendidikanTerakhir_id" 
-								required>
-							<option value="">-- Pilih Pendidikan --</option>
-							<?php foreach (get_ref_table('master_pendidikan', 'id, Nama', null, 'data') as $row) : ?>
-								<option value="<?= $row->id ?>" <?= old('PendidikanTerakhir_id') == $row->id ? 'selected' : '' ?>>
-									<?= $row->Nama ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-						<?php if (session('errors.PendidikanTerakhir_id')) : ?>
-							<div class="invalid-feedback"><?= session('errors.PendidikanTerakhir_id') ?></div>
-						<?php endif; ?>
-					</div>
-
-					<div class="form-group">
-						<label for="JenisKelamin_id" class="required">Jenis Kelamin</label>
-						<select class="form-control <?= session('errors.JenisKelamin_id') ? 'is-invalid' : '' ?>" 
-								name="JenisKelamin_id" 
-								id="JenisKelamin_id" 
-								required>
-							<option value="">-- Pilih Jenis Kelamin --</option>
-							<?php foreach (get_ref_table('jenis_kelamin', 'ID, Name', 'active=1', 'data') as $row) : ?>
-								<option value="<?= $row->ID ?>" <?= old('JenisKelamin_id') == $row->ID ? 'selected' : '' ?>>
-									<?= $row->Name ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-						<?php if (session('errors.JenisKelamin_id')) : ?>
-							<div class="invalid-feedback"><?= session('errors.JenisKelamin_id') ?></div>
-						<?php endif; ?>
-					</div>
-				</div>
-
-				<!-- Alamat -->
-				<div class="form-group">
-					<label for="Alamat">Alamat Sesuai Identitas</label>
-					<textarea id="Alamat" 
-							  name="Alamat" 
-							  class="form-control <?= session('errors.Alamat') ? 'is-invalid' : '' ?>" 
-							  placeholder="Masukkan alamat lengkap sesuai identitas"
-							  rows="3"><?= old('Alamat') ?></textarea>
-					<?php if (session('errors.Alamat')) : ?>
-						<div class="invalid-feedback"><?= session('errors.Alamat') ?></div>
-					<?php endif; ?>
-				</div>
 				<?php if ($SettingBukuTamu == 1) : ?>
 					<div class="form-group">
 							<div class="col-md-6" style="padding-left: 0;">
@@ -616,19 +539,7 @@ document.getElementById('frm_create').addEventListener('submit', function(e) {
 	const saveBtn = document.getElementById('saveBtn');
 	const btnText = saveBtn.querySelector('.btn-text');
 	const btnLoading = saveBtn.querySelector('.btn-loading');
-	
-	// Basic validation
-	const nama = document.getElementById('Nama').value.trim();
-	const profesi = document.getElementById('Profesi_id').value;
-	const pendidikan = document.getElementById('PendidikanTerakhir_id').value;
-	const jenisKelamin = document.getElementById('JenisKelamin_id').value;
-	
-	if (!nama || !profesi || !pendidikan || !jenisKelamin) {
-		e.preventDefault();
-		showCustomNotification('Mohon lengkapi semua field yang wajib diisi (bertanda *)', 'error');
-		return false;
-	}
-	
+
 	// Show loading state
 	saveBtn.disabled = true;
 	btnText.style.display = 'none';
