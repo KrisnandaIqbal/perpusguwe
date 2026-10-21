@@ -35,11 +35,14 @@ class Registrasi extends BaseController
         
         $data['jenis_anggota'] = $this->db->table('jenis_anggota')
                                           ->where('active', 1)
+                                          ->whereIn('jenisanggota', ['ASN', 'Non ASN'])
                                           ->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)
                                           ->get()->getResult();
 
+        // R2: Saring unit induk Kementerian Ketenagakerjaan (ID: 1) khusus form registrasi online
         $data['unit_kerja'] = $this->db->table('master_unit')
                                        ->where('active', 1)
+                                       ->where('id !=', 1)
                                        ->get()->getResult();
 
         $subUnitModel = new \App\Models\SubUnitModel();
@@ -177,13 +180,13 @@ class Registrasi extends BaseController
                 $identityTypeId = $nikType->id;
             }
 
-            // Validasi ketat Status Non-ASN: wajib dan hanya boleh 'staf' atau 'magang'
+            // Validasi ketat Status Non-ASN: hanya boleh 'staf', 'magang_nasional', atau 'magang_biasa' ('magang' ditolak untuk pendaftar baru)
             $statusNonAsn = strtolower(trim((string) $statusNonAsn));
-            if (!in_array($statusNonAsn, ['staf', 'magang'], true)) {
+            if (!in_array($statusNonAsn, ['staf', 'magang_nasional', 'magang_biasa'], true)) {
                 return $this->respond([
                     'success' => false,
-                    'message' => 'Status Non-ASN wajib dipilih (Staf atau Magang).',
-                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf atau Magang.']
+                    'message' => 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).',
+                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf, Magang Nasional, atau Magang Biasa.']
                 ]);
             }
         } else {

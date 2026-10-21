@@ -316,7 +316,7 @@ foreach ($membersData as $item):
             <tr>
                 <td class="data-label">Status Non-ASN</td>
                 <td class="data-separator">:</td>
-                <td class="data-value"><strong><?= htmlspecialchars(ucfirst($m->status_non_asn)) ?></strong></td>
+                <td class="data-value"><strong><?= htmlspecialchars(format_status_non_asn($m->status_non_asn)) ?></strong></td>
             </tr>
             <?php endif; ?>
             <tr>

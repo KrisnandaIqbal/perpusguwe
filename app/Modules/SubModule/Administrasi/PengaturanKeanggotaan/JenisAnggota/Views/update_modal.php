@@ -23,10 +23,32 @@
 						</div>
 						<div class="col-lg-6">
 							<div class="form-group">
-								<label for="MasaBerlakuAnggota">Masa Berlaku</label>
-								<div>
-									<input required type="text" class="form-control" id="frm_update_MasaBerlakuAnggota" name="MasaBerlakuAnggota" placeholder="Masa Berlaku" value="" />
+								<div class="d-flex justify-content-between align-items-center mb-1">
+									<label for="frm_update_MasaBerlakuAnggota" class="mb-0 font-weight-bold">Masa Berlaku</label>
+									<div class="btn-group btn-group-sm" role="group">
+										<button type="button" class="btn btn-outline-primary btn-xs active" id="btn_mode_hari_update">Hari</button>
+										<button type="button" class="btn btn-outline-primary btn-xs" id="btn_mode_tanggal_update">Pilih Tanggal</button>
+									</div>
 								</div>
+								<!-- Mode 1: Berdasarkan Jumlah Hari -->
+								<div id="wrap_mode_hari_update">
+									<div class="input-group">
+										<input required type="number" min="1" class="form-control" id="frm_update_MasaBerlakuAnggota" name="MasaBerlakuAnggota" placeholder="Contoh: 180" value="" />
+										<div class="input-group-append">
+											<span class="input-group-text">hari</span>
+										</div>
+									</div>
+								</div>
+								<!-- Mode 2: Berdasarkan Tanggal Berakhir -->
+								<div id="wrap_mode_tanggal_update" style="display:none;">
+									<div class="input-group">
+										<input type="date" class="form-control" id="frm_update_MasaBerlakuTanggal" name="target_expire_date" />
+										<div class="input-group-append">
+											<span class="input-group-text"><i class="fa fa-calendar"></i></span>
+										</div>
+									</div>
+								</div>
+								<small class="form-text text-muted" id="preview_masa_berlaku_update">Masa berlaku aktif untuk jenis anggota ini.</small>
 							</div>
 						</div>
 						<div class="col-lg-6">
@@ -85,6 +107,61 @@
 </div>
 
 <script>
+	function updatePreviewMasaBerlakuUpdate(days) {
+		days = parseInt(days, 10);
+		if (!days || isNaN(days) || days <= 0) {
+			$('#preview_masa_berlaku_update').text('Masukkan jumlah hari atau pilih tanggal.');
+			return;
+		}
+		var targetDate = new Date();
+		targetDate.setDate(targetDate.getDate() + days);
+		var d = String(targetDate.getDate()).padStart(2, '0');
+		var m = String(targetDate.getMonth() + 1).padStart(2, '0');
+		var y = targetDate.getFullYear();
+		$('#preview_masa_berlaku_update').html('<i class="fa fa-info-circle text-info"></i> Berlaku <strong>' + days + ' hari</strong> (s/d <strong>' + d + '/' + m + '/' + y + '</strong>)');
+		
+		var isoDate = y + '-' + m + '-' + d;
+		$('#frm_update_MasaBerlakuTanggal').val(isoDate);
+	}
+
+	$('#btn_mode_hari_update').click(function() {
+		$(this).addClass('active');
+		$('#btn_mode_tanggal_update').removeClass('active');
+		$('#wrap_mode_hari_update').show();
+		$('#wrap_mode_tanggal_update').hide();
+		$('#frm_update_MasaBerlakuTanggal').val('');
+		updatePreviewMasaBerlakuUpdate($('#frm_update_MasaBerlakuAnggota').val());
+	});
+
+	$('#btn_mode_tanggal_update').click(function() {
+		$(this).addClass('active');
+		$('#btn_mode_hari_update').removeClass('active');
+		$('#wrap_mode_tanggal_update').show();
+		$('#wrap_mode_hari_update').hide();
+	});
+
+	$('#frm_update_MasaBerlakuAnggota').on('input change', function() {
+		updatePreviewMasaBerlakuUpdate($(this).val());
+	});
+
+	$('#frm_update_MasaBerlakuTanggal').on('input change', function() {
+		var val = $(this).val();
+		if (!val) return;
+		var target = new Date(val + 'T00:00:00');
+		var now = new Date();
+		now.setHours(0, 0, 0, 0);
+		var diffTime = target.getTime() - now.getTime();
+		var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+		if (diffDays <= 0) {
+			if (typeof Swal !== 'undefined') {
+				Swal.fire('Perhatian', 'Tanggal berakhir harus lebih besar dari hari ini.', 'warning');
+			}
+			return;
+		}
+		$('#frm_update_MasaBerlakuAnggota').val(diffDays);
+		updatePreviewMasaBerlakuUpdate(diffDays);
+	});
+
 	$("body").on("click", ".show-data", function() {
 		var url = $(this).attr('data-href');
         $.ajax({
@@ -94,7 +171,24 @@
             success: function(response) {
                 $('#frm_update').attr("data-id", response.id);
                 $('#frm_update_jenisanggota').val(response.jenisanggota);
-                $('#frm_update_MasaBerlakuAnggota').val(response.MasaBerlakuAnggota);
+                if (response.target_expire_date) {
+                    $('#btn_mode_tanggal_update').trigger('click');
+                    $('#frm_update_MasaBerlakuTanggal').val(response.target_expire_date);
+                    var target = new Date(response.target_expire_date + 'T00:00:00');
+                    var now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    var diffTime = target.getTime() - now.getTime();
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#frm_update_MasaBerlakuAnggota').val(diffDays > 0 ? diffDays : response.MasaBerlakuAnggota);
+                    var p = response.target_expire_date.split('-');
+                    var fmt = p[2] + '/' + p[1] + '/' + p[0];
+                    $('#preview_masa_berlaku_update').html('<i class="fa fa-info-circle text-info"></i> Berlaku serentak s/d <strong>' + fmt + '</strong> (' + diffDays + ' hari lagi)');
+                } else {
+                    $('#btn_mode_hari_update').trigger('click');
+                    $('#frm_update_MasaBerlakuTanggal').val('');
+                    $('#frm_update_MasaBerlakuAnggota').val(response.MasaBerlakuAnggota);
+                    updatePreviewMasaBerlakuUpdate(response.MasaBerlakuAnggota);
+                }
                 $('#frm_update_BiayaPendaftaran').val(response.BiayaPendaftaran);
                 $('#frm_update_BiayaPerpanjangan').val(response.BiayaPerpanjangan);
                 $('#frm_update_MaxPinjamKoleksi').val(response.MaxPinjamKoleksi);

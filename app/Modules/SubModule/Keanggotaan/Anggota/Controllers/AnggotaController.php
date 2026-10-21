@@ -421,7 +421,7 @@ class AnggotaController extends \Base\Controllers\BaseController
         $this->data['unit_kerja']          = $db->table('master_unit')->where('active', 1)->get()->getResult();
         $this->data['sub_units_grouped']   = (new \App\Models\SubUnitModel())->getAllActiveGrouped();
         $this->data['jenis_identitas']     = $db->table('master_jenis_identitas')->where('active', 1)->get()->getResult();
-        $this->data['jenis_anggota_list']  = $db->table('jenis_anggota')->where('active', 1)->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)->get()->getResult();
+        $this->data['jenis_anggota_list']  = $db->table('jenis_anggota')->where('active', 1)->whereIn('jenisanggota', ['ASN', 'Non ASN'])->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)->get()->getResult();
         $this->data['status_anggota_list'] = $db->table('status_anggota')->get()->getResult();
         $this->data['jenis_kelamin_list']  = $db->table('jenis_kelamin')->where('active', 1)->orderBy('ID', 'ASC')->get()->getResult();
 
