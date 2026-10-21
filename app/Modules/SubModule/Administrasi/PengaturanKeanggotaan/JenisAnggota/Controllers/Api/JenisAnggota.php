@@ -43,6 +43,10 @@ class JenisAnggota extends \Base\Controllers\BaseResourceController
 				return $html;
 			})
 			->edit('MasaBerlakuAnggota', function ($row) {
+				if (!empty($row->target_expire_date)) {
+					$target = date('d-m-Y', strtotime($row->target_expire_date));
+					return '<span class="badge badge-info mb-1" style="font-size: 11px;">s/d ' . $target . '</span><br><small class="text-muted">' . formatRupiah($row->MasaBerlakuAnggota, '') . ' hari</small>';
+				}
 				$html  =  formatRupiah($row->MasaBerlakuAnggota, '') . ' hari';
 				return $html;
 			})
@@ -111,6 +115,7 @@ class JenisAnggota extends \Base\Controllers\BaseResourceController
 		$save_data = array(
 			'jenisanggota' => $this->request->getPost('jenisanggota'),
 			'MasaBerlakuAnggota' => $this->request->getPost('MasaBerlakuAnggota'),
+			'target_expire_date' => $this->request->getPost('target_expire_date') ?: null,
 			'BiayaPendaftaran' => $this->request->getPost('BiayaPendaftaran'),
 			'DayPerpanjang' => $this->request->getPost('DayPerpanjang'),
 			'BiayaPerpanjangan' => $this->request->getPost('BiayaPerpanjangan'),
@@ -141,6 +146,7 @@ class JenisAnggota extends \Base\Controllers\BaseResourceController
 		$update_data = array(
 			'jenisanggota' => $this->request->getPost('jenisanggota'),
 			'MasaBerlakuAnggota' => $this->request->getPost('MasaBerlakuAnggota'),
+			'target_expire_date' => $this->request->getPost('target_expire_date') ?: null,
 			'BiayaPendaftaran' => $this->request->getPost('BiayaPendaftaran'),
 			'DayPerpanjang' => $this->request->getPost('DayPerpanjang'),
 			'BiayaPerpanjangan' => $this->request->getPost('BiayaPerpanjangan'),

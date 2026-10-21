@@ -47,6 +47,8 @@ $slug = $request->getGet('slug') ?? '';
             </a>
         </li>
     </ul>
+    <?= view('BukuTamu\Views\ringkasan_hari_ini', ['hari_ini' => $hari_ini ?? null]) ?>
+
     <div class="main-card mb-3 card">
         <div class="card-header"><i class="header-icon lnr-list icon-gradient bg-plum-plate"> </i>Tabel Buku Tamu
             <div class="btn-actions-pane-right actions-icon-btn">
@@ -61,8 +63,8 @@ $slug = $request->getGet('slug') ?? '';
                         <th class="text-center" width="35">No</th>
                         <th class="text-center" width="120">Tgl. Kunjungan</th>
                         <th class="text-center" width="120">Nama Pengunjung</th>
-                        <th class="text-center" width="100">Pekerjaan</th>
-                        <th class="text-center" width="100">Pendidikan</th>
+                        <th class="text-center" width="160">Unit Asal</th>
+                        <th class="text-center" width="110">WhatsApp</th>
                         <th class="text-center">Lokasi Perpustakaan</th>
                         <th class="text-center">Lokasi Ruang</th>
                         <th class="text-center" width="50">Aksi</th>
@@ -114,10 +116,11 @@ $slug = $request->getGet('slug') ?? '';
                     data: 'Visitor_name'
                 },
                 {
-                    data: 'Profesi_name'
+                    data: 'Visitor_unit',
+                    searchable: false
                 },
                 {
-                    data: 'PendidikanTerakhir_name'
+                    data: 'Visitor_phone'
                 },
                 {
                     data: 'LocationLibrary_name',

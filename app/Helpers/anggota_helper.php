@@ -437,12 +437,13 @@ if (!function_exists('hitungMasaBerlaku')) {
     /**
      * Menghitung masa berlaku keanggotaan berdasarkan aturan bisnis:
      * - ASN: tetap pakai logika lama (+1 year dari RegisterDate).
-     * - Non-ASN + Magang: +6 bulan dari tanggal konfirmasi petugas (clamped akhir bulan).
+     * - Magang Nasional (atau legacy 'magang'): +6 bulan dari tanggal konfirmasi petugas (clamped akhir bulan).
+     * - Magang Biasa: +1 bulan dari tanggal konfirmasi petugas (clamped akhir bulan).
      * - Non-ASN + Staf: +1 tahun dari tanggal konfirmasi petugas (clamped).
      * - Non-ASN + status_non_asn NULL: fallback +1 tahun dari tanggal konfirmasi + log warning.
      *
      * @param mixed $tipe (JenisAnggota_id / nama jenis / object member)
-     * @param string|null $statusNonAsn ('staf' | 'magang' | null)
+     * @param string|null $statusNonAsn ('staf' | 'magang' | 'magang_nasional' | 'magang_biasa' | null)
      * @param string|\DateTimeInterface|null $tanggalKonfirmasi (default: now)
      * @param string|null $registerDate (tanggal pendaftaran online)
      * @return array{end_date: string, end_date_formatted: string, durasi: string, label_status: string, preview_text: string}
@@ -476,34 +477,136 @@ if (!function_exists('hitungMasaBerlaku')) {
 
         $cleanStatus = strtolower(trim((string) $statusNonAsn));
 
-        if ($cleanStatus === 'magang') {
-            // Non-ASN + magang: masa berlaku 6 bulan sejak konfirmasi petugas
-            $targetDt = addMonthsClamped($dtKonfirmasi, 6);
-            $durasi = '6 bulan';
-            $labelStatus = 'Non-ASN (Magang)';
+        // Jika status_non_asn kosong, periksa apakah jenis anggota itu sendiri adalah Magang Nasional atau Magang Biasa
+        if (empty($cleanStatus)) {
+            $jaName = '';
+            if (is_numeric($tipe)) {
+                $db = db_connect();
+                $ja = $db->table('jenis_anggota')->where('id', (int) $tipe)->get()->getRow();
+                $jaName = $ja ? strtolower(trim($ja->jenisanggota)) : '';
+            } elseif (is_string($tipe)) {
+                $jaName = strtolower(trim($tipe));
+            }
+
+            if (strpos($jaName, 'magang nasional') !== false) {
+                $cleanStatus = 'magang_nasional';
+            } elseif (strpos($jaName, 'magang biasa') !== false) {
+                $cleanStatus = 'magang_biasa';
+            } elseif (strpos($jaName, 'magang') !== false) {
+                $cleanStatus = 'magang';
+            }
+        }
+
+        $previewText = '';
+        if ($cleanStatus === 'magang_nasional' || $cleanStatus === 'magang') {
+            // Ambil aturan masa berlaku langsung dari Pengaturan Anggota (master jenis_anggota)
+            $db = db_connect();
+            $jaMagang = $db->table('jenis_anggota')
+                ->where('LOWER(jenisanggota)', 'magang nasional')
+                ->get()->getRow();
+
+            if ($jaMagang && !empty($jaMagang->target_expire_date)) {
+                // Sesuai tanggal serentak dari Pengaturan Anggota
+                $targetDt = new \DateTime($jaMagang->target_expire_date . ' 00:00:00');
+                $diffDays = (int) $dtKonfirmasi->diff($targetDt)->format('%r%a');
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = ($diffDays > 0) ? ($diffDays . ' hari') : ('s/d ' . $formatted);
+                $labelStatus = 'Non-ASN (Magang Nasional)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku serentak berakhir ' . $formatted . ($diffDays > 0 ? " ({$diffDays} hari lagi, sesuai Pengaturan Anggota)" : '') . '.';
+            } elseif ($jaMagang && !empty($jaMagang->MasaBerlakuAnggota)) {
+                $days = (int) $jaMagang->MasaBerlakuAnggota;
+                $targetDt = (clone $dtKonfirmasi)->modify("+{$days} days");
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = $days . ' hari';
+                $labelStatus = 'Non-ASN (Magang Nasional)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $days . ' hari, berakhir ' . $formatted . ' (sesuai Pengaturan Anggota).';
+            } else {
+                $targetDt = addMonthsClamped($dtKonfirmasi, 6);
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = '6 bulan';
+                $labelStatus = ($cleanStatus === 'magang_nasional') ? 'Non-ASN (Magang Nasional)' : 'Non-ASN (Magang)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
+            }
+        } elseif ($cleanStatus === 'magang_biasa') {
+            $db = db_connect();
+            $jaBiasa = $db->table('jenis_anggota')
+                ->where('LOWER(jenisanggota)', 'magang biasa')
+                ->get()->getRow();
+
+            if ($jaBiasa && !empty($jaBiasa->target_expire_date)) {
+                $targetDt = new \DateTime($jaBiasa->target_expire_date . ' 00:00:00');
+                $diffDays = (int) $dtKonfirmasi->diff($targetDt)->format('%r%a');
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = ($diffDays > 0) ? ($diffDays . ' hari') : ('s/d ' . $formatted);
+                $labelStatus = 'Non-ASN (Magang Biasa)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku serentak berakhir ' . $formatted . '.';
+            } elseif ($jaBiasa && !empty($jaBiasa->MasaBerlakuAnggota)) {
+                $days = (int) $jaBiasa->MasaBerlakuAnggota;
+                $targetDt = (clone $dtKonfirmasi)->modify("+{$days} days");
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = $days . ' hari';
+                $labelStatus = 'Non-ASN (Magang Biasa)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $days . ' hari, berakhir ' . $formatted . ' (sesuai Pengaturan Anggota).';
+            } else {
+                $targetDt = addMonthsClamped($dtKonfirmasi, 1);
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = '1 bulan';
+                $labelStatus = 'Non-ASN (Magang Biasa)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
+            }
         } elseif ($cleanStatus === 'staf') {
             // Non-ASN + staf: masa berlaku 1 tahun sejak konfirmasi petugas
             $targetDt = addMonthsClamped($dtKonfirmasi, 12);
+            $formatted = $targetDt->format('d-m-Y');
             $durasi = '1 tahun';
             $labelStatus = 'Non-ASN (Staf)';
+            $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
         } else {
             // Fallback jika status_non_asn NULL pada pendaftar Non-ASN (data lama)
             log_message('warning', 'Pendaftar Non-ASN tanpa status_non_asn saat konfirmasi, fallback masa berlaku 1 tahun.');
             $targetDt = addMonthsClamped($dtKonfirmasi, 12);
+            $formatted = $targetDt->format('d-m-Y');
             $durasi = '1 tahun';
             $labelStatus = 'Non-ASN';
+            $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
         }
 
         $endDate = $targetDt->format('Y-m-d 00:00:00');
-        $formatted = $targetDt->format('d-m-Y');
 
         return [
             'end_date'           => $endDate,
             'end_date_formatted' => $formatted,
             'durasi'             => $durasi,
             'label_status'       => $labelStatus,
-            'preview_text'       => 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.',
+            'preview_text'       => $previewText,
         ];
+    }
+}
+
+if (!function_exists('format_status_non_asn')) {
+    /**
+     * Memformat string enum status_non_asn menjadi label tampilan yang rapi.
+     *
+     * @param string|null $status
+     * @return string
+     */
+    function format_status_non_asn(?string $status): string {
+        if (empty($status)) {
+            return '';
+        }
+        $clean = strtolower(trim((string)$status));
+        switch ($clean) {
+            case 'magang_nasional':
+                return 'Magang Nasional';
+            case 'magang_biasa':
+                return 'Magang Biasa';
+            case 'magang':
+                return 'Magang';
+            case 'staf':
+                return 'Staf';
+            default:
+                return ucwords(str_replace('_', ' ', $clean));
+        }
     }
 }
 

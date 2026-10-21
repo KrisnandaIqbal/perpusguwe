@@ -56,7 +56,7 @@ $baris = static function (string $label, string $nilai): string {
                                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
                                     <?= $baris('Jenis anggota', (string) ($member->JenisAnggota ?? '-')) ?>
                                     <?php if (!empty($member->status_non_asn)): ?>
-                                        <?= $baris('Status Non-ASN', ucfirst($member->status_non_asn)) ?>
+                                        <?= $baris('Status Non-ASN', format_status_non_asn($member->status_non_asn)) ?>
                                     <?php endif; ?>
                                     <?= $baris('Unit kerja', (string) (get_member_unit_display($member) ?: '-')) ?>
                                     <?= $baris('Tanggal daftar', tgl_indonesia(substr((string) $member->RegisterDate, 0, 10))) ?>
@@ -72,8 +72,7 @@ $baris = static function (string $label, string $nilai): string {
                                     <?= $baris('Berlaku sampai', $berlaku) ?>
                                 </table>
                                 <p style="margin:0;font-size:15px;line-height:24px;">
-                                    Kartu anggota Anda terlampir dalam dua bentuk: file PDF dua halaman untuk dicetak,
-                                    dan dua gambar (sisi depan dan sisi belakang) untuk disimpan di HP.
+                                    Kartu anggota Anda terlampir sebagai satu file PDF berisi sisi depan dan sisi belakang.
                                     Kartu memuat nama, No. Anggota, dan kode QR. Saat berkunjung, tunjukkan sisi belakang untuk dipindai.
                                 </p>
 

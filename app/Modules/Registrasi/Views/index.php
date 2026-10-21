@@ -81,7 +81,7 @@ if (!empty($jenis_identitas)) {
 
         /* Typography */
         --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
         /* Shadows: Flat editorial, sharp 1px hairline border + delicate depth */
@@ -856,12 +856,15 @@ if (!empty($jenis_identitas)) {
         border: 1px solid var(--border-subtle);
         transition: all var(--transition-fast);
         letter-spacing: -0.02em;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
     }
 
     .rf-digit-badge.is-valid {
         background: var(--emerald-50) !important;
-        color: var(--emerald-600) !important;
-        border-color: var(--emerald-200) !important;
+        color: #059669 !important;
+        border-color: #a7f3d0 !important;
     }
 
     .rf-digit-badge.is-error {
@@ -1389,13 +1392,13 @@ if (!empty($jenis_identitas)) {
         z-index: 1;
     }
 
-    /* Helper Hints & Error Messages */
+    /* Helper Hints (Teks petunjuk informatif berwarna biru sesuai butir 2) */
     .rf-hint {
         display: flex;
         align-items: flex-start;
         gap: 6px;
         font-size: 0.77rem;
-        color: var(--text-muted);
+        color: #2563eb;
         margin-top: 6px;
         line-height: 1.4;
     }
@@ -1405,7 +1408,7 @@ if (!empty($jenis_identitas)) {
         height: 14px;
         flex-shrink: 0;
         margin-top: 1px;
-        color: var(--text-subtle);
+        color: #3b82f6;
     }
 
     .rf-error-msg {
@@ -2577,11 +2580,20 @@ if (!empty($jenis_identitas)) {
                                 </label>
                                 <span class="rf-digit-badge" id="digitCount">0 / 18 digit</span>
                             </div>
+
+                            <!-- Petunjuk kolom NIP/NIK dipindahkan ke atas kolom isian (butir 10) berwarna biru (butir 2) -->
+                            <div class="rf-hint" id="identityHint" style="margin-top: 2px; margin-bottom: 8px;">
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>Masukkan 18 digit NIP tanpa spasi atau tanda baca.</span>
+                            </div>
+
                             <input type="hidden" id="IdentityType_id" name="IdentityType_id" value="">
 
                             <div class="rf-input-wrap">
                                 <input type="text" class="rf-input" id="IdentityNo" name="IdentityNo"
-                                       placeholder="Masukkan 18 digit NIP resmi BKN" inputmode="numeric" autocomplete="off" maxlength="18">
+                                       placeholder="Masukkan 18 digit NIP tanpa spasi atau tanda baca" inputmode="numeric" autocomplete="off" maxlength="18">
                                 <span class="rf-input-icon is-error">
                                     <svg viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
@@ -2594,12 +2606,6 @@ if (!empty($jenis_identitas)) {
                                 </span>
                             </div>
                             <div class="rf-field-feedback" id="feedback_IdentityNo"></div>
-                            <div class="rf-hint" id="identityHint">
-                                <svg viewBox="0 0 16 16" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
-                                </svg>
-                                <span>Nomor Induk Pegawai 18 digit resmi BKN tanpa spasi atau tanda baca.</span>
-                            </div>
                         </div>
                     </div>
 
@@ -2671,7 +2677,6 @@ if (!empty($jenis_identitas)) {
                                             </div>
                                             <div class="rf-gender-content">
                                                 <span class="rf-gender-title"><?= esc($jk->Name) ?></span>
-                                                <span class="rf-gender-subtitle"><?= $jk->ID == 1 ? 'Laki-laki sipil / kedinasan' : 'Perempuan sipil / kedinasan' ?></span>
                                             </div>
                                             <div class="rf-gender-radio-mark" aria-hidden="true">
                                                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -2773,7 +2778,8 @@ if (!empty($jenis_identitas)) {
                                 <select class="rf-select-native" id="status_non_asn" name="status_non_asn" tabindex="-1" aria-hidden="true" disabled>
                                     <option value="">Pilih status</option>
                                     <option value="staf">Staf</option>
-                                    <option value="magang">Magang</option>
+                                    <option value="magang_nasional">Magang Nasional</option>
+                                    <option value="magang_biasa">Magang Biasa</option>
                                 </select>
 
                                 <!-- Visual Trigger -->
@@ -2795,8 +2801,14 @@ if (!empty($jenis_identitas)) {
                                             <path d="M3.5 8.5l3 3 6-7"/>
                                         </svg>
                                     </div>
-                                    <div class="rf-select-option" data-value="magang" role="option">
-                                        <span class="rf-opt-text">Magang</span>
+                                    <div class="rf-select-option" data-value="magang_nasional" role="option">
+                                        <span class="rf-opt-text">Magang Nasional</span>
+                                        <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3.5 8.5l3 3 6-7"/>
+                                        </svg>
+                                    </div>
+                                    <div class="rf-select-option" data-value="magang_biasa" role="option">
+                                        <span class="rf-opt-text">Magang Biasa</span>
                                         <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M3.5 8.5l3 3 6-7"/>
                                         </svg>
@@ -3444,12 +3456,12 @@ document.addEventListener('DOMContentLoaded', function() {
             inputIdentityNo.maxLength = 16;
             inputIdentityNo.setAttribute('maxlength', '16');
             if (identityLabel) identityLabel.innerHTML = 'Nomor Induk Kependudukan (NIK) <span class="req">*</span>';
-            inputIdentityNo.placeholder = 'Masukkan 16 digit NIK KTP';
+            inputIdentityNo.placeholder = 'Masukkan 16 digit NIK tanpa spasi atau tanda baca';
             identityHint.innerHTML = `
                 <svg viewBox="0 0 16 16" fill="currentColor">
                     <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
                 </svg>
-                <span>Nomor Induk Kependudukan 16 digit resmi tanpa spasi.</span>
+                <span>Masukkan 16 digit NIK tanpa spasi atau tanda baca.</span>
             `;
             feedbackIdentityNo.textContent = 'NIK wajib diisi dengan 16 digit angka.';
         } else {
@@ -3459,12 +3471,12 @@ document.addEventListener('DOMContentLoaded', function() {
             inputIdentityNo.maxLength = 18;
             inputIdentityNo.setAttribute('maxlength', '18');
             if (identityLabel) identityLabel.innerHTML = 'Nomor Induk Pegawai (NIP) <span class="req">*</span>';
-            inputIdentityNo.placeholder = 'Masukkan 18 digit NIP resmi BKN';
+            inputIdentityNo.placeholder = 'Masukkan 18 digit NIP tanpa spasi atau tanda baca';
             identityHint.innerHTML = `
                 <svg viewBox="0 0 16 16" fill="currentColor">
                     <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
                 </svg>
-                <span>Nomor Induk Pegawai 18 digit resmi BKN tanpa spasi atau tanda baca.</span>
+                <span>Masukkan 18 digit NIP tanpa spasi atau tanda baca.</span>
             `;
             feedbackIdentityNo.textContent = 'NIP wajib diisi dengan 18 digit angka resmi BKN.';
         }
@@ -3505,14 +3517,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateDigitCount() {
         const len = inputIdentityNo.value.length;
-        digitCount.textContent = len + ' / ' + selectedIdDigits + ' digit';
         if (len === 0) {
-            digitCount.classList.remove('is-valid', 'is-error');
+            digitCount.className = 'rf-digit-badge';
+            digitCount.textContent = '0 / ' + selectedIdDigits + ' digit';
         } else if (len === selectedIdDigits) {
-            digitCount.classList.add('is-valid');
-            digitCount.classList.remove('is-error');
+            digitCount.className = 'rf-digit-badge is-valid';
+            digitCount.textContent = selectedIdDigits + ' / ' + selectedIdDigits + ' digit ✓';
         } else {
-            digitCount.classList.remove('is-valid');
+            digitCount.className = 'rf-digit-badge is-error';
+            digitCount.textContent = len + ' / ' + selectedIdDigits + ' digit ✕';
         }
     }
 
@@ -4156,14 +4169,11 @@ document.addEventListener('DOMContentLoaded', function() {
             badge.style.display = 'inline-flex';
         }
         if (feedback) {
-            feedback.className = 'rf-field-feedback is-valid';
-            feedback.style.display = 'flex';
-            feedback.innerHTML = `
-                <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path fill-rule="evenodd" d="M16 8A8 8 0 110 8a8 8 0 0116 0zm-3.97-3.03a.75.75 0 00-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 00-1.06 1.06L6.97 11.03a.75.75 0 001.079-.02l3.992-4.99a.75.75 0 00-.01-1.05z" clip-rule="evenodd"/>
-                </svg>
-                <span>${validMsg || 'Data valid.'}</span>
-            `;
+            // Sesuai butir 2: Hilangkan warna hijau pada petunjuk di bawah kolom setelah diisi dengan benar.
+            // Warna hijau dan centang di bagian atas kolom tetap.
+            feedback.className = 'rf-field-feedback';
+            feedback.style.display = 'none';
+            feedback.innerHTML = '';
         }
     }
 
@@ -4259,7 +4269,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (len === 0) {
             digitCount.className = 'rf-digit-badge is-error';
-            digitCount.textContent = 'Wajib Diisi';
+            digitCount.textContent = '0 / ' + needed + ' digit ✕';
             inputIdentityNo.classList.add('has-error');
             inputIdentityNo.classList.remove('is-valid');
             feedbackIdentityNo.className = 'rf-field-feedback is-error';
@@ -4274,7 +4284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (len < needed) {
             const kurang = needed - len;
             digitCount.className = 'rf-digit-badge is-error';
-            digitCount.textContent = `${len} / ${needed} Digit (Kurang ${kurang} digit)`;
+            digitCount.textContent = `${len} / ${needed} digit ✕`;
             inputIdentityNo.classList.add('has-error');
             inputIdentityNo.classList.remove('is-valid');
             feedbackIdentityNo.className = 'rf-field-feedback is-error';
@@ -4283,7 +4293,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <svg viewBox="0 0 16 16" fill="currentColor">
                     <path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/>
                 </svg>
-                <span>Nomor ${typeName} tidak lengkap. Wajib ${needed} digit angka (terdeteksi ${len} digit: ${val}). Kurang ${kurang} digit.</span>
+                <span>Nomor ${typeName} tidak lengkap. Wajib ${needed} digit angka (terdeteksi ${len} digit). Kurang ${kurang} digit.</span>
             `;
             return `<strong>Nomor Identitas (${typeName}):</strong> Harus berjumlah tepat ${needed} digit angka (saat ini berisi ${len} digit).`;
         } else {
@@ -4291,14 +4301,10 @@ document.addEventListener('DOMContentLoaded', function() {
             digitCount.textContent = `${needed} / ${needed} digit ✓`;
             inputIdentityNo.classList.remove('has-error');
             inputIdentityNo.classList.add('is-valid');
-            feedbackIdentityNo.className = 'rf-field-feedback is-valid';
-            feedbackIdentityNo.style.display = 'flex';
-            feedbackIdentityNo.innerHTML = `
-                <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path fill-rule="evenodd" d="M16 8A8 8 0 110 8a8 8 0 0116 0zm-3.97-3.03a.75.75 0 00-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 00-1.06 1.06L6.97 11.03a.75.75 0 001.079-.02l3.992-4.99a.75.75 0 00-.01-1.05z" clip-rule="evenodd"/>
-                </svg>
-                <span>Nomor ${typeName} memenuhi ketentuan ${needed} digit.</span>
-            `;
+            // Butir 2: Hilangkan warna hijau pada petunjuk di bawah kolom setelah diisi dengan benar
+            feedbackIdentityNo.className = 'rf-field-feedback';
+            feedbackIdentityNo.style.display = 'none';
+            feedbackIdentityNo.innerHTML = '';
             return null;
         }
     }
@@ -4364,11 +4370,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return null; // Tidak wajib jika disembunyikan/disabled (misal ASN atau biro belum dipilih)
         }
         const val = nativeStatusNonAsnSelect ? nativeStatusNonAsnSelect.value : '';
-        if (!val || (val !== 'staf' && val !== 'magang')) {
-            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', 'Status Non-ASN wajib dipilih (Staf atau Magang).');
-            return '<strong>Status Non-ASN:</strong> Status pemustaka Non-ASN wajib dipilih (Staf atau Magang).';
+        if (!val || (val !== 'staf' && val !== 'magang_nasional' && val !== 'magang_biasa')) {
+            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).');
+            return '<strong>Status Non-ASN:</strong> Status pemustaka Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).';
         } else {
-            const labelText = val === 'magang' ? 'Magang' : 'Staf';
+            let labelText = 'Staf';
+            if (val === 'magang_nasional') labelText = 'Magang Nasional';
+            else if (val === 'magang_biasa') labelText = 'Magang Biasa';
             setFieldValid(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Status Non-ASN terverifikasi: ' + labelText + '.');
             return null;
         }

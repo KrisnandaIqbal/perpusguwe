@@ -3,6 +3,10 @@ html {
 	font-size: 100% !important;
 }
 
+body, input, select, textarea, button, .app-container, .app-sidebar, .app-header {
+	font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
 .toggle-group label.toggle-off{
 	left: 47% !important;
 }

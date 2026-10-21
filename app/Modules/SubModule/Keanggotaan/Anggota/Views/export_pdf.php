@@ -99,11 +99,6 @@
             letter-spacing: 0.5px;
             margin: 0;
         }
-        .doc-subtitle {
-            font-size: 8.5pt;
-            color: #718096;
-            margin-top: 2px;
-        }
 
         /* Header Box (Kartu & Pasfoto) */
         .header-box {
@@ -125,9 +120,10 @@
             border-left: 1px solid #e2e8f0;
             background-color: #fbfbfa;
         }
+        /* Pasfoto 2:3, sama dengan foto yang dipotong saat pendaftaran */
         .photo-box {
-            width: 95px;
-            height: 125px;
+            width: 84px;
+            height: 126px;
             border: 1px solid #cbd5e0;
             background-color: #edf2f7;
             text-align: center;
@@ -137,8 +133,8 @@
             margin: 0 auto;
         }
         .photo-img {
-            width: 95px;
-            height: 125px;
+            width: 84px;
+            height: 126px;
             object-fit: cover;
             border: 1px solid #cbd5e0;
         }
@@ -216,8 +212,6 @@
 </head>
 <body>
 <?php 
-$totalMembers = count($membersData);
-$pageIndex = 1;
 foreach ($membersData as $item): 
     $m = $item['member'];
     $photoPath = $item['photoPath'];
@@ -229,7 +223,7 @@ foreach ($membersData as $item):
         $isAsn = true;
     }
 
-    $identityLabel = $isAsn ? 'Nomor Induk Pegawai (NIP)' : 'Nomor Induk Kependudukan (NIK)';
+    $identityLabel = $isAsn ? 'Nomor Induk Pegawai' : 'Nomor Induk Kependudukan';
 ?>
     <div class="page">
         <!-- KOP SURAT -->
@@ -246,7 +240,6 @@ foreach ($membersData as $item):
         <!-- JUDUL DOKUMEN -->
         <div class="doc-title-box">
             <div class="doc-title">LEMBAR DATA ANGGOTA PERPUSTAKAAN</div>
-            <div class="doc-subtitle">Data Terverifikasi Berdasarkan Formulir Pendaftaran Online Pemustaka</div>
         </div>
 
         <!-- RINGKASAN STATUS & PASFOTO -->
@@ -296,7 +289,7 @@ foreach ($membersData as $item):
                             <table style="width: 100%; height: 100%;">
                                 <tr>
                                     <td style="text-align: center; vertical-align: middle;">
-                                        Pasfoto<br>3 &times; 4
+                                        Pasfoto<br>2 &times; 3
                                     </td>
                                 </tr>
                             </table>
@@ -307,10 +300,10 @@ foreach ($membersData as $item):
         </table>
 
         <!-- 01. DATA IDENTITAS & KEPEGAWAIAN -->
-        <div class="section-header">01. Data Identitas & Kepegawaian (Pendaftaran Online)</div>
+        <div class="section-header">01. Data Identitas & Kepegawaian</div>
         <table class="data-table" cellpadding="0" cellspacing="0">
             <tr>
-                <td class="data-label">Nama Lengkap (Tanpa Gelar)</td>
+                <td class="data-label">Nama Lengkap</td>
                 <td class="data-separator">:</td>
                 <td class="data-value"><strong><?= htmlspecialchars($m->Fullname ?? '-') ?></strong></td>
             </tr>
@@ -323,7 +316,7 @@ foreach ($membersData as $item):
             <tr>
                 <td class="data-label">Status Non-ASN</td>
                 <td class="data-separator">:</td>
-                <td class="data-value"><strong><?= htmlspecialchars(ucfirst($m->status_non_asn)) ?></strong></td>
+                <td class="data-value"><strong><?= htmlspecialchars(format_status_non_asn($m->status_non_asn)) ?></strong></td>
             </tr>
             <?php endif; ?>
             <tr>
@@ -331,26 +324,25 @@ foreach ($membersData as $item):
                 <td class="data-separator">:</td>
                 <td class="data-value">
                     <strong><?= htmlspecialchars($m->IdentityNo ?? '-') ?></strong>
-                    <span style="color: #718096; font-size: 8.5pt;">(<?= htmlspecialchars($m->JenisIdentitas ?? ($isAsn ? 'NIP' : 'NIK')) ?>)</span>
                 </td>
             </tr>
             <tr>
                 <td class="data-label">Satuan Kerja / Unit Penempatan</td>
                 <td class="data-separator">:</td>
-                <td class="data-value"><strong><?= htmlspecialchars(format_unit_kerja($m->UnitKerja ?? null, $m->SubUnitKerja ?? null) ?: 'Kementerian Ketenagakerjaan RI') ?></strong></td>
+                <td class="data-value"><strong><?= htmlspecialchars(format_unit_kerja($m->UnitKerja ?? null, $m->SubUnitKerja ?? null) ?: '-') ?></strong></td>
             </tr>
         </table>
 
         <!-- 02. KONTAK & ALAMAT DOMISILI -->
-        <div class="section-header">02. Kontak & Alamat Domisili (Pendaftaran Online)</div>
+        <div class="section-header">02. Kontak & Alamat Domisili</div>
         <table class="data-table" cellpadding="0" cellspacing="0">
             <tr>
-                <td class="data-label">Alamat Email Aktif</td>
+                <td class="data-label">Alamat Email</td>
                 <td class="data-separator">:</td>
                 <td class="data-value"><?= htmlspecialchars($m->Email ?? '-') ?></td>
             </tr>
             <tr>
-                <td class="data-label">Nomor WhatsApp / HP Aktif</td>
+                <td class="data-label">Nomor WhatsApp / HP</td>
                 <td class="data-separator">:</td>
                 <td class="data-value"><strong><?= htmlspecialchars($m->Phone ?? '-') ?></strong></td>
             </tr>
@@ -384,14 +376,10 @@ foreach ($membersData as $item):
                 <td style="text-align: left;">
                     Dicetak dari Sistem Perpustakaan Kemnaker RI pada: <?= date('d/m/Y H:i') ?> WIB
                 </td>
-                <td style="text-align: right;">
-                    Halaman <?= $pageIndex ?> dari <?= $totalMembers ?>
-                </td>
             </tr>
         </table>
     </div>
 <?php 
-$pageIndex++;
 endforeach; 
 ?>
 </body>

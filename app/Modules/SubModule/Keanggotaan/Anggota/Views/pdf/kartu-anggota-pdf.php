@@ -44,7 +44,7 @@ if (!empty($card['foto_path']) && is_file($card['foto_path'])) {
     }
 }
 
-// dompdf tidak mengenal object-fit: ukuran asli foto dipakai untuk memotongnya manual di kotak persegi
+// dompdf tidak mengenal object-fit: ukuran asli foto dipakai untuk memotongnya manual di kotak foto
 $fotoUkuran = $fotoSrc ? @getimagesizefromstring(base64_decode(substr($fotoSrc, strpos($fotoSrc, ',') + 1))) : false;
 
 $logoFront = !empty($logo_teks) && file_exists($logo_teks) ? $logo_teks : $logo;
@@ -82,19 +82,20 @@ $logoBack  = !empty($logo_teks_putih) && file_exists($logo_teks_putih) ? $logo_t
         $namaLh  = count($baris) > 1 ? 18 : 19.2;
         // Blok nama (label 10,5 + jarak 3 + baris) berakhir 10 px di atas nomor (171), sama seperti halaman cetak
         $namaTop = 171 - 10 - (10.5 + 3 + count($baris) * $namaLh);
-        // Foto persegi, berhenti 10 px di atas nama, jadi lebih kecil kalau nama dua baris
+        // Foto 2:3 seperti pas foto di pendaftaran, berhenti 10 px di atas nama, jadi lebih kecil kalau nama dua baris
         $fotoH   = $namaTop - 10 - 60;
+        $fotoL   = $fotoH * 2 / 3;
         // Foto diperbesar sampai menutup kotak: lebih lebar dipotong di tengah, lebih tinggi dipotong dari bawah (sama dengan KartuPng)
-        [$fotoW, $fotoT] = [$fotoH, $fotoH];
+        [$fotoW, $fotoT] = [$fotoL, $fotoH];
         if ($fotoUkuran && $fotoUkuran[0] > 0 && $fotoUkuran[1] > 0) {
-            $skala  = max($fotoH / $fotoUkuran[0], $fotoH / $fotoUkuran[1]);
+            $skala  = max($fotoL / $fotoUkuran[0], $fotoH / $fotoUkuran[1]);
             $fotoW  = $fotoUkuran[0] * $skala;
             $fotoT  = $fotoUkuran[1] * $skala;
         }
         ?>
-        /* Foto anggota persegi, rata kiri dengan logo, nama, dan nomor */
-        .front .foto-box { left: <?= $pt(18) ?>; top: <?= $pt(60) ?>; width: <?= $pt($fotoH) ?>; height: <?= $pt($fotoH) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
-        .front .foto-box img { width: <?= $pt($fotoW) ?>; height: <?= $pt($fotoT) ?>; margin-left: <?= $pt(($fotoH - $fotoW) / 2) ?>; display: block; }
+        /* Foto anggota 2:3, rata kiri dengan logo, nama, dan nomor */
+        .front .foto-box { left: <?= $pt(18) ?>; top: <?= $pt(60) ?>; width: <?= $pt($fotoL) ?>; height: <?= $pt($fotoH) ?>; border-radius: <?= $pt(3) ?>; overflow: hidden; }
+        .front .foto-box img { width: <?= $pt($fotoW) ?>; height: <?= $pt($fotoT) ?>; margin-left: <?= $pt(($fotoL - $fotoW) / 2) ?>; display: block; }
 
         .front .nama { left: <?= $pt(18) ?>; top: <?= $pt($namaTop) ?>; width: <?= $pt(145) ?>; }
         .front .nama .label { font-size: <?= $pt(7) ?>; line-height: <?= $lh(10.5) ?>; letter-spacing: <?= $pt(1.12) ?>; color: #8A8B8A; }

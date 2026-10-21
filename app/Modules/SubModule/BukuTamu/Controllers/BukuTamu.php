@@ -32,19 +32,42 @@ class BukuTamu extends \Base\Controllers\BaseController
     public function index()
     {
         $this->data['title'] = 'Buku Tamu - Anggota';
+        $this->data['hari_ini'] = $this->kunjunganHariIni();
         echo view('BukuTamu\Views\list', $this->data);
     }
 
     public function non_anggota()
     {
         $this->data['title'] = 'Buku Tamu - Non Anggota';
+        $this->data['hari_ini'] = $this->kunjunganHariIni();
         echo view('BukuTamu\Views\list_non_anggota', $this->data);
     }
 
     public function rombongan()
     {
         $this->data['title'] = 'Buku Tamu - Rombongan';
+        $this->data['hari_ini'] = $this->kunjunganHariIni();
         echo view('BukuTamu\Views\list_rombongan', $this->data);
+    }
+
+    /** Kunjungan hari ini untuk admin; formulir buku tamu publik tidak lagi menampilkannya. */
+    private function kunjunganHariIni(): array
+    {
+        $db      = db_connect();
+        $hariIni = date('Y-m-d');
+
+        $anggota     = $db->table('memberguesses')->where('DATE(CreateDate)', $hariIni)->where('NoAnggota IS NOT NULL')->countAllResults();
+        $bukanAnggota = $db->table('memberguesses')->where('DATE(CreateDate)', $hariIni)->where('NoAnggota IS NULL')->countAllResults();
+        $rombongan   = $db->table('groupguesses')->selectSum('CountPersonel', 'orang')->selectCount('ID', 'kelompok')
+            ->where('DATE(CreateDate)', $hariIni)->get()->getRow();
+
+        return [
+            'anggota'            => $anggota,
+            'bukan_anggota'      => $bukanAnggota,
+            'rombongan'          => (int) ($rombongan->kelompok ?? 0),
+            'rombongan_orang'    => (int) ($rombongan->orang ?? 0),
+            'total'              => $anggota + $bukanAnggota + (int) ($rombongan->orang ?? 0),
+        ];
     }
 
     public function delete(int $id = 0)

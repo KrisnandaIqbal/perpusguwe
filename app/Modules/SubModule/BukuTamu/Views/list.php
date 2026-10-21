@@ -52,6 +52,8 @@ if ($slug === null) {
         </li>
     </ul>
 
+    <?= view('BukuTamu\Views\ringkasan_hari_ini', ['hari_ini' => $hari_ini ?? null]) ?>
+
     <div class="main-card mb-3 card">
         <div class="card-header"><i class="header-icon lnr-list icon-gradient bg-plum-plate"> </i>Tabel Buku Tamu
             <div class="btn-actions-pane-right actions-icon-btn">
@@ -67,6 +69,8 @@ if ($slug === null) {
                         <th class="text-center" width="120">Tgl. Kunjungan</th>
                         <th class="text-center" width="120">Nama Anggota</th>
                         <th class="text-center" width="100">Nomor Anggota</th>
+                        <th class="text-center" width="160">Unit Asal</th>
+                        <th class="text-center" width="110">WhatsApp</th>
                         <th class="text-center">Lokasi Perpustakaan</th>
                         <th class="text-center">Lokasi Ruang</th>
                         <th class="text-center" style="min-width: 150px;">Aksi</th>
@@ -121,6 +125,13 @@ if ($slug === null) {
                 },
                 {
                     data: 'Member_no'
+                },
+                {
+                    data: 'Visitor_unit',
+                    searchable: false
+                },
+                {
+                    data: 'Visitor_phone'
                 },
                 {
                     data: 'LocationLibrary_name',

@@ -31,6 +31,9 @@ $page_title = ucfirst($segment2 ?: $segment1);
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
     <link rel="icon" href="<?= !empty($logo) ? base_url('uploads/branch/' . $logo) : base_url('assets/img/logo-inlislite-icon.png') ?>">
     <link rel="stylesheet" href="<?= base_url('themes/uigniter'); ?>/css/base.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <?= $this->include('App\Views\layout\partial\style'); ?>
     <?= $this->include('App\Views\layout\partial\style_custom'); ?>
     <?= $this->renderSection('style'); ?>
@@ -42,9 +45,12 @@ $page_title = ucfirst($segment2 ?: $segment1);
             box-sizing: border-box;
         }
 
+        body, input, select, textarea, button, .form-control, .btn, .modal, .table {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
         body {
             background-color: #f8f9fa;
-            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             overflow-x: hidden;
         }

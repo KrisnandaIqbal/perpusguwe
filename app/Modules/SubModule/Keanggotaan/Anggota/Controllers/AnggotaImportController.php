@@ -108,6 +108,8 @@ class AnggotaImportController extends \Base\Controllers\BaseController
                 'kelas'                          => 'Kelas_id',
                 'program studi'                  => 'ProgramStudi_id',
                 'phone'                          => 'Phone',
+                'status non-asn'                 => 'status_non_asn',
+                'status non asn'                 => 'status_non_asn',
             ];
 
             $importedCount = 0;
@@ -189,6 +191,19 @@ class AnggotaImportController extends \Base\Controllers\BaseController
                         } elseif ($dbColumnName == 'ProgramStudi_id') {
                             $row_data = $db->table('master_program_studi')->like('Nama', $cellValue)->get()->getRow();
                             $memberData['ProgramStudi_id'] = $row_data ? $row_data->id : null;
+                        } elseif ($dbColumnName == 'status_non_asn') {
+                            $val = strtolower(trim((string) $cellValue));
+                            if (in_array($val, ['magang nasional', 'magang_nasional'], true)) {
+                                $memberData['status_non_asn'] = 'magang_nasional';
+                            } elseif (in_array($val, ['magang biasa', 'magang_biasa'], true)) {
+                                $memberData['status_non_asn'] = 'magang_biasa';
+                            } elseif ($val === 'magang') {
+                                $memberData['status_non_asn'] = 'magang';
+                            } elseif ($val === 'staf') {
+                                $memberData['status_non_asn'] = 'staf';
+                            } else {
+                                $memberData['status_non_asn'] = null;
+                            }
                         } elseif (in_array($dbColumnName, ['DateOfBirth', 'RegisterDate', 'EndDate'])) {
                             $memberData[$dbColumnName] = $this->parseExcelDate($cellValue);
                         } else {
@@ -209,6 +224,23 @@ class AnggotaImportController extends \Base\Controllers\BaseController
                     // Jika unit kerja adalah Unit 1 (Kementerian Ketenagakerjaan RI), kosongkan sub-unit
                     if (($memberData['UnitKerja_id'] ?? null) == 1) {
                         $memberData['SubUnitKerja_id'] = null;
+                    }
+
+                    // Pastikan ASN tidak memiliki status_non_asn
+                    helper('anggota');
+                    if (!empty($memberData['JenisAnggota_id']) && isJenisAnggotaAsn($memberData['JenisAnggota_id'])) {
+                        $memberData['status_non_asn'] = null;
+                    }
+
+                    // Jika EndDate kosong, hitung otomatis menggunakan hitungMasaBerlaku
+                    if (empty($memberData['EndDate'])) {
+                        $mb = hitungMasaBerlaku(
+                            $memberData['JenisAnggota_id'] ?? null,
+                            $memberData['status_non_asn'] ?? null,
+                            date('Y-m-d H:i:s'),
+                            $memberData['RegisterDate'] ?? date('Y-m-d')
+                        );
+                        $memberData['EndDate'] = $mb['end_date'];
                     }
 
                     $memberModel->insert($memberData);

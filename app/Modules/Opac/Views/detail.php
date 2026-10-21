@@ -375,12 +375,24 @@
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($roweksemplar as $eksemplar): ?>
-                                                    <tr>
+                                                    <?php
+                                                    $isDipinjam = (($eksemplar->Status_id ?? 0) == 5)
+                                                        || (stripos($eksemplar->StatusName ?? '', 'pinjam') !== false);
+                                                    ?>
+                                                    <tr class="<?= $isDipinjam ? 'table-danger' : '' ?>">
                                                         <td><code><?= esc($eksemplar->NomorBarcode) ?></code></td>
                                                         <td><code><?= esc($eksemplar->CallNumber) ?></code></td>
                                                         <td><span class="badge bg-primary"><?= esc($eksemplar->RuleName) ?></span></td>
                                                         <td><i class="fas fa-building me-1"></i><?= esc($eksemplar->LocationName) ?></td>
-                                                        <td><span class="badge bg-success"><?= esc($eksemplar->StatusName) ?></span></td>
+                                                        <td>
+                                                            <?php if ($isDipinjam): ?>
+                                                                <span class="badge bg-danger text-white"><i class="fas fa-book-reader me-1"></i>Sedang Dipinjam</span>
+                                                            <?php elseif (($eksemplar->Status_id ?? 0) == 1 || ($eksemplar->StatusName ?? '') === 'Tersedia'): ?>
+                                                                <span class="badge bg-success"><?= esc($eksemplar->StatusName) ?></span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-secondary"><?= esc($eksemplar->StatusName) ?></span>
+                                                            <?php endif; ?>
+                                                        </td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
@@ -406,17 +418,26 @@
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($roweksemplar_drm as $eksemplar_drm): ?>
-                                                    <tr>
+                                                    <?php
+                                                    $canRead = $eksemplar_drm->Status_id == 1
+                                                        || in_array($eksemplar_drm->CollectionID, $member_active_loan_collections ?? []);
+                                                    $isDrmDipinjam = !$canRead || (($eksemplar_drm->Status_id ?? 0) == 5) || (stripos($eksemplar_drm->StatusName ?? '', 'pinjam') !== false);
+                                                    ?>
+                                                    <tr class="<?= $isDrmDipinjam ? 'table-danger' : '' ?>">
                                                         <td><code><?= esc($eksemplar_drm->NomorBarcode) ?></code></td>
                                                         <td><code><?= esc($eksemplar_drm->CallNumber) ?></code></td>
                                                         <td><span class="badge bg-primary"><?= esc($eksemplar_drm->RuleName) ?></span></td>
                                                         <td><i class="fas fa-cloud me-1"></i><?= esc($eksemplar_drm->LocationName) ?></td>
-                                                        <td><span class="badge bg-success"><?= esc($eksemplar_drm->StatusName) ?></span></td>
                                                         <td>
-                                                            <?php
-                                                            $canRead = $eksemplar_drm->Status_id == 1
-                                                                || in_array($eksemplar_drm->CollectionID, $member_active_loan_collections ?? []);
-                                                            ?>
+                                                            <?php if ($isDrmDipinjam): ?>
+                                                                <span class="badge bg-danger text-white"><i class="fas fa-book-reader me-1"></i>Sedang Dipinjam</span>
+                                                            <?php elseif (($eksemplar_drm->Status_id ?? 0) == 1 || ($eksemplar_drm->StatusName ?? '') === 'Tersedia'): ?>
+                                                                <span class="badge bg-success"><?= esc($eksemplar_drm->StatusName) ?></span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-secondary"><?= esc($eksemplar_drm->StatusName) ?></span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
                                                             <?php if ($canRead): ?>
                                                                 <a href="<?= base_url('opac/baca-digital/' . $catalog['ID']) ?>"
                                                                     target="_blank"
@@ -424,8 +445,8 @@
                                                                     <i class="fas fa-file-pdf me-1"></i>Baca PDF
                                                                 </a>
                                                             <?php else: ?>
-                                                                <button class="btn btn-warning btn-sm"
-                                                                    onclick="Swal.fire({icon:'info',title:'Sedang Dipinjam',text:'Koleksi digital ini sedang dipinjam oleh anggota lain. Silakan coba lagi nanti.',confirmButtonText:'Oke'})">
+                                                                <button class="btn btn-danger btn-sm"
+                                                                    onclick="Swal.fire({icon:'error',title:'Sedang Dipinjam',text:'Koleksi digital ini sedang dipinjam oleh anggota lain. Silakan coba lagi nanti.',confirmButtonText:'Oke'})">
                                                                     <i class="fas fa-book-reader me-1"></i>Sedang Dipinjam
                                                                 </button>
                                                             <?php endif; ?>
