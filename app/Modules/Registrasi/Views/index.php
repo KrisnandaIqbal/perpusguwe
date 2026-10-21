@@ -2773,7 +2773,8 @@ if (!empty($jenis_identitas)) {
                                 <select class="rf-select-native" id="status_non_asn" name="status_non_asn" tabindex="-1" aria-hidden="true" disabled>
                                     <option value="">Pilih status</option>
                                     <option value="staf">Staf</option>
-                                    <option value="magang">Magang</option>
+                                    <option value="magang_nasional">Magang Nasional</option>
+                                    <option value="magang_biasa">Magang Biasa</option>
                                 </select>
 
                                 <!-- Visual Trigger -->
@@ -2795,8 +2796,14 @@ if (!empty($jenis_identitas)) {
                                             <path d="M3.5 8.5l3 3 6-7"/>
                                         </svg>
                                     </div>
-                                    <div class="rf-select-option" data-value="magang" role="option">
-                                        <span class="rf-opt-text">Magang</span>
+                                    <div class="rf-select-option" data-value="magang_nasional" role="option">
+                                        <span class="rf-opt-text">Magang Nasional</span>
+                                        <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3.5 8.5l3 3 6-7"/>
+                                        </svg>
+                                    </div>
+                                    <div class="rf-select-option" data-value="magang_biasa" role="option">
+                                        <span class="rf-opt-text">Magang Biasa</span>
                                         <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M3.5 8.5l3 3 6-7"/>
                                         </svg>
@@ -4364,11 +4371,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return null; // Tidak wajib jika disembunyikan/disabled (misal ASN atau biro belum dipilih)
         }
         const val = nativeStatusNonAsnSelect ? nativeStatusNonAsnSelect.value : '';
-        if (!val || (val !== 'staf' && val !== 'magang')) {
-            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', 'Status Non-ASN wajib dipilih (Staf atau Magang).');
-            return '<strong>Status Non-ASN:</strong> Status pemustaka Non-ASN wajib dipilih (Staf atau Magang).';
+        if (!val || (val !== 'staf' && val !== 'magang_nasional' && val !== 'magang_biasa')) {
+            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).');
+            return '<strong>Status Non-ASN:</strong> Status pemustaka Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).';
         } else {
-            const labelText = val === 'magang' ? 'Magang' : 'Staf';
+            let labelText = 'Staf';
+            if (val === 'magang_nasional') labelText = 'Magang Nasional';
+            else if (val === 'magang_biasa') labelText = 'Magang Biasa';
             setFieldValid(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Status Non-ASN terverifikasi: ' + labelText + '.');
             return null;
         }

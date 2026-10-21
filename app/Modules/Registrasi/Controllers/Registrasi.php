@@ -179,13 +179,13 @@ class Registrasi extends BaseController
                 $identityTypeId = $nikType->id;
             }
 
-            // Validasi ketat Status Non-ASN: wajib dan hanya boleh 'staf' atau 'magang'
+            // Validasi ketat Status Non-ASN: hanya boleh 'staf', 'magang_nasional', atau 'magang_biasa' ('magang' ditolak untuk pendaftar baru)
             $statusNonAsn = strtolower(trim((string) $statusNonAsn));
-            if (!in_array($statusNonAsn, ['staf', 'magang'], true)) {
+            if (!in_array($statusNonAsn, ['staf', 'magang_nasional', 'magang_biasa'], true)) {
                 return $this->respond([
                     'success' => false,
-                    'message' => 'Status Non-ASN wajib dipilih (Staf atau Magang).',
-                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf atau Magang.']
+                    'message' => 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).',
+                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf, Magang Nasional, atau Magang Biasa.']
                 ]);
             }
         } else {

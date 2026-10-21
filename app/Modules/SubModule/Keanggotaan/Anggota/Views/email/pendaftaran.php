@@ -56,7 +56,7 @@ $baris = static function (string $label, string $nilai): string {
                                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
                                     <?= $baris('Jenis anggota', (string) ($member->JenisAnggota ?? '-')) ?>
                                     <?php if (!empty($member->status_non_asn)): ?>
-                                        <?= $baris('Status Non-ASN', ucfirst($member->status_non_asn)) ?>
+                                        <?= $baris('Status Non-ASN', format_status_non_asn($member->status_non_asn)) ?>
                                     <?php endif; ?>
                                     <?= $baris('Unit kerja', (string) (get_member_unit_display($member) ?: '-')) ?>
                                     <?= $baris('Tanggal daftar', tgl_indonesia(substr((string) $member->RegisterDate, 0, 10))) ?>

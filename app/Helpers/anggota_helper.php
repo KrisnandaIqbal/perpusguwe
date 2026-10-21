@@ -437,12 +437,13 @@ if (!function_exists('hitungMasaBerlaku')) {
     /**
      * Menghitung masa berlaku keanggotaan berdasarkan aturan bisnis:
      * - ASN: tetap pakai logika lama (+1 year dari RegisterDate).
-     * - Non-ASN + Magang: +6 bulan dari tanggal konfirmasi petugas (clamped akhir bulan).
+     * - Magang Nasional (atau legacy 'magang'): +6 bulan dari tanggal konfirmasi petugas (clamped akhir bulan).
+     * - Magang Biasa: +1 bulan dari tanggal konfirmasi petugas (clamped akhir bulan).
      * - Non-ASN + Staf: +1 tahun dari tanggal konfirmasi petugas (clamped).
      * - Non-ASN + status_non_asn NULL: fallback +1 tahun dari tanggal konfirmasi + log warning.
      *
      * @param mixed $tipe (JenisAnggota_id / nama jenis / object member)
-     * @param string|null $statusNonAsn ('staf' | 'magang' | null)
+     * @param string|null $statusNonAsn ('staf' | 'magang' | 'magang_nasional' | 'magang_biasa' | null)
      * @param string|\DateTimeInterface|null $tanggalKonfirmasi (default: now)
      * @param string|null $registerDate (tanggal pendaftaran online)
      * @return array{end_date: string, end_date_formatted: string, durasi: string, label_status: string, preview_text: string}
@@ -476,11 +477,16 @@ if (!function_exists('hitungMasaBerlaku')) {
 
         $cleanStatus = strtolower(trim((string) $statusNonAsn));
 
-        if ($cleanStatus === 'magang') {
-            // Non-ASN + magang: masa berlaku 6 bulan sejak konfirmasi petugas
+        if ($cleanStatus === 'magang_nasional' || $cleanStatus === 'magang') {
+            // Non-ASN + Magang Nasional (atau legacy 'magang'): masa berlaku 6 bulan sejak konfirmasi petugas
             $targetDt = addMonthsClamped($dtKonfirmasi, 6);
             $durasi = '6 bulan';
-            $labelStatus = 'Non-ASN (Magang)';
+            $labelStatus = ($cleanStatus === 'magang_nasional') ? 'Non-ASN (Magang Nasional)' : 'Non-ASN (Magang)';
+        } elseif ($cleanStatus === 'magang_biasa') {
+            // Non-ASN + Magang Biasa: masa berlaku 1 bulan sejak konfirmasi petugas
+            $targetDt = addMonthsClamped($dtKonfirmasi, 1);
+            $durasi = '1 bulan';
+            $labelStatus = 'Non-ASN (Magang Biasa)';
         } elseif ($cleanStatus === 'staf') {
             // Non-ASN + staf: masa berlaku 1 tahun sejak konfirmasi petugas
             $targetDt = addMonthsClamped($dtKonfirmasi, 12);
@@ -504,6 +510,33 @@ if (!function_exists('hitungMasaBerlaku')) {
             'label_status'       => $labelStatus,
             'preview_text'       => 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.',
         ];
+    }
+}
+
+if (!function_exists('format_status_non_asn')) {
+    /**
+     * Memformat string enum status_non_asn menjadi label tampilan yang rapi.
+     *
+     * @param string|null $status
+     * @return string
+     */
+    function format_status_non_asn(?string $status): string {
+        if (empty($status)) {
+            return '';
+        }
+        $clean = strtolower(trim((string)$status));
+        switch ($clean) {
+            case 'magang_nasional':
+                return 'Magang Nasional';
+            case 'magang_biasa':
+                return 'Magang Biasa';
+            case 'magang':
+                return 'Magang';
+            case 'staf':
+                return 'Staf';
+            default:
+                return ucwords(str_replace('_', ' ', $clean));
+        }
     }
 }
 
