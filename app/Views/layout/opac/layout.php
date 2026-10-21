@@ -344,6 +344,12 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= base_url('home/pendaftaran-online') ?>">
+                            <i class="fa-solid fa-id-card me-1"></i>Pendaftaran Anggota
+                        </a>
+                    </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#"
                             id="navbarDropdownLayanan" role="button"
@@ -361,26 +367,24 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                                     <i class="fa-solid fa-address-book fa-fw text-secondary me-2"></i>Buku Tamu
                                 </a>
                             </li>
+                            <?php if (env('Is_keanggotaan_online') == 1): ?>
                             <li>
+                                <a class="dropdown-item" href="<?= base_url('home/pendaftaran-online') ?>">
+                                    <i class="fa-solid fa-id-card fa-fw text-secondary me-2"></i>Pendaftaran Anggota
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                            <!-- Menu Peminjaman & Pengembalian Mandiri disembunyikan sesuai butir 5 (fitur tetap aktif via direct URL) -->
+                            <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('peminjaman-mandiri') ?>">
                                     <i class="fa-solid fa-hand-holding-hand fa-fw text-secondary me-2"></i>Peminjaman Mandiri
                                 </a>
                             </li>
-                            <li>
+                            <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('pengembalian-mandiri') ?>">
                                     <i class="fa-solid fa-rotate-left fa-fw text-secondary me-2"></i>Pengembalian Mandiri
                                 </a>
                             </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <?php if (env('Is_keanggotaan_online') == 1): ?>
-                            <li>
-                                <a class="dropdown-item" href="<?= base_url('home/pendaftaran-online') ?>">
-                                    <i class="fa-solid fa-id-card fa-fw text-secondary me-2"></i>Keanggotaan Online
-                                </a>
-                            </li>
-                            <?php endif; ?>
                         </ul>
                     </li>
 
@@ -450,9 +454,10 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                 <div class="col-lg-2 col-md-6 mb-4 mb-lg-0 offset-lg-1">
                     <h5 class="footer-title">Layanan</h5>
                     <ul class="footer-links">
-                        <?php if (env('Is_keanggotaan_online') == 1): ?><li><a href="<?= base_url('home/pendaftaran_online') ?>">Keanggotaan Online</a></li><?php endif; ?>
-                        <li><a href="<?= base_url('peminjaman-mandiri') ?>">Peminjaman Mandiri</a></li>
-                        <li><a href="<?= base_url('pengembalian-mandiri') ?>">Pengembalian Mandiri</a></li>
+                        <?php if (env('Is_keanggotaan_online') == 1): ?><li><a href="<?= base_url('home/pendaftaran-online') ?>">Pendaftaran Anggota</a></li><?php endif; ?>
+                        <!-- Disembunyikan sesuai butir 5 -->
+                        <li style="display: none;"><a href="<?= base_url('peminjaman-mandiri') ?>">Peminjaman Mandiri</a></li>
+                        <li style="display: none;"><a href="<?= base_url('pengembalian-mandiri') ?>">Pengembalian Mandiri</a></li>
                         <li><a href="<?= base_url('opac') ?>">OPAC</a></li>
                     </ul>
                 </div>
