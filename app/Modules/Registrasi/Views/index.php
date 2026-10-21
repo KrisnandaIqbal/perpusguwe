@@ -2955,7 +2955,7 @@ if (!empty($jenis_identitas)) {
                         <!-- Agreement Box -->
                         <div class="rf-agree-box" id="agreeBox">
                             <div class="rf-agree-row">
-                                <input type="checkbox" id="Persetujuan" name="Persetujuan" value="1" disabled required>
+                                <input type="checkbox" id="Persetujuan" name="Persetujuan" value="1" required>
                                 <label for="Persetujuan">
                                     <strong>Pernyataan Pemustaka:</strong>
                                     Saya menyatakan data yang diisi adalah benar dan sah. Saya bersedia menaati tata tertib Perpustakaan serta menyetujui pemrosesan data pribadi untuk administrasi sirkulasi sesuai
@@ -4238,7 +4238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearFieldStatus(unitKerjaTrigger, badgeUnitKerja, feedbackUnitKerja);
 
                 cbPersetujuan.checked = false;
-                cbPersetujuan.disabled = true;
+                cbPersetujuan.disabled = false;
                 agreeBox.classList.remove('has-error', 'is-valid');
                 persetujuanFeedback.className = 'rf-field-feedback';
                 persetujuanFeedback.style.display = 'none';
