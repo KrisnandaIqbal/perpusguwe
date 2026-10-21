@@ -94,8 +94,26 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertNull($this->tamu('Tamu Salah Uji Otomatis'));
     }
 
+    public function testTanpaLokasiRuangKunjunganTetapTersimpan(): void
+    {
+        service('superglobals')->unsetCookie('Location_id');
+
+        $this->post('buku-tamu/non_anggota', [
+            'Nama'         => 'Tamu Tanpa Ruang Uji Otomatis',
+            'UnitKerja_id' => 'lainnya',
+            'UnitLainnya'  => 'Universitas Indonesia',
+            'HP'           => '081200005555',
+        ])->assertRedirectTo('/buku-tamu/non_anggota');
+
+        $tamu = $this->tamu('Tamu Tanpa Ruang Uji Otomatis');
+        $this->assertNotNull($tamu);
+        $this->assertNull($tamu->Location_Id);
+    }
+
     public function testFormBukanAnggotaTidakLagiMenanyakanIsianLama(): void
     {
+        // Tanpa lokasi ruang pun form langsung tampil, tidak dialihkan ke halaman Atur Lokasi
+        service('superglobals')->unsetCookie('Location_id');
         $result = $this->get('buku-tamu/non_anggota');
 
         $result->assertOK();

@@ -48,12 +48,7 @@ class GuestBook extends \App\Controllers\BaseController
 		// Get member data from database
 		$member = $member_no ? $this->db->table('members')->where('MemberNo', $member_no)->get()->getRow() : null;
 
-		// Get location id from cookie
-		$locationId = $this->request->getCookie('Location_id');
-		// Check if location id is available
-		if (!$locationId) {
-			return redirect()->to('buku-tamu/lokasi');
-		}
+		$locationId = $this->request->getCookie('Location_id') ?: null;
 	    $today = date('Y-m-d');
 		$builderAnggota = $this->db->table('memberguesses');
         $builderAnggota->where('DATE(CreateDate)', $today);
@@ -68,19 +63,8 @@ class GuestBook extends \App\Controllers\BaseController
 		$this->data['totalKunjungan'] = $totalKunjungan;
 
 
-		// Query for location data
-		$builder = $this->db->table('locations as a')
-			->select('a.ID, a.Code, a.Name')
-			->select('b.Name as LocationLibrary_name, b.Code as LocationLibrary_code')
-			->select('a.Branch_id, c.Name as Branch_name')
-			->join('location_library as b', 'b.ID = a.LocationLibrary_id', 'left')
-			->join('branchs as c', 'c.ID = a.Branch_id', 'left')
-			->where('a.ID', $locationId);
+		$data = $this->lokasiTamu($locationId);
 
-		// Get location data
-		$data = $builder->get()->getRow();
-
-		
 
 		if ($member) {
 			$pilihan = IsianTamu::pilihanUnit($this->db);
@@ -116,6 +100,28 @@ class GuestBook extends \App\Controllers\BaseController
 	}
 
 
+	/**
+	 * Ruang tempat buku tamu dibuka (cookie Location_id). Buku tamu tidak lagi mewajibkannya;
+	 * tanpa ruang, judul halaman memakai nama perpustakaan dan kunjungan tersimpan tanpa lokasi.
+	 */
+	private function lokasiTamu($locationId): object
+	{
+		$data = $locationId ? $this->db->table('locations as a')
+			->select('a.ID, a.Code, a.Name')
+			->select('b.Name as LocationLibrary_name, b.Code as LocationLibrary_code')
+			->select('a.Branch_id, c.Name as Branch_name')
+			->join('location_library as b', 'b.ID = a.LocationLibrary_id', 'left')
+			->join('branchs as c', 'c.ID = a.Branch_id', 'left')
+			->where('a.ID', $locationId)
+			->get()->getRow() : null;
+
+		return $data ?? (object) [
+			'Name'                 => $this->db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value ?? 'Perpustakaan Kemnaker RI',
+			'LocationLibrary_name' => 'Buku Tamu',
+			'Branch_id'            => null,
+		];
+	}
+
 	public function lokasi()
 	{
 		$this->data['title'] = 'Setting- Lokasi';
@@ -125,10 +131,7 @@ class GuestBook extends \App\Controllers\BaseController
 
 	public function store_anggota()
 	{
-		$locationId = $this->request->getCookie('Location_id');
-		if (!$locationId) {
-			return redirect()->to('buku-tamu');
-		}
+		$locationId = $this->request->getCookie('Location_id') ?: null;
 
 		$member_no = trim((string) $this->request->getPost('member_no'));
 		$member    = $member_no !== '' ? $this->db->table('members')->where('MemberNo', $member_no)->get()->getRow() : null;
@@ -178,22 +181,9 @@ class GuestBook extends \App\Controllers\BaseController
 	}
 	public function non_anggota($prefix = '')
 	{
-		$locationId = $this->request->getCookie('Location_id');
-		// Check if location id is available
-		if (!$locationId) {
-			return redirect()->to('buku-tamu/lokasi');
-		}
+		$locationId = $this->request->getCookie('Location_id') ?: null;
 		$this->data['SettingBukuTamu'] = $this->settingModel->where('Name', 'SettingBukuTamu')->first()->Value ?? '0';
-		$builder = $this->db->table('locations as a')
-			->select('a.ID, a.Code, a.Name')
-			->select('b.Name as LocationLibrary_name, b.Code as LocationLibrary_code')
-			->select('a.Branch_id, c.Name as Branch_name')
-			->join('location_library as b', 'b.ID = a.LocationLibrary_id', 'left')
-			->join('branchs as c', 'c.ID = a.Branch_id', 'left')
-			->where('a.ID', $locationId);
-
-		// Get location data
-		$data = $builder->get()->getRow();
+		$data = $this->lokasiTamu($locationId);
 		$this->data['title'] = 'Buku Tamu - Non Anggota';
 		$this->data['data'] = $data;
 		$branch_id = $data->Branch_id;
@@ -216,7 +206,7 @@ class GuestBook extends \App\Controllers\BaseController
 		$this->data['isian']  = [];
 		$this->data['errors'] = [];
 
-		if ($this->request->getPost()) {
+		if ($this->request->is('post')) {
 			$hasil = IsianTamu::periksa(
 				$this->request->getPost(),
 				array_column($pilihan['unit_kerja'], 'id'),
@@ -252,16 +242,12 @@ class GuestBook extends \App\Controllers\BaseController
 		$this->data['title'] = 'Buku Tamu - Bukan Anggota';
 		$this->data['tujuan_kunjungan'] = get_ref_table('tujuan_kunjungan', 'ID, TujuanKunjungan', 'nonmember=1', 'data');
 		$this->data['message'] = $this->data['errors'] ? 'Periksa lagi isian yang ditandai merah.' : $this->session->getFlashdata('message');
-		echo view('GuestBook\Views\add_non_anggota', $this->data);
+		return view('GuestBook\Views\add_non_anggota', $this->data);
 	}
 
 public function rombongan()
 {
-	$locationId = $this->request->getCookie('Location_id');
-	// Check if location id is available
-	if (!$locationId) {
-		return redirect()->to('buku-tamu/lokasi');
-	}
+	$locationId = $this->request->getCookie('Location_id') ?: null;
 	 $today = date('Y-m-d');
 		$builderAnggota = $this->db->table('memberguesses');
         $builderAnggota->where('DATE(CreateDate)', $today);
@@ -273,16 +259,7 @@ public function rombongan()
         $totalRombongan = (int)($resultRombongan->total_personel ?? 0);
 		$totalKunjungan = $totalAnggota + $totalRombongan;
 		$this->data['totalKunjungan'] = $totalKunjungan;
-	$builder = $this->db->table('locations as a')
-		->select('a.ID, a.Code, a.Name')
-		->select('b.Name as LocationLibrary_name, b.Code as LocationLibrary_code')
-		->select('a.Branch_id, c.Name as Branch_name')
-		->join('location_library as b', 'b.ID = a.LocationLibrary_id', 'left')
-		->join('branchs as c', 'c.ID = a.Branch_id', 'left')
-		->where('a.ID', $locationId);
-
-	// Get location data
-	$data = $builder->get()->getRow();
+	$data = $this->lokasiTamu($locationId);
 	$this->data['title'] = 'Buku Tamu - Rombongan';
 	$this->data['data'] = $data;
 	$branch_id = $data->Branch_id;
@@ -498,7 +475,7 @@ public function rombongan()
 	//$this->data['tujuan_kunjungan'] = get_ref_table('tujuan_kunjungan', 'ID, TujuanKunjungan', 'active=1', 'data');
 	$this->data['tujuan_kunjungan'] = get_ref_table('tujuan_kunjungan', 'ID, TujuanKunjungan', 'rombongan=1', 'data');
 	
-	echo view('GuestBook\Views\add_rombongan', $this->data);
+	return view('GuestBook\Views\add_rombongan', $this->data);
 }
 
 	public function getKnownFaces($prefix = '')
