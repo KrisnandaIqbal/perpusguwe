@@ -42,7 +42,7 @@
 								<!-- Mode 2: Berdasarkan Tanggal Berakhir -->
 								<div id="wrap_mode_tanggal_update" style="display:none;">
 									<div class="input-group">
-										<input type="date" class="form-control" id="frm_update_MasaBerlakuTanggal" name="target_expire_date" />
+										<input type="date" class="form-control" id="frm_update_MasaBerlakuTanggal" name="target_expire_date" disabled />
 										<div class="input-group-append">
 											<span class="input-group-text"><i class="fa fa-calendar"></i></span>
 										</div>
@@ -113,15 +113,7 @@
 			$('#preview_masa_berlaku_update').text('Masukkan jumlah hari atau pilih tanggal.');
 			return;
 		}
-		var targetDate = new Date();
-		targetDate.setDate(targetDate.getDate() + days);
-		var d = String(targetDate.getDate()).padStart(2, '0');
-		var m = String(targetDate.getMonth() + 1).padStart(2, '0');
-		var y = targetDate.getFullYear();
-		$('#preview_masa_berlaku_update').html('<i class="fa fa-info-circle text-info"></i> Berlaku <strong>' + days + ' hari</strong> (s/d <strong>' + d + '/' + m + '/' + y + '</strong>)');
-		
-		var isoDate = y + '-' + m + '-' + d;
-		$('#frm_update_MasaBerlakuTanggal').val(isoDate);
+		$('#preview_masa_berlaku_update').html('<i class="fa fa-info-circle text-info"></i> Berlaku <strong>' + days + ' hari</strong> untuk setiap anggota, tidak serentak.');
 	}
 
 	$('#btn_mode_hari_update').click(function() {
@@ -129,7 +121,7 @@
 		$('#btn_mode_tanggal_update').removeClass('active');
 		$('#wrap_mode_hari_update').show();
 		$('#wrap_mode_tanggal_update').hide();
-		$('#frm_update_MasaBerlakuTanggal').val('');
+		$('#frm_update_MasaBerlakuTanggal').val('').prop('disabled', true);
 		updatePreviewMasaBerlakuUpdate($('#frm_update_MasaBerlakuAnggota').val());
 	});
 
@@ -138,6 +130,7 @@
 		$('#btn_mode_hari_update').removeClass('active');
 		$('#wrap_mode_tanggal_update').show();
 		$('#wrap_mode_hari_update').hide();
+		$('#frm_update_MasaBerlakuTanggal').prop('disabled', false);
 	});
 
 	$('#frm_update_MasaBerlakuAnggota').on('input change', function() {
@@ -159,7 +152,8 @@
 			return;
 		}
 		$('#frm_update_MasaBerlakuAnggota').val(diffDays);
-		updatePreviewMasaBerlakuUpdate(diffDays);
+		var p = val.split('-');
+		$('#preview_masa_berlaku_update').html('<i class="fa fa-info-circle text-info"></i> Berlaku serentak s/d <strong>' + p[2] + '/' + p[1] + '/' + p[0] + '</strong> (' + diffDays + ' hari lagi)');
 	});
 
 	$("body").on("click", ".show-data", function() {
