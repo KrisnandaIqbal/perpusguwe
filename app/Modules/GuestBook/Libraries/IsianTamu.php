@@ -92,9 +92,56 @@ class IsianTamu
         ];
     }
 
-    /** Unit asal untuk ditampilkan di tabel admin. Butuh helper anggota. */
+    /** Rombongan paling sedikit 6 orang; kurang dari itu mengisi buku tamu perorangan. */
+    public const MIN_ROMBONGAN = 6;
+    public const MAX_ROMBONGAN = 1000;
+
+    /**
+     * Isian rombongan: Jenis (kemnaker atau lainnya), penanggung jawab (Nama, HP), unit atau instansi,
+     * dan CountPersonel. Pesan galat memakai nama isian yang sama dengan periksa().
+     *
+     * @return array{data: array, errors: array<string, string>}
+     */
+    public static function periksaRombongan(array $post, array $unitIds, array $subUnitsGrouped): array
+    {
+        $jenis = (string) ($post['Jenis'] ?? '');
+
+        // Jenis menentukan isian mana yang berlaku: Kemnaker memilih unit, Lainnya menulis instansi
+        if ($jenis === self::LAINNYA) {
+            $post['UnitKerja_id'] = self::LAINNYA;
+        } elseif ($jenis === 'kemnaker') {
+            $post['UnitLainnya'] = '';
+            if (($post['UnitKerja_id'] ?? '') === self::LAINNYA) {
+                $post['UnitKerja_id'] = '';
+            }
+        }
+
+        $hasil = self::periksa($post, $unitIds, $subUnitsGrouped);
+
+        if (!in_array($jenis, ['kemnaker', self::LAINNYA], true)) {
+            $hasil['errors'] = ['Jenis' => 'Pilih Kemnaker atau Lainnya.'] + $hasil['errors'];
+            unset($hasil['errors']['UnitKerja_id'], $hasil['errors']['SubUnitKerja_id'], $hasil['errors']['UnitLainnya']);
+        } elseif ($jenis === 'kemnaker' && isset($hasil['errors']['UnitKerja_id'])) {
+            $hasil['errors']['UnitKerja_id'] = 'Pilih satuan kerja penanggung jawab.';
+        }
+
+        $jumlah = trim((string) ($post['CountPersonel'] ?? ''));
+        if (!ctype_digit($jumlah) || (int) $jumlah < self::MIN_ROMBONGAN) {
+            $hasil['errors']['CountPersonel'] = 'Rombongan paling sedikit ' . self::MIN_ROMBONGAN . ' orang, termasuk penanggung jawab.';
+        } elseif ((int) $jumlah > self::MAX_ROMBONGAN) {
+            $hasil['errors']['CountPersonel'] = 'Jumlah anggota paling banyak ' . self::MAX_ROMBONGAN . ' orang.';
+        }
+
+        $hasil['data']['Jenis']         = $jenis;
+        $hasil['data']['CountPersonel'] = (int) $jumlah;
+
+        return $hasil;
+    }
+
+    /** Unit asal sebagai teks: "Satuan Kerja - Unit", nama instansi, atau "-". */
     public static function teksUnit(?string $unitNama, ?string $subUnitNama, ?string $unitLainnya): string
     {
+        helper('anggota');
         $lainnya = trim((string) $unitLainnya);
 
         return $lainnya !== '' ? $lainnya : format_unit_kerja($unitNama, $subUnitNama);

@@ -1,4 +1,4 @@
--- Buku tamu: kolom unit asal pengunjung (satuan kerja, unit, atau instansi di luar Kemnaker).
+-- Buku tamu: kolom unit asal pengunjung dan rombongan (satuan kerja, unit, atau instansi di luar Kemnaker).
 -- Nomor WhatsApp memakai kolom HP yang sudah ada.
 --
 -- Bisa langsung di-import di phpMyAdmin (pilih database dulu, lalu tab Import).
@@ -24,6 +24,20 @@ SET @sql = IF((SELECT COUNT(*) FROM information_schema.COLUMNS
               'SELECT 1');
 PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
 
-SELECT COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'memberguesses'
-  AND COLUMN_NAME IN ('UnitKerja_id', 'SubUnitKerja_id', 'UnitLainnya', 'HP');
+-- Rombongan Kemnaker: satuan kerja dan unit penanggung jawab. Nama unit atau instansi tetap ditulis di AsalInstansi.
+SET @sql = IF((SELECT COUNT(*) FROM information_schema.COLUMNS
+               WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'groupguesses' AND COLUMN_NAME = 'UnitKerja_id') = 0,
+              'ALTER TABLE groupguesses ADD COLUMN UnitKerja_id INT NULL AFTER AsalInstansi',
+              'SELECT 1');
+PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+
+SET @sql = IF((SELECT COUNT(*) FROM information_schema.COLUMNS
+               WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'groupguesses' AND COLUMN_NAME = 'SubUnitKerja_id') = 0,
+              'ALTER TABLE groupguesses ADD COLUMN SubUnitKerja_id INT NULL AFTER UnitKerja_id',
+              'SELECT 1');
+PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
+
+SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = @db
+  AND ((TABLE_NAME = 'memberguesses' AND COLUMN_NAME IN ('UnitKerja_id', 'SubUnitKerja_id', 'UnitLainnya', 'HP'))
+    OR (TABLE_NAME = 'groupguesses' AND COLUMN_NAME IN ('UnitKerja_id', 'SubUnitKerja_id')));

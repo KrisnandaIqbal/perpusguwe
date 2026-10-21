@@ -368,7 +368,6 @@
 					<span class="active">Bukan Anggota</span>
 				</nav>
 			</div><br>
-				<h2 style="background-color: #1b3878; color: #fff; padding: 10px; border-radius: 5px;">Total Kunjungan Hari ini <?=$totalKunjungan ?? '0'?></h2>
 		</div>
 
 		<!-- Navigation Tabs -->
@@ -416,23 +415,6 @@
 					'sub_units_grouped' => $sub_units_grouped,
 				]) ?>
 
-				<?php if ($SettingBukuTamu == 1) : ?>
-					<div class="form-group">
-							<div class="col-md-6" style="padding-left: 0;">
-								
-									<label for="TujuanKunjungan_id">Tujuan Kunjungan</label>
-									<select class="form-control" name="TujuanKunjungan_id" id="TujuanKunjungan_id">
-									  <option value="" disabled selected> ----- Pilih ----- </option>
-									  <?php foreach ($tujuan_kunjungan as $row) : ?>
-											<?php // PERBAIKAN: Menyamakan ID dengan id 
-											?>
-											<option value="<?= $row->ID ?>" <?= set_select('TujuanKunjungan_id', $row->ID) ?>><?= $row->TujuanKunjungan ?></option>
-										<?php endforeach; ?>
-									</select>
-							
-							</div>
-						</div>
-				<?php endif; ?>
 
 				<!-- Submit Button -->
 				<div class="submit-section">

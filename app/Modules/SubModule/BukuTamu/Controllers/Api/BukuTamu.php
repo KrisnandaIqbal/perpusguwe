@@ -135,7 +135,7 @@ public function non_anggota_datatable()
 		$builder = $db->table('groupguesses as a')
 			->select('a.ID, a.ID as id, a.ID as action')
 			->select('a.CreateDate as VisitDate')
-			->select('a.NamaKetua as Group_chief, a.AsalInstansi as Group_name, a.CountPersonel')
+			->select('a.NamaKetua as Group_chief, a.NomerTelponKetua as Group_phone, a.AsalInstansi as Group_name, a.CountPersonel')
 			->select('a.Location_id, locations.Name as Location_name')
 			->select('location_library.Name as LocationLibrary_name')
 			->join('locations', 'locations.ID = a.Location_id', 'left')
@@ -143,6 +143,8 @@ public function non_anggota_datatable()
 
 		$dataTable = DataTable::of($builder)
 			->addNumbering('no')
+			->edit('Group_phone', fn ($row) => esc($row->Group_phone ?: '-'))
+			->edit('Group_name', fn ($row) => esc($row->Group_name))
 			->edit('VisitDate', function ($row) {
 				$html   = '<b>' . $row->VisitDate . '</b>';
 				return $html;

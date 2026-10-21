@@ -393,7 +393,6 @@
 					<span class="active">Anggota</span>
 				</nav>
 			</div><br>
-			<h2 style="background-color: #1b3878; color: #fff; padding: 10px; border-radius: 5px;">Total Kunjungan Hari ini <?= $totalKunjungan ?? '0' ?></h2>
 		</div>
 
 		<!-- Navigation Tabs -->

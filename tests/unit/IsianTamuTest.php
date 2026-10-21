@@ -89,6 +89,60 @@ final class IsianTamuTest extends CIUnitTestCase
         $this->assertSame('Universitas Indonesia', $hasil['data']['UnitLainnya']);
     }
 
+    private function periksaRombongan(array $post): array
+    {
+        return IsianTamu::periksaRombongan($post + [
+            'Jenis'           => 'kemnaker',
+            'Nama'            => 'Budi Santoso',
+            'UnitKerja_id'    => '2',
+            'SubUnitKerja_id' => '21',
+            'UnitLainnya'     => '',
+            'HP'              => '081234567890',
+            'CountPersonel'   => '12',
+        ], $this->unitIds, $this->subUnits);
+    }
+
+    public function testRombonganKemnakerMemakaiUnit(): void
+    {
+        $hasil = $this->periksaRombongan(['UnitLainnya' => 'Diabaikan']);
+
+        $this->assertSame([], $hasil['errors']);
+        $this->assertSame(2, $hasil['data']['UnitKerja_id']);
+        $this->assertNull($hasil['data']['UnitLainnya']);
+        $this->assertSame(12, $hasil['data']['CountPersonel']);
+    }
+
+    public function testRombonganLainnyaMemakaiNamaInstansi(): void
+    {
+        $hasil = $this->periksaRombongan(['Jenis' => 'lainnya', 'UnitLainnya' => 'SMA Negeri 1 Jakarta']);
+
+        $this->assertSame([], $hasil['errors']);
+        $this->assertNull($hasil['data']['UnitKerja_id']);
+        $this->assertSame('SMA Negeri 1 Jakarta', $hasil['data']['UnitLainnya']);
+
+        $this->assertArrayHasKey('UnitLainnya', $this->periksaRombongan(['Jenis' => 'lainnya'])['errors']);
+    }
+
+    public function testRombonganKemnakerTidakBolehMemilihLainnya(): void
+    {
+        $this->assertArrayHasKey('UnitKerja_id', $this->periksaRombongan(['UnitKerja_id' => IsianTamu::LAINNYA])['errors']);
+    }
+
+    public function testRombonganWajibMemilihJenis(): void
+    {
+        $hasil = $this->periksaRombongan(['Jenis' => '']);
+
+        $this->assertSame(['Jenis'], array_keys($hasil['errors']));
+    }
+
+    public function testRombonganPalingSedikitEnamOrang(): void
+    {
+        $this->assertArrayHasKey('CountPersonel', $this->periksaRombongan(['CountPersonel' => '5'])['errors']);
+        $this->assertArrayHasKey('CountPersonel', $this->periksaRombongan(['CountPersonel' => ''])['errors']);
+        $this->assertArrayHasKey('CountPersonel', $this->periksaRombongan(['CountPersonel' => '6.5'])['errors']);
+        $this->assertArrayNotHasKey('CountPersonel', $this->periksaRombongan(['CountPersonel' => '6'])['errors']);
+    }
+
     public function testTeksUnitUntukDitampilkan(): void
     {
         helper('anggota');

@@ -459,7 +459,6 @@
 					<span class="active">Rombongan</span>
 				</nav>
 			</div><br>
-            	<h2 style="background-color: #1b3878; color: #fff; padding: 10px; border-radius: 5px;">Total Kunjungan Hari ini <?=$totalKunjungan ?? '0'?></h2>
 		</div>
 
 		<!-- Navigation Tabs -->
@@ -495,448 +494,18 @@
 		<!-- Form Section -->
 		<div class="form-section">
 			<h2 class="form-title">Buku Tamu Rombongan</h2>
-			<p class="form-subtitle">Silakan isi data rombongan dan detail anggota untuk tercatat sebagai pengunjung perpustakaan</p>
+			<p class="form-subtitle">Untuk kunjungan bersama paling sedikit 6 orang. Diisi oleh penanggung jawab rombongan.</p>
 
 			<form id="frm_create" method="post" action="<?= base_url('buku-tamu/rombongan') ?>">
 				<?= csrf_field() ?>
-				
-				<!-- Section 1: Data Penanggung Jawab -->
-				<div class="section-header">
-					<h3><i class="fas fa-user-tie"></i> Data Penanggung Jawab</h3>
-				</div>
 
-				<div class="form-row-2">
-					<div class="form-group">
-						<label for="NamaKetua" class="required">Nama Penanggung Jawab</label>
-						<input type="text" 
-							   class="form-control <?= session('errors.NamaKetua') ? 'is-invalid' : '' ?>" 
-							   name="NamaKetua" 
-							   id="NamaKetua" 
-							   placeholder="Masukkan nama penanggung jawab"
-							   value="<?= old('NamaKetua') ?>" 
-							   required>
-						<?php if (session('errors.NamaKetua')) : ?>
-							<div class="invalid-feedback"><?= session('errors.NamaKetua') ?></div>
-						<?php endif; ?>
-					</div>
-
-					<div class="form-group">
-						<label for="NomerTelponKetua" class="required">Nomor Telepon</label>
-						<input type="tel" 
-							   class="form-control <?= session('errors.NomerTelponKetua') ? 'is-invalid' : '' ?>" 
-							   name="NomerTelponKetua" 
-							   id="NomerTelponKetua" 
-							   placeholder="Contoh: 08123456789"
-							   value="<?= old('NomerTelponKetua') ?>" 
-							   required>
-						<?php if (session('errors.NomerTelponKetua')) : ?>
-							<div class="invalid-feedback"><?= session('errors.NomerTelponKetua') ?></div>
-						<?php endif; ?>
-					</div>
-				</div>
-
-				<!-- Section 2: Data Instansi -->
-				<div class="section-header">
-					<h3><i class="fas fa-building"></i> Data Instansi/Organisasi</h3>
-				</div>
-
-				<div class="form-row">
-					<div class="form-group">
-						<label for="AsalInstansi" class="required">Nama Instansi/Organisasi</label>
-						<input type="text" 
-							   class="form-control <?= session('errors.AsalInstansi') ? 'is-invalid' : '' ?>" 
-							   name="AsalInstansi" 
-							   id="AsalInstansi" 
-							   placeholder="Masukkan nama instansi atau organisasi"
-							   value="<?= old('AsalInstansi') ?>" 
-							   required>
-						<?php if (session('errors.AsalInstansi')) : ?>
-							<div class="invalid-feedback"><?= session('errors.AsalInstansi') ?></div>
-						<?php endif; ?>
-					</div>
-
-					<div class="form-group">
-						<label for="EmailInstansi">Email Instansi</label>
-						<input type="email" 
-							   class="form-control <?= session('errors.EmailInstansi') ? 'is-invalid' : '' ?>" 
-							   name="EmailInstansi" 
-							   id="EmailInstansi" 
-							   placeholder="contoh@instansi.com"
-							   value="<?= old('EmailInstansi') ?>">
-						<?php if (session('errors.EmailInstansi')) : ?>
-							<div class="invalid-feedback"><?= session('errors.EmailInstansi') ?></div>
-						<?php endif; ?>
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label for="AlamatInstansi">Alamat Instansi</label>
-					<textarea id="AlamatInstansi" 
-							  name="AlamatInstansi" 
-							  class="form-control <?= session('errors.AlamatInstansi') ? 'is-invalid' : '' ?>" 
-							  placeholder="Masukkan alamat lengkap instansi"
-							  rows="3"><?= old('AlamatInstansi') ?></textarea>
-					<?php if (session('errors.AlamatInstansi')) : ?>
-						<div class="invalid-feedback"><?= session('errors.AlamatInstansi') ?></div>
-					<?php endif; ?>
-				</div>
-
-				<!-- Section 3: Jumlah Anggota -->
-				<div class="section-header">
-					<h3><i class="fas fa-users"></i> Jumlah Anggota Rombongan</h3>
-				</div>
-
-				<!-- Total dan Gender -->
-				<div class="form-row-3">
-					<div class="form-group count-input">
-						<label for="CountPersonel" class="required">Total Anggota</label>
-						<input type="number" 
-							   class="form-control <?= session('errors.CountPersonel') ? 'is-invalid' : '' ?>" 
-							   name="CountPersonel" 
-							   id="CountPersonel" 
-							   placeholder="0"
-							   value="<?= old('CountPersonel', 0) ?>" 
-							   min="1"
-							   required>
-						<?php if (session('errors.CountPersonel')) : ?>
-							<div class="invalid-feedback"><?= session('errors.CountPersonel') ?></div>
-						<?php endif; ?>
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountLaki">Laki-laki</label>
-						<input type="number" 
-							   class="form-control" 
-							   name="CountLaki" 
-							   id="CountLaki" 
-							   placeholder="0"
-							   value="<?= old('CountLaki', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountPerempuan">Perempuan</label>
-						<input type="number" 
-							   class="form-control" 
-							   name="CountPerempuan" 
-							   id="CountPerempuan" 
-							   placeholder="0"
-							   value="<?= old('CountPerempuan', 0) ?>" 
-							   min="0">
-					</div>
-				</div>
-
-				<!-- Summary Gender -->
-				<div class="summary-box" id="genderSummary" style="display: none;">
-					<div class="summary-label">Total Berdasarkan Jenis Kelamin</div>
-					<div class="summary-total" id="genderTotal">0</div>
-				</div>
-
-				<!-- Section 4: Komposisi Profesi -->
-				<div class="section-header">
-					<h3><i class="fas fa-briefcase"></i> Komposisi Berdasarkan Profesi</h3>
-				</div>
-
-				<div class="form-row-4">
-					<div class="form-group count-input">
-						<label for="CountPNS">PNS</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountPNS" 
-							   id="CountPNS" 
-							   placeholder="0"
-							   value="<?= old('CountPNS', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountGuru">Guru</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountGuru" 
-							   id="CountGuru" 
-							   placeholder="0"
-							   value="<?= old('CountGuru', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountPSwasta">Pegawai Swasta</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountPSwasta" 
-							   id="CountPSwasta" 
-							   placeholder="0"
-							   value="<?= old('CountPSwasta', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountPeneliti">Peneliti</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountPeneliti" 
-							   id="CountPeneliti" 
-							   placeholder="0"
-							   value="<?= old('CountPeneliti', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountDosen">Dosen</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountDosen" 
-							   id="CountDosen" 
-							   placeholder="0"
-							   value="<?= old('CountDosen', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountPensiunan">Pensiunan</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountPensiunan" 
-							   id="CountPensiunan" 
-							   placeholder="0"
-							   value="<?= old('CountPensiunan', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountTNI">TNI/Polri</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountTNI" 
-							   id="CountTNI" 
-							   placeholder="0"
-							   value="<?= old('CountTNI', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountWiraswasta">Wiraswasta</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountWiraswasta" 
-							   id="CountWiraswasta" 
-							   placeholder="0"
-							   value="<?= old('CountWiraswasta', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountPelajar">Pelajar</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountPelajar" 
-							   id="CountPelajar" 
-							   placeholder="0"
-							   value="<?= old('CountPelajar', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountMahasiswa">Mahasiswa</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountMahasiswa" 
-							   id="CountMahasiswa" 
-							   placeholder="0"
-							   value="<?= old('CountMahasiswa', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountLainnya">Lainnya</label>
-						<input type="number" 
-							   class="form-control profesi-count" 
-							   name="CountLainnya" 
-							   id="CountLainnya" 
-							   placeholder="0"
-							   value="<?= old('CountLainnya', 0) ?>" 
-							   min="0">
-					</div>
-				</div>
-
-				<!-- Summary Profesi -->
-				<div class="summary-box" id="profesiSummary" style="display: none;">
-					<div class="summary-label">Total Berdasarkan Profesi</div>
-					<div class="summary-total" id="profesiTotal">0</div>
-				</div>
-
-				<!-- Section 5: Komposisi Pendidikan -->
-				<div class="section-header">
-					<h3><i class="fas fa-graduation-cap"></i> Komposisi Berdasarkan Pendidikan</h3>
-				</div>
-
-				<div class="form-row-4">
-					<div class="form-group count-input">
-						<label for="CountTk">TK</label>
-						<input type="number"
-							   class="form-control pendidikan-count"
-							   name="CountTk"
-							   id="CountTk"
-							   placeholder="0"
-							   value="<?= old('CountTk', 0) ?>"
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountSD">SD</label>
-						<input type="number"
-							   class="form-control pendidikan-count"
-							   name="CountSD"
-							   id="CountSD"
-							   placeholder="0"
-							   value="<?= old('CountSD', 0) ?>"
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountSMP">SMP</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountSMP" 
-							   id="CountSMP" 
-							   placeholder="0"
-							   value="<?= old('CountSMP', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountSMA">SMA</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountSMA" 
-							   id="CountSMA" 
-							   placeholder="0"
-							   value="<?= old('CountSMA', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountD1">D1</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountD1" 
-							   id="CountD1" 
-							   placeholder="0"
-							   value="<?= old('CountD1', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountD2">D2</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountD2" 
-							   id="CountD2" 
-							   placeholder="0"
-							   value="<?= old('CountD2', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountD3">D3</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountD3" 
-							   id="CountD3" 
-							   placeholder="0"
-							   value="<?= old('CountD3', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountS1">S1</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountS1" 
-							   id="CountS1" 
-							   placeholder="0"
-							   value="<?= old('CountS1', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountS2">S2</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountS2" 
-							   id="CountS2" 
-							   placeholder="0"
-							   value="<?= old('CountS2', 0) ?>" 
-							   min="0">
-					</div>
-
-					<div class="form-group count-input">
-						<label for="CountS3">S3</label>
-						<input type="number" 
-							   class="form-control pendidikan-count" 
-							   name="CountS3" 
-							   id="CountS3" 
-							   placeholder="0"
-							   value="<?= old('CountS3', 0) ?>" 
-							   min="0">
-					</div>
-				</div>
-
-				<!-- Summary Pendidikan -->
-				<div class="summary-box" id="pendidikanSummary" style="display: none;">
-					<div class="summary-label">Total Berdasarkan Pendidikan</div>
-					<div class="summary-total" id="pendidikanTotal">0</div>
-				</div>
-
-				<!-- Section 6: Informasi Tambahan -->
-				<div class="section-header">
-					<h3><i class="fas fa-info-circle"></i> Informasi Tambahan</h3>
-				</div>
-
-				<div class="form-row-2">
-					<div class="form-group">
-						<label for="TeleponInstansi">Telepon Instansi</label>
-						<input type="tel" 
-							   class="form-control <?= session('errors.TeleponInstansi') ? 'is-invalid' : '' ?>" 
-							   name="TeleponInstansi" 
-							   id="TeleponInstansi" 
-							   placeholder="Contoh: 021-1234567"
-							   value="<?= old('TeleponInstansi') ?>">
-						<?php if (session('errors.TeleponInstansi')) : ?>
-							<div class="invalid-feedback"><?= session('errors.TeleponInstansi') ?></div>
-						<?php endif; ?>
-					</div>
-
-					<div class="form-group">
-						<label for="TujuanKunjungan_ID">Tujuan Kunjungan</label>
-						<select class="form-control <?= session('errors.TujuanKunjungan_ID') ? 'is-invalid' : '' ?>" 
-								name="TujuanKunjungan_ID" 
-								id="TujuanKunjungan_ID">
-							<option value="" disabled selected> ----- Pilih ----- </option>
-									  <?php foreach ($tujuan_kunjungan as $row) : ?>
-								<option value="<?= $row->ID ?>" <?= old('TujuanKunjungan_ID') == $row->ID ? 'selected' : '' ?>>
-									<?= $row->TujuanKunjungan ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-						<?php if (session('errors.TujuanKunjungan_ID')) : ?>
-							<div class="invalid-feedback"><?= session('errors.TujuanKunjungan_ID') ?></div>
-						<?php endif; ?>
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label for="Information">Keterangan Tambahan</label>
-					<textarea id="Information" 
-							  name="Information" 
-							  class="form-control <?= session('errors.Information') ? 'is-invalid' : '' ?>" 
-							  placeholder="Masukkan keterangan atau catatan tambahan (opsional)"
-							  rows="3"><?= old('Information') ?></textarea>
-					<?php if (session('errors.Information')) : ?>
-						<div class="invalid-feedback"><?= session('errors.Information') ?></div>
-					<?php endif; ?>
-				</div>
+				<?= view('GuestBook\Views\isian_tamu', [
+					'isian'             => $isian,
+					'errors'            => $errors,
+					'unit_kerja'        => $unit_kerja,
+					'sub_units_grouped' => $sub_units_grouped,
+					'rombongan'         => true,
+				]) ?>
 
 				<!-- Submit Button -->
 				<div class="submit-section">
@@ -960,7 +529,7 @@
 <script>
 // Auto-focus pada input pertama
 document.addEventListener('DOMContentLoaded', function() {
-	const firstInput = document.getElementById('NamaKetua');
+	const firstInput = document.getElementById('Nama');
 	if (firstInput) {
 		firstInput.focus();
 	}
@@ -977,11 +546,6 @@ document.addEventListener('DOMContentLoaded', function() {
 		}, 7000);
 	}
 
-	// Check for toastr messages
-	checkToastrMessages();
-	
-	// Initialize calculations
-	calculateTotals();
 });
 
 
@@ -1047,125 +611,11 @@ function showCustomNotification(message, type) {
 	}, autoRemoveTime);
 }
 
-// Calculate totals function
-function calculateTotals() {
-	// Gender calculation
-	const laki = parseInt(document.getElementById('CountLaki').value) || 0;
-	const perempuan = parseInt(document.getElementById('CountPerempuan').value) || 0;
-	const genderTotal = laki + perempuan;
-	
-	document.getElementById('genderTotal').textContent = genderTotal;
-	document.getElementById('genderSummary').style.display = genderTotal > 0 ? 'block' : 'none';
-	
-	// Profesi calculation
-	const profesiInputs = document.querySelectorAll('.profesi-count');
-	let profesiTotal = 0;
-	profesiInputs.forEach(input => {
-		profesiTotal += parseInt(input.value) || 0;
-	});
-	
-	document.getElementById('profesiTotal').textContent = profesiTotal;
-	document.getElementById('profesiSummary').style.display = profesiTotal > 0 ? 'block' : 'none';
-	
-	// Pendidikan calculation
-	const pendidikanInputs = document.querySelectorAll('.pendidikan-count');
-	let pendidikanTotal = 0;
-	pendidikanInputs.forEach(input => {
-		pendidikanTotal += parseInt(input.value) || 0;
-	});
-	
-	document.getElementById('pendidikanTotal').textContent = pendidikanTotal;
-	document.getElementById('pendidikanSummary').style.display = pendidikanTotal > 0 ? 'block' : 'none';
-}
-
-// Add event listeners untuk auto calculation
-document.getElementById('CountLaki').addEventListener('input', calculateTotals);
-document.getElementById('CountPerempuan').addEventListener('input', calculateTotals);
-
-document.querySelectorAll('.profesi-count').forEach(input => {
-	input.addEventListener('input', calculateTotals);
-});
-
-document.querySelectorAll('.pendidikan-count').forEach(input => {
-	input.addEventListener('input', calculateTotals);
-});
-
 // Form validation
 document.getElementById('frm_create').addEventListener('submit', function(e) {
 	const saveBtn = document.getElementById('saveBtn');
 	const btnText = saveBtn.querySelector('.btn-text');
 	const btnLoading = saveBtn.querySelector('.btn-loading');
-	
-	// Basic validation
-	const namaKetua = document.getElementById('NamaKetua').value.trim();
-	const nomorTelpon = document.getElementById('NomerTelponKetua').value.trim();
-	const asalInstansi = document.getElementById('AsalInstansi').value.trim();
-	const countPersonel = parseInt(document.getElementById('CountPersonel').value) || 0;
-	
-	if (!namaKetua || !nomorTelpon || !asalInstansi || countPersonel < 1) {
-		e.preventDefault();
-		showCustomNotification('Mohon lengkapi semua field yang wajib diisi (bertanda *)', 'error');
-		return false;
-	}
-	
-	// Validate phone number format
-	const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
-	if (!phoneRegex.test(nomorTelpon)) {
-		e.preventDefault();
-		showCustomNotification('Format nomor telepon tidak valid. Gunakan format: 08123456789', 'error');
-		document.getElementById('NomerTelponKetua').focus();
-		return false;
-	}
-	
-	// Validate email if provided
-	const email = document.getElementById('EmailInstansi').value.trim();
-	if (email) {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(email)) {
-			e.preventDefault();
-			showCustomNotification('Format email tidak valid', 'error');
-			document.getElementById('EmailInstansi').focus();
-			return false;
-		}
-	}
-	
-	// Check if gender total matches total personel (optional warning)
-	const laki = parseInt(document.getElementById('CountLaki').value) || 0;
-	const perempuan = parseInt(document.getElementById('CountPerempuan').value) || 0;
-	const genderTotal = laki + perempuan;
-	
-	if (genderTotal > 0 && genderTotal !== countPersonel) {
-		if (!confirm(`Jumlah laki-laki + perempuan (${genderTotal}) tidak sama dengan total anggota (${countPersonel}). Lanjutkan?`)) {
-			e.preventDefault();
-			return false;
-		}
-	}
-	
-	// Check if profesi total exceeds total personel (optional warning)
-	const profesiInputs = document.querySelectorAll('.profesi-count');
-	let profesiTotal = 0;
-	profesiInputs.forEach(input => {
-		profesiTotal += parseInt(input.value) || 0;
-	});
-	
-	// Check if pendidikan total exceeds total personel (optional warning)
-	const pendidikanInputs = document.querySelectorAll('.pendidikan-count');
-	let pendidikanTotal = 0;
-	pendidikanInputs.forEach(input => {
-		pendidikanTotal += parseInt(input.value) || 0;
-	});
-	
-	if (profesiTotal > countPersonel) {
-		e.preventDefault();
-		showCustomNotification(`Total berdasarkan profesi (${profesiTotal}) tidak boleh melebihi total anggota (${countPersonel})`, 'error');
-		return false;
-	}
-	
-	if (pendidikanTotal > countPersonel) {
-		e.preventDefault();
-		showCustomNotification(`Total berdasarkan pendidikan (${pendidikanTotal}) tidak boleh melebihi total anggota (${countPersonel})`, 'error');
-		return false;
-	}
 	
 	// Show loading state
 	saveBtn.disabled = true;
@@ -1180,44 +630,6 @@ document.getElementById('frm_create').addEventListener('submit', function(e) {
 			btnLoading.style.display = 'none';
 		}
 	}, 15000); // 15 detik timeout untuk form yang lebih kompleks
-});
-
-// Auto-format phone number
-document.getElementById('NomerTelponKetua').addEventListener('input', function(e) {
-	let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-	
-	// Auto-format Indonesian phone numbers
-	if (value.startsWith('62')) {
-		value = '0' + value.substring(2);
-	}
-	
-	e.target.value = value;
-});
-
-// Validate total personel input
-document.getElementById('CountPersonel').addEventListener('input', function(e) {
-	const value = parseInt(e.target.value);
-	if (value < 1) {
-		e.target.value = 1;
-	}
-	calculateTotals();
-});
-
-// Auto-calculate when total personel changes
-document.getElementById('CountPersonel').addEventListener('change', function(e) {
-	const totalPersonel = parseInt(e.target.value) || 0;
-	
-	// Optional: Auto-distribute gender if not set
-	const laki = parseInt(document.getElementById('CountLaki').value) || 0;
-	const perempuan = parseInt(document.getElementById('CountPerempuan').value) || 0;
-	
-	if (totalPersonel > 0 && laki === 0 && perempuan === 0) {
-		// Auto-suggest equal distribution
-		const halfTotal = Math.floor(totalPersonel / 2);
-		document.getElementById('CountLaki').value = halfTotal;
-		document.getElementById('CountPerempuan').value = totalPersonel - halfTotal;
-		calculateTotals();
-	}
 });
 
 // Remove validation styling on input
@@ -1281,7 +693,7 @@ document.head.appendChild(style);
 		Swal.fire({
 			icon: 'success',
 			title: 'Berhasil!',
-			text: '<?= session()->getFlashdata('success') ?>',
+			text: <?= json_encode((string) session()->getFlashdata('success'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
 			showConfirmButton: false,
 			timer: 3000
 		});

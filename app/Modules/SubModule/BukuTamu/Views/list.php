@@ -52,6 +52,8 @@ if ($slug === null) {
         </li>
     </ul>
 
+    <?= view('BukuTamu\Views\ringkasan_hari_ini', ['hari_ini' => $hari_ini ?? null]) ?>
+
     <div class="main-card mb-3 card">
         <div class="card-header"><i class="header-icon lnr-list icon-gradient bg-plum-plate"> </i>Tabel Buku Tamu
             <div class="btn-actions-pane-right actions-icon-btn">

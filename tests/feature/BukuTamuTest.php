@@ -38,6 +38,7 @@ final class BukuTamuTest extends CIUnitTestCase
     {
         service('superglobals')->unsetCookie('Location_id');
         db_connect()->table('memberguesses')->like('Nama', 'Uji Otomatis')->delete();
+        db_connect()->table('groupguesses')->like('NamaKetua', 'Uji Otomatis')->delete();
         parent::tearDown();
     }
 
@@ -123,6 +124,8 @@ final class BukuTamuTest extends CIUnitTestCase
         $result->assertDontSee('name="JenisKelamin_id"');
         $result->assertDontSee('name="Alamat"');
         $result->assertDontSee('>Kementerian Ketenagakerjaan Republik Indonesia<');
+        $result->assertDontSee('name="TujuanKunjungan_id"');
+        $result->assertDontSee('Total Kunjungan Hari ini');
     }
 
     public function testAnggotaTersimpanDenganNomorAnggota(): void
@@ -171,5 +174,73 @@ final class BukuTamuTest extends CIUnitTestCase
         $result->assertOK();
         $this->assertStringContainsString('value="' . ($anggota->NoHp ?: $anggota->Phone) . '"', $result->getBody());
         $result->assertSee('Simpan Kunjungan');
+    }
+    private function rombongan(string $nama): ?object
+    {
+        return db_connect()->table('groupguesses')->where('NamaKetua', $nama)->get()->getRow();
+    }
+
+    public function testRombonganKemnakerTersimpanDenganUnit(): void
+    {
+        $this->post('buku-tamu/rombongan', [
+            'Jenis'           => 'kemnaker',
+            'Nama'            => 'Ketua Kemnaker Uji Otomatis',
+            'UnitKerja_id'    => '2',
+            'SubUnitKerja_id' => (string) $this->subUnitId,
+            'HP'              => '+62 812 0000 6666',
+            'CountPersonel'   => '12',
+        ])->assertRedirectTo('/buku-tamu/rombongan');
+
+        $r = $this->rombongan('Ketua Kemnaker Uji Otomatis');
+        $this->assertNotNull($r);
+        $this->assertSame('081200006666', $r->NomerTelponKetua);
+        $this->assertSame('2', (string) $r->UnitKerja_id);
+        $this->assertStringStartsWith('Sekretariat Jenderal - ', $r->AsalInstansi);
+        $this->assertSame('12', (string) $r->CountPersonel);
+    }
+
+    public function testRombonganLainnyaTersimpanDenganNamaInstansi(): void
+    {
+        $this->post('buku-tamu/rombongan', [
+            'Jenis'         => 'lainnya',
+            'Nama'          => 'Ketua Lainnya Uji Otomatis',
+            'UnitLainnya'   => 'SMA Negeri 1 Jakarta',
+            'HP'            => '081200007777',
+            'CountPersonel' => '30',
+        ]);
+
+        $r = $this->rombongan('Ketua Lainnya Uji Otomatis');
+        $this->assertNotNull($r);
+        $this->assertNull($r->UnitKerja_id);
+        $this->assertSame('SMA Negeri 1 Jakarta', $r->AsalInstansi);
+    }
+
+    public function testRombonganKurangDariEnamOrangDitolak(): void
+    {
+        $result = $this->post('buku-tamu/rombongan', [
+            'Jenis'         => 'lainnya',
+            'Nama'          => 'Ketua Kecil Uji Otomatis',
+            'UnitLainnya'   => 'SMA Negeri 1 Jakarta',
+            'HP'            => '081200008888',
+            'CountPersonel' => '5',
+        ]);
+
+        $result->assertOK();
+        $result->assertSee('Rombongan paling sedikit 6 orang');
+        $this->assertNull($this->rombongan('Ketua Kecil Uji Otomatis'));
+    }
+
+    public function testFormRombonganHanyaMenanyakanIsianBaru(): void
+    {
+        $result = $this->get('buku-tamu/rombongan');
+
+        $result->assertOK();
+        $body = $result->getBody();
+        $this->assertStringContainsString('value="kemnaker"', $body);
+        $this->assertStringContainsString('name="CountPersonel"', $body);
+        foreach (['EmailInstansi', 'AlamatInstansi', 'CountLaki', 'CountPNS', 'CountSD', 'TujuanKunjungan_ID'] as $lama) {
+            $this->assertStringNotContainsString('name="' . $lama . '"', $body);
+        }
+        $result->assertDontSee('Total Kunjungan Hari ini');
     }
 }
