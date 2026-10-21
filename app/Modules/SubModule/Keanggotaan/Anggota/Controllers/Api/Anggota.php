@@ -382,11 +382,21 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		}
 
 		// 4. Periksa relasi database (foreign keys / data transaksi)
-		$db = db_connect();
-		$loanCount        = $db->table('collectionloans')->where('Member_id', $id)->countAllResults();
-		$loanItemCount    = $db->table('collectionloanitems')->where('member_id', $id)->countAllResults();
-		$pelanggaranCount = $db->table('pelanggaran')->where('Member_id', $id)->countAllResults();
-		$sumbanganCount   = $db->table('sumbangan')->where('Member_id', $id)->countAllResults();
+		// Hanya transaksi sejak pendaftar dibuat yang dihitung: baris lebih lama milik anggota yang sudah
+		// dihapus (atau sisa migrasi) dan kebetulan menunjuk ke ID yang sama, bukan riwayat pendaftar ini.
+		$db         = db_connect();
+		$sejak      = $member->CreateDate ?? $member->RegisterDate ?? null;
+		$hitungSejak = function (string $tabel, string $kolom) use ($db, $id, $sejak): int {
+			$builder = $db->table($tabel)->where($kolom, $id);
+			if (!empty($sejak)) {
+				$builder->where('CreateDate >=', $sejak);
+			}
+			return $builder->countAllResults();
+		};
+		$loanCount        = $hitungSejak('collectionloans', 'Member_id');
+		$loanItemCount    = $hitungSejak('collectionloanitems', 'member_id');
+		$pelanggaranCount = $hitungSejak('pelanggaran', 'Member_id');
+		$sumbanganCount   = $hitungSejak('sumbangan', 'Member_id');
 
 		if ($loanCount > 0 || $loanItemCount > 0 || $pelanggaranCount > 0 || $sumbanganCount > 0) {
 			return $this->simpleResponse([
