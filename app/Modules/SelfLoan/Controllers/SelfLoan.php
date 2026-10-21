@@ -318,10 +318,28 @@ class SelfLoan extends \App\Controllers\BaseController
      */
     private function getLoanConfiguration($member, $carts)
     {
+        // 1. Prioritas Utama: Konfigurasi dari Master Jenis Anggota (Menu: master-jenis-anggota)
+        $jenisAnggotaId = is_object($member) ? ($member->JenisAnggota_id ?? null) : $member;
+        $jenis_anggota = null;
+        if (!empty($jenisAnggotaId)) {
+            $jenis_anggota = $this->db->table('jenis_anggota')
+                ->where('id', $jenisAnggotaId)
+                ->get()
+                ->getRow();
+        }
+        
+        if ($jenis_anggota && !empty($jenis_anggota->MaxLoanDays) && (int)$jenis_anggota->MaxLoanDays > 0) {
+            return [
+                'max_loan_days' => (int)$jenis_anggota->MaxLoanDays,
+                'max_pinjam_koleksi' => (int)($jenis_anggota->MaxPinjamKoleksi ?? 2),
+                'source' => 'Jenis Anggota (' . ($jenis_anggota->jenisanggota ?? '') . ')'
+            ];
+        }
+
         $today = new \DateTime();
         $day_index = $today->format('N'); // 1=Monday, 7=Sunday
         
-        // 1. Check peminjaman_hari (Day-based rules) - Highest Priority
+        // 2. Check peminjaman_hari (Day-based rules)
         $day_rule = $this->db->table('peraturan_peminjaman_hari')
             ->where('DayIndex', $day_index)
             ->where('active', 1)
@@ -330,13 +348,13 @@ class SelfLoan extends \App\Controllers\BaseController
             
         if ($day_rule) {
             return [
-                'max_loan_days' => $day_rule->MaxLoanDays,
-                'max_pinjam_koleksi' => $day_rule->MaxPinjamKoleksi,
+                'max_loan_days' => (int)$day_rule->MaxLoanDays,
+                'max_pinjam_koleksi' => (int)$day_rule->MaxPinjamKoleksi,
                 'source' => 'Peraturan Hari (' . $this->getDayName($day_index) . ')'
             ];
         }
         
-        // 2. Check peminjaman_tanggal (Date range rules)
+        // 3. Check peminjaman_tanggal (Date range rules)
         $today_formatted = $today->format('Y-m-d H:i:s');
         $date_rule = $this->db->table('peraturan_peminjaman_tanggal')
             ->where('TanggalAwal <=', $today_formatted)
@@ -347,18 +365,19 @@ class SelfLoan extends \App\Controllers\BaseController
             
         if ($date_rule) {
             return [
-                'max_loan_days' => $date_rule->MaxLoanDays,
-                'max_pinjam_koleksi' => $date_rule->MaxPinjamKoleksi,
+                'max_loan_days' => (int)$date_rule->MaxLoanDays,
+                'max_pinjam_koleksi' => (int)$date_rule->MaxPinjamKoleksi,
                 'source' => 'Peraturan Tanggal'
             ];
         }
         
-        // 3. Check jenis bahan pustaka (Material type - worksheets)
+        // 4. Check jenis bahan pustaka (Material type - worksheets)
         $worksheet_limits = $this->getWorksheetLimits($carts);
         if ($worksheet_limits) {
             // Check if current loan exceeds worksheet limit
+            $memberId = is_object($member) ? ($member->ID ?? $member->id ?? 0) : 0;
             $current_loan_count = $this->db->table('collectionloanitems')
-                ->where('member_id', $member->ID)
+                ->where('member_id', $memberId)
                 ->where('LoanStatus', 'Loan')
                 ->where('active', 1)
                 ->countAllResults();
@@ -368,23 +387,17 @@ class SelfLoan extends \App\Controllers\BaseController
             if ($total_requested > $worksheet_limits['max_pinjam_koleksi']) {
                 // Return worksheet limit for validation
                 return [
-                    'max_loan_days' => $worksheet_limits['max_loan_days'],
-                    'max_pinjam_koleksi' => $worksheet_limits['max_pinjam_koleksi'],
+                    'max_loan_days' => (int)$worksheet_limits['max_loan_days'],
+                    'max_pinjam_koleksi' => (int)$worksheet_limits['max_pinjam_koleksi'],
                     'source' => 'Jenis Bahan Pustaka (' . ($worksheet_limits['worksheet_name'] ?? 'Unknown') . ')'
                 ];
             }
         }
         
-        // 4. Default to jenis_anggota (Member type) - Lowest Priority
-        $jenis_anggota = $this->db->table('jenis_anggota')
-            ->where('id', $member->JenisAnggota_id)
-            ->get()
-            ->getRow();
-        
         return [
-            'max_loan_days' => $jenis_anggota->MaxLoanDays ?? 3,
-            'max_pinjam_koleksi' => $jenis_anggota->MaxPinjamKoleksi ?? 1000,
-            'source' => 'Jenis Anggota (' . ($jenis_anggota->jenisanggota ?? 'Unknown') . ')'
+            'max_loan_days' => (int)($jenis_anggota->MaxLoanDays ?? 10),
+            'max_pinjam_koleksi' => (int)($jenis_anggota->MaxPinjamKoleksi ?? 2),
+            'source' => 'Default'
         ];
     }
     
@@ -667,8 +680,9 @@ class SelfLoan extends \App\Controllers\BaseController
         
         // Get loan details
         $loan = $this->db->table('collectionloans as cl')
-            ->select('cl.*, m.MemberNo, m.Fullname, m.Email, m.Phone')
+            ->select('cl.*, m.MemberNo, m.Fullname, m.Email, m.Phone, ja.MaxLoanDays, ja.MaxPinjamKoleksi, ja.jenisanggota as JenisAnggota_name')
             ->join('members as m', 'm.ID = cl.Member_id')
+            ->join('jenis_anggota as ja', 'ja.id = m.JenisAnggota_id', 'left')
             ->where('cl.ID', $loanId)
             ->get()
             ->getRow();
