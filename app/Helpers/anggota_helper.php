@@ -477,6 +477,26 @@ if (!function_exists('hitungMasaBerlaku')) {
 
         $cleanStatus = strtolower(trim((string) $statusNonAsn));
 
+        // Jika status_non_asn kosong, periksa apakah jenis anggota itu sendiri adalah Magang Nasional atau Magang Biasa
+        if (empty($cleanStatus)) {
+            $jaName = '';
+            if (is_numeric($tipe)) {
+                $db = db_connect();
+                $ja = $db->table('jenis_anggota')->where('id', (int) $tipe)->get()->getRow();
+                $jaName = $ja ? strtolower(trim($ja->jenisanggota)) : '';
+            } elseif (is_string($tipe)) {
+                $jaName = strtolower(trim($tipe));
+            }
+
+            if (strpos($jaName, 'magang nasional') !== false) {
+                $cleanStatus = 'magang_nasional';
+            } elseif (strpos($jaName, 'magang biasa') !== false) {
+                $cleanStatus = 'magang_biasa';
+            } elseif (strpos($jaName, 'magang') !== false) {
+                $cleanStatus = 'magang';
+            }
+        }
+
         if ($cleanStatus === 'magang_nasional' || $cleanStatus === 'magang') {
             // Non-ASN + Magang Nasional (atau legacy 'magang'): masa berlaku 6 bulan sejak konfirmasi petugas
             $targetDt = addMonthsClamped($dtKonfirmasi, 6);
