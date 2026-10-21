@@ -19,7 +19,7 @@ INSERT INTO `jenis_anggota` (
     `active`,
     `CreateDate`
 )
-SELECT 'Magang Nasional', 180, 0, 0, 2, 7, 0, 1, NOW()
+SELECT 'Magang Nasional', 180, 0, 0, 2, 7, 0, 0, NOW()
 WHERE NOT EXISTS (
     SELECT 1 FROM `jenis_anggota` WHERE LOWER(TRIM(`jenisanggota`)) = 'magang nasional'
 );
@@ -36,7 +36,7 @@ INSERT INTO `jenis_anggota` (
     `active`,
     `CreateDate`
 )
-SELECT 'Magang Biasa', 30, 0, 0, 2, 7, 0, 1, NOW()
+SELECT 'Magang Biasa', 30, 0, 0, 2, 7, 0, 0, NOW()
 WHERE NOT EXISTS (
     SELECT 1 FROM `jenis_anggota` WHERE LOWER(TRIM(`jenisanggota`)) = 'magang biasa'
 );

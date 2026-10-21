@@ -35,6 +35,7 @@ class Registrasi extends BaseController
         
         $data['jenis_anggota'] = $this->db->table('jenis_anggota')
                                           ->where('active', 1)
+                                          ->whereIn('jenisanggota', ['ASN', 'Non ASN'])
                                           ->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)
                                           ->get()->getResult();
 
