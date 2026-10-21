@@ -497,38 +497,88 @@ if (!function_exists('hitungMasaBerlaku')) {
             }
         }
 
+        $previewText = '';
         if ($cleanStatus === 'magang_nasional' || $cleanStatus === 'magang') {
-            // Non-ASN + Magang Nasional (atau legacy 'magang'): masa berlaku 6 bulan sejak konfirmasi petugas
-            $targetDt = addMonthsClamped($dtKonfirmasi, 6);
-            $durasi = '6 bulan';
-            $labelStatus = ($cleanStatus === 'magang_nasional') ? 'Non-ASN (Magang Nasional)' : 'Non-ASN (Magang)';
+            // Ambil aturan masa berlaku langsung dari Pengaturan Anggota (master jenis_anggota)
+            $db = db_connect();
+            $jaMagang = $db->table('jenis_anggota')
+                ->where('LOWER(jenisanggota)', 'magang nasional')
+                ->get()->getRow();
+
+            if ($jaMagang && !empty($jaMagang->target_expire_date)) {
+                // Sesuai tanggal serentak dari Pengaturan Anggota
+                $targetDt = new \DateTime($jaMagang->target_expire_date . ' 00:00:00');
+                $diffDays = (int) $dtKonfirmasi->diff($targetDt)->format('%r%a');
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = ($diffDays > 0) ? ($diffDays . ' hari') : ('s/d ' . $formatted);
+                $labelStatus = 'Non-ASN (Magang Nasional)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku serentak berakhir ' . $formatted . ($diffDays > 0 ? " ({$diffDays} hari lagi, sesuai Pengaturan Anggota)" : '') . '.';
+            } elseif ($jaMagang && !empty($jaMagang->MasaBerlakuAnggota)) {
+                $days = (int) $jaMagang->MasaBerlakuAnggota;
+                $targetDt = (clone $dtKonfirmasi)->modify("+{$days} days");
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = $days . ' hari';
+                $labelStatus = 'Non-ASN (Magang Nasional)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $days . ' hari, berakhir ' . $formatted . ' (sesuai Pengaturan Anggota).';
+            } else {
+                $targetDt = addMonthsClamped($dtKonfirmasi, 6);
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = '6 bulan';
+                $labelStatus = ($cleanStatus === 'magang_nasional') ? 'Non-ASN (Magang Nasional)' : 'Non-ASN (Magang)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
+            }
         } elseif ($cleanStatus === 'magang_biasa') {
-            // Non-ASN + Magang Biasa: masa berlaku 1 bulan sejak konfirmasi petugas
-            $targetDt = addMonthsClamped($dtKonfirmasi, 1);
-            $durasi = '1 bulan';
-            $labelStatus = 'Non-ASN (Magang Biasa)';
+            $db = db_connect();
+            $jaBiasa = $db->table('jenis_anggota')
+                ->where('LOWER(jenisanggota)', 'magang biasa')
+                ->get()->getRow();
+
+            if ($jaBiasa && !empty($jaBiasa->target_expire_date)) {
+                $targetDt = new \DateTime($jaBiasa->target_expire_date . ' 00:00:00');
+                $diffDays = (int) $dtKonfirmasi->diff($targetDt)->format('%r%a');
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = ($diffDays > 0) ? ($diffDays . ' hari') : ('s/d ' . $formatted);
+                $labelStatus = 'Non-ASN (Magang Biasa)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku serentak berakhir ' . $formatted . '.';
+            } elseif ($jaBiasa && !empty($jaBiasa->MasaBerlakuAnggota)) {
+                $days = (int) $jaBiasa->MasaBerlakuAnggota;
+                $targetDt = (clone $dtKonfirmasi)->modify("+{$days} days");
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = $days . ' hari';
+                $labelStatus = 'Non-ASN (Magang Biasa)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $days . ' hari, berakhir ' . $formatted . ' (sesuai Pengaturan Anggota).';
+            } else {
+                $targetDt = addMonthsClamped($dtKonfirmasi, 1);
+                $formatted = $targetDt->format('d-m-Y');
+                $durasi = '1 bulan';
+                $labelStatus = 'Non-ASN (Magang Biasa)';
+                $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
+            }
         } elseif ($cleanStatus === 'staf') {
             // Non-ASN + staf: masa berlaku 1 tahun sejak konfirmasi petugas
             $targetDt = addMonthsClamped($dtKonfirmasi, 12);
+            $formatted = $targetDt->format('d-m-Y');
             $durasi = '1 tahun';
             $labelStatus = 'Non-ASN (Staf)';
+            $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
         } else {
             // Fallback jika status_non_asn NULL pada pendaftar Non-ASN (data lama)
             log_message('warning', 'Pendaftar Non-ASN tanpa status_non_asn saat konfirmasi, fallback masa berlaku 1 tahun.');
             $targetDt = addMonthsClamped($dtKonfirmasi, 12);
+            $formatted = $targetDt->format('d-m-Y');
             $durasi = '1 tahun';
             $labelStatus = 'Non-ASN';
+            $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.';
         }
 
         $endDate = $targetDt->format('Y-m-d 00:00:00');
-        $formatted = $targetDt->format('d-m-Y');
 
         return [
             'end_date'           => $endDate,
             'end_date_formatted' => $formatted,
             'durasi'             => $durasi,
             'label_status'       => $labelStatus,
-            'preview_text'       => 'Status: ' . $labelStatus . '. Masa berlaku: ' . $durasi . ', berakhir ' . $formatted . '.',
+            'preview_text'       => $previewText,
         ];
     }
 }

@@ -42,7 +42,7 @@
 								<!-- Mode 2: Berdasarkan Tanggal Berakhir -->
 								<div id="wrap_mode_tanggal_add" style="display:none;">
 									<div class="input-group">
-										<input type="date" class="form-control" id="frm_add_MasaBerlakuTanggal" />
+										<input type="date" class="form-control" id="frm_add_MasaBerlakuTanggal" name="target_expire_date" />
 										<div class="input-group-append">
 											<span class="input-group-text"><i class="fa fa-calendar"></i></span>
 										</div>
@@ -128,6 +128,8 @@
 		$('#btn_mode_tanggal_add').removeClass('active');
 		$('#wrap_mode_hari_add').show();
 		$('#wrap_mode_tanggal_add').hide();
+		$('#frm_add_MasaBerlakuTanggal').val('');
+		updatePreviewMasaBerlakuAdd($('#frm_add_MasaBerlakuAnggota').val());
 	});
 
 	$('#btn_mode_tanggal_add').click(function() {

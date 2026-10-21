@@ -42,7 +42,7 @@
 								<!-- Mode 2: Berdasarkan Tanggal Berakhir -->
 								<div id="wrap_mode_tanggal_update" style="display:none;">
 									<div class="input-group">
-										<input type="date" class="form-control" id="frm_update_MasaBerlakuTanggal" />
+										<input type="date" class="form-control" id="frm_update_MasaBerlakuTanggal" name="target_expire_date" />
 										<div class="input-group-append">
 											<span class="input-group-text"><i class="fa fa-calendar"></i></span>
 										</div>
@@ -129,6 +129,8 @@
 		$('#btn_mode_tanggal_update').removeClass('active');
 		$('#wrap_mode_hari_update').show();
 		$('#wrap_mode_tanggal_update').hide();
+		$('#frm_update_MasaBerlakuTanggal').val('');
+		updatePreviewMasaBerlakuUpdate($('#frm_update_MasaBerlakuAnggota').val());
 	});
 
 	$('#btn_mode_tanggal_update').click(function() {
@@ -169,9 +171,24 @@
             success: function(response) {
                 $('#frm_update').attr("data-id", response.id);
                 $('#frm_update_jenisanggota').val(response.jenisanggota);
-                $('#frm_update_MasaBerlakuAnggota').val(response.MasaBerlakuAnggota);
-                updatePreviewMasaBerlakuUpdate(response.MasaBerlakuAnggota);
-                $('#btn_mode_hari_update').trigger('click');
+                if (response.target_expire_date) {
+                    $('#btn_mode_tanggal_update').trigger('click');
+                    $('#frm_update_MasaBerlakuTanggal').val(response.target_expire_date);
+                    var target = new Date(response.target_expire_date + 'T00:00:00');
+                    var now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    var diffTime = target.getTime() - now.getTime();
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#frm_update_MasaBerlakuAnggota').val(diffDays > 0 ? diffDays : response.MasaBerlakuAnggota);
+                    var p = response.target_expire_date.split('-');
+                    var fmt = p[2] + '/' + p[1] + '/' + p[0];
+                    $('#preview_masa_berlaku_update').html('<i class="fa fa-info-circle text-info"></i> Berlaku serentak s/d <strong>' + fmt + '</strong> (' + diffDays + ' hari lagi)');
+                } else {
+                    $('#btn_mode_hari_update').trigger('click');
+                    $('#frm_update_MasaBerlakuTanggal').val('');
+                    $('#frm_update_MasaBerlakuAnggota').val(response.MasaBerlakuAnggota);
+                    updatePreviewMasaBerlakuUpdate(response.MasaBerlakuAnggota);
+                }
                 $('#frm_update_BiayaPendaftaran').val(response.BiayaPendaftaran);
                 $('#frm_update_BiayaPerpanjangan').val(response.BiayaPerpanjangan);
                 $('#frm_update_MaxPinjamKoleksi').val(response.MaxPinjamKoleksi);
