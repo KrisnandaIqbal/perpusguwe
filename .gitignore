@@ -145,3 +145,7 @@ public/error_log
 -d
 public/test_kartu_real.pdf
 public/test_kartu_real.pdf
+
+# Cadangan lokal
+public/*.bak*
+public/*.rusak

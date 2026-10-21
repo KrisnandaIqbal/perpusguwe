@@ -1,5 +1,5 @@
 # Blokir perayap AI yang membebani OPAC - dipasang 18 Agustus 2026
-SetEnvIfNoCase User-Agent "(ClaudeBot|GPTBot|OAI-SearchBot|ChatGPT-User|GoogleOther|Amazonbot|meta-externalagent|meta-webindexer|PerplexityBot|Bytespider|CCBot|Applebot-Extended|Diffbot|cohere-ai|anthropic-ai|ImagesiftBot|YouBot|omgili|Scrapy)" perayap_ai
+SetEnvIfNoCase User-Agent "(ClaudeBot|GPTBot|OAI-SearchBot|ChatGPT-User|GoogleOther|Amazonbot|meta-externalagent|PerplexityBot|Bytespider|CCBot|Applebot-Extended|Diffbot|cohere-ai|anthropic-ai|ImagesiftBot|YouBot|omgili|Scrapy)" perayap_ai
 <RequireAll>
   Require all granted
   Require not env perayap_ai
@@ -22,6 +22,14 @@ php_value post_max_size 16M
 	Options +FollowSymlinks
 	RewriteEngine On
 
+	# Bot yang mengaku bot/crawler: hanya dilayani 10 detik tiap 10 menit di halaman berat
+	RewriteCond %{HTTP_USER_AGENT} (bot|crawl|spider|scrap|fetch|index|slurp|GPT|Claude|Perplexity|Gemini) [NC]
+	RewriteCond %{HTTP_USER_AGENT} !(Googlebot|bingbot|facebookexternalhit|TelegramBot|Twitterbot|LinkedInBot|Slackbot) [NC]
+	RewriteCond %{TIME_MIN}:%{TIME_SEC} !^[0-5]0:0
+	RewriteCond %{REQUEST_URI} !^/($|robots\.txt|sitemap.*\.xml|uploads/|assets/)
+	RewriteRule ^ - [R=429,L]
+
+    
 	# If you installed CodeIgniter in a subfolder, you will need to
 	# change the following line to match the subfolder you need.
 	# http://httpd.apache.org/docs/current/mod/mod_rewrite.html#rewritebase
@@ -40,6 +48,11 @@ php_value post_max_size 16M
 	RewriteCond %{HTTPS} !=on
 	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
 	RewriteRule ^ http://%1%{REQUEST_URI} [R=301,L]
+	
+	RewriteRule ^csp-report-endpoint$ - [R=204,L]
+	RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_URI} \.(jpe?g|png|gif|webp|svg|ico|css|js|map|woff2?)$ [NC]
+    RewriteRule ^ - [R=404,L]
 
 	# Checks to see if the user is attempting to access a valid file,
 	# such as an image or css document, if this isn't true it sends the
