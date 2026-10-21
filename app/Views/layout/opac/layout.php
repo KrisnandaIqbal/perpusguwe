@@ -35,11 +35,14 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
             --slate-900: #0f172a;
         }
 
-        body {
+        body, input, select, textarea, button {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
             background-color: var(--slate-50);
             color: var(--slate-800);
-            -webkit-font-smoothing: antialiased;
         }
 
         /* ─── Global Utility ─── */
@@ -343,7 +346,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                             <i class="fa-solid fa-compass me-1"></i>Browse
                         </a>
                     </li>
-
+ 
                     <li class="nav-item">
                         <a class="nav-link" href="<?= base_url('home/pendaftaran-online') ?>">
                             <i class="fa-solid fa-id-card me-1"></i>Pendaftaran Anggota
@@ -368,7 +371,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                                 </a>
                             </li>
                             <?php if (env('Is_keanggotaan_online') == 1): ?>
-                            <li>
+                            <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('home/pendaftaran-online') ?>">
                                     <i class="fa-solid fa-id-card fa-fw text-secondary me-2"></i>Pendaftaran Anggota
                                 </a>

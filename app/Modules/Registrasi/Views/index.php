@@ -81,7 +81,7 @@ if (!empty($jenis_identitas)) {
 
         /* Typography */
         --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
         /* Shadows: Flat editorial, sharp 1px hairline border + delicate depth */
@@ -2677,7 +2677,6 @@ if (!empty($jenis_identitas)) {
                                             </div>
                                             <div class="rf-gender-content">
                                                 <span class="rf-gender-title"><?= esc($jk->Name) ?></span>
-                                                <span class="rf-gender-subtitle"><?= $jk->ID == 1 ? 'Laki-laki sipil / kedinasan' : 'Perempuan sipil / kedinasan' ?></span>
                                             </div>
                                             <div class="rf-gender-radio-mark" aria-hidden="true">
                                                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
