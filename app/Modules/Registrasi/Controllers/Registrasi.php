@@ -38,8 +38,10 @@ class Registrasi extends BaseController
                                           ->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)
                                           ->get()->getResult();
 
+        // R2: Saring unit induk Kementerian Ketenagakerjaan (ID: 1) khusus form registrasi online
         $data['unit_kerja'] = $this->db->table('master_unit')
                                        ->where('active', 1)
+                                       ->where('id !=', 1)
                                        ->get()->getResult();
 
         $subUnitModel = new \App\Models\SubUnitModel();
