@@ -322,7 +322,7 @@ padding-top: 110px; }
                                 <p><strong>ID Peminjaman</strong> <?= esc($loan->ID) ?></p>
                                 <p><strong>Tanggal Pinjam</strong> <?= date('d/m/Y H:i', strtotime($loan->CreateDate)) ?></p>
                                 <p><strong>Jumlah Buku</strong> <?= $loan->CollectionCount ?> buku</p>
-                                <p><strong>Masa Peminjaman</strong> 7 hari</p>
+                                <p><strong>Masa Peminjaman</strong> <?= esc($loan->MaxLoanDays ?? 10) ?> hari kerja</p>
                             </div>
                         </div>
                     </div>

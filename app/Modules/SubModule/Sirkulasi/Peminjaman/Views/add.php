@@ -430,6 +430,12 @@ $request = service('request'); ?>
                                         <?= $memberData['remaining_loans'] ?> buku
                                     </div>
                                 </div>
+                                <div>
+                                    <div class="mstat-label">Masa Pinjam</div>
+                                    <div class="mstat-val ok">
+                                        <?= esc($memberData['loan_days'] ?? 10) ?> hari kerja
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

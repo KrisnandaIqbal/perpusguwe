@@ -179,7 +179,7 @@
                                     <p class="mb-1"><strong>ID Peminjaman:</strong> <?= esc($loan->ID) ?></p>
                                     <p class="mb-1"><strong>Tanggal Pinjam:</strong> <?= date('d/m/Y H:i', strtotime($loan->CreateDate)) ?></p>
                                     <p class="mb-1"><strong>Jumlah Buku:</strong> <?= $loan->CollectionCount ?> buku</p>
-                                    <p class="mb-1"><strong>Masa Peminjaman:</strong> 7 hari</p>
+                                    <p class="mb-1"><strong>Masa Peminjaman:</strong> <?= esc($loan->MaxLoanDays ?? 10) ?> hari kerja</p>
                                 </div>
                             </div>
 
