@@ -2,10 +2,9 @@
 /**
  * Isian nama, unit asal, dan WhatsApp untuk buku tamu anggota, bukan anggota, dan rombongan.
  *
- * @var array  $isian             nilai awal: Nama, UnitKerja_id, SubUnitKerja_id, UnitLainnya, HP (rombongan: Jenis, CountPersonel)
+ * @var array  $isian             nilai awal: Nama, UnitKerja_id, UnitLainnya, HP (rombongan: Jenis, CountPersonel)
  * @var array  $errors            pesan per isian dari IsianTamu::periksa() atau periksaRombongan()
  * @var array  $unit_kerja        satuan kerja dari IsianTamu::pilihanUnit()
- * @var array  $sub_units_grouped unit per satuan kerja
  * @var bool   $rombongan         true: pilihan Kemnaker / Lainnya, isian penanggung jawab, dan jumlah anggota
  */
 
@@ -87,15 +86,6 @@ $jenis        = $nilai('Jenis');
 			<?= $pesan('UnitKerja_id') ?>
 		</div>
 
-		<div class="form-group" id="kotakSubUnit" hidden>
-			<label for="SubUnitKerja_id" class="required">Biro / Direktorat / Unit</label>
-			<select class="form-control <?= $salah('SubUnitKerja_id') ?>" name="SubUnitKerja_id" id="SubUnitKerja_id"
-				data-terpilih="<?= esc($nilai('SubUnitKerja_id'), 'attr') ?>">
-				<option value="">Pilih biro, direktorat, atau unit</option>
-			</select>
-			<?= $pesan('SubUnitKerja_id') ?>
-		</div>
-
 		<div class="form-group" id="kotakUnitLainnya" hidden>
 			<label for="UnitLainnya" class="required"><?= $rombongan ? 'Nama Instansi' : 'Nama Instansi / Asal' ?></label>
 			<input type="text" class="form-control <?= $salah('UnitLainnya') ?>" name="UnitLainnya" id="UnitLainnya" maxlength="150"
@@ -128,13 +118,10 @@ $jenis        = $nilai('Jenis');
 
 <script>
 (function () {
-	const subUnits = <?= json_encode($sub_units_grouped ?? [], JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 	const LAINNYA = '<?= IsianTamu::LAINNYA ?>';
 	const rombongan = <?= $rombongan ? 'true' : 'false' ?>;
 	const unit = document.getElementById('UnitKerja_id');
 	const kotakUnit = document.getElementById('kotakUnit');
-	const sub = document.getElementById('SubUnitKerja_id');
-	const kotakSub = document.getElementById('kotakSubUnit');
 	const lainnya = document.getElementById('UnitLainnya');
 	const kotakLainnya = document.getElementById('kotakUnitLainnya');
 
@@ -145,22 +132,11 @@ $jenis        = $nilai('Jenis');
 
 	function tampilkan(awal) {
 		const jenis = rombongan ? jenisTerpilih() : '';
-		const pakaiUnit = rombongan ? jenis === 'kemnaker' : unit.value !== LAINNYA;
+		const pakaiUnit = rombongan ? jenis === 'kemnaker' : true;
 		const pakaiLainnya = rombongan ? jenis === LAINNYA : unit.value === LAINNYA;
-		const pilihan = pakaiUnit ? (subUnits[unit.value] || []) : [];
-		const terpilih = awal ? sub.dataset.terpilih : sub.value;
 
-		sub.length = 1;
-		pilihan.forEach(function (s) {
-			const opsi = new Option(s.nama_subunit, s.id);
-			opsi.selected = String(s.id) === terpilih;
-			sub.add(opsi);
-		});
-
-		kotakUnit.hidden = !pakaiUnit && rombongan;
-		unit.required = rombongan ? pakaiUnit : true;
-		kotakSub.hidden = pilihan.length === 0;
-		sub.required = pilihan.length > 0;
+		kotakUnit.hidden = !pakaiUnit;
+		unit.required = pakaiUnit;
 		kotakLainnya.hidden = !pakaiLainnya;
 		lainnya.required = pakaiLainnya;
 		if (!awal && pakaiLainnya) lainnya.focus();

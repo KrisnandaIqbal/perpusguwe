@@ -10,19 +10,16 @@ use GuestBook\Libraries\IsianTamu;
  */
 final class IsianTamuTest extends CIUnitTestCase
 {
-    /** Satuan kerja 2 punya dua unit, satuan kerja 9 tidak punya unit. */
     private array $unitIds = [2, 9];
-    private array $subUnits = [2 => [['id' => 21], ['id' => 22]]];
 
     private function periksa(array $post): array
     {
         return IsianTamu::periksa($post + [
             'Nama'            => 'Budi Santoso',
             'UnitKerja_id'    => '2',
-            'SubUnitKerja_id' => '21',
             'UnitLainnya'     => '',
             'HP'              => '0812 3456 7890',
-        ], $this->unitIds, $this->subUnits);
+        ], $this->unitIds);
     }
 
     public function testIsianLengkapDisimpanDenganNomorDirapikan(): void
@@ -31,11 +28,10 @@ final class IsianTamuTest extends CIUnitTestCase
 
         $this->assertSame([], $hasil['errors']);
         $this->assertSame([
-            'Nama'            => 'Budi Santoso',
-            'UnitKerja_id'    => 2,
-            'SubUnitKerja_id' => 21,
-            'UnitLainnya'     => null,
-            'HP'              => '081234567890',
+            'Nama'         => 'Budi Santoso',
+            'UnitKerja_id' => 2,
+            'UnitLainnya'  => null,
+            'HP'           => '081234567890',
         ], $hasil['data']);
     }
 
@@ -58,18 +54,12 @@ final class IsianTamuTest extends CIUnitTestCase
         $this->assertArrayHasKey('HP', $this->periksa(['HP' => '021123456'])['errors']);
     }
 
-    public function testUnitWajibKalauSatuanKerjaPunyaUnit(): void
+    public function testCukupSatuanKerjaTanpaBiroAtauUnit(): void
     {
-        $this->assertArrayHasKey('SubUnitKerja_id', $this->periksa(['SubUnitKerja_id' => ''])['errors']);
-        $this->assertArrayHasKey('SubUnitKerja_id', $this->periksa(['SubUnitKerja_id' => '99'])['errors']);
-    }
-
-    public function testSatuanKerjaTanpaUnitTidakMemintaUnit(): void
-    {
-        $hasil = $this->periksa(['UnitKerja_id' => '9', 'SubUnitKerja_id' => '']);
+        $hasil = $this->periksa(['UnitKerja_id' => '9']);
 
         $this->assertSame([], $hasil['errors']);
-        $this->assertNull($hasil['data']['SubUnitKerja_id']);
+        $this->assertArrayNotHasKey('SubUnitKerja_id', $hasil['data']);
     }
 
     public function testSatuanKerjaTidakDikenalDitolak(): void
@@ -81,11 +71,10 @@ final class IsianTamuTest extends CIUnitTestCase
     {
         $this->assertArrayHasKey('UnitLainnya', $this->periksa(['UnitKerja_id' => IsianTamu::LAINNYA])['errors']);
 
-        $hasil = $this->periksa(['UnitKerja_id' => IsianTamu::LAINNYA, 'SubUnitKerja_id' => '21', 'UnitLainnya' => ' Universitas Indonesia ']);
+        $hasil = $this->periksa(['UnitKerja_id' => IsianTamu::LAINNYA, 'UnitLainnya' => ' Universitas Indonesia ']);
 
         $this->assertSame([], $hasil['errors']);
         $this->assertNull($hasil['data']['UnitKerja_id']);
-        $this->assertNull($hasil['data']['SubUnitKerja_id']);
         $this->assertSame('Universitas Indonesia', $hasil['data']['UnitLainnya']);
     }
 
@@ -95,11 +84,10 @@ final class IsianTamuTest extends CIUnitTestCase
             'Jenis'           => 'kemnaker',
             'Nama'            => 'Budi Santoso',
             'UnitKerja_id'    => '2',
-            'SubUnitKerja_id' => '21',
             'UnitLainnya'     => '',
             'HP'              => '081234567890',
             'CountPersonel'   => '12',
-        ], $this->unitIds, $this->subUnits);
+        ], $this->unitIds);
     }
 
     public function testRombonganKemnakerMemakaiUnit(): void

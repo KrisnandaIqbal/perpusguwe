@@ -13,7 +13,7 @@ class IsianTamu
     public const LAINNYA = 'lainnya';
 
     /**
-     * Satuan kerja aktif beserta unitnya, untuk dropdown.
+     * Satuan kerja aktif untuk dropdown.
      * "Kementerian Ketenagakerjaan Republik Indonesia" tidak ditawarkan karena bukan satuan kerja.
      */
     public static function pilihanUnit($db): array
@@ -24,20 +24,16 @@ class IsianTamu
             ->orderBy('id', 'ASC')
             ->get()->getResult();
 
-        return [
-            'unit_kerja'        => $unitKerja,
-            'sub_units_grouped' => (new \App\Models\SubUnitModel())->getAllActiveGrouped(),
-        ];
+        return ['unit_kerja' => $unitKerja];
     }
 
     /**
-     * @param array $post            isian dari formulir
-     * @param array $unitIds         ID satuan kerja yang boleh dipilih
-     * @param array $subUnitsGrouped unit per satuan kerja, seperti SubUnitModel::getAllActiveGrouped()
+     * @param array $post    isian dari formulir
+     * @param array $unitIds ID satuan kerja yang boleh dipilih
      *
      * @return array{data: array, errors: array<string, string>}
      */
-    public static function periksa(array $post, array $unitIds, array $subUnitsGrouped): array
+    public static function periksa(array $post, array $unitIds): array
     {
         $errors = [];
 
@@ -50,7 +46,6 @@ class IsianTamu
 
         $unit        = trim((string) ($post['UnitKerja_id'] ?? ''));
         $unitKerjaId = null;
-        $subUnitId   = null;
         $unitLainnya = null;
 
         if ($unit === self::LAINNYA) {
@@ -64,15 +59,6 @@ class IsianTamu
             $errors['UnitKerja_id'] = 'Pilih satuan kerja, atau Lainnya kalau Anda dari luar Kemnaker.';
         } else {
             $unitKerjaId = (int) $unit;
-            $pilihanSub  = array_map(fn ($s) => (int) $s['id'], $subUnitsGrouped[$unitKerjaId] ?? []);
-            if ($pilihanSub !== []) {
-                $sub = (int) ($post['SubUnitKerja_id'] ?? 0);
-                if (!in_array($sub, $pilihanSub, true)) {
-                    $errors['SubUnitKerja_id'] = 'Pilih biro, direktorat, atau unit Anda.';
-                } else {
-                    $subUnitId = $sub;
-                }
-            }
         }
 
         $hp = IdentityValidator::normalizePhone($post['HP'] ?? '');
@@ -82,11 +68,10 @@ class IsianTamu
 
         return [
             'data' => [
-                'Nama'            => $nama,
-                'UnitKerja_id'    => $unitKerjaId,
-                'SubUnitKerja_id' => $subUnitId,
-                'UnitLainnya'     => $unitLainnya,
-                'HP'              => $hp,
+                'Nama'         => $nama,
+                'UnitKerja_id' => $unitKerjaId,
+                'UnitLainnya'  => $unitLainnya,
+                'HP'           => $hp,
             ],
             'errors' => $errors,
         ];
@@ -102,7 +87,7 @@ class IsianTamu
      *
      * @return array{data: array, errors: array<string, string>}
      */
-    public static function periksaRombongan(array $post, array $unitIds, array $subUnitsGrouped): array
+    public static function periksaRombongan(array $post, array $unitIds): array
     {
         $jenis = (string) ($post['Jenis'] ?? '');
 
@@ -116,11 +101,11 @@ class IsianTamu
             }
         }
 
-        $hasil = self::periksa($post, $unitIds, $subUnitsGrouped);
+        $hasil = self::periksa($post, $unitIds);
 
         if (!in_array($jenis, ['kemnaker', self::LAINNYA], true)) {
             $hasil['errors'] = ['Jenis' => 'Pilih Kemnaker atau Lainnya.'] + $hasil['errors'];
-            unset($hasil['errors']['UnitKerja_id'], $hasil['errors']['SubUnitKerja_id'], $hasil['errors']['UnitLainnya']);
+            unset($hasil['errors']['UnitKerja_id'], $hasil['errors']['UnitLainnya']);
         } elseif ($jenis === 'kemnaker' && isset($hasil['errors']['UnitKerja_id'])) {
             $hasil['errors']['UnitKerja_id'] = 'Pilih satuan kerja penanggung jawab.';
         }

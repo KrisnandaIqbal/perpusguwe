@@ -412,7 +412,6 @@
 					'isian'             => $isian,
 					'errors'            => $errors,
 					'unit_kerja'        => $unit_kerja,
-					'sub_units_grouped' => $sub_units_grouped,
 				]) ?>
 
 

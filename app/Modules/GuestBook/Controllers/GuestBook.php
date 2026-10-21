@@ -40,8 +40,6 @@ class GuestBook extends \App\Controllers\BaseController
 	public function index()
 	{
 
-		$this->data['SettingBukuTamu'] = $this->settingModel->where('Name', 'SettingBukuTamu')->first()->Value ?? '0';
-		
 		// Get member number from request — trim to handle barcode scanner spaces
 		$member_no = trim($this->request->getGet('member_no') ?? '');
 
@@ -58,10 +56,9 @@ class GuestBook extends \App\Controllers\BaseController
 			$this->data += $pilihan;
 
 			$isian = $this->session->getFlashdata('isian_tamu') ?? [
-				'Nama'            => $member->Fullname,
-				'UnitKerja_id'    => $member->UnitKerja_id,
-				'SubUnitKerja_id' => $member->SubUnitKerja_id,
-				'HP'              => $member->NoHp ?: $member->Phone,
+				'Nama'         => $member->Fullname,
+				'UnitKerja_id' => $member->UnitKerja_id,
+				'HP'           => $member->NoHp ?: $member->Phone,
 			];
 			$this->data['isian']  = $isian;
 			$this->data['errors'] = $this->session->getFlashdata('errors_tamu') ?? [];
@@ -69,8 +66,7 @@ class GuestBook extends \App\Controllers\BaseController
 			// Simpan otomatis hanya kalau data anggota sudah lengkap dan benar; selain itu anggota melengkapi dulu
 			$this->data['isian_lengkap'] = $this->data['errors'] === [] && IsianTamu::periksa(
 				$isian,
-				array_column($pilihan['unit_kerja'], 'id'),
-				$pilihan['sub_units_grouped']
+				array_column($pilihan['unit_kerja'], 'id')
 			)['errors'] === [];
 		}
 
@@ -78,7 +74,6 @@ class GuestBook extends \App\Controllers\BaseController
 		$this->data['title'] = 'Buku Tamu - Anggota';
 		$this->data['data'] = $data;
 		$this->data['member'] = $member;
-		$this->data['tujuan_kunjungan'] = get_ref_table('tujuan_kunjungan', 'ID, TujuanKunjungan', 'Member=1', 'data');
 		$this->data['message'] = $this->session->getFlashdata('message')
 			?: ($member_no !== '' && !$member ? 'Nomor Anggota tidak ditemukan.' : null);
 
@@ -131,8 +126,7 @@ class GuestBook extends \App\Controllers\BaseController
 		$pilihan = IsianTamu::pilihanUnit($this->db);
 		$hasil   = IsianTamu::periksa(
 			$this->request->getPost(),
-			array_column($pilihan['unit_kerja'], 'id'),
-			$pilihan['sub_units_grouped']
+			array_column($pilihan['unit_kerja'], 'id')
 		);
 
 		if ($hasil['errors'] !== []) {
@@ -150,13 +144,6 @@ class GuestBook extends \App\Controllers\BaseController
 			'Location_id'           => $locationId,
 			'Branch_id'             => $member->Branch_id,
 		];
-
-		$SettingBukuTamu = $this->settingModel->where('Name', 'SettingBukuTamu')->first()->Value ?? '0';
-
-		// Tujuan kunjungan hanya disimpan kalau pilihannya ditampilkan (setting buku tamu = 1)
-		if ($SettingBukuTamu == '1') {
-			$save_data['TujuanKunjungan_id'] = $this->request->getPost('TujuanKunjungan_id');
-		}
 
 		if ($this->memberguestModel->insert($save_data)) {
 			$this->session->setFlashdata('success', 'Kunjungan berhasil dicatat.');
@@ -182,8 +169,7 @@ class GuestBook extends \App\Controllers\BaseController
 		if ($this->request->is('post')) {
 			$hasil = IsianTamu::periksa(
 				$this->request->getPost(),
-				array_column($pilihan['unit_kerja'], 'id'),
-				$pilihan['sub_units_grouped']
+				array_column($pilihan['unit_kerja'], 'id')
 			);
 
 			if ($hasil['errors'] === []) {
@@ -226,8 +212,7 @@ class GuestBook extends \App\Controllers\BaseController
 		if ($this->request->is('post')) {
 			$hasil = IsianTamu::periksaRombongan(
 				$this->request->getPost(),
-				array_column($pilihan['unit_kerja'], 'id'),
-				$pilihan['sub_units_grouped']
+				array_column($pilihan['unit_kerja'], 'id')
 			);
 
 			if ($hasil['errors'] === []) {
@@ -235,19 +220,12 @@ class GuestBook extends \App\Controllers\BaseController
 
 				// AsalInstansi tetap berisi teks supaya tabel dan laporan rombongan yang lama terbaca
 				$namaUnit = array_column($pilihan['unit_kerja'], 'nama_unit', 'id')[$isian['UnitKerja_id']] ?? null;
-				$namaSub  = null;
-				foreach ($pilihan['sub_units_grouped'][$isian['UnitKerja_id']] ?? [] as $sub) {
-					if ($sub['id'] === $isian['SubUnitKerja_id']) {
-						$namaSub = $sub['nama_subunit'];
-					}
-				}
 
 				$save_data = [
 					'NamaKetua'        => $isian['Nama'],
 					'NomerTelponKetua' => $isian['HP'],
-					'AsalInstansi'     => IsianTamu::teksUnit($namaUnit, $namaSub, $isian['UnitLainnya']),
+					'AsalInstansi'     => IsianTamu::teksUnit($namaUnit, null, $isian['UnitLainnya']),
 					'UnitKerja_id'     => $isian['UnitKerja_id'],
-					'SubUnitKerja_id'  => $isian['SubUnitKerja_id'],
 					'AlamatInstansi'   => '',
 					'CountPersonel'    => $isian['CountPersonel'],
 					'CountTk'          => 0,

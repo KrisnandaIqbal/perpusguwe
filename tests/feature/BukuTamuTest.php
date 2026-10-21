@@ -13,8 +13,6 @@ final class BukuTamuTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
 
-    private int $subUnitId;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -24,14 +22,12 @@ final class BukuTamuTest extends CIUnitTestCase
         $dbConfig->tests = $dbConfig->default;
 
         $lokasi = db_connect()->table('locations')->select('ID')->get()->getRow();
-        $sub    = db_connect()->table('master_subunit')->where('unit_id', 2)->where('active', 1)->get()->getRow();
-        if (! $lokasi || ! $sub) {
-            $this->markTestSkipped('Butuh lokasi ruang dan unit Sekretariat Jenderal di database lokal.');
+        if (! $lokasi) {
+            $this->markTestSkipped('Butuh minimal satu lokasi ruang di database lokal.');
         }
 
         // Kiosk buku tamu menyimpan lokasi ruang di cookie Location_id
         service('superglobals')->setCookie('Location_id', (string) $lokasi->ID);
-        $this->subUnitId = (int) $sub->id;
     }
 
     protected function tearDown(): void
@@ -52,7 +48,6 @@ final class BukuTamuTest extends CIUnitTestCase
         $result = $this->post('buku-tamu/non_anggota', [
             'Nama'            => 'Tamu Uji Otomatis',
             'UnitKerja_id'    => '2',
-            'SubUnitKerja_id' => (string) $this->subUnitId,
             'HP'              => '+62 812 0000 1111',
         ]);
 
@@ -62,7 +57,7 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertNull($tamu->NoAnggota);
         $this->assertSame('081200001111', $tamu->HP);
         $this->assertSame('2', (string) $tamu->UnitKerja_id);
-        $this->assertSame((string) $this->subUnitId, (string) $tamu->SubUnitKerja_id);
+        $this->assertNull($tamu->SubUnitKerja_id);
     }
 
     public function testBukanAnggotaDariLuarKemnaker(): void
@@ -85,7 +80,6 @@ final class BukuTamuTest extends CIUnitTestCase
         $result = $this->post('buku-tamu/non_anggota', [
             'Nama'            => 'Tamu Salah Uji Otomatis',
             'UnitKerja_id'    => '2',
-            'SubUnitKerja_id' => (string) $this->subUnitId,
             'HP'              => '12345',
         ]);
 
@@ -136,7 +130,6 @@ final class BukuTamuTest extends CIUnitTestCase
             'member_no'       => $anggota->MemberNo,
             'Nama'            => 'Anggota Uji Otomatis',
             'UnitKerja_id'    => '2',
-            'SubUnitKerja_id' => (string) $this->subUnitId,
             'HP'              => '081200003333',
         ]);
 
@@ -174,7 +167,10 @@ final class BukuTamuTest extends CIUnitTestCase
         $result->assertOK();
         $this->assertStringContainsString('value="' . ($anggota->NoHp ?: $anggota->Phone) . '"', $result->getBody());
         $result->assertSee('Simpan Kunjungan');
+        $this->assertStringNotContainsString('name="SubUnitKerja_id"', $result->getBody());
+        $this->assertStringNotContainsString('name="TujuanKunjungan_id"', $result->getBody());
     }
+
     private function rombongan(string $nama): ?object
     {
         return db_connect()->table('groupguesses')->where('NamaKetua', $nama)->get()->getRow();
@@ -186,7 +182,6 @@ final class BukuTamuTest extends CIUnitTestCase
             'Jenis'           => 'kemnaker',
             'Nama'            => 'Ketua Kemnaker Uji Otomatis',
             'UnitKerja_id'    => '2',
-            'SubUnitKerja_id' => (string) $this->subUnitId,
             'HP'              => '+62 812 0000 6666',
             'CountPersonel'   => '12',
         ])->assertRedirectTo('/buku-tamu/rombongan');
@@ -195,7 +190,7 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertNotNull($r);
         $this->assertSame('081200006666', $r->NomerTelponKetua);
         $this->assertSame('2', (string) $r->UnitKerja_id);
-        $this->assertStringStartsWith('Sekretariat Jenderal - ', $r->AsalInstansi);
+        $this->assertSame('Sekretariat Jenderal', $r->AsalInstansi);
         $this->assertSame('12', (string) $r->CountPersonel);
     }
 

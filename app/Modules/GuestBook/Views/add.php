@@ -474,22 +474,7 @@
 						'isian'             => $isian,
 						'errors'            => $errors,
 						'unit_kerja'        => $unit_kerja,
-						'sub_units_grouped' => $sub_units_grouped,
 					]) ?>
-
-					<?php if ($SettingBukuTamu == 1) : ?>
-						<div class="isian-tamu">
-							<div class="form-group">
-								<label for="TujuanKunjungan_id">Tujuan Kunjungan</label>
-								<select class="form-control" name="TujuanKunjungan_id" id="TujuanKunjungan_id">
-									<option value="" disabled selected>Pilih tujuan kunjungan</option>
-									<?php foreach ($tujuan_kunjungan as $row) : ?>
-										<option value="<?= $row->ID ?>" <?= set_select('TujuanKunjungan_id', $row->ID) ?>><?= esc($row->TujuanKunjungan) ?></option>
-									<?php endforeach; ?>
-								</select>
-							</div>
-						</div>
-					<?php endif; ?>
 
 					<button type="submit" class="save-btn" id="simpanKunjungan">
 						<i class="fas fa-save"></i>
@@ -572,32 +557,23 @@
 	</script>
 <?php endif; ?>
 
-<?php if (!empty($member)) : ?>
+<?php if (!empty($member) && !empty($isian_lengkap)) : ?>
 <script>
-    const storeForm = document.getElementById('frm_store_anggota');
-    const selectEl  = document.getElementById('TujuanKunjungan_id');
-    let timer = null;
-
-    <?php if (!empty($isian_lengkap)) : ?>
-    let countdown = 10;
+    const storeForm   = document.getElementById('frm_store_anggota');
     const countdownEl = document.getElementById('countdown');
-
-    timer = setInterval(() => {
+    let countdown = 10;
+    let timer = setInterval(() => {
         countdown--;
         if (countdownEl) countdownEl.textContent = countdown;
 
         if (countdown <= 0) {
             clearInterval(timer);
-            if (selectEl && !selectEl.value) {
-                selectEl.value = '<?= $tujuan_kunjungan[0]->ID ?? '' ?>';
-            }
             storeForm.submit();
         }
     }, 1000);
 
     // Anggota yang mulai mengubah isian butuh waktu: hitung mundur berhenti, simpan lewat tombol
     storeForm.querySelectorAll('input:not([type=hidden]), select').forEach((el) => {
-        if (el === selectEl) return;
         el.addEventListener('focus', () => {
             if (timer === null) return;
             clearInterval(timer);
@@ -605,16 +581,6 @@
             document.getElementById('pesanHitung').textContent = 'Simpan otomatis dihentikan. Tekan Simpan Kunjungan setelah selesai.';
         });
     });
-    <?php endif; ?>
-
-    // Memilih tujuan langsung menyimpan, selama isian lain belum diubah
-    if (selectEl) {
-        selectEl.addEventListener('change', function() {
-            if (timer === null) return;
-            clearInterval(timer);
-            storeForm.submit();
-        });
-    }
 </script>
 <?php endif; ?>
 
