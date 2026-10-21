@@ -66,7 +66,7 @@ final class PenolakanAnggotaTest extends CIUnitTestCase
     }
 
     /**
-     * Baris transaksi lama milik anggota yang sudah dihapus (yatim) bisa menunjuk ke ID
+     * Baris transaksi lama milik anggota yang sudah dihapus bisa menunjuk ke ID
      * yang sekarang dipakai pendaftar baru. Itu bukan riwayat pendaftar ini.
      */
     public function testTransaksiSebelumPendaftaranTidakMenghalangiPenolakan(): void
