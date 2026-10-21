@@ -72,8 +72,7 @@ $baris = static function (string $label, string $nilai): string {
                                     <?= $baris('Berlaku sampai', $berlaku) ?>
                                 </table>
                                 <p style="margin:0;font-size:15px;line-height:24px;">
-                                    Kartu anggota Anda terlampir dalam dua bentuk: file PDF dua halaman untuk dicetak,
-                                    dan dua gambar (sisi depan dan sisi belakang) untuk disimpan di HP.
+                                    Kartu anggota Anda terlampir sebagai satu file PDF berisi sisi depan dan sisi belakang.
                                     Kartu memuat nama, No. Anggota, dan kode QR. Saat berkunjung, tunjukkan sisi belakang untuk dipindai.
                                 </p>
 

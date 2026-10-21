@@ -226,14 +226,8 @@ class EmailPendaftaran
         $email->setMessage(view('Anggota\Views\email\pendaftaran', $data, ['debug' => false]));
 
         if ($jenis === self::DISETUJUI) {
+            // Satu file saja: PDF dua halaman, sisi depan dan sisi belakang
             $email->attach($this->kartuPdf($member), 'attachment', 'kartu-anggota-' . $member->MemberNo . '.pdf', 'application/pdf');
-
-            // Gambar per sisi berpojok transparan, enak disimpan dan ditunjukkan dari HP
-            helper('anggota');
-            $card = kartuAnggotaData($member);
-            $png  = new KartuPng();
-            $email->attach($png->depan($card), 'attachment', 'kartu-anggota-' . $member->MemberNo . '-depan.png', 'image/png');
-            $email->attach($png->belakang($card), 'attachment', 'kartu-anggota-' . $member->MemberNo . '-belakang.png', 'image/png');
         }
 
         if ($email->send()) {
