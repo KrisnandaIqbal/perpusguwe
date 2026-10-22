@@ -490,7 +490,7 @@ if (!function_exists('hitungMasaBerlaku')) {
 
             if (strpos($jaName, 'magang nasional') !== false) {
                 $cleanStatus = 'magang_nasional';
-            } elseif (strpos($jaName, 'magang biasa') !== false) {
+            } elseif (strpos($jaName, 'magang biasa') !== false || strpos($jaName, 'magang reguler') !== false) {
                 $cleanStatus = 'magang_biasa';
             } elseif (strpos($jaName, 'magang') !== false) {
                 $cleanStatus = 'magang';
@@ -532,7 +532,7 @@ if (!function_exists('hitungMasaBerlaku')) {
             // target_expire_date sengaja diabaikan; yang serentak hanya Magang Nasional.
             $db = db_connect();
             $jaBiasa = $db->table('jenis_anggota')
-                ->where('LOWER(jenisanggota)', 'magang biasa')
+                ->whereIn('LOWER(jenisanggota)', ['magang reguler', 'magang biasa'])
                 ->get()->getRow();
 
             $days     = ($jaBiasa && (int) $jaBiasa->MasaBerlakuAnggota > 0) ? (int) $jaBiasa->MasaBerlakuAnggota : 30;
@@ -540,7 +540,7 @@ if (!function_exists('hitungMasaBerlaku')) {
             $targetDt = (clone $dtDaftar)->modify("+{$days} days");
             $formatted = $targetDt->format('d-m-Y');
             $durasi = $days . ' hari';
-            $labelStatus = 'Non-ASN (Magang Biasa)';
+            $labelStatus = 'Non-ASN (Magang Reguler)';
             $previewText = 'Status: ' . $labelStatus . '. Masa berlaku: ' . $days . ' hari sejak mendaftar (' . $dtDaftar->format('d-m-Y') . '), berakhir ' . $formatted . '.';
         } elseif ($cleanStatus === 'staf') {
             // Non-ASN + staf: masa berlaku 1 tahun sejak konfirmasi petugas
@@ -587,7 +587,8 @@ if (!function_exists('format_status_non_asn')) {
             case 'magang_nasional':
                 return 'Magang Nasional';
             case 'magang_biasa':
-                return 'Magang Biasa';
+            case 'magang_reguler':
+                return 'Magang Reguler';
             case 'magang':
                 return 'Magang';
             case 'staf':
@@ -1010,6 +1011,4 @@ if (!function_exists('is_valid_unit_subunit')) {
     }
 }
 
-
-?>
 

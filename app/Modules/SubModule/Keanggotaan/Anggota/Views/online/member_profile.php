@@ -122,21 +122,6 @@ $member_type = get_member_type($member->JenisAnggota_id);
 				</div>
 			</div>
 		</li>
-		<li class="list-group-item">
-			<div class="widget-content p-0">
-				<div class="widget-content-wrapper">
-					<div class="widget-content-left mr-3">
-						<i class="fa fa-credit-card"></i>
-					</div>
-					<div class="widget-content-left">
-						<div class="widget-heading"><?= $member_type->charge_amount ?? '-' ?> </div>
-					</div>
-					<div class="widget-content-right">
-						<small class="text-muted">Denda Terlambat / <?= $member_type->charge_unit ?? '-' ?></small>
-					</div>
-				</div>
-			</div>
-		</li>
 	</ul>
 </div>
 

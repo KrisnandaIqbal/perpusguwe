@@ -57,27 +57,14 @@
 						</div>
 					</div>
 
-					<div class="form-row">
-						<div class="col-lg-6 col-md-6">
-							<div class="form-group">
-								<label for="code">Denda</label>
-								<div>
-									<select required class="form-control" id="frm_update_DendaType" name="DendaType" placeholder="Denda Type" value="">
-										<option value="">-- Pilih Denda --</option>
-										<option value="Konstan">Konstan</option>
-										<option value="Berkelipatan">Berkelipatan</option>
-									</select>
-								</div>
-							</div>
-						</div>
-						<div class="col-lg-6 col-md-6">
-							<div class="form-group">
-								<label for="name">Jumlah Denda</label>
-								<div>
-									<input required type="number" min="0" class="form-control" id="frm_update_DendaPerTenor" name="DendaPerTenor" placeholder="Jumlah Denda" value="" />
-								</div>
-							</div>
-						</div>
+					<!-- Sembunyikan isian denda (perpustakaan tidak memakai denda) -->
+					<div style="display: none;">
+						<select class="form-control" id="frm_update_DendaType" name="DendaType" placeholder="Denda Type" value="">
+							<option value="">-- Pilih Denda --</option>
+							<option value="Konstan">Konstan</option>
+							<option value="Berkelipatan">Berkelipatan</option>
+						</select>
+						<input type="number" min="0" class="form-control" id="frm_update_DendaPerTenor" name="DendaPerTenor" placeholder="Jumlah Denda" value="0" />
 					</div>
 
 					<div class="form-row">

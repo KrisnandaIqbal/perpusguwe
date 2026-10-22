@@ -210,14 +210,15 @@ class Home extends \Base\Controllers\BaseController
                 'link' => base_url('buku-tamu'),
                 'color' => 'success'
             ],
-            [
-                'name' => 'Baca di Tempat',
-                'description' => 'Layanan membaca di perpustakaan',
-                'img' => base_url('assets/img/bacaditempat.png'),
-                'icon' => 'fas fa-chair',
-                'link' => base_url('baca-ditempat'),
-                'color' => 'info'
-            ],
+            // Sembunyikan kartu Baca di Tempat dari halaman depan (fitur/route tetap aktif jika diakses langsung)
+            // [
+            //     'name' => 'Baca di Tempat',
+            //     'description' => 'Layanan membaca di perpustakaan',
+            //     'img' => base_url('assets/img/bacaditempat.png'),
+            //     'icon' => 'fas fa-chair',
+            //     'link' => base_url('baca-ditempat'),
+            //     'color' => 'info'
+            // ],
             ...(env('Is_keanggotaan_online') == 1 ? [[
                 'name' => 'Keanggotaan Online',
                 'description' => 'Daftar menjadi anggota perpustakaan',

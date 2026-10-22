@@ -92,72 +92,27 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="col-lg-6 col-md-6">
-                            <div class="form-group">
-                                <label for="code">Jumlah Denda</label>
-                                <div>
-                                    <input required type="number" min="0" class="form-control" id="frm_add_DendaPerTenor"
-                                        name="DendaPerTenor" placeholder="Jumlah Denda" value="" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 col-md-6">
-                            <div class="form-group">
-                                <label for="code">Jenis Denda</label>
-                                <div>
-                                    <select class="form-control" id="frm_add_DendaType" name="DendaType" style="width:100%">
-                                        <option value="">-Pilih-</option>
-                                        <?php foreach (get_ref_table('jenis_denda', 'ID, Name', null, 'data') as $row): ?>
-                                            <option value="<?= $row->Name ?>"><?= $row->Name ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                    <div class="form-row">
-                        <div class="col-lg-6 col-md-6">
-                            <div class="form-group">
-                                <label for="code">Satuan Tenor Denda</label>
-                                <div>
-                                    <input required type="number" min="0" class="form-control" id="frm_add_DendaTenorJumlah"
-                                        name="DendaTenorJumlah" placeholder="Tenor Denda Denda" value="" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 col-md-6">
-                            <div class="form-group">
-                                <label for="code">Tenor Satuan Denda</label>
-                                <div>
-                                    <select class="form-control" id="frm_add_DendaTenorSatuan" name="DendaTenorSatuan" style="width:100%">
-                                        <option value="">-Pilih-</option>
-                                        <option value="Tanggal">Tanggal</option>
-                                        <option value="Minggu">Minggu</option>
-                                        <option value="Bulan">Bulan</option>
-                                        <option value="Tahun">Tahun</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="form-row">
-                        <div class="col-lg-12 col-md-12">
-                            <div class="form-group">
-                                <label for="name">Pengali Tenor Denda</label>
-                                <div>
-                                    <input required type="number" class="form-control" id="frm_add_DendaTenorMultiply"
-                                        name="DendaTenorMultiply" placeholder="Pengali Tenor Denda" value="" />
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Sembunyikan isian denda (perpustakaan tidak memakai denda) -->
+                    <div style="display: none;">
+                        <input type="number" min="0" class="form-control" id="frm_add_DendaPerTenor"
+                            name="DendaPerTenor" placeholder="Jumlah Denda" value="0" />
+                        <select class="form-control" id="frm_add_DendaType" name="DendaType" style="width:100%">
+                            <option value="" selected>-Pilih-</option>
+                            <?php foreach (get_ref_table('jenis_denda', 'ID, Name', null, 'data') as $row): ?>
+                                <option value="<?= $row->Name ?>"><?= $row->Name ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <input type="number" min="0" class="form-control" id="frm_add_DendaTenorJumlah"
+                            name="DendaTenorJumlah" placeholder="Tenor Denda" value="0" />
+                        <select class="form-control" id="frm_add_DendaTenorSatuan" name="DendaTenorSatuan" style="width:100%">
+                            <option value="" selected>-Pilih-</option>
+                            <option value="Tanggal">Tanggal</option>
+                            <option value="Minggu">Minggu</option>
+                            <option value="Bulan">Bulan</option>
+                            <option value="Tahun">Tahun</option>
+                        </select>
+                        <input type="number" class="form-control" id="frm_add_DendaTenorMultiply"
+                            name="DendaTenorMultiply" placeholder="Pengali Tenor Denda" value="0" />
                     </div>
 
                     <div class="form-row">

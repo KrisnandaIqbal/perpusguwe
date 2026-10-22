@@ -24,8 +24,9 @@ class GuestBook extends \App\Controllers\BaseController
          $this->session = session();
 		 $this->db=\Config\Database::connect('data');
 		 $this->validation = \Config\Services::validation();
-		$this->memberguestModel = new \BukuTamu\Models\MemberGuestModel();
-		$this->groupguestModel  =  new \BukuTamu\Models\GroupGuestModel();
+		// Lewat model() supaya tes bisa menggantinya dengan model tiruan
+		$this->memberguestModel = model(\BukuTamu\Models\MemberGuestModel::class);
+		$this->groupguestModel  = model(\BukuTamu\Models\GroupGuestModel::class);
 		$this->settingModel = new \PenomoranKoleksi\Models\PenomoranKoleksiModel();
 
 		helper('reference');
@@ -63,11 +64,13 @@ class GuestBook extends \App\Controllers\BaseController
 			$this->data['isian']  = $isian;
 			$this->data['errors'] = $this->session->getFlashdata('errors_tamu') ?? [];
 
-			// Simpan otomatis hanya kalau data anggota sudah lengkap dan benar; selain itu anggota melengkapi dulu
-			$this->data['isian_lengkap'] = $this->data['errors'] === [] && IsianTamu::periksa(
-				$isian,
-				array_column($pilihan['unit_kerja'], 'id')
-			)['errors'] === [];
+			// ?ubah= membuka form untuk mengoreksi kunjungan yang baru dicatat, tanpa kirim otomatis
+			$ubah = (int) $this->request->getGet('ubah');
+			$this->data['kunjungan_id'] = $ubah && $this->kunjunganBolehDiubah($ubah, $member) ? $ubah : null;
+
+			// Data yang sudah lengkap dan benar langsung dikirim oleh halaman (POST); selain itu anggota melengkapi form dulu
+			$this->data['kirim_otomatis'] = !$this->data['kunjungan_id'] && $this->data['errors'] === []
+				&& IsianTamu::periksa($isian, array_column($pilihan['unit_kerja'], 'id'))['errors'] === [];
 		}
 
 		// Set data for view
@@ -76,6 +79,7 @@ class GuestBook extends \App\Controllers\BaseController
 		$this->data['member'] = $member;
 		$this->data['message'] = $this->session->getFlashdata('message')
 			?: ($member_no !== '' && !$member ? 'Nomor Anggota tidak ditemukan.' : null);
+		$this->data['kunjungan_baru'] = $this->session->getFlashdata('kunjungan_baru');
 
 		// Render view
 		return view('GuestBook\Views\add', $this->data);
@@ -135,8 +139,42 @@ class GuestBook extends \App\Controllers\BaseController
 			return redirect()->to(base_url('buku-tamu') . '?member_no=' . rawurlencode($member->MemberNo));
 		}
 
+		$kunjunganId = (int) $this->request->getPost('kunjungan_id');
+		if ($kunjunganId && $this->kunjunganBolehDiubah($kunjunganId, $member)) {
+			return $this->ubahKunjunganAnggota($kunjunganId, $hasil['data']);
+		}
+
+		return $this->simpanKunjunganAnggota($member, $hasil['data'], $locationId);
+	}
+
+	/** Kunjungan yang boleh dikoreksi: milik anggota ini dan dicatat hari ini. */
+	private function kunjunganBolehDiubah(int $id, object $member): bool
+	{
+		return $this->db->table('memberguesses')
+			->where('ID', $id)
+			->where('NoAnggota', $member->MemberNo)
+			->where('DATE(CreateDate)', date('Y-m-d'))
+			->countAllResults() > 0;
+	}
+
+	private function ubahKunjunganAnggota(int $id, array $isian)
+	{
+		try {
+			$this->memberguestModel->update($id, $isian);
+			$this->session->setFlashdata('success', 'Data kunjungan berhasil diubah.');
+		} catch (\Throwable $e) {
+			log_message('error', '[BukuTamu] Gagal mengubah kunjungan ' . $id . ': ' . $e->getMessage());
+			$this->session->setFlashdata('message', 'Buku tamu gagal disimpan. Silakan hubungi petugas perpustakaan.');
+		}
+
+		return redirect()->to(base_url('buku-tamu'));
+	}
+
+	/** Mencatat kunjungan anggota dari isian yang sudah diperiksa, lalu kembali ke layar pindai. */
+	private function simpanKunjunganAnggota(object $member, array $isian, $locationId)
+	{
 		// Pendidikan, pekerjaan, dan alamat tetap diambil dari data anggota untuk Laporan Buku Tamu
-		$save_data = $hasil['data'] + [
+		$save_data = $isian + [
 			'NoAnggota'             => $member->MemberNo,
 			'PendidikanTerakhir_id' => $member->EducationLevel_id,
 			'Profesi_id'            => $member->Job_id,
@@ -145,14 +183,37 @@ class GuestBook extends \App\Controllers\BaseController
 			'Branch_id'             => $member->Branch_id,
 		];
 
-		if ($this->memberguestModel->insert($save_data)) {
-			$this->session->setFlashdata('success', 'Kunjungan berhasil dicatat.');
-		} else {
-			$this->session->setFlashdata('message', 'Buku Tamu gagal disimpan');
+		$id = $this->simpanTamu($this->memberguestModel, $save_data, 'Kunjungan berhasil dicatat.');
+		if ($id) {
+			// Untuk tautan "Data kunjungan salah? Ubah" di layar pindai
+			$this->session->setFlashdata('kunjungan_baru', ['id' => $id, 'member_no' => $member->MemberNo]);
 		}
 
 		return redirect()->to(base_url('buku-tamu'));
 	}
+
+	/**
+	 * Menyimpan satu baris buku tamu dan menyiapkan pesan untuk pengunjung. Mengembalikan ID baris baru, atau null kalau gagal.
+	 * Kesalahan database (misalnya migrasi belum di-import di server) dicatat di log; pengunjung cukup melihat pesan gagal.
+	 */
+	private function simpanTamu($model, array $data, string $pesanBerhasil): ?int
+	{
+		try {
+			$id = (int) $model->insert($data) ?: null;
+		} catch (\Throwable $e) {
+			log_message('error', '[BukuTamu] Gagal menyimpan ke ' . get_class($model) . ': ' . $e->getMessage());
+			$id = null;
+		}
+
+		if ($id) {
+			$this->session->setFlashdata('success', $pesanBerhasil);
+		} else {
+			$this->session->setFlashdata('message', 'Buku tamu gagal disimpan. Silakan hubungi petugas perpustakaan.');
+		}
+
+		return $id;
+	}
+
 	public function non_anggota($prefix = '')
 	{
 		$locationId = $this->request->getCookie('Location_id') ?: null;
@@ -179,11 +240,7 @@ class GuestBook extends \App\Controllers\BaseController
 					'CreateBy' => user_id(),
 				];
 
-				if ($this->memberguestModel->insert($save_data)) {
-					$this->session->setFlashdata('success', 'Kunjungan berhasil dicatat.');
-				} else {
-					$this->session->setFlashdata('message', 'Buku Tamu gagal disimpan');
-				}
+				$this->simpanTamu($this->memberguestModel, $save_data, 'Kunjungan berhasil dicatat.');
 
 				return redirect()->to('/buku-tamu/non_anggota');
 			}
@@ -237,11 +294,7 @@ class GuestBook extends \App\Controllers\BaseController
 					'CreateTerminal'   => $this->request->getIPAddress(),
 				];
 
-				if ($this->groupguestModel->insert($save_data)) {
-					$this->session->setFlashdata('success', 'Kunjungan rombongan ' . $save_data['AsalInstansi'] . ' (' . $save_data['CountPersonel'] . ' orang) berhasil dicatat.');
-				} else {
-					$this->session->setFlashdata('message', 'Buku Tamu Rombongan gagal disimpan. Silakan coba lagi.');
-				}
+				$this->simpanTamu($this->groupguestModel, $save_data, 'Kunjungan rombongan ' . $save_data['AsalInstansi'] . ' (' . $save_data['CountPersonel'] . ' orang) berhasil dicatat.');
 
 				return redirect()->to('/buku-tamu/rombongan');
 			}

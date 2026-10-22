@@ -277,10 +277,6 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
         }
 
         /* ─── SweetAlert2 Fix ─── */
-        .swal2-icon {
-            display: flex !important;
-        }
-
         .swal2-icon.swal2-warning {
             border-color: #f8bb86 !important;
             color: #f8bb86 !important;
@@ -360,11 +356,11 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                             <i class="fa-solid fa-desktop me-1"></i>Layanan Mandiri
                         </a>
                         <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdownLayanan">
-                            <li>
+                            <!--<li>
                                 <a class="dropdown-item" href="<?= base_url('baca-ditempat') ?>">
                                     <i class="fa-solid fa-book-reader fa-fw text-secondary me-2"></i>Baca Ditempat
                                 </a>
-                            </li>
+                            </li>-->
                             <li>
                                 <a class="dropdown-item" href="<?= base_url('buku-tamu') ?>">
                                     <i class="fa-solid fa-address-book fa-fw text-secondary me-2"></i>Buku Tamu
@@ -486,6 +482,18 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
     <script src="<?= base_url('assets/js'); ?>/jquery-4.0.0.min.js"></script>
     <script src="<?= base_url('assets/js'); ?>/bootstrap.min.js"></script>
     <script src="<?= base_url('assets/js'); ?>/sweetalert2@8.js"></script>
+    <script>
+        // SweetAlert2 versi 8 memakai opsi `type`; halaman yang menulis `icon` (nama di versi 9 ke atas) tetap dapat ikonnya
+        (function () {
+            const fire = Swal.fire.bind(Swal);
+            Swal.fire = function (opsi, ...lainnya) {
+                if (opsi && typeof opsi === 'object' && opsi.icon && !opsi.type) {
+                    opsi = Object.assign({}, opsi, { type: opsi.icon });
+                }
+                return fire(opsi, ...lainnya);
+            };
+        })();
+    </script>
 
     <?= $this->renderSection('script') ?>
 </body>

@@ -114,6 +114,15 @@ class SelfLoan extends \App\Controllers\BaseController
         if ($member->EndDate && strtotime($member->EndDate) < time()) {
             return ['success' => false, 'message' => 'Keanggotaan sudah berakhir'];
         }
+
+        // Check member suspend status
+        helper('sirkulasi');
+        if (function_exists('cek_suspend_anggota')) {
+            $suspendCheck = cek_suspend_anggota($member->ID);
+            if ($suspendCheck['is_suspended']) {
+                return ['success' => false, 'message' => $suspendCheck['message']];
+            }
+        }
         
         // Get current location from cookie
         $locationId = $this->request->getCookie('Location_id');

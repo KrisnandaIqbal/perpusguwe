@@ -419,6 +419,13 @@
 				</div>
 			<?php endif; ?>
 
+			<?php if (!empty($kunjungan_baru)) : ?>
+				<p class="tamu-hitung">
+					Data kunjungan salah?
+					<a href="<?= base_url('buku-tamu') . '?' . http_build_query(['member_no' => $kunjungan_baru['member_no'], 'ubah' => $kunjungan_baru['id']]) ?>">Ubah</a>
+				</p>
+			<?php endif; ?>
+
 			<!-- Search Section -->
 			<div class="search-section">
 				<h2 class="search-title">Cari Anggota Perpustakaan</h2>
@@ -457,7 +464,11 @@
 			<!-- Action Section -->
 			<div class="action-section">
 				<h2 class="tamu-judul">Data Kunjungan</h2>
-				<p class="tamu-sub">Periksa nama, unit, dan nomor WhatsApp Anda. Ubah kalau ada yang tidak sesuai.</p>
+				<?php if (!empty($kirim_otomatis)) : ?>
+					<p class="tamu-sub" aria-live="polite">Mencatat kunjungan Anda...</p>
+				<?php else : ?>
+					<p class="tamu-sub">Periksa nama, unit, dan nomor WhatsApp Anda. Ubah kalau ada yang tidak sesuai.</p>
+				<?php endif; ?>
 
 				<?php if (!empty($errors)) : ?>
 					<div class="alert-custom alert-error-custom" role="alert">
@@ -466,9 +477,12 @@
 					</div>
 				<?php endif; ?>
 
-				<form id="frm_store_anggota" class="tamu-form" method="post" action="<?php echo base_url('buku-tamu/store_anggota'); ?>">
+				<form id="frm_store_anggota" class="tamu-form" method="post" action="<?php echo base_url('buku-tamu/store_anggota'); ?>"<?= !empty($kirim_otomatis) ? ' data-kirim-otomatis' : '' ?>>
 					<?= csrf_field() ?>
 					<input type="hidden" name="member_no" value="<?= esc($member->MemberNo, 'attr') ?>">
+					<?php if (!empty($kunjungan_id)) : ?>
+						<input type="hidden" name="kunjungan_id" value="<?= (int) $kunjungan_id ?>">
+					<?php endif; ?>
 
 					<?= view('GuestBook\Views\isian_tamu', [
 						'isian'             => $isian,
@@ -482,11 +496,9 @@
 					</button>
 				</form>
 
-				<?php if (!empty($isian_lengkap)) : ?>
-					<p class="tamu-hitung" id="pesanHitung" aria-live="polite">
-						Tersimpan otomatis dalam <strong><span id="countdown">10</span></strong> detik. Sentuh salah satu isian untuk mengubahnya.
-					</p>
-				<?php else : ?>
+				<?php if (!empty($kunjungan_id)) : ?>
+					<p class="tamu-hitung">Ubah isian yang salah, lalu tekan Simpan Kunjungan.</p>
+				<?php elseif (empty($kirim_otomatis)) : ?>
 					<p class="tamu-hitung">Lengkapi isian yang masih kosong, lalu tekan Simpan Kunjungan.</p>
 				<?php endif; ?>
 			</div>
@@ -557,30 +569,10 @@
 	</script>
 <?php endif; ?>
 
-<?php if (!empty($member) && !empty($isian_lengkap)) : ?>
+<?php if (!empty($kirim_otomatis)) : ?>
 <script>
-    const storeForm   = document.getElementById('frm_store_anggota');
-    const countdownEl = document.getElementById('countdown');
-    let countdown = 10;
-    let timer = setInterval(() => {
-        countdown--;
-        if (countdownEl) countdownEl.textContent = countdown;
-
-        if (countdown <= 0) {
-            clearInterval(timer);
-            storeForm.submit();
-        }
-    }, 1000);
-
-    // Anggota yang mulai mengubah isian butuh waktu: hitung mundur berhenti, simpan lewat tombol
-    storeForm.querySelectorAll('input:not([type=hidden]), select').forEach((el) => {
-        el.addEventListener('focus', () => {
-            if (timer === null) return;
-            clearInterval(timer);
-            timer = null;
-            document.getElementById('pesanHitung').textContent = 'Simpan otomatis dihentikan. Tekan Simpan Kunjungan setelah selesai.';
-        });
-    });
+	// Data anggota sudah lengkap: kunjungan langsung dikirim. Tanpa JavaScript, tombol Simpan Kunjungan tetap bisa dipakai.
+	document.querySelector('[data-kirim-otomatis]').submit();
 </script>
 <?php endif; ?>
 

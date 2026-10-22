@@ -220,30 +220,25 @@ class Pengembalian extends \Base\Controllers\BaseController
                     'UpdateTerminal' => $this->request->getIPAddress()
                 ]);
 
-            // Catat pelanggaran jika buku terlambat dan user memilih proses pelanggaran
-            if ($processVio === '1' && $isOverdue && !empty($violationData)) {
-                $jumlahDenda = isset($violationData['per_hari']) && $violationData['per_hari']
-                    ? ($lateDays * (float)($violationData['jumlah_denda'] ?? 0))
-                    : (float)($violationData['jumlah_denda'] ?? 0);
-
+            // Catat pelanggaran jika buku terlambat (Aturan baru: terlambat N hari, suspend N hari, dihitung dari tanggal pengembalian. Tanpa denda uang.)
+            if ($isOverdue) {
                 $this->db->table('pelanggaran')->insert([
                     'CollectionLoan_id'     => $item->CollectionLoan_id,
                     'CollectionLoanItem_id' => $item->ID,
-                    'JenisPelanggaran_id'   => $violationData['jenis_pelanggaran_id'] ?? null,
-                    'JenisDenda_id'         => $violationData['jenis_denda_id'] ?? null,
-                    'JumlahDenda'           => $jumlahDenda,
-                    'JumlahSuspend'         => 0,
-                    'Paid'                  => 0,
+                    'JenisPelanggaran_id'   => !empty($violationData['jenis_pelanggaran_id']) ? $violationData['jenis_pelanggaran_id'] : 1,
+                    'JenisDenda_id'         => 5, // 5 = Suspend (Skorsing)
+                    'JumlahDenda'           => 0, // Tanpa denda uang
+                    'JumlahSuspend'         => $lateDays, // Otomatis dari hari keterlambatan
+                    'Paid'                  => 1,
                     'Member_id'             => $item->member_id,
                     'Collection_id'         => $item->Collection_id,
                     'Branch_id'             => null,
                     'active'                => 1,
-                    'CreateBy'              => user_id(),
+                    'CreateBy'              => user_id() ?: 1,
                     'CreateDate'            => $returnDate,
                     'CreateTerminal'        => $this->request->getIPAddress()
                 ]);
 
-                $totalDenda += $jumlahDenda;
                 $violationCount++;
             }
 
