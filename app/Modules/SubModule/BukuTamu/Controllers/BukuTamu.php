@@ -90,12 +90,12 @@ class BukuTamu extends \Base\Controllers\BaseController
             session()->setFlashdata('swal_icon', 'success');
             session()->setFlashdata('swal_title', 'Berhasil');
             session()->setFlashdata('swal_text', 'Buku Tamu berhasil dihapus');
-            return redirect()->to('bukutamu?slug=' . $slug);
+            return redirect()->to($slug == 'rombongan' ? 'bukutamu/rombongan' : 'bukutamu');
         } else {
             session()->setFlashdata('swal_icon', 'error');
             session()->setFlashdata('swal_title', 'Gagal');
             session()->setFlashdata('swal_text', 'Buku Tamu gagal dihapus');
-            return redirect()->to('bukutamu?slug=' . $slug);
+            return redirect()->to($slug == 'rombongan' ? 'bukutamu/rombongan' : 'bukutamu');
         }
     }
 
