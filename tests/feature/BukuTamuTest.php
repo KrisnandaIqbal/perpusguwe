@@ -246,6 +246,29 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertSame('SMA Negeri 1 Jakarta', $r->AsalInstansi);
     }
 
+    public function testRombonganGagalDisimpanMenampilkanPesanBukanHalamanError(): void
+    {
+        // Meniru server yang belum meng-import buku_tamu_unit_migration.sql: kolom UnitKerja_id belum ada
+        $db = db_connect();
+        $db->query('ALTER TABLE groupguesses RENAME COLUMN UnitKerja_id TO UnitKerja_id_uji');
+
+        try {
+            $result = $this->post('buku-tamu/rombongan', [
+                'Jenis'         => 'kemnaker',
+                'Nama'          => 'Ketua Gagal Uji Otomatis',
+                'UnitKerja_id'  => '2',
+                'HP'            => '081200009999',
+                'CountPersonel' => '8',
+            ]);
+        } finally {
+            $db->query('ALTER TABLE groupguesses RENAME COLUMN UnitKerja_id_uji TO UnitKerja_id');
+        }
+
+        $result->assertRedirectTo('/buku-tamu/rombongan');
+        $result->assertSessionHas('message', 'Buku tamu gagal disimpan. Silakan hubungi petugas perpustakaan.');
+        $this->assertNull($this->rombongan('Ketua Gagal Uji Otomatis'));
+    }
+
     public function testRombonganKurangDariEnamOrangDitolak(): void
     {
         $result = $this->post('buku-tamu/rombongan', [
