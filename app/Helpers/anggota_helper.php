@@ -1011,5 +1011,3 @@ if (!function_exists('is_valid_unit_subunit')) {
 }
 
 
-?>
-
