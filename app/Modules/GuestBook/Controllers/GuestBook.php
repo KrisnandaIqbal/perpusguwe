@@ -151,13 +151,29 @@ class GuestBook extends \App\Controllers\BaseController
 			'Branch_id'             => $member->Branch_id,
 		];
 
-		if ($this->memberguestModel->insert($save_data)) {
-			$this->session->setFlashdata('success', 'Kunjungan berhasil dicatat.');
-		} else {
-			$this->session->setFlashdata('message', 'Buku Tamu gagal disimpan');
-		}
+		$this->simpanTamu($this->memberguestModel, $save_data, 'Kunjungan berhasil dicatat.');
 
 		return redirect()->to(base_url('buku-tamu'));
+	}
+
+	/**
+	 * Menyimpan satu baris buku tamu dan menyiapkan pesan untuk pengunjung.
+	 * Kesalahan database (misalnya migrasi belum di-import di server) dicatat di log; pengunjung cukup melihat pesan gagal.
+	 */
+	private function simpanTamu($model, array $data, string $pesanBerhasil): void
+	{
+		try {
+			$tersimpan = (bool) $model->insert($data);
+		} catch (\Throwable $e) {
+			log_message('error', '[BukuTamu] Gagal menyimpan ke ' . get_class($model) . ': ' . $e->getMessage());
+			$tersimpan = false;
+		}
+
+		if ($tersimpan) {
+			$this->session->setFlashdata('success', $pesanBerhasil);
+		} else {
+			$this->session->setFlashdata('message', 'Buku tamu gagal disimpan. Silakan hubungi petugas perpustakaan.');
+		}
 	}
 
 	public function non_anggota($prefix = '')
@@ -186,11 +202,7 @@ class GuestBook extends \App\Controllers\BaseController
 					'CreateBy' => user_id(),
 				];
 
-				if ($this->memberguestModel->insert($save_data)) {
-					$this->session->setFlashdata('success', 'Kunjungan berhasil dicatat.');
-				} else {
-					$this->session->setFlashdata('message', 'Buku Tamu gagal disimpan');
-				}
+				$this->simpanTamu($this->memberguestModel, $save_data, 'Kunjungan berhasil dicatat.');
 
 				return redirect()->to('/buku-tamu/non_anggota');
 			}
@@ -244,11 +256,7 @@ class GuestBook extends \App\Controllers\BaseController
 					'CreateTerminal'   => $this->request->getIPAddress(),
 				];
 
-				if ($this->groupguestModel->insert($save_data)) {
-					$this->session->setFlashdata('success', 'Kunjungan rombongan ' . $save_data['AsalInstansi'] . ' (' . $save_data['CountPersonel'] . ' orang) berhasil dicatat.');
-				} else {
-					$this->session->setFlashdata('message', 'Buku Tamu Rombongan gagal disimpan. Silakan coba lagi.');
-				}
+				$this->simpanTamu($this->groupguestModel, $save_data, 'Kunjungan rombongan ' . $save_data['AsalInstansi'] . ' (' . $save_data['CountPersonel'] . ' orang) berhasil dicatat.');
 
 				return redirect()->to('/buku-tamu/rombongan');
 			}
