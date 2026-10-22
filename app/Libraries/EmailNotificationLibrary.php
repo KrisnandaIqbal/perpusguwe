@@ -581,7 +581,7 @@ class EmailNotificationLibrary
         if ($lateBooks === 0) {
             $opening = 'Terima kasih telah mengembalikan buku tepat waktu.';
         } elseif ($lateBooks === $totalBooks) {
-            $opening = 'Terima kasih telah mengembalikan buku. Buku dikembalikan melewati jatuh tempo.';
+            $opening = 'Terima kasih telah mengembalikan buku, meski melewati jatuh tempo.';
         } else {
             $opening = 'Terima kasih telah mengembalikan buku. Sebagian buku dikembalikan melewati jatuh tempo.';
         }

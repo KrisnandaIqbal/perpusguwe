@@ -46,7 +46,7 @@ final class EmailStrukPengembalianTest extends CIUnitTestCase
         $isi = $this->kirim([4]);
 
         $this->assertStringNotContainsString('tepat waktu', $isi);
-        $this->assertStringContainsString('Terima kasih telah mengembalikan buku. Buku dikembalikan melewati jatuh tempo.', $isi);
+        $this->assertStringContainsString('Terima kasih telah mengembalikan buku, meski melewati jatuh tempo.', $isi);
     }
 
     public function testSebagianBukuTerlambat(): void
