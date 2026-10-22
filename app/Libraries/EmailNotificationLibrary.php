@@ -274,8 +274,7 @@ class EmailNotificationLibrary
                                     </table>
 
                                     <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;">
-                                        Mohon segera kembalikan buku tersebut ke perpustakaan untuk menghindari
-                                        penambahan denda. Jika sudah dikembalikan, abaikan pesan ini.
+                                        Mohon segera kembalikan buku tersebut ke perpustakaan. Jika sudah dikembalikan, abaikan pesan ini.
                                     </p>
                                 </td>
                             </tr>
@@ -388,8 +387,7 @@ class EmailNotificationLibrary
                                     </table>
 
                                     <p style="margin:0 0 24px;color:#6b7280;font-size:13px;line-height:1.7;">
-                                        Mohon segera kembalikan buku-buku tersebut ke perpustakaan untuk menghindari
-                                        penambahan denda. Jika sudah dikembalikan, abaikan pesan ini.
+                                        Mohon segera kembalikan buku-buku tersebut ke perpustakaan. Jika sudah dikembalikan, abaikan pesan ini.
                                     </p>
                                 </td>
                             </tr>
@@ -555,7 +553,7 @@ class EmailNotificationLibrary
                                     </tr>
                                     {$bookRows}
                                 </table>
-                                <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;">Harap kembalikan buku sebelum tanggal jatuh tempo baru untuk menghindari denda.</p>
+                                <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;">Harap kembalikan buku sebelum tanggal jatuh tempo baru.</p>
                             </td>
                         </tr>
                         <tr>
@@ -576,6 +574,15 @@ class EmailNotificationLibrary
         $appName    = $this->settingModel->where('Name', 'NamaPerpustakaan')->first()->Value ?? 'Perpustakaan Mitra';
         $returnDate = date('d F Y H:i');
         $totalBooks = count($items);
+
+        $lateBooks = count(array_filter($items, static fn ($item) => (int)($item->LateDays ?? 0) > 0));
+        if ($lateBooks === 0) {
+            $opening = 'Terima kasih telah mengembalikan buku tepat waktu.';
+        } elseif ($lateBooks === $totalBooks) {
+            $opening = 'Terima kasih telah mengembalikan buku, meski melewati jatuh tempo.';
+        } else {
+            $opening = 'Terima kasih telah mengembalikan buku. Sebagian buku dikembalikan melewati jatuh tempo.';
+        }
 
         $bookRows = '';
         foreach ($items as $i => $item) {
@@ -620,7 +627,7 @@ class EmailNotificationLibrary
                         <tr>
                             <td style="padding:32px 40px;">
                                 <p style="margin:0 0 8px;color:#374151;font-size:15px;">Kepada Yth. <strong>{$member->Fullname}</strong> ({$member->MemberNo}),</p>
-                                <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">Terima kasih telah mengembalikan buku tepat waktu. Berikut struk pengembalian Anda.</p>
+                                <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">{$opening} Berikut struk pengembalian Anda.</p>
                                 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:24px;">
                                     <tr><td style="background:#1e40af;padding:12px 20px;"><p style="margin:0;color:#ffffff;font-size:13px;font-weight:600;">📋 Ringkasan Pengembalian</p></td></tr>
                                     <tr><td style="padding:20px;">
@@ -639,7 +646,6 @@ class EmailNotificationLibrary
                                     </tr>
                                     {$bookRows}
                                 </table>
-                                <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;">Jika ada denda keterlambatan, silakan selesaikan di loket perpustakaan.</p>
                             </td>
                         </tr>
                         <tr>
@@ -721,7 +727,7 @@ class EmailNotificationLibrary
                                     </tr>
                                     {$bookRows}
                                 </table>
-                                <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;">Harap kembalikan buku sebelum tanggal jatuh tempo untuk menghindari denda.</p>
+                                <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;">Harap kembalikan buku sebelum tanggal jatuh tempo.</p>
                             </td>
                         </tr>
                         <tr>

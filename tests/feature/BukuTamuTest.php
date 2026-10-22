@@ -30,8 +30,32 @@ final class BukuTamuTest extends CIUnitTestCase
         service('superglobals')->setCookie('Location_id', (string) $lokasi->ID);
     }
 
+    /** ID anggota uji yang dibuat tes ini, dihapus di tearDown. */
+    private array $anggotaUji = [];
+
+    /** Anggota uji disalin dari anggota yang ada, dengan nama, unit, dan No. HP yang ditentukan tes. */
+    private function anggotaUji(string $nama, ?int $unitKerjaId, string $hp): object
+    {
+        $db     = db_connect();
+        $contoh = $db->table('members')->notLike('MemberNo', 'PENDING-', 'after')->get()->getRowArray();
+
+        unset($contoh['ID']);
+        $contoh['MemberNo']     = '98' . substr((string) hrtime(true), -9);
+        $contoh['Fullname']     = $nama;
+        $contoh['UnitKerja_id'] = $unitKerjaId;
+        $contoh['NoHp']         = $hp;
+        $contoh['Phone']        = $hp;
+        $db->table('members')->insert($contoh);
+        $this->anggotaUji[] = (int) $db->insertID();
+
+        return (object) $contoh;
+    }
+
     protected function tearDown(): void
     {
+        if ($this->anggotaUji) {
+            db_connect()->table('members')->whereIn('ID', $this->anggotaUji)->delete();
+        }
         service('superglobals')->unsetCookie('Location_id');
         db_connect()->table('memberguesses')->like('Nama', 'Uji Otomatis')->delete();
         db_connect()->table('groupguesses')->like('NamaKetua', 'Uji Otomatis')->delete();
@@ -155,17 +179,76 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertNull($this->tamu('Anggota Salah Uji Otomatis'));
     }
 
+    public function testPindaiAnggotaLengkapLangsungDikirimTanpaMenyimpanLewatGet(): void
+    {
+        $anggota = $this->anggotaUji('Anggota Lengkap Uji Otomatis', 2, '081200005555');
+
+        $result = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo));
+
+        // Membuka tautan pindai tidak mencatat apa pun; halaman mengirim form POST sendiri
+        $result->assertOK();
+        $this->assertNull($this->tamu('Anggota Lengkap Uji Otomatis'));
+        $this->assertStringContainsString('data-kirim-otomatis', $result->getBody());
+        $this->assertStringContainsString('action="' . base_url('buku-tamu/store_anggota') . '"', $result->getBody());
+    }
+
+    /** Mencatat kunjungan anggota lewat form, seperti yang dikirim halaman pindai. */
+    private function catatKunjungan(object $anggota, string $hp, ?int $kunjunganId = null)
+    {
+        return $this->post('buku-tamu/store_anggota', array_filter([
+            'member_no'    => $anggota->MemberNo,
+            'Nama'         => $anggota->Fullname,
+            'UnitKerja_id' => '2',
+            'HP'           => $hp,
+            'kunjungan_id' => $kunjunganId,
+        ]));
+    }
+
+    public function testDataSalahBisaDiubahTanpaMenambahKunjungan(): void
+    {
+        $anggota = $this->anggotaUji('Anggota Koreksi Uji Otomatis', 2, '081200005555');
+
+        $this->catatKunjungan($anggota, '081200005555')->assertRedirectTo(base_url('buku-tamu'));
+        $kunjungan = $this->tamu('Anggota Koreksi Uji Otomatis');
+        $this->assertNotNull($kunjungan);
+        $this->assertSame(['id' => (int) $kunjungan->ID, 'member_no' => $anggota->MemberNo], $_SESSION['kunjungan_baru'] ?? null);
+
+        // Tautan "Ubah" membuka form terisi tanpa kirim otomatis, membawa kunjungan yang akan diubah
+        $form = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo) . '&ubah=' . $kunjungan->ID);
+        $form->assertOK();
+        $this->assertStringNotContainsString('data-kirim-otomatis', $form->getBody());
+        $this->assertStringContainsString('name="kunjungan_id" value="' . $kunjungan->ID . '"', $form->getBody());
+
+        $this->catatKunjungan($anggota, '081277778888', (int) $kunjungan->ID);
+
+        $semua = db_connect()->table('memberguesses')->where('Nama', 'Anggota Koreksi Uji Otomatis')->get()->getResult();
+        $this->assertCount(1, $semua);
+        $this->assertSame('081277778888', $semua[0]->HP);
+    }
+
+    public function testKunjunganAnggotaLainTidakBisaDiubah(): void
+    {
+        $pemilik = $this->anggotaUji('Anggota Pemilik Uji Otomatis', 2, '081200005555');
+        $lain    = $this->anggotaUji('Anggota Lain Uji Otomatis', 2, '081200006666');
+        $this->catatKunjungan($pemilik, '081200005555');
+        $kunjungan = $this->tamu('Anggota Pemilik Uji Otomatis');
+
+        $this->catatKunjungan($lain, '081299990000', (int) $kunjungan->ID);
+
+        $this->assertSame('081200005555', $this->tamu('Anggota Pemilik Uji Otomatis')->HP);
+        $this->assertNotNull($this->tamu('Anggota Lain Uji Otomatis'));
+    }
+
     public function testDataAnggotaMengisiFormOtomatis(): void
     {
-        $anggota = db_connect()->table('members')
-            ->notLike('MemberNo', 'PENDING-', 'after')
-            ->where("COALESCE(NULLIF(NoHp, ''), Phone) IS NOT NULL", null, false)
-            ->get()->getRow();
+        // Tanpa satuan kerja, data belum lengkap: form tampil terisi dan kunjungan belum tercatat
+        $anggota = $this->anggotaUji('Anggota Belum Lengkap Uji Otomatis', null, '081200006666');
 
         $result = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo));
 
         $result->assertOK();
-        $this->assertStringContainsString('value="' . ($anggota->NoHp ?: $anggota->Phone) . '"', $result->getBody());
+        $this->assertNull($this->tamu('Anggota Belum Lengkap Uji Otomatis'));
+        $this->assertStringContainsString('value="081200006666"', $result->getBody());
         $result->assertSee('Simpan Kunjungan');
         $this->assertStringNotContainsString('name="SubUnitKerja_id"', $result->getBody());
         $this->assertStringNotContainsString('name="TujuanKunjungan_id"', $result->getBody());
@@ -208,6 +291,30 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertNotNull($r);
         $this->assertNull($r->UnitKerja_id);
         $this->assertSame('SMA Negeri 1 Jakarta', $r->AsalInstansi);
+    }
+
+    public function testRombonganGagalDisimpanMenampilkanPesanBukanHalamanError(): void
+    {
+        // Meniru server yang belum meng-import buku_tamu_unit_migration.sql: insert ditolak database karena kolom belum ada
+        $gagal = new class () extends \BukuTamu\Models\GroupGuestModel {
+            public function insert($row = null, bool $returnID = true)
+            {
+                throw new \CodeIgniter\Database\Exceptions\DatabaseException("Unknown column 'UnitKerja_id' in 'field list'");
+            }
+        };
+        \CodeIgniter\Config\Factories::injectMock('models', \BukuTamu\Models\GroupGuestModel::class, $gagal);
+
+        $result = $this->post('buku-tamu/rombongan', [
+            'Jenis'         => 'kemnaker',
+            'Nama'          => 'Ketua Gagal Uji Otomatis',
+            'UnitKerja_id'  => '2',
+            'HP'            => '081200009999',
+            'CountPersonel' => '8',
+        ]);
+
+        $result->assertRedirectTo('/buku-tamu/rombongan');
+        $result->assertSessionHas('message', 'Buku tamu gagal disimpan. Silakan hubungi petugas perpustakaan.');
+        $this->assertNull($this->rombongan('Ketua Gagal Uji Otomatis'));
     }
 
     public function testRombonganKurangDariEnamOrangDitolak(): void

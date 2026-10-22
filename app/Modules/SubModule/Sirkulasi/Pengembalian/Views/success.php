@@ -168,9 +168,6 @@
                                 <p><strong>Tanggal Kembali</strong> <?= date('d/m/Y H:i', strtotime($return_date)) ?></p>
                                 <p><strong>Jumlah Buku</strong> <?= count($items) ?> buku</p>
                                 <p><strong>Pelanggaran</strong> <?= $violation_count ?> item</p>
-                                <?php if ($total_denda > 0): ?>
-                                <p><strong>Total Denda</strong> Rp <?= number_format($total_denda, 0, ',', '.') ?></p>
-                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -230,8 +227,8 @@
                                 <div class="rstat-val"><?= date('d/m/Y', strtotime($return_date)) ?></div>
                             </div>
                             <div>
-                                <div class="rstat-label">Total Denda</div>
-                                <div class="rstat-val"><?= $total_denda > 0 ? 'Rp ' . number_format($total_denda, 0, ',', '.') : '-' ?></div>
+                                <div class="rstat-label">Terlambat</div>
+                                <div class="rstat-val"><?= $violation_count > 0 ? $violation_count . ' buku' : '-' ?></div>
                             </div>
                         </div>
                         <div class="receipt-note">

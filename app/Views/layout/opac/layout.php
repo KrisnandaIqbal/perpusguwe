@@ -277,10 +277,6 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
         }
 
         /* ─── SweetAlert2 Fix ─── */
-        .swal2-icon {
-            display: flex !important;
-        }
-
         .swal2-icon.swal2-warning {
             border-color: #f8bb86 !important;
             color: #f8bb86 !important;
@@ -486,6 +482,18 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
     <script src="<?= base_url('assets/js'); ?>/jquery-4.0.0.min.js"></script>
     <script src="<?= base_url('assets/js'); ?>/bootstrap.min.js"></script>
     <script src="<?= base_url('assets/js'); ?>/sweetalert2@8.js"></script>
+    <script>
+        // SweetAlert2 versi 8 memakai opsi `type`; halaman yang menulis `icon` (nama di versi 9 ke atas) tetap dapat ikonnya
+        (function () {
+            const fire = Swal.fire.bind(Swal);
+            Swal.fire = function (opsi, ...lainnya) {
+                if (opsi && typeof opsi === 'object' && opsi.icon && !opsi.type) {
+                    opsi = Object.assign({}, opsi, { type: opsi.icon });
+                }
+                return fire(opsi, ...lainnya);
+            };
+        })();
+    </script>
 
     <?= $this->renderSection('script') ?>
 </body>

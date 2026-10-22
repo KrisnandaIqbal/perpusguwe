@@ -194,7 +194,7 @@
                             <div class="alert alert-warning text-center">
                                 <i class="fas fa-calendar-exclamation me-2"></i>
                                 <strong>Tanggal Kembali: <?= date('d/m/Y', strtotime($firstDueDate)) ?></strong><br>
-                                <small>Harap kembalikan buku sebelum tanggal jatuh tempo untuk menghindari denda</small>
+                                <small>Harap kembalikan buku sebelum tanggal jatuh tempo</small>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -267,7 +267,6 @@
                             <ul class="mb-0">
                                 <li>Simpan struk ini dengan baik sebagai bukti peminjaman</li>
                                 <li>Buku harus dikembalikan sebelum tanggal jatuh tempo</li>
-                                <li>Keterlambatan pengembalian akan dikenakan denda</li>
                                 <li>Hubungi petugas perpustakaan jika ada kendala</li>
                             </ul>
                         </div>

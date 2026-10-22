@@ -17,6 +17,7 @@ $routes->group('bukutamu', ['namespace' => 'BukuTamu\Controllers'], function ($s
 	//custom
 	$subroutes->add('non_anggota', 'BukuTamu::non_anggota');
 	$subroutes->add('rombongan', 'BukuTamu::rombongan');
+	$subroutes->get('export', 'BukuTamu::export');
 });
 
 $routes->group('api/bukutamu', ['namespace' => 'BukuTamu\Controllers\Api'], function ($subroutes) {
