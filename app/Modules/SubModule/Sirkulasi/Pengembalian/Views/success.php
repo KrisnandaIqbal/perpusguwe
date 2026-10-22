@@ -172,12 +172,13 @@
                         </div>
                     </div>
 
-                    <!-- Peringatan keterlambatan -->
+                    <!-- Suspend Alert -->
                     <?php if ($violation_count > 0): ?>
-                    <div class="denda-alert">
-                        <i class="fa fa-exclamation-triangle"></i>
+                    <div class="denda-alert" style="background:#fef2f2;border-left:4px solid var(--danger,#dc2626);color:#991b1b;">
+                        <i class="fa fa-ban"></i>
                         <div>
                             <?= $violation_count ?> buku dikembalikan terlambat
+                            <small style="display:block;margin-top:2px;">Sesuai aturan perpustakaan, hak peminjaman disuspend sementara selama jumlah hari keterlambatan tanpa denda uang.</small>
                         </div>
                     </div>
                     <?php endif; ?>

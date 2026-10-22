@@ -349,10 +349,6 @@
 
                 <!-- Form Pelanggaran -->
                 <div id="violationFormSection">
-                    <p style="font-size:14px;color:var(--gray-500);margin-bottom:14px;">
-                        Apakah ingin mencatat pelanggaran untuk buku yang terlambat?
-                    </p>
-
                     <div class="mb-3">
                         <label style="font-size:13px;font-weight:700;color:var(--blue-900);margin-bottom:6px;display:block;">
                             <i class="fa fa-list-ul"></i> Jenis Pelanggaran
@@ -362,38 +358,28 @@
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label style="font-size:13px;font-weight:700;color:var(--blue-900);margin-bottom:6px;display:block;">
-                            <i class="fa fa-tag"></i> Jenis Denda
-                        </label>
-                        <select id="jenisDendaSelect" class="form-select" style="border-radius:var(--radius-md);font-size:14px;border:2px solid var(--gray-300);">
-                            <option value="">-- Pilih Jenis Denda --</option>
-                        </select>
+                    <!-- Informasi Suspend Pengganti Denda -->
+                    <div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:var(--radius-md);padding:14px 16px;color:#991b1b;font-size:13px;line-height:1.5;">
+                        <i class="fa fa-ban" style="margin-right:6px;"></i>
+                        <strong>Ketentuan Sanksi:</strong> Perpustakaan tidak menerapkan denda uang. Keterlambatan N hari otomatis dikenakan sanksi suspend peminjaman selama N hari terhitung sejak tanggal pengembalian.
                     </div>
 
-                    <div class="mb-3">
-                        <label style="font-size:13px;font-weight:700;color:var(--blue-900);margin-bottom:6px;display:block;">
-                            <i class="fa fa-money"></i> Jumlah Denda
-                        </label>
-                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                            <input type="number" id="jumlahDendaInput" class="pm-input" min="0" step="500" placeholder="Contoh: 1000"
-                                   style="flex:1;min-width:160px;font-size:15px;letter-spacing:0;font-weight:600;padding:12px 16px;">
-                            <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-500);">
-                                <input type="checkbox" id="perHariCheck" style="width:16px;height:16px;accent-color:var(--blue-500);" checked>
-                                <label for="perHariCheck" style="cursor:pointer;font-weight:600;">Per hari</label>
-                            </div>
-                        </div>
-                        <small id="dendaPreview" style="color:var(--blue-800);font-size:12px;margin-top:6px;display:block;"></small>
+                    <!-- Hidden Denda Fields (Perpustakaan tidak memakai denda) -->
+                    <div style="display:none;">
+                        <select id="jenisDendaSelect"><option value="5" selected>Suspend</option></select>
+                        <input type="number" id="jumlahDendaInput" value="0">
+                        <input type="checkbox" id="perHariCheck">
+                        <small id="dendaPreview"></small>
                     </div>
                 </div>
             </div>
 
             <div class="modal-footer" style="border:none;padding:12px 24px 20px;gap:10px;">
-                <button type="button" id="skipViolationBtn" class="pm-btn pm-btn-ghost" style="flex:1;">
-                    <i class="fa fa-forward"></i> Lewati Pelanggaran
+                <button type="button" class="pm-btn pm-btn-ghost" data-bs-dismiss="modal" style="flex:1;">
+                    <i class="fa fa-times"></i> Batal
                 </button>
-                <button type="button" id="confirmViolationBtn" class="pm-btn pm-btn-primary" style="flex:1;background:linear-gradient(135deg,#7c1d1d,var(--danger));box-shadow:0 4px 14px rgba(232,57,77,.35);">
-                    <i class="fa fa-gavel"></i> Proses + Catat Pelanggaran
+                <button type="button" id="confirmViolationBtn" class="pm-btn pm-btn-primary" style="flex:2;background:linear-gradient(135deg,#7c1d1d,var(--danger));box-shadow:0 4px 14px rgba(232,57,77,.35);">
+                    <i class="fa fa-gavel"></i> Proses Pengembalian & Suspend
                 </button>
             </div>
 
@@ -427,17 +413,25 @@ class SelfReturnApp {
         });
 
         // Tombol di dalam modal
-        document.getElementById('skipViolationBtn').addEventListener('click', () => {
-            bootstrap.Modal.getInstance(document.getElementById('modalPelanggaran')).hide();
-            this.submitReturn(false, null);
-        });
-        document.getElementById('confirmViolationBtn').addEventListener('click', () => {
-            this.handleConfirmViolation();
-        });
+        const skipBtn = document.getElementById('skipViolationBtn');
+        if (skipBtn) {
+            skipBtn.addEventListener('click', () => {
+                bootstrap.Modal.getInstance(document.getElementById('modalPelanggaran')).hide();
+                this.submitReturn(false, null);
+            });
+        }
+        const confirmBtn = document.getElementById('confirmViolationBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+                this.handleConfirmViolation();
+            });
+        }
 
-        // Live preview kalkulasi denda
-        document.getElementById('jumlahDendaInput').addEventListener('input', () => this.updateDendaPreview());
-        document.getElementById('perHariCheck').addEventListener('change', () => this.updateDendaPreview());
+        // Live preview kalkulasi denda (jika elemen tersedia)
+        const dendaInput = document.getElementById('jumlahDendaInput');
+        if (dendaInput) dendaInput.addEventListener('input', () => this.updateDendaPreview());
+        const perHari = document.getElementById('perHariCheck');
+        if (perHari) perHari.addEventListener('change', () => this.updateDendaPreview());
     }
 
     setupAutoScan() {
@@ -600,19 +594,15 @@ class SelfReturnApp {
         listEl.innerHTML = overdueBooks.map(b => `
             <div style="background:var(--gray-100);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:8px;border-left:4px solid var(--danger);">
                 <div style="font-size:14px;font-weight:700;color:var(--gray-800);">${b.title || '-'}</div>
-                <div style="font-size:12px;color:var(--gray-500);">
+                <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">
                     <i class="fa fa-barcode"></i> ${b.barcode} &nbsp;|&nbsp;
-                    <span style="color:var(--danger);font-weight:700;"><i class="fa fa-exclamation-circle"></i> Terlambat ${b.days_overdue} hari</span>
+                    <span style="color:var(--danger);font-weight:700;"><i class="fa fa-exclamation-circle"></i> Terlambat ${b.days_overdue} hari</span> &nbsp;|&nbsp;
+                    <span style="color:#b91c1c;font-weight:700;"><i class="fa fa-ban"></i> Sanksi Suspend: ${b.days_overdue} hari</span>
                 </div>
             </div>`).join('');
 
         document.getElementById('overdueInfoText').textContent =
             `${overdueBooks.length} dari ${this.booksToReturn.length} buku melewati tanggal jatuh tempo.`;
-
-        // Reset form
-        document.getElementById('jumlahDendaInput').value = '';
-        document.getElementById('perHariCheck').checked   = true;
-        document.getElementById('dendaPreview').textContent = '';
 
         // Simpan referensi overdueBooks untuk kalkulasi preview
         this._overdueBooks = overdueBooks;
@@ -621,46 +611,19 @@ class SelfReturnApp {
     }
 
     updateDendaPreview() {
-        const nominal  = parseFloat(document.getElementById('jumlahDendaInput').value) || 0;
-        const perHari  = document.getElementById('perHariCheck').checked;
-        const overdue  = this._overdueBooks || [];
-        const preview  = document.getElementById('dendaPreview');
-
-        if (!nominal || overdue.length === 0) { preview.textContent = ''; return; }
-
-        if (perHari) {
-            const totalDays = overdue.reduce((s, b) => s + b.days_overdue, 0);
-            const total     = totalDays * nominal;
-            preview.innerHTML = `<i class="fa fa-info-circle"></i> Estimasi total denda: <b>Rp ${total.toLocaleString('id-ID')}</b> (${totalDays} hari × Rp ${nominal.toLocaleString('id-ID')})`;
-        } else {
-            const total = overdue.length * nominal;
-            preview.innerHTML = `<i class="fa fa-info-circle"></i> Estimasi total denda: <b>Rp ${total.toLocaleString('id-ID')}</b> (${overdue.length} buku × Rp ${nominal.toLocaleString('id-ID')})`;
-        }
+        // Ditiadakan karena perpustakaan tidak memakai denda uang
     }
 
     handleConfirmViolation() {
-        const jenisPelanggaranId = document.getElementById('jenisPelanggaranSelect').value;
-        const jenisDendaId       = document.getElementById('jenisDendaSelect').value;
-        const jumlahDenda        = document.getElementById('jumlahDendaInput').value;
-        const perHari            = document.getElementById('perHariCheck').checked;
-
-        if (!jenisPelanggaranId) {
-            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Silakan pilih jenis pelanggaran', confirmButtonColor: '#1B3878' }); return;
-        }
-        if (!jenisDendaId) {
-            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Silakan pilih jenis denda', confirmButtonColor: '#1B3878' }); return;
-        }
-        if (!jumlahDenda || parseFloat(jumlahDenda) < 0) {
-            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Silakan masukkan jumlah denda yang valid', confirmButtonColor: '#1B3878' }); return;
-        }
+        const jenisPelanggaranSelect = document.getElementById('jenisPelanggaranSelect');
+        const jenisPelanggaranId     = (jenisPelanggaranSelect && jenisPelanggaranSelect.value) ? jenisPelanggaranSelect.value : 1;
 
         bootstrap.Modal.getInstance(document.getElementById('modalPelanggaran')).hide();
 
         this.submitReturn(true, {
             jenis_pelanggaran_id: jenisPelanggaranId,
-            jenis_denda_id:       jenisDendaId,
-            jumlah_denda:         parseFloat(jumlahDenda),
-            per_hari:             perHari
+            jenis_denda_id:       5, // Suspend
+            jumlah_denda:         0
         });
     }
 

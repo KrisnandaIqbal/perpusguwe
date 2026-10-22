@@ -356,11 +356,11 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                             <i class="fa-solid fa-desktop me-1"></i>Layanan Mandiri
                         </a>
                         <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdownLayanan">
-                            <li>
+                            <!--<li>
                                 <a class="dropdown-item" href="<?= base_url('baca-ditempat') ?>">
                                     <i class="fa-solid fa-book-reader fa-fw text-secondary me-2"></i>Baca Ditempat
                                 </a>
-                            </li>
+                            </li>-->
                             <li>
                                 <a class="dropdown-item" href="<?= base_url('buku-tamu') ?>">
                                     <i class="fa-solid fa-address-book fa-fw text-secondary me-2"></i>Buku Tamu

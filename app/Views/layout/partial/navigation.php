@@ -134,7 +134,7 @@ $menuData[] = [
 			"subMenu" => [
 				get_menu_item("Jenis Akses", "master/jenis-akses", in_array($segment2, ['jenis-akses'])),
 				get_menu_item("Jenis Bahan", "master/jenis-bahan", in_array($segment2, ['jenis-bahan'])),
-				get_menu_item("Jenis Denda", "master/jenis-denda", in_array($segment2, ['jenis-denda'])),
+				// get_menu_item("Jenis Denda", "master/jenis-denda", in_array($segment2, ['jenis-denda'])), // Disembunyikan (perpustakaan tidak memakai denda)
 				get_menu_item("Jenis Pelanggaran", "master/jenis-pelanggaran", in_array($segment2, ['jenis-pelanggaran'])),
 				get_menu_item("Peminjaman Hari", "master/peraturan-peminjaman-hari", in_array($segment2, ['peraturan-peminjaman-hari'])),
 				get_menu_item("Peminjaman Tanggal", "master/peraturan-peminjaman-tanggal", in_array($segment2, ['peraturan-peminjaman-tanggal'])),

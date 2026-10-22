@@ -62,6 +62,18 @@ if (!function_exists('check_member_loan_eligibility')) {
                 'message' => 'Keanggotaan sudah berakhir'
             ];
         }
+
+        // Check member suspend status
+        helper('sirkulasi');
+        if (function_exists('cek_suspend_anggota')) {
+            $suspendCheck = cek_suspend_anggota($memberId);
+            if ($suspendCheck['is_suspended']) {
+                return [
+                    'eligible' => false,
+                    'message'  => $suspendCheck['message']
+                ];
+            }
+        }
         
         // Check current loans
         $currentLoans = $db->table('collectionloanitems')
