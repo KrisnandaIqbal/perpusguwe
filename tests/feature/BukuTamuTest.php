@@ -30,8 +30,32 @@ final class BukuTamuTest extends CIUnitTestCase
         service('superglobals')->setCookie('Location_id', (string) $lokasi->ID);
     }
 
+    /** ID anggota uji yang dibuat tes ini, dihapus di tearDown. */
+    private array $anggotaUji = [];
+
+    /** Anggota uji disalin dari anggota yang ada, dengan nama, unit, dan No. HP yang ditentukan tes. */
+    private function anggotaUji(string $nama, ?int $unitKerjaId, string $hp): object
+    {
+        $db     = db_connect();
+        $contoh = $db->table('members')->notLike('MemberNo', 'PENDING-', 'after')->get()->getRowArray();
+
+        unset($contoh['ID']);
+        $contoh['MemberNo']     = '98' . substr((string) hrtime(true), -9);
+        $contoh['Fullname']     = $nama;
+        $contoh['UnitKerja_id'] = $unitKerjaId;
+        $contoh['NoHp']         = $hp;
+        $contoh['Phone']        = $hp;
+        $db->table('members')->insert($contoh);
+        $this->anggotaUji[] = (int) $db->insertID();
+
+        return (object) $contoh;
+    }
+
     protected function tearDown(): void
     {
+        if ($this->anggotaUji) {
+            db_connect()->table('members')->whereIn('ID', $this->anggotaUji)->delete();
+        }
         service('superglobals')->unsetCookie('Location_id');
         db_connect()->table('memberguesses')->like('Nama', 'Uji Otomatis')->delete();
         db_connect()->table('groupguesses')->like('NamaKetua', 'Uji Otomatis')->delete();
@@ -155,17 +179,29 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertNull($this->tamu('Anggota Salah Uji Otomatis'));
     }
 
+    public function testAnggotaDenganDataLengkapLangsungTercatat(): void
+    {
+        $anggota = $this->anggotaUji('Anggota Lengkap Uji Otomatis', 2, '081200005555');
+
+        $result = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo));
+
+        $result->assertRedirectTo(base_url('buku-tamu'));
+        $tamu = $this->tamu('Anggota Lengkap Uji Otomatis');
+        $this->assertNotNull($tamu);
+        $this->assertSame($anggota->MemberNo, $tamu->NoAnggota);
+        $this->assertSame('081200005555', $tamu->HP);
+    }
+
     public function testDataAnggotaMengisiFormOtomatis(): void
     {
-        $anggota = db_connect()->table('members')
-            ->notLike('MemberNo', 'PENDING-', 'after')
-            ->where("COALESCE(NULLIF(NoHp, ''), Phone) IS NOT NULL", null, false)
-            ->get()->getRow();
+        // Tanpa satuan kerja, data belum lengkap: form tampil terisi dan kunjungan belum tercatat
+        $anggota = $this->anggotaUji('Anggota Belum Lengkap Uji Otomatis', null, '081200006666');
 
         $result = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo));
 
         $result->assertOK();
-        $this->assertStringContainsString('value="' . ($anggota->NoHp ?: $anggota->Phone) . '"', $result->getBody());
+        $this->assertNull($this->tamu('Anggota Belum Lengkap Uji Otomatis'));
+        $this->assertStringContainsString('value="081200006666"', $result->getBody());
         $result->assertSee('Simpan Kunjungan');
         $this->assertStringNotContainsString('name="SubUnitKerja_id"', $result->getBody());
         $this->assertStringNotContainsString('name="TujuanKunjungan_id"', $result->getBody());

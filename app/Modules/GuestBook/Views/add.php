@@ -482,13 +482,7 @@
 					</button>
 				</form>
 
-				<?php if (!empty($isian_lengkap)) : ?>
-					<p class="tamu-hitung" id="pesanHitung" aria-live="polite">
-						Tersimpan otomatis dalam <strong><span id="countdown">10</span></strong> detik. Sentuh salah satu isian untuk mengubahnya.
-					</p>
-				<?php else : ?>
-					<p class="tamu-hitung">Lengkapi isian yang masih kosong, lalu tekan Simpan Kunjungan.</p>
-				<?php endif; ?>
+				<p class="tamu-hitung">Lengkapi isian yang masih kosong, lalu tekan Simpan Kunjungan.</p>
 			</div>
 
 
@@ -555,33 +549,6 @@
 			});
 		});
 	</script>
-<?php endif; ?>
-
-<?php if (!empty($member) && !empty($isian_lengkap)) : ?>
-<script>
-    const storeForm   = document.getElementById('frm_store_anggota');
-    const countdownEl = document.getElementById('countdown');
-    let countdown = 10;
-    let timer = setInterval(() => {
-        countdown--;
-        if (countdownEl) countdownEl.textContent = countdown;
-
-        if (countdown <= 0) {
-            clearInterval(timer);
-            storeForm.submit();
-        }
-    }, 1000);
-
-    // Anggota yang mulai mengubah isian butuh waktu: hitung mundur berhenti, simpan lewat tombol
-    storeForm.querySelectorAll('input:not([type=hidden]), select').forEach((el) => {
-        el.addEventListener('focus', () => {
-            if (timer === null) return;
-            clearInterval(timer);
-            timer = null;
-            document.getElementById('pesanHitung').textContent = 'Simpan otomatis dihentikan. Tekan Simpan Kunjungan setelah selesai.';
-        });
-    });
-</script>
 <?php endif; ?>
 
 <?= $this->endsection() ?>

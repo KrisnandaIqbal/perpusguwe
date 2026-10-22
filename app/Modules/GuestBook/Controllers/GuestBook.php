@@ -63,11 +63,11 @@ class GuestBook extends \App\Controllers\BaseController
 			$this->data['isian']  = $isian;
 			$this->data['errors'] = $this->session->getFlashdata('errors_tamu') ?? [];
 
-			// Simpan otomatis hanya kalau data anggota sudah lengkap dan benar; selain itu anggota melengkapi dulu
-			$this->data['isian_lengkap'] = $this->data['errors'] === [] && IsianTamu::periksa(
-				$isian,
-				array_column($pilihan['unit_kerja'], 'id')
-			)['errors'] === [];
+			// Data anggota yang sudah lengkap dan benar langsung dicatat; selain itu anggota melengkapi form dulu
+			$hasil = IsianTamu::periksa($isian, array_column($pilihan['unit_kerja'], 'id'));
+			if ($this->data['errors'] === [] && $hasil['errors'] === []) {
+				return $this->simpanKunjunganAnggota($member, $hasil['data'], $locationId);
+			}
 		}
 
 		// Set data for view
@@ -135,8 +135,14 @@ class GuestBook extends \App\Controllers\BaseController
 			return redirect()->to(base_url('buku-tamu') . '?member_no=' . rawurlencode($member->MemberNo));
 		}
 
+		return $this->simpanKunjunganAnggota($member, $hasil['data'], $locationId);
+	}
+
+	/** Mencatat kunjungan anggota dari isian yang sudah diperiksa, lalu kembali ke layar pindai. */
+	private function simpanKunjunganAnggota(object $member, array $isian, $locationId)
+	{
 		// Pendidikan, pekerjaan, dan alamat tetap diambil dari data anggota untuk Laporan Buku Tamu
-		$save_data = $hasil['data'] + [
+		$save_data = $isian + [
 			'NoAnggota'             => $member->MemberNo,
 			'PendidikanTerakhir_id' => $member->EducationLevel_id,
 			'Profesi_id'            => $member->Job_id,
@@ -153,6 +159,7 @@ class GuestBook extends \App\Controllers\BaseController
 
 		return redirect()->to(base_url('buku-tamu'));
 	}
+
 	public function non_anggota($prefix = '')
 	{
 		$locationId = $this->request->getCookie('Location_id') ?: null;
