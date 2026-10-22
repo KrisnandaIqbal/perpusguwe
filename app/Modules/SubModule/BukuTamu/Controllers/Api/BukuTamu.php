@@ -154,7 +154,7 @@ public function non_anggota_datatable()
 				return $html;
 			})
 			->edit('action', function ($row) {
-				$html   = '<a href="javascript:void(0);" data-href="' . base_url('bukutamu/delete/' . $row->id) . '" data-toggle="tooltip" data-placement="top" title="Hapus " class="btn btn-danger remove-data"><i class="pe-7s-trash font-weight-bold"> </i></a> ';
+				$html   = '<a href="javascript:void(0);" data-href="' . base_url('bukutamu/delete/' . $row->id . '?slug=rombongan') . '" data-toggle="tooltip" data-placement="top" title="Hapus " class="btn btn-danger remove-data"><i class="pe-7s-trash font-weight-bold"> </i></a> ';
 				return $html;
 			})
 			->toJson();

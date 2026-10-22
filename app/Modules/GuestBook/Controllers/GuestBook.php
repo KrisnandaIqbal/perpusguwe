@@ -24,8 +24,9 @@ class GuestBook extends \App\Controllers\BaseController
          $this->session = session();
 		 $this->db=\Config\Database::connect('data');
 		 $this->validation = \Config\Services::validation();
-		$this->memberguestModel = new \BukuTamu\Models\MemberGuestModel();
-		$this->groupguestModel  =  new \BukuTamu\Models\GroupGuestModel();
+		// Lewat model() supaya tes bisa menggantinya dengan model tiruan
+		$this->memberguestModel = model(\BukuTamu\Models\MemberGuestModel::class);
+		$this->groupguestModel  = model(\BukuTamu\Models\GroupGuestModel::class);
 		$this->settingModel = new \PenomoranKoleksi\Models\PenomoranKoleksiModel();
 
 		helper('reference');
