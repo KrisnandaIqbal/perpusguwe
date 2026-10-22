@@ -2779,7 +2779,7 @@ if (!empty($jenis_identitas)) {
                                     <option value="">Pilih status</option>
                                     <option value="staf">Staf</option>
                                     <option value="magang_nasional">Magang Nasional</option>
-                                    <option value="magang_biasa">Magang Biasa</option>
+                                    <option value="magang_biasa">Magang Reguler</option>
                                 </select>
 
                                 <!-- Visual Trigger -->
@@ -2808,7 +2808,7 @@ if (!empty($jenis_identitas)) {
                                         </svg>
                                     </div>
                                     <div class="rf-select-option" data-value="magang_biasa" role="option">
-                                        <span class="rf-opt-text">Magang Biasa</span>
+                                        <span class="rf-opt-text">Magang Reguler</span>
                                         <svg class="rf-opt-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M3.5 8.5l3 3 6-7"/>
                                         </svg>
@@ -2976,8 +2976,8 @@ if (!empty($jenis_identitas)) {
                             </button>
                             <button type="button" class="rf-btn rf-btn-primary" id="btnSubmitRegistrasi" disabled>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                                 </svg>
                                 <span>Kirim Formulir Registrasi</span>
                             </button>
@@ -4371,12 +4371,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const val = nativeStatusNonAsnSelect ? nativeStatusNonAsnSelect.value : '';
         if (!val || (val !== 'staf' && val !== 'magang_nasional' && val !== 'magang_biasa')) {
-            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).');
-            return '<strong>Status Non-ASN:</strong> Status pemustaka Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).';
+            setFieldError(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Belum Dipilih', 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Reguler).');
+            return '<strong>Status Non-ASN:</strong> Status pemustaka Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Reguler).';
         } else {
             let labelText = 'Staf';
             if (val === 'magang_nasional') labelText = 'Magang Nasional';
-            else if (val === 'magang_biasa') labelText = 'Magang Biasa';
+            else if (val === 'magang_biasa') labelText = 'Magang Reguler';
             setFieldValid(statusNonAsnTrigger, badgeStatusNonAsn, feedbackStatusNonAsn, 'Status Non-ASN terverifikasi: ' + labelText + '.');
             return null;
         }

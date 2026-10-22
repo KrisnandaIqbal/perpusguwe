@@ -304,18 +304,16 @@ class Pengembalian extends \Base\Controllers\BaseResourceController
 			$collectionLoanItemId = $this->request->getPost('collection_loan_item_id');
 			$lateDays = $this->request->getPost('late_days');
 
-			// Validasi input
+			// Validasi input: hanya jenis_pelanggaran_id yang wajib (denda ditiadakan)
 			$validation = \Config\Services::validation();
 			$validation->setRules([
 				'jenis_pelanggaran_id' => 'required',
-				'jenis_denda_id' => 'required',
-				'jumlah_denda' => 'required|numeric',
 			]);
 
 			if (!$validation->withRequest($this->request)->run()) {
 				return $this->response->setJSON([
 					'success' => false,
-					'message' => 'Validasi gagal. Periksa kembali form Anda.'
+					'message' => 'Validasi gagal. Pilih jenis pelanggaran.'
 				]);
 			}
 
@@ -330,14 +328,15 @@ class Pengembalian extends \Base\Controllers\BaseResourceController
 			}
 
 			$jenisPelanggaranId = $this->request->getPost('jenis_pelanggaran_id');
-			$jenisDendaId = $this->request->getPost('jenis_denda_id');
+			$jenisDendaId = $this->request->getPost('jenis_denda_id') ?: 5; // Default: Suspend (Skorsing)
 
-			// Hitung denda berdasarkan hari keterlambatan
-			$dendaPerHari = $this->request->getPost('jumlah_denda');
-			$jumlahDenda = $dendaPerHari * $lateDays;
+			// Hitung hari keterlambatan jika belum terisi
+			helper('sirkulasi');
+			$lateDays = (int) ($this->request->getPost('late_days') ?? hitungHariKerjaTerlambat($loanItem->DueDate));
 
-			// Hitung jumlah suspend
-			$jumlahSuspend = $this->request->getPost('jumlah_suspend') ?: 0;
+			// Aturan baru: terlambat N hari, suspend N hari, dihitung dari tanggal pengembalian. Tanpa denda uang.
+			$jumlahDenda = 0;
+			$jumlahSuspend = $lateDays;
 
 			$pelanggaranData = [
 				'CollectionLoan_id' => $loanItem->CollectionLoan_id,
@@ -348,9 +347,9 @@ class Pengembalian extends \Base\Controllers\BaseResourceController
 				'JumlahSuspend' => $jumlahSuspend,
 				'Member_id' => $this->request->getPost('member_id'),
 				'Collection_id' => $this->request->getPost('collection_id'),
-				'Paid' => 1, // Belum dibayar
+				'Paid' => 1,
 				'active' => 1,
-				'CreateBy' => session()->get('user_id'),
+				'CreateBy' => session()->get('user_id') ?: 1,
 				'CreateDate' => date('Y-m-d H:i:s'),
 				'CreateTerminal' => $this->request->getIPAddress()
 			];
@@ -359,7 +358,7 @@ class Pengembalian extends \Base\Controllers\BaseResourceController
 
 			return $this->response->setJSON([
 				'success' => true,
-				'message' => 'Pelanggaran berhasil disimpan. Total denda: Rp ' . number_format($jumlahDenda, 0, ',', '.')
+				'message' => 'Pelanggaran berhasil disimpan. Anggota disuspend selama ' . $jumlahSuspend . ' hari.'
 			]);
 		} catch (\Exception $e) {
 			return $this->response->setJSON([

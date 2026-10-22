@@ -185,8 +185,8 @@ class Registrasi extends BaseController
             if (!in_array($statusNonAsn, ['staf', 'magang_nasional', 'magang_biasa'], true)) {
                 return $this->respond([
                     'success' => false,
-                    'message' => 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Biasa).',
-                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf, Magang Nasional, atau Magang Biasa.']
+                    'message' => 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Reguler).',
+                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf, Magang Nasional, atau Magang Reguler.']
                 ]);
             }
         } else {

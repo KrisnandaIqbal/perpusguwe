@@ -698,7 +698,7 @@
             <option value="">Pilih status</option>
             <option value="staf" <?= (($anggota->status_non_asn ?? '') === 'staf') ? 'selected' : '' ?>>Staf</option>
             <option value="magang_nasional" <?= (($anggota->status_non_asn ?? '') === 'magang_nasional') ? 'selected' : '' ?>>Magang Nasional</option>
-            <option value="magang_biasa" <?= (($anggota->status_non_asn ?? '') === 'magang_biasa') ? 'selected' : '' ?>>Magang Biasa</option>
+            <option value="magang_biasa" <?= (($anggota->status_non_asn ?? '') === 'magang_biasa') ? 'selected' : '' ?>>Magang Reguler</option>
             <?php if (($anggota->status_non_asn ?? '') === 'magang'): ?>
             <option value="magang" selected>Magang (Data Lama)</option>
             <?php endif; ?>
@@ -865,7 +865,7 @@
           <label for="EndDate" class="font-weight-bold">Tanggal Masa Berlaku Kartu</label>
           <input type="text" class="form-control" id="EndDate" name="EndDate" 
                  value="<?= substr(($anggota->EndDate ?? date('Y-m-d', strtotime('+1 year'))), 0, 10) ?>" readonly />
-          <small class="form-text text-muted">Masa aktif kartu (ASN: 1 tahun sejak registrasi; Non-ASN: Staf 1 tahun, Magang Nasional 6 bulan, Magang Biasa 1 bulan sejak disetujui).</small>
+          <small class="form-text text-muted">Masa aktif kartu (ASN: 1 tahun sejak registrasi; Non-ASN: Staf 1 tahun, Magang Nasional 6 bulan, Magang Reguler 1 bulan sejak disetujui).</small>
         </div>
       </div>
 

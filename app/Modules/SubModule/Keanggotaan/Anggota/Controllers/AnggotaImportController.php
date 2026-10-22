@@ -195,7 +195,7 @@ class AnggotaImportController extends \Base\Controllers\BaseController
                             $val = strtolower(trim((string) $cellValue));
                             if (in_array($val, ['magang nasional', 'magang_nasional'], true)) {
                                 $memberData['status_non_asn'] = 'magang_nasional';
-                            } elseif (in_array($val, ['magang biasa', 'magang_biasa'], true)) {
+                            } elseif (in_array($val, ['magang reguler', 'magang_reguler', 'magang biasa', 'magang_biasa'], true)) {
                                 $memberData['status_non_asn'] = 'magang_biasa';
                             } elseif ($val === 'magang') {
                                 $memberData['status_non_asn'] = 'magang';

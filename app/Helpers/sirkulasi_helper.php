@@ -312,3 +312,90 @@ if (!function_exists('get_cart_loan')) {
     }
 }
 
+if (!function_exists('cek_suspend_anggota')) {
+    /**
+     * Memeriksa apakah anggota sedang dalam masa suspend peminjaman.
+     * Aturan: terlambat N hari menghasilkan suspend N hari, dihitung dari tanggal pengembalian (CreateDate).
+     *
+     * @param int|string $memberId ID anggota
+     * @param string|\DateTimeInterface|null $checkDate Tanggal pengecekan (default: now)
+     * @return array ['is_suspended' => bool, 'message' => string, 'suspend_until' => string|null, 'suspend_days' => int]
+     */
+    function cek_suspend_anggota($memberId, $checkDate = null): array {
+        if (empty($memberId)) {
+            return ['is_suspended' => false, 'message' => '', 'suspend_until' => null, 'suspend_days' => 0];
+        }
+
+        $nowDt = $checkDate
+            ? ($checkDate instanceof \DateTimeInterface ? clone $checkDate : new \DateTime($checkDate))
+            : new \DateTime();
+
+        $db = \Config\Database::connect();
+
+        // 1. Cek status anggota di tabel members (StatusAnggota_id = 5 adalah Suspend)
+        if ($db->tableExists('members')) {
+            $member = $db->table('members')
+                ->select('ID, MemberNo, Fullname, StatusAnggota_id')
+                ->where('ID', $memberId)
+                ->get()
+                ->getRow();
+
+            if ($member && (int)$member->StatusAnggota_id === 5) {
+                return [
+                    'is_suspended'  => true,
+                    'message'       => 'Anggota sedang dalam status Suspend oleh admin perpustakaan.',
+                    'suspend_until' => null,
+                    'suspend_days'  => 0,
+                ];
+            }
+        }
+
+        // 2. Cek catatan pelanggaran aktif dengan JumlahSuspend > 0
+        if ($db->tableExists('pelanggaran')) {
+            $violations = $db->table('pelanggaran')
+                ->where('Member_id', $memberId)
+                ->where('JumlahSuspend >', 0)
+                ->where('active', 1)
+                ->orderBy('CreateDate', 'DESC')
+                ->get()
+                ->getResult();
+
+            $maxSuspendUntil = null;
+            $maxSuspendDays = 0;
+
+            foreach ($violations as $v) {
+                $createDt = new \DateTime($v->CreateDate);
+                $suspendDays = (int)$v->JumlahSuspend;
+                // Suspend N hari dihitung dari tanggal pengembalian
+                $untilDt = clone $createDt;
+                $untilDt->modify("+{$suspendDays} days");
+                $untilDt->setTime(23, 59, 59);
+
+                if ($nowDt <= $untilDt) {
+                    if ($maxSuspendUntil === null || $untilDt > $maxSuspendUntil) {
+                        $maxSuspendUntil = $untilDt;
+                        $maxSuspendDays = $suspendDays;
+                    }
+                }
+            }
+
+            if ($maxSuspendUntil !== null) {
+                $formattedUntil = $maxSuspendUntil->format('d/m/Y');
+                return [
+                    'is_suspended'  => true,
+                    'message'       => "Anggota sedang disuspend hingga {$formattedUntil} (sanksi keterlambatan {$maxSuspendDays} hari).",
+                    'suspend_until' => $maxSuspendUntil->format('Y-m-d H:i:s'),
+                    'suspend_days'  => $maxSuspendDays,
+                ];
+            }
+        }
+
+        return [
+            'is_suspended'  => false,
+            'message'       => '',
+            'suspend_until' => null,
+            'suspend_days'  => 0,
+        ];
+    }
+}
+

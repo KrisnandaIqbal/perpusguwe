@@ -79,7 +79,7 @@
                                 <select class="form-control" id="jenis_pelanggaran_id" name="jenis_pelanggaran_id" required>
                                     <option value="">-- Pilih Jenis Pelanggaran --</option>
                                     <?php foreach (get_table('jenis_pelanggaran', 'ID, JenisPelanggaran', null, 'data') as $row) : ?>
-                                        <option value="<?= $row->ID ?>"><?= $row->JenisPelanggaran ?></option>
+                                        <option value="<?= $row->ID ?>" <?= ($row->ID == 1) ? 'selected' : '' ?>><?= $row->JenisPelanggaran ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -87,37 +87,16 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="jenis_denda_id">Jenis Denda <span class="text-danger">*</span></label>
-                                <select class="form-control" id="jenis_denda_id" name="jenis_denda_id" required>
-                                    <option value="">-- Pilih Jenis Denda --</option>
-                                    <?php foreach (get_table('jenis_denda', 'ID, Name', null, 'data') as $row) : ?>
-                  <option value="<?= $row->ID ?>" <?= set_select('ID', $row->ID) ?>><?= $row->Name ?></option>
-                <?php endforeach; ?>
-                        </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="jumlah_denda">Jumlah Denda per Hari (Rp) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="jumlah_denda" name="jumlah_denda" value="0" min="0" required>
-                                <small class="form-text text-muted">Denda akan dikalikan dengan hari keterlambatan</small>
-                            </div>
-                            <div class="alert alert-info">
-                                <strong>Total Denda:</strong> Rp <span id="total_denda_display">0</span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
                                 <label for="jumlah_suspend">Jumlah Hari Suspend</label>
-                                <input type="number" class="form-control" id="jumlah_suspend" name="jumlah_suspend" value="0" min="0">
-                                <small class="form-text text-muted">Kosongkan atau isi 0 jika tidak ada suspend</small>
+                                <input type="number" class="form-control" id="jumlah_suspend" name="jumlah_suspend" value="0" min="0" readonly style="background-color: #e9ecef; font-weight: bold;">
+                                <small class="form-text text-muted">Terisi otomatis sesuai hari keterlambatan</small>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Hidden Denda Fields (Perpustakaan tidak memakai denda uang) -->
+                    <input type="hidden" name="jenis_denda_id" id="jenis_denda_id" value="5">
+                    <input type="hidden" name="jumlah_denda" id="jumlah_denda" value="0">
 
                     <div class="form-group">
                         <label for="catatan">Catatan</label>
@@ -301,22 +280,25 @@
 		var memberId = $(this).data('member-id');
 		var collectionId = $(this).data('collection-id');
         
+        // --- Reset form setiap kali modal dibuka ---
+        $('#formViolation')[0].reset();
+        
         // --- Isi informasi di header modal ---
         $('#info-loan-id').text(loanId);
         $('#info-barcode').text(barcode);
         $('#info-title').text(title);
         $('#info-latedays').text(lateDays + ' hari');
         
-        // --- Isi hidden input di dalam form ---
+        // --- Isi input di dalam form ---
         $('#collection_loan_item_id').val(loanItemId);
         $('#collection_loan_id').val(loanId);
 		$('#member_id').val(memberId);
 		$('#collection_id').val(collectionId);
         $('#late_days').val(lateDays);
-        
-        // --- (Opsional) Reset form setiap kali modal dibuka ---
-        $('#formViolation')[0].reset();
-        $('#total_denda_display').text('0');
+        $('#jumlah_suspend').val(lateDays);
+        $('#jumlah_denda').val(0);
+        $('#jenis_denda_id').val(5);
+        $('#jenis_pelanggaran_id').val(1);
 
         // Tampilkan modal secara manual
         // Baris ini tidak wajib jika Anda sudah menambahkan data-toggle="modal", 
