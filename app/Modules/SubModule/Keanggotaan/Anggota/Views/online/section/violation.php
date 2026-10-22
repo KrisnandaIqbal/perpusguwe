@@ -18,7 +18,6 @@
 						<th>Penerbitan</th>
 						<th>Tanggal Peminjaman</th>
 						<th>Jatuh Tempo</th>
-						<th>Jumlah Denda</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -35,7 +34,6 @@
 							<td><?= _spec($row->publisher); ?></td>
 							<td width="100"><?= _spec($row->LoanDate); ?></td>
 							<td width="100"><?= _spec($row->DueDate); ?></td>
-							<td><?= _spec($row->JumlahDenda) ?></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>

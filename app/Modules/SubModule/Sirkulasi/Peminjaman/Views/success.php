@@ -339,7 +339,7 @@ padding-top: 110px; }
                         <i class="fa fa-calendar"></i>
                         <div>
                             Tanggal Kembali: <strong><?= date('d/m/Y', strtotime($firstDueDate)) ?></strong>
-                            <small>Harap kembalikan buku sebelum tanggal jatuh tempo untuk menghindari denda</small>
+                            <small>Harap kembalikan buku sebelum tanggal jatuh tempo</small>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -398,7 +398,6 @@ padding-top: 110px; }
                         <ul>
                             <li>Simpan struk ini dengan baik sebagai bukti peminjaman</li>
                             <li>Buku harus dikembalikan sebelum tanggal jatuh tempo</li>
-                            <li>Keterlambatan pengembalian akan dikenakan denda</li>
                             <li>Hubungi petugas perpustakaan jika ada kendala</li>
                         </ul>
                     </div>
