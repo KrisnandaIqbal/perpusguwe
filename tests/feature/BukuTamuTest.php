@@ -248,21 +248,22 @@ final class BukuTamuTest extends CIUnitTestCase
 
     public function testRombonganGagalDisimpanMenampilkanPesanBukanHalamanError(): void
     {
-        // Meniru server yang belum meng-import buku_tamu_unit_migration.sql: kolom UnitKerja_id belum ada
-        $db = db_connect();
-        $db->query('ALTER TABLE groupguesses RENAME COLUMN UnitKerja_id TO UnitKerja_id_uji');
+        // Meniru server yang belum meng-import buku_tamu_unit_migration.sql: insert ditolak database karena kolom belum ada
+        $gagal = new class () extends \BukuTamu\Models\GroupGuestModel {
+            public function insert($row = null, bool $returnID = true)
+            {
+                throw new \CodeIgniter\Database\Exceptions\DatabaseException("Unknown column 'UnitKerja_id' in 'field list'");
+            }
+        };
+        \CodeIgniter\Config\Factories::injectMock('models', \BukuTamu\Models\GroupGuestModel::class, $gagal);
 
-        try {
-            $result = $this->post('buku-tamu/rombongan', [
-                'Jenis'         => 'kemnaker',
-                'Nama'          => 'Ketua Gagal Uji Otomatis',
-                'UnitKerja_id'  => '2',
-                'HP'            => '081200009999',
-                'CountPersonel' => '8',
-            ]);
-        } finally {
-            $db->query('ALTER TABLE groupguesses RENAME COLUMN UnitKerja_id_uji TO UnitKerja_id');
-        }
+        $result = $this->post('buku-tamu/rombongan', [
+            'Jenis'         => 'kemnaker',
+            'Nama'          => 'Ketua Gagal Uji Otomatis',
+            'UnitKerja_id'  => '2',
+            'HP'            => '081200009999',
+            'CountPersonel' => '8',
+        ]);
 
         $result->assertRedirectTo('/buku-tamu/rombongan');
         $result->assertSessionHas('message', 'Buku tamu gagal disimpan. Silakan hubungi petugas perpustakaan.');
