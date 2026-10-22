@@ -36,7 +36,7 @@ $e = $eksemplar; // object saat edit, null saat create
 
     <div class="form-row">
         <div class="form-group col-md-6">
-            <label>Lokasi Perpustakaan</label>
+            <label>Lokasi Perpustakaan <span class="text-danger">*</span> <small class="text-muted">sebaiknya diisi</small></label>
             <select class="form-control" name="Location_Library_id" id="Location_Library_id">
                 <option value="">-- Pilih --</option>
                 <?php foreach ($locationLibraries as $row) : ?>
@@ -47,7 +47,7 @@ $e = $eksemplar; // object saat edit, null saat create
             </select>
         </div>
         <div class="form-group col-md-6">
-            <label>Lokasi Ruang</label>
+            <label>Lokasi Ruang <span class="text-danger">*</span> <small class="text-muted">sebaiknya diisi</small></label>
             <select class="form-control" name="Location_id" id="Location_id">
                 <option value="">-- Pilih Lokasi Perpustakaan Dulu --</option>
                 <?php if ($isEdit && !empty($locations)) : foreach ($locations as $row) : ?>
@@ -139,6 +139,12 @@ $e = $eksemplar; // object saat edit, null saat create
     (function () {
         var $libSel = $('#formEksemplarModal #Location_Library_id');
         var $locSel = $('#formEksemplarModal #Location_id');
+        setTimeout(function () {
+            var $opts = $libSel.find('option').filter(function () { return this.value !== ''; });
+            if (!$libSel.val() && $opts.length === 1) {
+                $libSel.val($opts.first().val()).trigger('change');
+            }
+        }, 0);
 
         $libSel.off('change.eksemplarModal').on('change.eksemplarModal', function () {
             var libId = $(this).val();
