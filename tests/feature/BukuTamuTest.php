@@ -179,17 +179,64 @@ final class BukuTamuTest extends CIUnitTestCase
         $this->assertNull($this->tamu('Anggota Salah Uji Otomatis'));
     }
 
-    public function testAnggotaDenganDataLengkapLangsungTercatat(): void
+    public function testPindaiAnggotaLengkapLangsungDikirimTanpaMenyimpanLewatGet(): void
     {
         $anggota = $this->anggotaUji('Anggota Lengkap Uji Otomatis', 2, '081200005555');
 
         $result = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo));
 
-        $result->assertRedirectTo(base_url('buku-tamu'));
-        $tamu = $this->tamu('Anggota Lengkap Uji Otomatis');
-        $this->assertNotNull($tamu);
-        $this->assertSame($anggota->MemberNo, $tamu->NoAnggota);
-        $this->assertSame('081200005555', $tamu->HP);
+        // Membuka tautan pindai tidak mencatat apa pun; halaman mengirim form POST sendiri
+        $result->assertOK();
+        $this->assertNull($this->tamu('Anggota Lengkap Uji Otomatis'));
+        $this->assertStringContainsString('data-kirim-otomatis', $result->getBody());
+        $this->assertStringContainsString('action="' . base_url('buku-tamu/store_anggota') . '"', $result->getBody());
+    }
+
+    /** Mencatat kunjungan anggota lewat form, seperti yang dikirim halaman pindai. */
+    private function catatKunjungan(object $anggota, string $hp, ?int $kunjunganId = null)
+    {
+        return $this->post('buku-tamu/store_anggota', array_filter([
+            'member_no'    => $anggota->MemberNo,
+            'Nama'         => $anggota->Fullname,
+            'UnitKerja_id' => '2',
+            'HP'           => $hp,
+            'kunjungan_id' => $kunjunganId,
+        ]));
+    }
+
+    public function testDataSalahBisaDiubahTanpaMenambahKunjungan(): void
+    {
+        $anggota = $this->anggotaUji('Anggota Koreksi Uji Otomatis', 2, '081200005555');
+
+        $this->catatKunjungan($anggota, '081200005555')->assertRedirectTo(base_url('buku-tamu'));
+        $kunjungan = $this->tamu('Anggota Koreksi Uji Otomatis');
+        $this->assertNotNull($kunjungan);
+        $this->assertSame(['id' => (int) $kunjungan->ID, 'member_no' => $anggota->MemberNo], $_SESSION['kunjungan_baru'] ?? null);
+
+        // Tautan "Ubah" membuka form terisi tanpa kirim otomatis, membawa kunjungan yang akan diubah
+        $form = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo) . '&ubah=' . $kunjungan->ID);
+        $form->assertOK();
+        $this->assertStringNotContainsString('data-kirim-otomatis', $form->getBody());
+        $this->assertStringContainsString('name="kunjungan_id" value="' . $kunjungan->ID . '"', $form->getBody());
+
+        $this->catatKunjungan($anggota, '081277778888', (int) $kunjungan->ID);
+
+        $semua = db_connect()->table('memberguesses')->where('Nama', 'Anggota Koreksi Uji Otomatis')->get()->getResult();
+        $this->assertCount(1, $semua);
+        $this->assertSame('081277778888', $semua[0]->HP);
+    }
+
+    public function testKunjunganAnggotaLainTidakBisaDiubah(): void
+    {
+        $pemilik = $this->anggotaUji('Anggota Pemilik Uji Otomatis', 2, '081200005555');
+        $lain    = $this->anggotaUji('Anggota Lain Uji Otomatis', 2, '081200006666');
+        $this->catatKunjungan($pemilik, '081200005555');
+        $kunjungan = $this->tamu('Anggota Pemilik Uji Otomatis');
+
+        $this->catatKunjungan($lain, '081299990000', (int) $kunjungan->ID);
+
+        $this->assertSame('081200005555', $this->tamu('Anggota Pemilik Uji Otomatis')->HP);
+        $this->assertNotNull($this->tamu('Anggota Lain Uji Otomatis'));
     }
 
     public function testDataAnggotaMengisiFormOtomatis(): void
