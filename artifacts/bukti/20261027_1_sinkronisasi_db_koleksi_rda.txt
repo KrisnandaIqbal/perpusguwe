@@ -1,0 +1,37 @@
+================================================================================
+BUKTI PEKERJAAN: SINKRONISASI DATABASE LOKAL & PENGAKTIFAN EKSTENSI PHP
+Tanggal   : 2026-10-27
+PIC       : Rizki
+Commit    : 16da10d / Local DB Migration
+================================================================================
+
+1. Masalah Awal:
+   - Error saat akses http://localhost/katalog/create?rda=1:
+     CodeIgniter\Database\Exceptions\DatabaseException: Table 'inlislite_v33.mst_content_type' doesn't exist
+   - Error saat upload Excel eksemplar:
+     Error: Class "ZipArchive" not found
+   - Tabel catalogs dan collections di database lokal masih 0 baris.
+
+2. Eksekusi Migrasi SQL ke Database inlislite_v33:
+   - Import artifacts/db/koleksi_eksemplar_data.sql (5.582 katalog, 8.933 eksemplar, 53.527 ruas MARC)
+   - Import artifacts/buku_tamu_unit_migration.sql (kolom UnitKerja_id, SubUnitKerja_id, UnitLainnya)
+   - Import artifacts/20261019_update_max_loan_days_to_10_business_days.sql (MaxLoanDays = 10)
+   - Import artifacts/20261022_update_magang_biasa_to_magang_reguler.sql (Magang Reguler & enum status_non_asn)
+   - Pembuatan dan seeding tabel RDA SLiMS:
+     * mst_content_type (25 baris)
+     * mst_media_type (10 baris)
+     * mst_carrier_type (47 baris)
+     * item_label_print_log
+
+3. Hasil Verifikasi Database:
+   - catalogs           : 5.582 baris (Index FULLTEXT ft_title, ft_author, ft_subject, ft_publisher, ft_all aktif)
+   - collections        : 8.933 baris
+   - mst_content_type   : 25 baris (OK)
+   - mst_media_type     : 10 baris (OK)
+   - mst_carrier_type   : 47 baris (OK)
+
+4. Konfigurasi PHP Laragon:
+   - File: C:\laragon\bin\php\php-8.4.27-Win32-vs17-x64\php.ini
+   - Status: extension=zip dan extension=gmp diaktifkan
+   - Layanan php-cgi FastCGI di-restart (10 proses aktif)
+   - Pengujian fungsi: zip, gmp, gd, intl, mysqli terdeteksi aktif.
