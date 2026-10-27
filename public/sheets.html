@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Pekerjaan InlisLite - Rizki (Spreadsheet)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --sheets-green: #0f9d58;
+            --sheets-dark: #0b8043;
+            --border-color: #e0e0e0;
+            --grid-header: #f8f9fa;
+            --cell-hover: #e8f0fe;
+            --text-dark: #202124;
+            --text-muted: #5f6368;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-dark);
+            background: #f1f3f4;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top Bar */
+        .app-header {
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .doc-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .doc-icon {
+            color: var(--sheets-green);
+            font-size: 32px;
+        }
+
+        .doc-title-box h1 {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-pic {
+            background: #e6f4ea;
+            color: #137333;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .doc-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--sheets-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--sheets-dark);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #1a73e8;
+            border-color: #dadce0;
+        }
+
+        .btn-outline:hover {
+            background: #f8f9fa;
+            border-color: #1a73e8;
+        }
+
+        /* Quick Search & Stats */
+        .toolbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f1f3f4;
+            border-radius: 4px;
+            padding: 4px 10px;
+            width: 320px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            margin-left: 8px;
+            font-size: 13px;
+        }
+
+        /* Grid Viewport */
+        .grid-viewport {
+            flex: 1;
+            overflow: auto;
+            background: white;
+        }
+
+        table.sheets-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 13px;
+            table-layout: fixed;
+        }
+
+        table.sheets-table th {
+            background: #205c43;
+            color: white;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #14402e;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            user-select: none;
+        }
+
+        table.sheets-table th.center,
+        table.sheets-table td.center {
+            text-align: center;
+        }
+
+        table.sheets-table td {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            vertical-align: middle;
+            line-height: 1.45;
+            word-wrap: break-word;
+        }
+
+        table.sheets-table tr:hover td {
+            background: var(--cell-hover);
+        }
+
+        .badge-status {
+            background: #e6f4ea;
+            color: #137333;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .badge-category {
+            background: #e8f0fe;
+            color: #1967d2;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .file-link {
+            color: #1a73e8;
+            text-decoration: none;
+            font-family: monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #dadce0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .file-link:hover {
+            background: #e8f0fe;
+            text-decoration: underline;
+        }
+
+        /* Bottom Sheet Tabs */
+        .sheet-tabs {
+            background: #e8eaed;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            height: 38px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--sheets-dark);
+            font-weight: 700;
+            box-shadow: 0 -2px 0 var(--sheets-green) inset;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
+            background: #323232;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="doc-info">
+            <i class="fa-solid fa-file-excel doc-icon"></i>
+            <div class="doc-title-box">
+                <h1>Log Pekerjaan InlisLite Kemnaker <span class="badge-pic">PIC: Rizki</span></h1>
+                <div class="doc-sub">Sinkronisasi Database, Navbar, Avatar Gender, Trello KUE, & Data Cleanup</div>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn btn-outline" onclick="copyTSV()">
+                <i class="fa-regular fa-copy"></i> Salin TSV
+            </button>
+            <a href="/Log_Pekerjaan_Rizki_InlisLite.xlsx" download="Log_Pekerjaan_Rizki_InlisLite.xlsx" class="btn btn-primary">
+                <i class="fa-solid fa-download"></i> Unduh Excel (.xlsx)
+            </a>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass" style="color: #5f6368;"></i>
+            <input type="text" id="filterInput" placeholder="Cari aktivitas, modul, atau berkas bukti..." onkeyup="filterTable()">
+        </div>
+        <div style="color: var(--text-muted); font-size: 12px;">
+            <i class="fa-solid fa-check-double text-success me-1"></i> Status: <strong>Semua Selesai & Terverifikasi</strong> (Commit: <code>16da10d</code> & <code>fb4efab</code>)
+        </div>
+    </div>
+
+    <!-- Viewport -->
+    <main class="grid-viewport">
+        <!-- Tab 1: Hari Ini -->
+        <table class="sheets-table" id="tableToday">
+            <thead>
+                <tr>
+                    <th style="width: 100px;" class="center">Tanggal</th>
+                    <th style="width: 130px;" class="center">Migrasi - Jenis</th>
+                    <th style="width: 320px;">Aktivitas / Uraian Pekerjaan</th>
+                    <th style="width: 220px;">Modul / Objek</th>
+                    <th style="width: 90px;" class="center">PIC</th>
+                    <th style="width: 90px;" class="center">Status</th>
+                    <th style="width: 280px;">Catatan / Hasil</th>
+                    <th style="width: 260px;">Bukti 1</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="center">10/27/2026</td>
+                    <td class="center"><span class="badge-category">Konfigurasi</span></td>
+                    <td><strong>Sinkronisasi database lokal InlisLite</strong> (import koleksi/eksemplar 5.582 katalog & 8.933 eksemplar), penambahan tabel RDA (<code>mst_content_type</code>, <code>mst_media_type</code>, <code>mst_carrier_type</code>), dan pengaktifan ekstensi PHP zip & gmp di Laragon.</td>
+                    <td>Inlislite - Database & PHP Config</td>
+                    <td class="center">Rizki</td>
+                    <td class="center"><span class="badge-status">Selesai</span></td>
+                    <td>Memperbaiki error tabel RDA tidak ditemukan saat buka form katalog dan error Class ZipArchive not found saat upload Excel; migrasi buku tamu unit & durasi pinjam 10 hari kerja sudah terpasang.</td>
+                    <td>
+                        <a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_1_sinkronisasi_db_koleksi_rda.txt" target="_blank" class="file-link">
+                            <i class="fa-regular fa-file-lines"></i> 20261027_1_sinkronisasi_db_koleksi_rda.txt
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="center">10/27/2026</td>
+                    <td class="center"><span class="badge-category">Modul/Fitur</span></td>
+                    <td><strong>Penyembunyian tombol Login/Dashboard</strong> pada navbar publik (akses admin via direct URL <code>/login</code>) dan pertukaran posisi menu (Buku Tamu ke navbar utama, Pendaftaran Anggota ke dalam dropdown Layanan Mandiri).</td>
+                    <td>Inlislite - Navbar OPAC (<code>layout.php</code>)</td>
+                    <td class="center">Rizki</td>
+                    <td class="center"><span class="badge-status">Selesai</span></td>
+                    <td>Commit <code>16da10d</code> (push ke main); tombol disembunyikan menggunakan CSS/<code>d-none</code> tanpa menghapus struktur kode.</td>
+                    <td>
+                        <a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_2_navbar_hide_login_tukar_menu.txt" target="_blank" class="file-link">
+                            <i class="fa-regular fa-file-lines"></i> 20261027_2_navbar_hide_login_tukar_menu.txt
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="center">10/27/2026</td>
+                    <td class="center"><span class="badge-category">Modul/Fitur</span></td>
+                    <td><strong>Penggantian foto default wanita</strong> (<code>nophoto.jpg</code>) dengan <strong>avatar vector dinamis berbasis gender</strong> (Laki-laki / Perempuan / Netral) pada tabel Daftar Anggota dan profil pemustaka.</td>
+                    <td>Inlislite - Modul Keanggotaan (<code>Api/Anggota.php</code>, <code>anggota_helper.php</code>)</td>
+                    <td class="center">Rizki</td>
+                    <td class="center"><span class="badge-status">Selesai</span></td>
+                    <td>Commit <code>16da10d</code>; menambahkan file vector baru <code>avatar_male.svg</code>, <code>avatar_female.svg</code>, <code>avatar_neutral.svg</code> dan menimpa file <code>nophoto.jpg</code> lama.</td>
+                    <td>
+                        <a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_3_avatar_dinamis_gender.txt" target="_blank" class="file-link">
+                            <i class="fa-regular fa-file-lines"></i> 20261027_3_avatar_dinamis_gender.txt
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="center">10/27/2026</td>
+                    <td class="center"><span class="badge-category">Modul/Fitur</span></td>
+                    <td><strong>Revisi butir nomor 2 kartu Hak Akses Anggota</strong> pada pendaftaran online menjadi: <em>"Mendapatkan Kartu Anggota yang telah Terintegrasi dengan Kartu Uang Elektronik (KUE)"</em>.</td>
+                    <td>Inlislite - Registrasi Online (<code>index.php</code>)</td>
+                    <td class="center">Rizki</td>
+                    <td class="center"><span class="badge-status">Selesai</span></td>
+                    <td>Sesuai catatan revisi pada kartu Trello ("Siapin Website"); commit <code>16da10d</code>.</td>
+                    <td>
+                        <a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_4_revisi_trello_kue.txt" target="_blank" class="file-link">
+                            <i class="fa-regular fa-file-lines"></i> 20261027_4_revisi_trello_kue.txt
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="center">10/27/2026</td>
+                    <td class="center"><span class="badge-category">Data</span></td>
+                    <td><strong>Pengosongan seluruh data anggota uji coba</strong> (<code>members</code>, relasi sirkulasi/kategori, file foto di <code>uploads/anggota</code>) dan reset counter nomor anggota.</td>
+                    <td>Inlislite - Database (Tabel <code>members</code> & relasi)</td>
+                    <td class="center">Rizki</td>
+                    <td class="center"><span class="badge-status">Selesai</span></td>
+                    <td>Data sebelum dikosongkan telah dicadangkan ke <code>artifacts/backup_members_20261027.sql</code>; counter <code>NomorAnggotaCounter</code> di-reset kembali ke 0.</td>
+                    <td>
+                        <a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_5_pengosongan_data_anggota.txt" target="_blank" class="file-link">
+                            <i class="fa-regular fa-file-lines"></i> 20261027_5_pengosongan_data_anggota.txt
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Tab 2: Rincian Bukti -->
+        <table class="sheets-table" id="tableBukti" style="display: none;">
+            <thead>
+                <tr>
+                    <th style="width: 60px;" class="center">No</th>
+                    <th style="width: 280px;">Nama File Bukti</th>
+                    <th style="width: 180px;">Kategori Modul</th>
+                    <th style="width: 160px;" class="center">Commit / Status</th>
+                    <th style="width: 300px;">Path Lokal</th>
+                    <th style="width: 260px;">Tautan Daring</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="center">1</td>
+                    <td><strong>20261027_1_sinkronisasi_db_koleksi_rda.txt</strong></td>
+                    <td>Database & Konfigurasi PHP</td>
+                    <td class="center"><span class="badge-status">Migrasi DB Selesai</span></td>
+                    <td><code>artifacts/bukti/20261027_1_sinkronisasi_db_koleksi_rda.txt</code></td>
+                    <td><a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_1_sinkronisasi_db_koleksi_rda.txt" target="_blank" class="file-link"><i class="fa-brands fa-github"></i> Buka di GitHub</a></td>
+                </tr>
+                <tr>
+                    <td class="center">2</td>
+                    <td><strong>20261027_2_navbar_hide_login_tukar_menu.txt</strong></td>
+                    <td>Navbar OPAC (Publik)</td>
+                    <td class="center"><code>16da10d</code></td>
+                    <td><code>artifacts/bukti/20261027_2_navbar_hide_login_tukar_menu.txt</code></td>
+                    <td><a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_2_navbar_hide_login_tukar_menu.txt" target="_blank" class="file-link"><i class="fa-brands fa-github"></i> Buka di GitHub</a></td>
+                </tr>
+                <tr>
+                    <td class="center">3</td>
+                    <td><strong>20261027_3_avatar_dinamis_gender.txt</strong></td>
+                    <td>Avatar Member Berbasis Gender</td>
+                    <td class="center"><code>16da10d</code></td>
+                    <td><code>artifacts/bukti/20261027_3_avatar_dinamis_gender.txt</code></td>
+                    <td><a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_3_avatar_dinamis_gender.txt" target="_blank" class="file-link"><i class="fa-brands fa-github"></i> Buka di GitHub</a></td>
+                </tr>
+                <tr>
+                    <td class="center">4</td>
+                    <td><strong>20261027_4_revisi_trello_kue.txt</strong></td>
+                    <td>Teks Hak Akses Anggota KUE</td>
+                    <td class="center"><code>16da10d</code></td>
+                    <td><code>artifacts/bukti/20261027_4_revisi_trello_kue.txt</code></td>
+                    <td><a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_4_revisi_trello_kue.txt" target="_blank" class="file-link"><i class="fa-brands fa-github"></i> Buka di GitHub</a></td>
+                </tr>
+                <tr>
+                    <td class="center">5</td>
+                    <td><strong>20261027_5_pengosongan_data_anggota.txt</strong></td>
+                    <td>Pembersihan Anggota Uji Coba</td>
+                    <td class="center"><span class="badge-status">Data Bersih</span></td>
+                    <td><code>artifacts/bukti/20261027_5_pengosongan_data_anggota.txt</code></td>
+                    <td><a href="https://github.com/adminperpuskemnaker/inlislitekemnaker/blob/main/artifacts/bukti/20261027_5_pengosongan_data_anggota.txt" target="_blank" class="file-link"><i class="fa-brands fa-github"></i> Buka di GitHub</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Bottom Sheet Tabs -->
+    <footer class="sheet-tabs">
+        <button class="tab-btn active" onclick="switchTab('today', this)">
+            <i class="fa-regular fa-calendar-check"></i> Log 27 Okt 2026 (Hari Ini)
+        </button>
+        <button class="tab-btn" onclick="switchTab('bukti', this)">
+            <i class="fa-regular fa-folder-open"></i> Daftar Berkas Bukti (.txt)
+        </button>
+    </footer>
+
+    <div class="toast" id="toast">Data TSV berhasil disalin ke clipboard!</div>
+
+    <script>
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (tab === 'today') {
+                document.getElementById('tableToday').style.display = 'table';
+                document.getElementById('tableBukti').style.display = 'none';
+            } else {
+                document.getElementById('tableToday').style.display = 'none';
+                document.getElementById('tableBukti').style.display = 'table';
+            }
+        }
+
+        function filterTable() {
+            const input = document.getElementById('filterInput').value.toLowerCase();
+            const activeTable = document.querySelector('table.sheets-table:not([style*="display: none"])');
+            const rows = activeTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const text = rows[i].textContent.toLowerCase();
+                rows[i].style.display = text.includes(input) ? '' : 'none';
+            }
+        }
+
+        function copyTSV() {
+            const tsvData = `10/27/2026\tKonfigurasi\tSinkronisasi database lokal InlisLite (import koleksi/eksemplar 5.582 katalog & 8.933 eksemplar), penambahan tabel RDA (mst_content_type, mst_media_type, mst_carrier_type), dan pengaktifan ekstensi PHP zip & gmp di Laragon\tInlislite - Database & PHP Config\tRizki\tSelesai\tMemperbaiki error tabel RDA tidak ditemukan saat buka form katalog dan error Class ZipArchive not found saat upload Excel; migrasi buku tamu unit & durasi pinjam 10 hari kerja sudah terpasang\t20261027_1_sinkronisasi_db_koleksi_rda.txt\t\t
+10/27/2026\tModul/Fitur\tPenyembunyian tombol Login/Dashboard pada navbar publik (akses admin via direct URL /login) dan pertukaran posisi menu (Buku Tamu ke navbar utama, Pendaftaran Anggota ke dalam dropdown Layanan Mandiri)\tInlislite - Navbar OPAC (layout.php)\tRizki\tSelesai\tCommit 16da10d (push ke main); tombol disembunyikan menggunakan CSS/d-none tanpa menghapus struktur kode\t20261027_2_navbar_hide_login_tukar_menu.txt\t\t
+10/27/2026\tModul/Fitur\tPenggantian foto default wanita (nophoto.jpg) dengan avatar vector dinamis berbasis gender (Laki-laki / Perempuan / Netral) pada tabel Daftar Anggota dan profil pemustaka\tInlislite - Modul Keanggotaan (Api/Anggota.php, anggota_helper.php)\tRizki\tSelesai\tCommit 16da10d; menambahkan file vector baru avatar_male.svg, avatar_female.svg, avatar_neutral.svg dan menimpa file nophoto.jpg lama\t20261027_3_avatar_dinamis_gender.txt\t\t
+10/27/2026\tModul/Fitur\tRevisi butir nomor 2 kartu Hak Akses Anggota pada pendaftaran online menjadi "Mendapatkan Kartu Anggota yang telah Terintegrasi dengan Kartu Uang Elektronik (KUE)"\tInlislite - Registrasi Online (index.php)\tRizki\tSelesai\tSesuai catatan revisi pada kartu Trello ("Siapin Website"); commit 16da10d\t20261027_4_revisi_trello_kue.txt\t\t
+10/27/2026\tData\tPengosongan seluruh data anggota uji coba (members, relasi sirkulasi/kategori, file foto di uploads/anggota) dan reset counter nomor anggota\tInlislite - Database (Tabel members & relasi)\tRizki\tSelesai\tData sebelum dikosongkan telah dicadangkan ke artifacts/backup_members_20261027.sql; counter NomorAnggotaCounter di-reset kembali ke 0\t20261027_5_pengosongan_data_anggota.txt\t\t`;
+
+            navigator.clipboard.writeText(tsvData).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2500);
+            });
+        }
+    </script>
+</body>
+</html>
