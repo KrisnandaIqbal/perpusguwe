@@ -291,4 +291,16 @@ class Home extends \Base\Controllers\BaseController
         $this->data['title'] = 'Pendaftaran Online';
         return view('Home\Views\pendaftaran-online', $this->data);
     }
+
+    public function tata_cara_sirkulasi()
+    {
+        $this->data['title'] = 'Tata Cara Sirkulasi';
+        return view('Home\Views\tata-cara-sirkulasi', $this->data);
+    }
+
+    public function layanan_isbn()
+    {
+        $this->data['title'] = 'Layanan ISBN';
+        return view('Home\Views\layanan-isbn', $this->data);
+    }
 }

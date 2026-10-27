@@ -7,6 +7,8 @@ $routes->group('home', ['namespace' => 'Home\Controllers'], function ($subroutes
 	$subroutes->add('', 'Home::index');
 	$subroutes->add('index', 'Home::index');
 	$subroutes->add('pendaftaran-online', 'Home::pendaftaran_online');
+	$subroutes->add('tata-cara-sirkulasi', 'Home::tata_cara_sirkulasi');
+	$subroutes->add('layanan-isbn', 'Home::layanan_isbn');
 
 });
 

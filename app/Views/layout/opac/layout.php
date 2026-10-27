@@ -353,7 +353,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                         <a class="nav-link dropdown-toggle" href="#"
                             id="navbarDropdownLayanan" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-desktop me-1"></i>Layanan Mandiri
+                            <i class="fa-solid fa-desktop me-1"></i>Layanan
                         </a>
                         <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdownLayanan">
                             <!--<li>
@@ -361,11 +361,13 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                                     <i class="fa-solid fa-book-reader fa-fw text-secondary me-2"></i>Baca Ditempat
                                 </a>
                             </li>-->
+                            <?php if (env('Is_keanggotaan_online') == 1): ?>
                             <li>
                                 <a class="dropdown-item" href="<?= base_url('home/pendaftaran-online') ?>">
                                     <i class="fa-solid fa-id-card fa-fw text-secondary me-2"></i>Pendaftaran Anggota
                                 </a>
                             </li>
+                            <?php endif; ?>
                             <!-- Menu Peminjaman & Pengembalian Mandiri disembunyikan sesuai butir 5 (fitur tetap aktif via direct URL) -->
                             <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('peminjaman-mandiri') ?>">
@@ -375,6 +377,16 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                             <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('pengembalian-mandiri') ?>">
                                     <i class="fa-solid fa-rotate-left fa-fw text-secondary me-2"></i>Pengembalian Mandiri
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="<?= base_url('home/layanan-isbn') ?>">
+                                    <i class="fa-solid fa-file-pdf fa-fw text-secondary me-2"></i>ISBN
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="<?= base_url('home/tata-cara-sirkulasi') ?>">
+                                    <i class="fa-solid fa-file-pdf fa-fw text-secondary me-2"></i>Tata Cara Sirkulasi
                                 </a>
                             </li>
                         </ul>
@@ -402,19 +414,13 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
 
                 </ul>
 
-                <!-- Tombol Login / Dashboard di-hide agar pengunjung umum tidak melihat akses masuk admin. Admin dapat mengakses melalui URL /login -->
-                <div class="d-none align-items-center gap-3 mt-3 mt-lg-0" style="display: none !important;">
+               <!-- Tombol Login dihapus dari navbar; admin login lewat URL /login. Tombol Dashboard hanya tampil kalau sudah login. -->
+                <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
                     <?php if (session()->get('logged_in')): ?>
                         <a href="<?= base_url('dashboard') ?>"
                             class="btn btn-light text-primary rounded-pill px-4 py-2 fw-bold shadow-sm"
                             style="font-size: 0.9rem; white-space: nowrap;">
                             <i class="fa-solid fa-gauge me-2"></i>Dashboard
-                        </a>
-                    <?php else: ?>
-                        <a href="<?= base_url('login') ?>"
-                            class="btn btn-light text-primary rounded-pill px-4 py-2 fw-bold shadow-sm"
-                            style="font-size: 0.9rem; white-space: nowrap;">
-                            <i class="fa-solid fa-right-to-bracket me-2"></i>Login
                         </a>
                     <?php endif; ?>
                 </div>
