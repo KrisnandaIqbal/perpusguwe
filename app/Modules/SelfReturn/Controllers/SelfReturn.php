@@ -203,8 +203,10 @@ class SelfReturn extends \App\Controllers\BaseController
         if (!empty($book->LoanStatus)) {
             $dueDate = new \DateTime($book->DueDate);
             $today = new \DateTime();
-            $response['data']['is_overdue'] = $today > $dueDate;
-            $response['data']['days_overdue'] = $today > $dueDate ? $today->diff($dueDate)->days : 0;
+            helper('sirkulasi');
+            $daysOverdue = hitungHariKerjaTerlambat($book->DueDate);
+            $response['data']['is_overdue'] = ($daysOverdue > 0);
+            $response['data']['days_overdue'] = $daysOverdue;
         }
         
         return $this->response->setJSON($response);

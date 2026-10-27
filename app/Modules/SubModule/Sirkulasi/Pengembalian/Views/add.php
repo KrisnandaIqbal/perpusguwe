@@ -414,6 +414,15 @@ class SelfReturnApp {
         document.getElementById('barcodeInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.checkBook();
         });
+        document.getElementById('returnDateInput').addEventListener('change', () => {
+            if (this.booksToReturn.length > 0) {
+                const firstBarcode = this.booksToReturn[0].barcode;
+                if (firstBarcode) {
+                    document.getElementById('barcodeInput').value = firstBarcode;
+                    this.checkBook();
+                }
+            }
+        });
 
         // Tombol di dalam modal
         const skipBtn = document.getElementById('skipViolationBtn');
@@ -503,7 +512,8 @@ class SelfReturnApp {
 
         let itemsHtml = '';
         this.booksToReturn.forEach((book, index) => {
-            const statusBadge = book.is_overdue
+            const isReallyOverdue = Boolean(book.is_overdue && Number(book.days_overdue) > 0);
+            const statusBadge = isReallyOverdue
                 ? `<span class="status-badge status-overdue"><i class="fa fa-exclamation-circle"></i> Terlambat ${book.days_overdue} hari</span>`
                 : `<span class="status-badge status-available"><i class="fa fa-clock-o"></i> Sedang Dipinjam</span>`;
 
@@ -581,8 +591,8 @@ class SelfReturnApp {
             this.focusInput(); return;
         }
 
-        // Cek apakah ada buku yang terlambat
-        const overdueBooks = this.booksToReturn.filter(b => b.is_overdue);
+        // Cek apakah ada buku yang benar-benar terlambat (> 0 hari)
+        const overdueBooks = this.booksToReturn.filter(b => b.is_overdue && Number(b.days_overdue) > 0);
 
         if (overdueBooks.length > 0) {
             this.showViolationModal(overdueBooks);

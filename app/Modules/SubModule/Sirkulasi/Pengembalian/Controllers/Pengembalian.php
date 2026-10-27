@@ -67,6 +67,27 @@ class Pengembalian extends \Base\Controllers\BaseController
 		return view('Pengembalian\Views\add', $this->data);
 	}
 
+	private function parseInputDate($dateStr): \DateTime
+	{
+		if (empty($dateStr)) {
+			return new \DateTime();
+		}
+		$dateStr = trim($dateStr);
+		// Format DD/MM/YYYY atau DD-MM-YYYY
+		if (preg_match('/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})/', $dateStr, $m)) {
+			return new \DateTime(sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]));
+		}
+		// Format YYYY-MM-DD
+		if (preg_match('/^(\d{4})[\/\.-](\d{1,2})[\/\.-](\d{1,2})/', $dateStr, $m)) {
+			return new \DateTime(sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]));
+		}
+		try {
+			return new \DateTime($dateStr);
+		} catch (\Throwable $e) {
+			return new \DateTime();
+		}
+	}
+
 	public function checkBook()
     {
         $nomorBarcode = $this->request->getPost('nomorBarcode');
@@ -97,8 +118,7 @@ class Pengembalian extends \Base\Controllers\BaseController
             ->where('cli.ActualReturn IS NULL')
             ->get()->getResult();
 
-        $inputReturnDate = $this->request->getPost('returnDate');
-        $actualReturnDate = $inputReturnDate ? new \DateTime($inputReturnDate) : new \DateTime();
+        $actualReturnDate = $this->parseInputDate($this->request->getPost('returnDate'));
         $today = $actualReturnDate;
         $formattedItems = [];
 
@@ -183,8 +203,8 @@ class Pengembalian extends \Base\Controllers\BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'Buku sudah dikembalikan atau tidak ditemukan']);
         }
 
-        $returnDate       = $inputReturnDate ? date('Y-m-d', strtotime($inputReturnDate)) . ' ' . date('H:i:s') : date('Y-m-d H:i:s');
-        $actualReturnDate = new \DateTime($returnDate);
+        $actualReturnDate = $this->parseInputDate($inputReturnDate);
+        $returnDate       = $actualReturnDate->format('Y-m-d') . ' ' . date('H:i:s');
         $returnedCount    = 0;
         $violationCount   = 0;
         $totalDenda       = 0;
