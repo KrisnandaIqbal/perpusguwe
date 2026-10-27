@@ -205,7 +205,7 @@ class Pengembalian extends \Base\Controllers\BaseController
                     'ActualReturn'   => $returnDate,
                     'LateDays'       => $lateDays,
                     'LoanStatus'     => 'Return',
-                    'UpdateBy'       => user_id(),
+                    'UpdateBy'       => user_id() ?: 1,
                     'UpdateDate'     => $returnDate,
                     'UpdateTerminal' => $this->request->getIPAddress()
                 ]);
@@ -215,7 +215,7 @@ class Pengembalian extends \Base\Controllers\BaseController
                 ->where('ID', $item->Collection_id)
                 ->update([
                     'Status_id'      => 1,
-                    'UpdateBy'       => user_id(),
+                    'UpdateBy'       => user_id() ?: 1,
                     'UpdateDate'     => $returnDate,
                     'UpdateTerminal' => $this->request->getIPAddress()
                 ]);
@@ -249,7 +249,7 @@ class Pengembalian extends \Base\Controllers\BaseController
             $this->db->table('collectionloans')
                 ->where('ID', $collectionLoanId)
                 ->set('ReturnCount', 'ReturnCount + ' . $returnedCount, false)
-                ->set('UpdateBy',       user_id())
+                ->set('UpdateBy',       user_id() ?: 1)
                 ->set('UpdateDate',     $returnDate)
                 ->set('UpdateTerminal', $this->request->getIPAddress())
                 ->update();

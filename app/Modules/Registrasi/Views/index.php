@@ -3013,7 +3013,7 @@ if (!empty($jenis_identitas)) {
                                     <path d="M3.5 8.5l3 3 6-7"/>
                                 </svg>
                             </span>
-                            <div>Akses pangkalan data jurnal & <strong>e-Resources Kemnaker RI</strong>.</div>
+                            <div>Mendapatkan Kartu Anggota yang telah <strong>Terintegrasi dengan Kartu Uang Elektronik (KUE)</strong>.</div>
                         </li>
                         <li>
                             <span class="rf-benefit-icon">

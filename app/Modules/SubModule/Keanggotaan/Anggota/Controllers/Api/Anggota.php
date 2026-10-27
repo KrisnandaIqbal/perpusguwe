@@ -74,6 +74,7 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'a.NotifTerkirim',
 			'a.NotifDate',
 			'a.CreateDate',
+			'a.Sex_id',
 			
 			// Kolom dari tabel join
 			'jenis_anggota.jenisanggota as JenisAnggota',
@@ -107,9 +108,11 @@ class Anggota extends \Base\Controllers\BaseResourceController
 				return $html;
 			})
 			->edit('FullName', function ($row) {
-				$default = base_url('uploads/default/nophoto.jpg');
+				$default = get_default_member_avatar($row->Sex_id ?? null);
 				$photoVersion = !empty($row->UpdateDate) ? '?v=' . strtotime($row->UpdateDate) : '';
-				$image = (!empty($row->PhotoUrl)) ? base_url('uploads/anggota/' . $row->PhotoUrl . $photoVersion) : $default;
+				$photoName = trim(explode(',', (string) ($row->PhotoUrl ?? ''))[0]);
+				$photoPath = ($photoName !== '') ? FCPATH . 'uploads/anggota/' . $photoName : null;
+				$image = ($photoPath && is_file($photoPath)) ? base_url('uploads/anggota/' . $photoName . $photoVersion) : $default;
 
 				$html =
 					'<div class="widget-content p-0">

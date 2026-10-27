@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300">
+  <rect width="200" height="300" fill="#fce7f3" rx="8"/>
+  <!-- Long Hair Behind -->
+  <path d="M50 130 C45 200 50 250 65 260 C70 230 70 190 70 170 Z" fill="#471435"/>
+  <path d="M150 130 C155 200 150 250 135 260 C130 230 130 190 130 170 Z" fill="#471435"/>
+  <!-- Torso / Clothes -->
+  <path d="M30 300 C30 230 65 210 100 210 C135 210 170 230 170 300 Z" fill="#db2777"/>
+  <!-- Collar -->
+  <polygon points="100,230 82,210 118,210" fill="#fbcfe8"/>
+  <!-- Neck -->
+  <rect x="88" y="170" width="24" height="45" fill="#fcd34d" rx="4"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="135" rx="40" ry="48" fill="#fde68a"/>
+  <!-- Ears -->
+  <circle cx="58" cy="138" r="8" fill="#fde68a"/>
+  <circle cx="142" cy="138" r="8" fill="#fde68a"/>
+  <!-- Hair (Female style with bangs & sides) -->
+  <path d="M52 140 C50 85 75 70 100 70 C125 70 150 85 148 140 C143 115 130 92 110 88 C95 86 75 92 65 110 C58 122 54 132 52 140 Z" fill="#471435"/>
+  <!-- Eyes & Lashes -->
+  <circle cx="85" cy="135" r="4.5" fill="#334155"/>
+  <circle cx="115" cy="135" r="4.5" fill="#334155"/>
+  <path d="M80 128 L84 131" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M120 128 L116 131" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Eyebrows -->
+  <path d="M78 123 Q85 119 92 122" stroke="#471435" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M108 122 Q115 119 122 123" stroke="#471435" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Smile -->
+  <path d="M92 156 Q100 164 108 156" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Cheeks -->
+  <circle cx="74" cy="146" r="6" fill="#f43f5e" opacity="0.3"/>
+  <circle cx="126" cy="146" r="6" fill="#f43f5e" opacity="0.3"/>
+</svg>

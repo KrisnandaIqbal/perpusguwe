@@ -1011,4 +1011,41 @@ if (!function_exists('is_valid_unit_subunit')) {
     }
 }
 
+if (!function_exists('get_default_member_avatar')) {
+    /**
+     * Mengembalikan URL avatar default berdasarkan jenis kelamin (Sex_id):
+     * 1 = Laki-laki (avatar_male.svg)
+     * 2 = Perempuan (avatar_female.svg)
+     * selain itu = Netral (avatar_neutral.svg)
+     */
+    function get_default_member_avatar($sexId = null): string
+    {
+        $sex = strtolower(trim((string) $sexId));
+        if ($sex === '1' || $sex === 'laki-laki' || $sex === 'l' || $sex === 'pria') {
+            return base_url('uploads/default/avatar_male.svg');
+        }
+        if ($sex === '2' || $sex === 'perempuan' || $sex === 'p' || $sex === 'wanita') {
+            return base_url('uploads/default/avatar_female.svg');
+        }
+        return base_url('uploads/default/avatar_neutral.svg');
+    }
+}
+
+if (!function_exists('get_member_photo_url')) {
+    /**
+     * Mengembalikan URL foto anggota jika file ada di server,
+     * atau avatar default sesuai jenis kelamin jika tidak ada foto.
+     */
+    function get_member_photo_url($photoUrl, $sexId = null, $updateDate = null): string
+    {
+        $default = get_default_member_avatar($sexId);
+        $fotoName = trim(explode(',', (string) $photoUrl)[0]);
+        if ($fotoName !== '' && is_file(FCPATH . 'uploads/anggota/' . $fotoName)) {
+            $version = !empty($updateDate) ? '?v=' . strtotime((string) $updateDate) : '';
+            return base_url('uploads/anggota/' . $fotoName . $version);
+        }
+        return $default;
+    }
+}
+
 

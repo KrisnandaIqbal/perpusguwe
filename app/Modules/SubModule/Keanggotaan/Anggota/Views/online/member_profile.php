@@ -9,8 +9,11 @@ $member_type = get_member_type($member->JenisAnggota_id);
 				<div class="avatar-icon-wrapper mr-2 avatar-icon-xl">
 					<div class="avatar-icon">
 						<?php
-						$default = base_url('uploads/default/no_cover.jpg');
-						$image = $default;
+						helper('anggota');
+						$default = function_exists('get_default_member_avatar') ? get_default_member_avatar($member->Sex_id ?? null) : base_url('uploads/default/avatar_neutral.svg');
+						$photoName = trim(explode(',', (string) ($member->PhotoUrl ?? ''))[0]);
+						$photoPath = ($photoName !== '') ? FCPATH . 'uploads/anggota/' . $photoName : null;
+						$image = ($photoPath && is_file($photoPath)) ? base_url('uploads/anggota/' . $photoName) : $default;
 
 						// $image = base_url('uploads/user/'.$user->avatar);
 						// if(empty($user->avatar)){

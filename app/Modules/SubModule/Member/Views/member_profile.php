@@ -11,9 +11,9 @@
 		->where('mac.Member_id',$member->ID);
 	$query = $builder->get();
 	$member_categories = $query->getResult();
-	helper('date_id');
+	helper(['date_id', 'anggota']);
 
-	$default = base_url('uploads/default/nophoto.jpg');
+	$default = function_exists('get_default_member_avatar') ? get_default_member_avatar($member->Sex_id ?? null) : base_url('uploads/default/avatar_neutral.svg');
 	$photoVersion = '';
 	if (!empty($member->PhotoUrl)) {
 		$memberPhotoPath = ROOTPATH . 'public/uploads/anggota/' . $member->PhotoUrl;

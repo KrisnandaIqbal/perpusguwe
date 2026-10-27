@@ -312,79 +312,82 @@
         </div>
     </div>
 
-</div>
+    <!-- Modal Pelanggaran -->
+    <div class="modal fade" id="modalPelanggaran" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: var(--radius-xl); border: none; overflow: hidden;">
 
+                <!-- Header -->
+                <div class="modal-header" style="background: linear-gradient(135deg, #7c1d1d, var(--danger)); border: none; padding: 16px 24px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                            <i class="fa fa-exclamation-triangle" style="color:white;font-size:16px;"></i>
+                        </div>
+                        <h5 class="modal-title" style="color:white;font-weight:700;margin:0;">Proses Pelanggaran Keterlambatan</h5>
+                    </div>
+                    <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="background:transparent;border:none;font-size:24px;line-height:1;color:white;opacity:0.85;cursor:pointer;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body" style="padding: 24px;">
+
+                    <!-- Info terlambat -->
+                    <div class="pm-alert pm-alert-danger mb-3" id="overdueInfoBox">
+                        <i class="fa fa-clock-o"></i>
+                        <span id="overdueInfoText">Terdapat buku yang melewati tanggal jatuh tempo.</span>
+                    </div>
+
+                    <!-- Daftar buku terlambat -->
+                    <div id="overdueBookList" style="margin-bottom: 18px;"></div>
+
+                    <hr class="pm-divider" style="margin: 16px 0;">
+
+                    <!-- Form Pelanggaran -->
+                    <div id="violationFormSection">
+                        <div class="mb-3">
+                            <label style="font-size:13px;font-weight:700;color:var(--blue-900);margin-bottom:6px;display:block;">
+                                <i class="fa fa-list-ul"></i> Jenis Pelanggaran
+                            </label>
+                            <select id="jenisPelanggaranSelect" class="form-select" style="border-radius:var(--radius-md);font-size:14px;border:2px solid var(--gray-300);">
+                                <option value="">-- Pilih Jenis Pelanggaran --</option>
+                            </select>
+                        </div>
+
+                        <!-- Informasi Suspend Pengganti Denda -->
+                        <div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:var(--radius-md);padding:14px 16px;color:#991b1b;font-size:13px;line-height:1.5;">
+                            <i class="fa fa-ban" style="margin-right:6px;"></i>
+                            <strong>Ketentuan Sanksi:</strong> Perpustakaan tidak menerapkan denda uang. Keterlambatan N hari otomatis dikenakan sanksi suspend peminjaman selama N hari terhitung sejak tanggal pengembalian.
+                        </div>
+
+                        <!-- Hidden Denda Fields (Perpustakaan tidak memakai denda) -->
+                        <div style="display:none;">
+                            <select id="jenisDendaSelect"><option value="5" selected>Suspend</option></select>
+                            <input type="number" id="jumlahDendaInput" value="0">
+                            <input type="checkbox" id="perHariCheck">
+                            <small id="dendaPreview"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="border:none;padding:12px 24px 20px;gap:10px;">
+                    <button type="button" class="pm-btn pm-btn-ghost" data-dismiss="modal" data-bs-dismiss="modal" style="flex:1;">
+                        <i class="fa fa-times"></i> Batal
+                    </button>
+                    <button type="button" id="confirmViolationBtn" class="pm-btn pm-btn-primary" style="flex:2;background:linear-gradient(135deg,#7c1d1d,var(--danger));box-shadow:0 4px 14px rgba(232,57,77,.35);">
+                        <i class="fa fa-gavel"></i> Proses Pengembalian & Suspend
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
 
 <?= $this->endSection('page'); ?>
 
 <?= $this->section('script'); ?>
-<!-- Modal Pelanggaran -->
-<div class="modal fade" id="modalPelanggaran" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: var(--radius-xl); border: none; overflow: hidden;">
-
-            <!-- Header -->
-            <div class="modal-header" style="background: linear-gradient(135deg, #7c1d1d, var(--danger)); border: none; padding: 16px 24px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa fa-exclamation-triangle" style="color:white;font-size:16px;"></i>
-                    </div>
-                    <h5 class="modal-title" style="color:white;font-weight:700;margin:0;">Proses Pelanggaran Keterlambatan</h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body" style="padding: 24px;">
-
-                <!-- Info terlambat -->
-                <div class="pm-alert pm-alert-danger mb-3" id="overdueInfoBox">
-                    <i class="fa fa-clock-o"></i>
-                    <span id="overdueInfoText">Terdapat buku yang melewati tanggal jatuh tempo.</span>
-                </div>
-
-                <!-- Daftar buku terlambat -->
-                <div id="overdueBookList" style="margin-bottom: 18px;"></div>
-
-                <hr class="pm-divider" style="margin: 16px 0;">
-
-                <!-- Form Pelanggaran -->
-                <div id="violationFormSection">
-                    <div class="mb-3">
-                        <label style="font-size:13px;font-weight:700;color:var(--blue-900);margin-bottom:6px;display:block;">
-                            <i class="fa fa-list-ul"></i> Jenis Pelanggaran
-                        </label>
-                        <select id="jenisPelanggaranSelect" class="form-select" style="border-radius:var(--radius-md);font-size:14px;border:2px solid var(--gray-300);">
-                            <option value="">-- Pilih Jenis Pelanggaran --</option>
-                        </select>
-                    </div>
-
-                    <!-- Informasi Suspend Pengganti Denda -->
-                    <div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:var(--radius-md);padding:14px 16px;color:#991b1b;font-size:13px;line-height:1.5;">
-                        <i class="fa fa-ban" style="margin-right:6px;"></i>
-                        <strong>Ketentuan Sanksi:</strong> Perpustakaan tidak menerapkan denda uang. Keterlambatan N hari otomatis dikenakan sanksi suspend peminjaman selama N hari terhitung sejak tanggal pengembalian.
-                    </div>
-
-                    <!-- Hidden Denda Fields (Perpustakaan tidak memakai denda) -->
-                    <div style="display:none;">
-                        <select id="jenisDendaSelect"><option value="5" selected>Suspend</option></select>
-                        <input type="number" id="jumlahDendaInput" value="0">
-                        <input type="checkbox" id="perHariCheck">
-                        <small id="dendaPreview"></small>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer" style="border:none;padding:12px 24px 20px;gap:10px;">
-                <button type="button" class="pm-btn pm-btn-ghost" data-bs-dismiss="modal" style="flex:1;">
-                    <i class="fa fa-times"></i> Batal
-                </button>
-                <button type="button" id="confirmViolationBtn" class="pm-btn pm-btn-primary" style="flex:2;background:linear-gradient(135deg,#7c1d1d,var(--danger));box-shadow:0 4px 14px rgba(232,57,77,.35);">
-                    <i class="fa fa-gavel"></i> Proses Pengembalian & Suspend
-                </button>
-            </div>
-
-    </div>
-</div>
 <script>
 class SelfReturnApp {
     constructor() {
@@ -416,13 +419,14 @@ class SelfReturnApp {
         const skipBtn = document.getElementById('skipViolationBtn');
         if (skipBtn) {
             skipBtn.addEventListener('click', () => {
-                bootstrap.Modal.getInstance(document.getElementById('modalPelanggaran')).hide();
+                this.closeViolationModal();
                 this.submitReturn(false, null);
             });
         }
         const confirmBtn = document.getElementById('confirmViolationBtn');
         if (confirmBtn) {
-            confirmBtn.addEventListener('click', () => {
+            confirmBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 this.handleConfirmViolation();
             });
         }
@@ -448,8 +452,8 @@ class SelfReturnApp {
     async loadMasterData() {
         try {
             const [resP, resD] = await Promise.all([
-                fetch('/sirkulasi-pengembalian/get-jenis-pelanggaran').then(r => r.json()),
-                fetch('/sirkulasi-pengembalian/get-jenis-denda').then(r => r.json())
+                fetch('<?= base_url('sirkulasi-pengembalian/get-jenis-pelanggaran') ?>').then(r => r.json()),
+                fetch('<?= base_url('sirkulasi-pengembalian/get-jenis-denda') ?>').then(r => r.json())
             ]);
             if (resP.status === 'success') {
                 this.jenisPelanggaran = resP.data;
@@ -547,7 +551,7 @@ class SelfReturnApp {
         }
         this.showLoading();
         try {
-            const res  = await fetch('/sirkulasi-pengembalian/check-book', {
+            const res  = await fetch('<?= base_url('sirkulasi-pengembalian/check-book') ?>', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `nomorBarcode=${encodeURIComponent(barcode)}&returnDate=${encodeURIComponent(returnDate)}`
@@ -588,6 +592,67 @@ class SelfReturnApp {
         }
     }
 
+    openViolationModal() {
+        const modalEl = document.getElementById('modalPelanggaran');
+        if (!modalEl) return;
+
+        if (window.jQuery && typeof window.jQuery(modalEl).modal === 'function') {
+            window.jQuery(modalEl).modal('show');
+            return;
+        }
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            if (typeof bootstrap.Modal.getOrCreateInstance === 'function') {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                return;
+            } else if (typeof bootstrap.Modal === 'function') {
+                new bootstrap.Modal(modalEl).show();
+                return;
+            }
+        }
+        modalEl.classList.add('show');
+        modalEl.style.display = 'block';
+        modalEl.removeAttribute('aria-hidden');
+        modalEl.setAttribute('aria-modal', 'true');
+        document.body.classList.add('modal-open');
+    }
+
+    closeViolationModal() {
+        const modalEl = document.getElementById('modalPelanggaran');
+        if (!modalEl) return;
+
+        try {
+            if (window.jQuery && typeof window.jQuery(modalEl).modal === 'function') {
+                window.jQuery(modalEl).modal('hide');
+                return;
+            }
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                if (typeof bootstrap.Modal.getInstance === 'function') {
+                    const inst = bootstrap.Modal.getInstance(modalEl);
+                    if (inst) {
+                        inst.hide();
+                        return;
+                    }
+                }
+                if (typeof bootstrap.Modal.getOrCreateInstance === 'function') {
+                    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    if (inst) {
+                        inst.hide();
+                        return;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Error closing modal:', e);
+        }
+
+        modalEl.classList.remove('show');
+        modalEl.style.display = 'none';
+        modalEl.setAttribute('aria-hidden', 'true');
+        modalEl.removeAttribute('aria-modal');
+        document.body.classList.remove('modal-open');
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    }
+
     showViolationModal(overdueBooks) {
         // Render daftar buku terlambat di modal
         const listEl = document.getElementById('overdueBookList');
@@ -607,7 +672,26 @@ class SelfReturnApp {
         // Simpan referensi overdueBooks untuk kalkulasi preview
         this._overdueBooks = overdueBooks;
 
-        new bootstrap.Modal(document.getElementById('modalPelanggaran')).show();
+        // Auto-select "Terlambat" / "Keterlambatan" jika opsi belum dipilih secara manual
+        const sel = document.getElementById('jenisPelanggaranSelect');
+        if (sel && sel.options.length > 0) {
+            let found = false;
+            for (let i = 0; i < sel.options.length; i++) {
+                const optText = (sel.options[i].text || '').toLowerCase();
+                if (optText.includes('terlambat') || optText.includes('lambat')) {
+                    sel.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && (!sel.value || sel.value === '')) {
+                if (sel.options.length > 1) {
+                    sel.selectedIndex = 1;
+                }
+            }
+        }
+
+        this.openViolationModal();
     }
 
     updateDendaPreview() {
@@ -615,10 +699,16 @@ class SelfReturnApp {
     }
 
     handleConfirmViolation() {
+        const confirmBtn = document.getElementById('confirmViolationBtn');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Memproses...';
+        }
+
         const jenisPelanggaranSelect = document.getElementById('jenisPelanggaranSelect');
         const jenisPelanggaranId     = (jenisPelanggaranSelect && jenisPelanggaranSelect.value) ? jenisPelanggaranSelect.value : 1;
 
-        bootstrap.Modal.getInstance(document.getElementById('modalPelanggaran')).hide();
+        this.closeViolationModal();
 
         this.submitReturn(true, {
             jenis_pelanggaran_id: jenisPelanggaranId,
@@ -640,8 +730,16 @@ class SelfReturnApp {
             `returnDate=${encodeURIComponent(returnDate)}`
         ].join('&');
 
+        const resetConfirmBtn = () => {
+            const confirmBtn = document.getElementById('confirmViolationBtn');
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fa fa-gavel"></i> Proses Pengembalian & Suspend';
+            }
+        };
+
         try {
-            const res  = await fetch('/sirkulasi-pengembalian/process-return', {
+            const res  = await fetch('<?= base_url('sirkulasi-pengembalian/process-return') ?>', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body
@@ -649,6 +747,7 @@ class SelfReturnApp {
             const data = await res.json();
 
             this.hideLoading();
+            resetConfirmBtn();
 
             if (data.status === 'success') {
                 window.location.href = data.struk_url;
@@ -657,13 +756,14 @@ class SelfReturnApp {
             }
         } catch (e) {
             this.hideLoading();
+            resetConfirmBtn();
             Swal.fire({ icon: 'error', title: 'Error Sistem', text: 'Terjadi kesalahan saat memproses pengembalian', confirmButtonColor: '#e8394d' });
         }
     }
 
     async loadHistory() {
         try {
-            let url = '/sirkulasi-pengembalian/getReturnHistory?limit=5';
+            let url = '<?= base_url('sirkulasi-pengembalian/getReturnHistory') ?>?limit=5';
             if (this.currentMemberId) url += '&member_id=' + this.currentMemberId;
             const res  = await fetch(url);
             const data = await res.json();

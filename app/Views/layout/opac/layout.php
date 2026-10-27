@@ -344,8 +344,8 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                     </li>
  
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= base_url('home/pendaftaran-online') ?>">
-                            <i class="fa-solid fa-id-card me-1"></i>Pendaftaran Anggota
+                        <a class="nav-link" href="<?= base_url('buku-tamu') ?>">
+                            <i class="fa-solid fa-address-book me-1"></i>Buku Tamu
                         </a>
                     </li>
 
@@ -362,17 +362,10 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                                 </a>
                             </li>-->
                             <li>
-                                <a class="dropdown-item" href="<?= base_url('buku-tamu') ?>">
-                                    <i class="fa-solid fa-address-book fa-fw text-secondary me-2"></i>Buku Tamu
-                                </a>
-                            </li>
-                            <?php if (env('Is_keanggotaan_online') == 1): ?>
-                            <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('home/pendaftaran-online') ?>">
                                     <i class="fa-solid fa-id-card fa-fw text-secondary me-2"></i>Pendaftaran Anggota
                                 </a>
                             </li>
-                            <?php endif; ?>
                             <!-- Menu Peminjaman & Pengembalian Mandiri disembunyikan sesuai butir 5 (fitur tetap aktif via direct URL) -->
                             <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('peminjaman-mandiri') ?>">
@@ -409,7 +402,8 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
 
                 </ul>
 
-                <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                <!-- Tombol Login / Dashboard di-hide agar pengunjung umum tidak melihat akses masuk admin. Admin dapat mengakses melalui URL /login -->
+                <div class="d-none align-items-center gap-3 mt-3 mt-lg-0" style="display: none !important;">
                     <?php if (session()->get('logged_in')): ?>
                         <a href="<?= base_url('dashboard') ?>"
                             class="btn btn-light text-primary rounded-pill px-4 py-2 fw-bold shadow-sm"
