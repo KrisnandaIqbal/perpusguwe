@@ -275,6 +275,18 @@ class Pengembalian extends \Base\Controllers\BaseController
                 ->update();
         }
 
+        if ($violationCount > 0 && $memberId) {
+            // Update status anggota menjadi Suspend (ID: 5)
+            $this->db->table('members')
+                ->where('ID', $memberId)
+                ->update([
+                    'StatusAnggota_id' => 5, // 5 = Suspend
+                    'UpdateBy'         => user_id() ?: 1,
+                    'UpdateDate'       => $returnDate,
+                    'UpdateTerminal'   => $this->request->getIPAddress()
+                ]);
+        }
+
         $this->db->transComplete();
 
         if ($this->db->transStatus() === false) {

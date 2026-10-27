@@ -97,7 +97,7 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		$aktif = $db->table('status_anggota')->where('Nama', 'Aktif')->get()->getRow();
 		$aktifId = $aktif->id ?? '';
 
-		helper('anggota');
+		helper(['anggota', 'sirkulasi']);
 		$perbaikanId = statusAnggotaId('Perlu Perbaikan') ?? '';
 		$alasanList  = alasanPerbaikan(true);
 
@@ -173,8 +173,29 @@ class Anggota extends \Base\Controllers\BaseResourceController
 				$html  =  '<badge class="badge badge-warning badge-pill">' . substr($row->EndDate, 0, 10) . '</badge>';
 				return $html;
 			})
-			->edit('StatusAnggota', function ($row) use ($perbaikanId, $alasanList) {
+			->edit('StatusAnggota', function ($row) use ($perbaikanId, $alasanList, $db) {
 				$statusName = $row->StatusAnggota ?? '-';
+				$suspendInfo = function_exists('cek_suspend_anggota') ? cek_suspend_anggota($row->cid) : ['is_suspended' => false];
+
+				if (!empty($suspendInfo['is_suspended'])) {
+					$statusName = 'Suspend';
+					if ((int)$row->StatusAnggota_id !== 5) {
+						$db->table('members')->where('ID', $row->cid)->update(['StatusAnggota_id' => 5]);
+					}
+				} elseif ((int)$row->StatusAnggota_id === 5) {
+					// Jika sebelumnya suspend dari sanksi tapi masa suspend sudah habis
+					$hasActiveViolation = $db->table('pelanggaran')
+						->where('Member_id', $row->cid)
+						->where('JumlahSuspend >', 0)
+						->where('active', 1)
+						->countAllResults() > 0;
+					if ($hasActiveViolation) {
+						// Masa berlaku suspend telah selesai, kembalikan ke Aktif
+						$db->table('members')->where('ID', $row->cid)->update(['StatusAnggota_id' => 3]);
+						$statusName = 'Aktif';
+					}
+				}
+
 				$badgeClass = 'badge-secondary';
 				$badgeStyle = '';
 				switch (strtolower($statusName)) {
@@ -208,6 +229,11 @@ class Anggota extends \Base\Controllers\BaseResourceController
 
 				$styleAttr = $badgeStyle ? ' style="' . $badgeStyle . ' font-size: 12px; cursor: default;"' : ' style="font-size: 12px; cursor: default;"';
 				$html = '<span class="badge ' . $badgeClass . ' py-1 px-2 font-weight-normal"' . $styleAttr . '>' . esc($statusName) . '</span>';
+
+				if (!empty($suspendInfo['is_suspended']) && !empty($suspendInfo['suspend_until'])) {
+					$untilFormatted = date('d/m/Y', strtotime($suspendInfo['suspend_until']));
+					$html .= '<div class="small text-danger font-weight-bold text-center mt-1" style="font-size: 11px;"><i class="fa fa-ban"></i> s.d. ' . esc($untilFormatted) . '</div>';
+				}
 
 				// Info status email sebagai ikon amplop kecil dengan tooltip
 				if (!empty($row->Email) && \App\Libraries\EmailPendaftaran::jenisUntuk((string) $row->MemberNo, $row->StatusAnggota_id)) {

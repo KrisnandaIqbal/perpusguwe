@@ -332,25 +332,7 @@ if (!function_exists('cek_suspend_anggota')) {
 
         $db = \Config\Database::connect();
 
-        // 1. Cek status anggota di tabel members (StatusAnggota_id = 5 adalah Suspend)
-        if ($db->tableExists('members')) {
-            $member = $db->table('members')
-                ->select('ID, MemberNo, Fullname, StatusAnggota_id')
-                ->where('ID', $memberId)
-                ->get()
-                ->getRow();
-
-            if ($member && (int)$member->StatusAnggota_id === 5) {
-                return [
-                    'is_suspended'  => true,
-                    'message'       => 'Anggota sedang dalam status Suspend oleh admin perpustakaan.',
-                    'suspend_until' => null,
-                    'suspend_days'  => 0,
-                ];
-            }
-        }
-
-        // 2. Cek catatan pelanggaran aktif dengan JumlahSuspend > 0
+        // 1. Cek catatan pelanggaran aktif dengan JumlahSuspend > 0
         if ($db->tableExists('pelanggaran')) {
             $violations = $db->table('pelanggaran')
                 ->where('Member_id', $memberId)
@@ -386,6 +368,24 @@ if (!function_exists('cek_suspend_anggota')) {
                     'message'       => "Anggota sedang disuspend hingga {$formattedUntil} (sanksi keterlambatan {$maxSuspendDays} hari).",
                     'suspend_until' => $maxSuspendUntil->format('Y-m-d H:i:s'),
                     'suspend_days'  => $maxSuspendDays,
+                ];
+            }
+        }
+
+        // 2. Cek status anggota di tabel members jika disuspend manual oleh admin (StatusAnggota_id = 5 adalah Suspend)
+        if ($db->tableExists('members')) {
+            $member = $db->table('members')
+                ->select('ID, MemberNo, Fullname, StatusAnggota_id')
+                ->where('ID', $memberId)
+                ->get()
+                ->getRow();
+
+            if ($member && (int)$member->StatusAnggota_id === 5) {
+                return [
+                    'is_suspended'  => true,
+                    'message'       => 'Anggota sedang dalam status Suspend oleh admin perpustakaan.',
+                    'suspend_until' => null,
+                    'suspend_days'  => 0,
                 ];
             }
         }

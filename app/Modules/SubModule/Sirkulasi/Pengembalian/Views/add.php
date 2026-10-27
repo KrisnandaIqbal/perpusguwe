@@ -192,6 +192,50 @@
     /* ── fade-in ── */
     .fade-in { animation: fadeIn .3s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ── Modal Styling: Hilangkan shadow dialog & backdrop ── */
+    #modalPelanggaran {
+        z-index: 1060 !important;
+        background: transparent !important;
+    }
+    #modalPelanggaran.show {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    #modalPelanggaran .modal-dialog {
+        max-width: 520px;
+        width: 92%;
+        margin: auto !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        border: none !important;
+    }
+    #modalPelanggaran .modal-dialog::before,
+    #modalPelanggaran .modal-dialog::after {
+        display: none !important;
+        content: none !important;
+        height: 0 !important;
+    }
+    #modalPelanggaran .modal-content {
+        border-radius: var(--radius-xl) !important;
+        border: 1px solid var(--gray-300) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+        overflow: hidden;
+        background: #ffffff !important;
+    }
+    .modal-backdrop,
+    .modal-backdrop.fade,
+    .modal-backdrop.show {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    #modalPelanggaran .close:hover {
+        opacity: 1 !important;
+    }
 </style>
 <?= $this->endSection('style'); ?>
 
@@ -313,8 +357,8 @@
     </div>
 
     <!-- Modal Pelanggaran -->
-    <div class="modal fade" id="modalPelanggaran" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="modalPelanggaran" data-backdrop="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content" style="border-radius: var(--radius-xl); border: none; overflow: hidden;">
 
                 <!-- Header -->
@@ -401,6 +445,11 @@ class SelfReturnApp {
     }
 
     init() {
+        // Pindahkan modal ke document.body agar tidak tertutup backdrop akibat stacking context .app-container
+        const modalEl = document.getElementById('modalPelanggaran');
+        if (modalEl && modalEl.parentNode !== document.body) {
+            document.body.appendChild(modalEl);
+        }
         this.bindEvents();
         this.focusInput();
         this.setupAutoScan();
@@ -425,6 +474,15 @@ class SelfReturnApp {
         });
 
         // Tombol di dalam modal
+        const modalEl = document.getElementById('modalPelanggaran');
+        if (modalEl) {
+            modalEl.querySelectorAll('[data-dismiss="modal"], [data-bs-dismiss="modal"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.closeViolationModal();
+                });
+            });
+        }
         const skipBtn = document.getElementById('skipViolationBtn');
         if (skipBtn) {
             skipBtn.addEventListener('click', () => {
@@ -606,8 +664,17 @@ class SelfReturnApp {
         const modalEl = document.getElementById('modalPelanggaran');
         if (!modalEl) return;
 
+        if (modalEl.parentNode !== document.body) {
+            document.body.appendChild(modalEl);
+        }
+
         if (window.jQuery && typeof window.jQuery(modalEl).modal === 'function') {
+            window.jQuery(modalEl).modal({
+                backdrop: false,
+                show: true
+            });
             window.jQuery(modalEl).modal('show');
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
             return;
         }
         if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
@@ -633,21 +700,16 @@ class SelfReturnApp {
         try {
             if (window.jQuery && typeof window.jQuery(modalEl).modal === 'function') {
                 window.jQuery(modalEl).modal('hide');
-                return;
-            }
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                 if (typeof bootstrap.Modal.getInstance === 'function') {
                     const inst = bootstrap.Modal.getInstance(modalEl);
                     if (inst) {
                         inst.hide();
-                        return;
                     }
-                }
-                if (typeof bootstrap.Modal.getOrCreateInstance === 'function') {
+                } else if (typeof bootstrap.Modal.getOrCreateInstance === 'function') {
                     const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
                     if (inst) {
                         inst.hide();
-                        return;
                     }
                 }
             }
@@ -655,12 +717,14 @@ class SelfReturnApp {
             console.warn('Error closing modal:', e);
         }
 
-        modalEl.classList.remove('show');
-        modalEl.style.display = 'none';
-        modalEl.setAttribute('aria-hidden', 'true');
-        modalEl.removeAttribute('aria-modal');
-        document.body.classList.remove('modal-open');
-        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        setTimeout(() => {
+            modalEl.classList.remove('show');
+            modalEl.style.display = 'none';
+            modalEl.setAttribute('aria-hidden', 'true');
+            modalEl.removeAttribute('aria-modal');
+            document.body.classList.remove('modal-open');
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        }, 150);
     }
 
     showViolationModal(overdueBooks) {
@@ -762,10 +826,12 @@ class SelfReturnApp {
             if (data.status === 'success') {
                 window.location.href = data.struk_url;
             } else {
+                this.renderBookList();
                 Swal.fire({ icon: 'error', title: 'Gagal', text: data.message, confirmButtonColor: '#e8394d' });
             }
         } catch (e) {
             this.hideLoading();
+            this.renderBookList();
             resetConfirmBtn();
             Swal.fire({ icon: 'error', title: 'Error Sistem', text: 'Terjadi kesalahan saat memproses pengembalian', confirmButtonColor: '#e8394d' });
         }
