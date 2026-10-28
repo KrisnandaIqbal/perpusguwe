@@ -183,17 +183,9 @@ class Anggota extends \Base\Controllers\BaseResourceController
 						$db->table('members')->where('ID', $row->cid)->update(['StatusAnggota_id' => 5]);
 					}
 				} elseif ((int)$row->StatusAnggota_id === 5) {
-					// Jika sebelumnya suspend dari sanksi tapi masa suspend sudah habis
-					$hasActiveViolation = $db->table('pelanggaran')
-						->where('Member_id', $row->cid)
-						->where('JumlahSuspend >', 0)
-						->where('active', 1)
-						->countAllResults() > 0;
-					if ($hasActiveViolation) {
-						// Masa berlaku suspend telah selesai, kembalikan ke Aktif
-						$db->table('members')->where('ID', $row->cid)->update(['StatusAnggota_id' => 3]);
-						$statusName = 'Aktif';
-					}
+					// Masa berlaku suspend telah selesai atau sanksi dicabut, kembalikan ke Aktif
+					$db->table('members')->where('ID', $row->cid)->update(['StatusAnggota_id' => 3]);
+					$statusName = 'Aktif';
 				}
 
 				$badgeClass = 'badge-secondary';
@@ -294,9 +286,17 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			return $this->failNotFound('Data anggota tidak ditemukan');
 		}
 
-		helper('anggota');
+		helper(['anggota', 'sirkulasi']);
 		$alasan     = alasanPerbaikan(true)[$row->AlasanPerbaikan] ?? null;
 		$sebelumnya = $alasan ? trim($alasan['label'] . '. ' . $row->CatatanPerbaikan) : null;
+
+		$suspendInfo = function_exists('cek_suspend_anggota') ? cek_suspend_anggota($row->ID) : ['is_suspended' => false];
+		$isSuspended = !empty($suspendInfo['is_suspended']);
+		$suspendUntil = !empty($suspendInfo['suspend_until']) ? date('d/m/Y', strtotime($suspendInfo['suspend_until'])) : null;
+		$statusName = $row->StatusAnggota ?? '-';
+		if ($isSuspended) {
+			$statusName = 'Suspend';
+		}
 
 		// Hitung preview masa berlaku (terhitung dari tanggal hari ini saat petugas memeriksa)
 		$mbPreview  = hitungMasaBerlaku($row->JenisAnggota_id ?? $row->JenisAnggota, $row->status_non_asn, date('Y-m-d H:i:s'), $row->RegisterDate);
@@ -322,7 +322,11 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			'ID'                  => $row->ID,
 			'MemberNo'            => $row->MemberNo ?? '-',
 			'StatusAnggota_id'    => $row->StatusAnggota_id,
-			'StatusAnggota'       => $row->StatusAnggota ?? '-',
+			'StatusAnggota'       => $statusName,
+			'is_suspended'        => $isSuspended,
+			'suspend_until'       => $suspendUntil,
+			'suspend_days'        => $suspendInfo['suspend_days'] ?? 0,
+			'suspend_message'     => $suspendInfo['message'] ?? '',
 			'JenisAnggota'        => $row->JenisAnggota,
 			'StatusNonAsn'        => !empty($row->status_non_asn) ? format_status_non_asn($row->status_non_asn) : null,
 			'status_non_asn'      => !empty($row->status_non_asn) ? format_status_non_asn($row->status_non_asn) : null,
@@ -746,8 +750,9 @@ class Anggota extends \Base\Controllers\BaseResourceController
 		$catatan = trim((string) $this->request->getPost('catatan'));
 
 		$update_data = array($field => $value);
+		$pelanggaranDicabut = 0;
 		if ($field === 'StatusAnggota_id') {
-			helper('anggota');
+			helper(['anggota', 'sirkulasi']);
 			if ((int) $value === statusAnggotaId('Perlu Perbaikan')) {
 				return $this->simpleResponse([
 					'error'   => true,
@@ -758,6 +763,9 @@ class Anggota extends \Base\Controllers\BaseResourceController
 				$update_data['CatatanPerbaikan'] = strip_tags($catatan);
 			}
 			$update_data = array_merge($update_data, memberApprovalData($id, $value));
+
+			// Sinkronkan sanksi suspend pada tabel pelanggaran bila diubah ke selain Suspend (misal: Aktif)
+			$pelanggaranDicabut = sinkronkan_status_suspend_anggota($id, $value);
 		}
 
 		$update_data_id = $this->anggotaModel->update($id, $update_data);
@@ -773,7 +781,12 @@ class Anggota extends \Base\Controllers\BaseResourceController
 			if (isset($update_data['MemberNo'])) {
 				$success = $nama . ' sudah disetujui dan aktif sebagai anggota.<br>No. Anggota: <b>' . esc($update_data['MemberNo']) . '</b>';
 			} else {
-				$success = 'Status <b>' . $nama . '</b> sekarang <b>' . esc($status->Nama ?? '-') . '</b>.';
+				$statusLabel = esc($status->Nama ?? '-');
+				if ($pelanggaranDicabut > 0 && (int)$value === 3) {
+					$success = 'Status <b>' . $nama . '</b> sekarang <b>' . $statusLabel . '</b>. Sisa sanksi suspend telah dicabut dan disinkronkan.';
+				} else {
+					$success = 'Status <b>' . $nama . '</b> sekarang <b>' . $statusLabel . '</b>.';
+				}
 			}
 			$failed = 'Status ' . $nama . ' gagal diubah. Silakan coba lagi.';
 		}

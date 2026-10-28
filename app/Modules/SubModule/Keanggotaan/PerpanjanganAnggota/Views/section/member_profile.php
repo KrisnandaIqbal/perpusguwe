@@ -1,8 +1,6 @@
 <?php
 $request = service('request');
-$slug = $request->getGet('slug') ?? 'peminjaman';
-$member_no = $request->getGet('member_no') ?? user()->username;
-$member = get_member($member_no);
+$defaultAvatar = base_url('uploads/default/avatar_neutral.svg');
 ?>
 
 <div class="card-shadow-dark profile-responsive card-border mb-3 card">
@@ -12,100 +10,95 @@ $member = get_member($member_no);
 			<div class="menu-header-content btn-pane-right">
 				<div class="avatar-icon-wrapper mr-2 avatar-icon-xl">
 					<div class="avatar-icon">
-						<?php
-						$default = base_url('themes/uigniter/images/avatars/2.jpg');
-						$image = $default;
-
-						// $image = base_url('uploads/user/'.$user->avatar);
-						// if(empty($user->avatar)){
-						//     $image = $default;
-						// }
-						?>
-
-						<img src="<?= $image ?>" onerror="this.onerror=null;this.src='<?= $default ?>';" alt="User Profile">
+						<img id="profile_avatar" src="<?= $defaultAvatar ?>" onerror="this.onerror=null;this.src='<?= $defaultAvatar ?>';" alt="Foto Anggota" style="object-fit: cover;">
 					</div>
 				</div>
 				<div>
-					<h5 class="menu-header-title"><span id="name"></h5>
-					<h6 class="menu-header-subtitle"><span name="no_anggota"></span></p>
+					<h5 class="menu-header-title mb-1"><span id="name">Pilih Anggota</span></h5>
+					<h6 class="menu-header-subtitle"><span name="no_anggota">-</span></h6>
 				</div>
-				<div class="menu-header-btn-pane">
-
-				</div>
+				<div class="menu-header-btn-pane"></div>
 			</div>
 		</div>
 	</div>
-	<ul class="list-group list-group-flush">
-		<li class="list-group-item">
+	<ul class="list-group list-group-flush" style="font-size: 13px;">
+		<li class="list-group-item py-2 px-3">
 			<div class="widget-content p-0">
 				<div class="widget-content-wrapper">
 					<div class="widget-content-left mr-3">
-						<i class="fa fa-phone"></i>
+						<i class="fa fa-id-badge text-primary" style="font-size: 16px;"></i>
 					</div>
 					<div class="widget-content-left">
-						<div class="widget-heading"><span id="nomor"></div>
-					</div>
-					<div class="widget-content-right">
-						<?= $member->Phone ?? '' ?>
+						<div class="text-muted small" style="font-size: 11px;">Kategori Keanggotaan</div>
+						<div class="widget-heading" id="profile_kategori_badge"><span class="badge badge-secondary">-</span></div>
 					</div>
 				</div>
 			</div>
 		</li>
-		<li class="list-group-item">
+		<li class="list-group-item py-2 px-3">
 			<div class="widget-content p-0">
 				<div class="widget-content-wrapper">
 					<div class="widget-content-left mr-3">
-						<i class="fa fa-envelope"></i>
+						<i class="fa fa-building text-info" style="font-size: 16px;"></i>
 					</div>
 					<div class="widget-content-left">
-						<div class="widget-heading"><span name="email"></div>
-					</div>
-
-					<div class="widget-content-right">
-
+						<div class="text-muted small" style="font-size: 11px;">Unit Kerja (Eselon I & II)</div>
+						<div class="widget-heading font-weight-bold" id="profile_unit_kerja" style="font-size: 12.5px;">-</div>
 					</div>
 				</div>
 			</div>
 		</li>
-
-		<li class="list-group-item">
+		<li class="list-group-item py-2 px-3">
 			<div class="widget-content p-0">
 				<div class="widget-content-wrapper">
 					<div class="widget-content-left mr-3">
-						<i class="fa fa-user"></i>
+						<i class="fa fa-clock text-warning" style="font-size: 16px;"></i>
 					</div>
 					<div class="widget-content-left">
-						<div class="widget-heading"><span id="date"></span><span>(Masa aktif)</span></div>
+						<div class="text-muted small" style="font-size: 11px;">Masa Berlaku Saat Ini</div>
+						<div class="widget-heading font-weight-bold" id="date">-</div>
 					</div>
-
-					<div class="widget-content-right">
-
+				</div>
+			</div>
+		</li>
+		<li class="list-group-item py-2 px-3">
+			<div class="widget-content p-0">
+				<div class="widget-content-wrapper">
+					<div class="widget-content-left mr-3">
+						<i class="fa fa-phone text-success" style="font-size: 16px;"></i>
+					</div>
+					<div class="widget-content-left">
+						<div class="text-muted small" style="font-size: 11px;">No. HP / WhatsApp</div>
+						<div class="widget-heading"><span id="nomor">-</span></div>
+					</div>
+				</div>
+			</div>
+		</li>
+		<li class="list-group-item py-2 px-3">
+			<div class="widget-content p-0">
+				<div class="widget-content-wrapper">
+					<div class="widget-content-left mr-3">
+						<i class="fa fa-envelope text-secondary" style="font-size: 16px;"></i>
+					</div>
+					<div class="widget-content-left">
+						<div class="text-muted small" style="font-size: 11px;">Email</div>
+						<div class="widget-heading"><span name="email">-</span></div>
+					</div>
+				</div>
+			</div>
+		</li>
+		<li class="list-group-item py-2 px-3">
+			<div class="widget-content p-0">
+				<div class="widget-content-wrapper">
+					<div class="widget-content-left mr-3">
+						<i class="fa fa-map-marker text-danger" style="font-size: 16px;"></i>
+					</div>
+					<div class="widget-content-left">
+						<div class="text-muted small" style="font-size: 11px;">Alamat</div>
+						<div class="widget-heading"><span name="address">-</span></div>
 					</div>
 				</div>
 			</div>
 		</li>
 	</ul>
-
-	<div class="card-border m-3 card">
-		<div class="card-body">
-			<div class="widget-content p-0">
-				<div class="widget-content-wrapper">
-					<div class="widget-content-left mr-3">
-						<i class="fa fa-map-marker"></i>
-					</div>
-					<div class="widget-content-left">
-						<div class="widget-heading"><span name="address"></div>
-					</div>
-					<div class="widget-content-right">
-					</div>
-				</div>
-				<p class="mt-3">
-
-				</p>
-				<p class="mt-3">
-					<a href="https://maps.google.com/?q=" target="_blank" title="Lihat Google Maps" class="btn btn-sm btn-warning" style="min-width:35px"><i class="fa fa-map"> </i> Google Maps</a>
-				</p>
-			</div>
-		</div>
-	</div>
 </div>

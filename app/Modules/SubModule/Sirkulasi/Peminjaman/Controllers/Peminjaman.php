@@ -1002,5 +1002,53 @@ public function overdueSummary(): \CodeIgniter\HTTP\ResponseInterface
     ]);
 }
 
+public function getLoanHistory()
+{
+    $limit     = $this->request->getGet('limit') ?? 5;
+    $offset    = $this->request->getGet('offset') ?? 0;
+    $member_id = $this->request->getGet('member_id');
+
+    $query = $this->db->table('collectionloanitems cli')
+        ->select('cli.*, c.NomorBarcode, cat.Title, cat.Author, m.Fullname, m.MemberNo')
+        ->join('collections c', 'c.ID = cli.Collection_id')
+        ->join('catalogs cat', 'cat.ID = c.Catalog_id', 'left')
+        ->join('members m', 'm.ID = cli.member_id', 'left');
+
+    if (!empty($member_id)) {
+        $query->where('cli.member_id', $member_id);
+    }
+
+    $history = $query->orderBy('cli.LoanDate', 'DESC')
+        ->limit($limit, $offset)
+        ->get()->getResult();
+
+    $today = new \DateTime();
+    foreach ($history as $h) {
+        $dueDate = !empty($h->DueDate) ? new \DateTime($h->DueDate) : null;
+        if ($h->LoanStatus === 'Return') {
+            $h->status_label = 'Sudah Dikembalikan';
+            $h->status_type  = 'returned';
+        } elseif ($dueDate && $today > $dueDate) {
+            $h->status_label = 'Melewati Jatuh Tempo';
+            $h->status_type  = 'overdue';
+        } else {
+            $h->status_label = 'Sedang Dipinjam';
+            $h->status_type  = 'loaned';
+        }
+
+        // Hitung durasi hari pinjam
+        $loanDate = !empty($h->LoanDate) ? new \DateTime($h->LoanDate) : null;
+        if ($loanDate && $dueDate) {
+            $h->duration_days = $loanDate->diff($dueDate)->days;
+        } else {
+            $h->duration_days = 10;
+        }
+    }
+
+    return $this->response->setJSON([
+        'status' => 'success',
+        'data'   => $history
+    ]);
+}
 
 }

@@ -644,6 +644,45 @@ if (!function_exists('statusAnggotaId')) {
     }
 }
 
+if (!function_exists('sinkronkan_status_suspend_anggota')) {
+    /**
+     * Menyinkronkan status keanggotaan dengan data suspend pelanggaran sirkulasi.
+     * Jika anggota diaktifkan kembali atau diubah statusnya ke selain Suspend (StatusAnggota_id != 5),
+     * maka semua catatan suspend aktif di tabel pelanggaran dinonaktifkan (active = 0).
+     *
+     * @param int|string $memberId
+     * @param int|string $newStatusId
+     * @return int Jumlah catatan pelanggaran suspend yang dinonaktifkan
+     */
+    function sinkronkan_status_suspend_anggota($memberId, $newStatusId): int {
+        if (empty($memberId)) {
+            return 0;
+        }
+
+        $newStatusId = (int) $newStatusId;
+        $db = \Config\Database::connect();
+
+        // 5 adalah ID status 'Suspend'
+        // Jika status baru BUKAN Suspend (misalnya 3 = Aktif, 4 = Nonaktif, 6 = Bebas Pustaka, dll)
+        if ($newStatusId !== 5 && $db->tableExists('pelanggaran')) {
+            $updated = $db->table('pelanggaran')
+                ->where('Member_id', $memberId)
+                ->where('JumlahSuspend >', 0)
+                ->where('active', 1)
+                ->update([
+                    'active'         => 0,
+                    'UpdateDate'     => date('Y-m-d H:i:s'),
+                    'UpdateBy'       => (function_exists('login_id') && login_id()) ? login_id() : ((function_exists('user_id') && user_id()) ? user_id() : 1),
+                    'UpdateTerminal' => (function_exists('service') && service('request')) ? service('request')->getIPAddress() : '127.0.0.1',
+                ]);
+
+            return $updated ? (int) $db->affectedRows() : 0;
+        }
+
+        return 0;
+    }
+}
+
 if (!function_exists('alasanPerbaikan')) {
     /**
      * Alasan pendaftaran belum bisa diterima (9 alasan resmi).

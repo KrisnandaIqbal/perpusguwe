@@ -167,14 +167,24 @@
 
     .history-item {
         background: var(--gray-100); border-radius: var(--radius-md);
-        padding: 14px 16px; margin-bottom: 9px;
+        padding: 14px 18px; margin-bottom: 12px;
         border-left: 4px solid var(--blue-500);
-        display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        transition: all .2s;
     }
-    .history-item .hi-title  { font-size: 14px; font-weight: 700; color: var(--blue-900); margin-bottom: 3px; }
-    .history-item .hi-author { font-size: 12px; color: var(--gray-500); margin-bottom: 3px; }
-    .history-item .hi-barcode{ font-size: 12px; color: var(--gray-500); }
+    .history-item:hover {
+        background: #f8fafc;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .history-item .hi-title  { font-size: 14px; font-weight: 700; color: var(--blue-900); margin-bottom: 4px; line-height: 1.3; }
+    .history-item .hi-meta   { font-size: 12px; color: var(--gray-500); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .history-item .hi-subinfo{ font-size: 12px; color: var(--gray-500); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
     .history-item .hi-date   { font-size: 12px; color: var(--gray-500); white-space: nowrap; text-align: right; }
+
+    @media (max-width: 768px) {
+        .history-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .history-item .hi-date { text-align: left; }
+    }
 
     .history-empty {
         text-align: center; padding: 28px;
@@ -454,6 +464,7 @@ class SelfReturnApp {
         this.focusInput();
         this.setupAutoScan();
         this.loadMasterData(); // Muat dropdown sekali saja
+        this.loadHistory(); // Muat riwayat pengembalian otomatis saat halaman dibuka
     }
 
     bindEvents() {
@@ -849,27 +860,53 @@ class SelfReturnApp {
 
     displayHistory(items) {
         const list = document.getElementById('historyList');
-        if (!items.length) {
-            list.innerHTML = `<div class="history-empty"><i class="fa fa-inbox"></i> Belum ada riwayat pengembalian</div>`; return;
+        if (!items || !items.length) {
+            list.innerHTML = `<div class="history-empty"><i class="fa fa-inbox"></i> Belum ada riwayat pengembalian</div>`;
+            return;
         }
-        list.innerHTML = items.map(item => `
+        list.innerHTML = items.map(item => {
+            const isReallyOverdue = (parseInt(item.LateDays, 10) > 0);
+            const statusBadge = isReallyOverdue
+                ? `<span class="status-badge status-overdue"><i class="fa fa-exclamation-circle"></i> Terlambat ${item.LateDays} hari</span>`
+                : `<span class="status-badge status-available"><i class="fa fa-check-circle"></i> Tepat Waktu</span>`;
+
+            const durationDays = item.duration_days !== undefined ? item.duration_days : '-';
+
+            return `
             <div class="history-item fade-in">
-                <div>
+                <div style="flex: 1; min-width: 0;">
                     <div class="hi-title">${item.Title || 'Judul tidak tersedia'}</div>
-                    <div class="hi-author">${item.Author || 'Pengarang tidak tersedia'}</div>
-                    <div class="hi-barcode"><i class="fa fa-barcode"></i> ${item.NomorBarcode}</div>
+                    <div class="hi-meta">
+                        <span><i class="fa fa-user" style="color:var(--blue-500);"></i> <strong>${item.Fullname || 'Anggota'}</strong> (${item.MemberNo || '-'})</span>
+                        <span><i class="fa fa-barcode"></i> <code>${item.NomorBarcode}</code></span>
+                        ${item.Author ? `<span><i class="fa fa-pencil"></i> ${item.Author}</span>` : ''}
+                    </div>
+                    <div class="hi-subinfo">
+                        <span><i class="fa fa-calendar-check-o"></i> Pinjam: <strong>${this.formatDate(item.LoanDate)}</strong></span>
+                        <span>&bull;</span>
+                        <span>Jatuh Tempo: <strong>${this.formatDate(item.DueDate)}</strong></span>
+                        <span>&bull;</span>
+                        <span style="background:#eef2ff; color:#3730a3; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;">
+                            <i class="fa fa-clock-o"></i> Durasi Pinjam: ${durationDays} hari
+                        </span>
+                    </div>
                 </div>
                 <div class="hi-date">
-                    ${this.formatDate(item.ActualReturn)}
-                    ${item.LateDays > 0 ? `<br><span class="status-badge status-overdue" style="font-size:10px;margin-top:5px;">Terlambat ${item.LateDays} hari</span>` : ''}
+                    <div style="font-size:11px; color:var(--gray-500); margin-bottom:2px;">Tgl Dikembalikan:</div>
+                    <div style="font-size:12px; font-weight:700; color:var(--blue-900);">${this.formatDate(item.ActualReturn)}</div>
+                    <div style="margin-top:6px;">${statusBadge}</div>
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     }
 
     formatDate(dateString) {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('id-ID', {
-            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        const cleanDate = dateString.replace(' ', 'T');
+        const d = new Date(cleanDate);
+        if (isNaN(d.getTime())) return dateString;
+        return d.toLocaleDateString('id-ID', {
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     }
 

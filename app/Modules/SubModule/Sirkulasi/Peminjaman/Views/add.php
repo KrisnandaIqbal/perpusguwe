@@ -270,6 +270,60 @@ $request = service('request'); ?>
     .tips-ok   { color: var(--success) !important; }
     .tips-warn { color: #e09800 !important; }
 
+    /* ── History items & badges ── */
+    .pm-btn-outline-sm {
+        background: transparent; color: var(--blue-800);
+        border: 1.5px solid var(--blue-200);
+        padding: 7px 14px; font-size: 13px; border-radius: 8px;
+        display: inline-flex; align-items: center; gap: 5px; font-weight: 600;
+        cursor: pointer; transition: all .2s; text-decoration: none;
+    }
+    .pm-btn-outline-sm:hover { background: var(--blue-50); color: var(--blue-800); }
+
+    .history-header {
+        display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+    .history-header h6 { font-size: 15px; font-weight: 700; color: var(--blue-900); margin: 0; }
+
+    .history-item {
+        background: var(--gray-100); border-radius: var(--radius-md);
+        padding: 14px 18px; margin-bottom: 12px;
+        border-left: 4px solid var(--blue-500);
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        transition: all .2s;
+    }
+    .history-item:hover {
+        background: #f8fafc;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .history-item .hi-title  { font-size: 14px; font-weight: 700; color: var(--blue-900); margin-bottom: 4px; line-height: 1.3; }
+    .history-item .hi-meta   { font-size: 12px; color: var(--gray-500); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .history-item .hi-subinfo{ font-size: 12px; color: var(--gray-500); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+    .history-item .hi-date   { font-size: 12px; color: var(--gray-500); white-space: nowrap; text-align: right; }
+
+    .history-empty {
+        text-align: center; padding: 28px;
+        color: var(--gray-500); font-size: 14px;
+    }
+    .history-empty i { font-size: 28px; margin-bottom: 10px; display: block; }
+
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 12px; border-radius: 50px;
+        font-size: 12px; font-weight: 700;
+    }
+    .status-available { background: #edfaf4; color: #0a6e43; }
+    .status-loaned    { background: #eff6ff; color: #1d4ed8; }
+    .status-overdue   { background: #fef1f2; color: var(--danger); }
+
+    .fade-in { animation: fadeIn .3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 768px) {
+        .history-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .history-item .hi-date { text-align: left; }
+    }
+
     @media (max-width: 640px) {
         .pm-inner-body { padding: 18px 14px; }
         .howto-grid    { grid-template-columns: 1fr; }
@@ -524,6 +578,31 @@ $request = service('request'); ?>
                 </div>
             </div>
 
+            <!-- Riwayat Peminjaman Card -->
+            <div class="pm-inner-card">
+                <div class="pm-inner-header">
+                    <div class="h-icon"><i class="fa fa-history"></i></div>
+                    <h5>Riwayat Peminjaman Terbaru</h5>
+                </div>
+                <div class="pm-inner-body">
+
+                    <div class="history-header">
+                        <h6>5 Peminjaman Terakhir</h6>
+                        <button type="button" id="refreshHistoryBtn" class="pm-btn-outline-sm">
+                            <i class="fa fa-sync"></i> Refresh
+                        </button>
+                    </div>
+
+                    <div id="historyList">
+                        <div class="history-empty">
+                            <i class="fa fa-clock-o"></i>
+                            Memuat riwayat peminjaman...
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
             <!-- Petunjuk Penggunaan — pakai card INLISLite asli -->
             <div class="main-card mb-3 card">
                 <div class="card-header">
@@ -635,5 +714,93 @@ setTimeout(function() {
     if (bc) bc.focus();
 }, 100);
 <?php endif; ?>
+
+class LoanHistoryApp {
+    constructor() {
+        this.currentMemberId = <?= !empty($memberData['id']) ? (int)$memberData['id'] : 'null' ?>;
+        this.init();
+    }
+
+    init() {
+        const refreshBtn = document.getElementById('refreshHistoryBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this.loadHistory());
+        }
+        this.loadHistory();
+    }
+
+    async loadHistory() {
+        try {
+            let url = '<?= base_url('sirkulasi-peminjaman/get-loan-history') ?>?limit=5';
+            if (this.currentMemberId) url += '&member_id=' + this.currentMemberId;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.status === 'success') {
+                this.displayHistory(data.data);
+            }
+        } catch (e) {
+            console.error('Error loading loan history:', e);
+        }
+    }
+
+    displayHistory(items) {
+        const list = document.getElementById('historyList');
+        if (!list) return;
+        if (!items || !items.length) {
+            list.innerHTML = `<div class="history-empty"><i class="fa fa-inbox"></i> Belum ada riwayat peminjaman</div>`;
+            return;
+        }
+
+        list.innerHTML = items.map(item => {
+            let statusBadge = '';
+            if (item.status_type === 'returned') {
+                statusBadge = `<span class="status-badge status-available"><i class="fa fa-check-circle"></i> Sudah Dikembalikan</span>`;
+            } else if (item.status_type === 'overdue') {
+                statusBadge = `<span class="status-badge status-overdue"><i class="fa fa-exclamation-circle"></i> Melewati Jatuh Tempo</span>`;
+            } else {
+                statusBadge = `<span class="status-badge status-loaned" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;"><i class="fa fa-book"></i> Sedang Dipinjam</span>`;
+            }
+
+            return `
+            <div class="history-item fade-in">
+                <div style="flex: 1; min-width: 0;">
+                    <div class="hi-title">${item.Title || 'Judul tidak tersedia'}</div>
+                    <div class="hi-meta">
+                        <span><i class="fa fa-user" style="color:var(--blue-500);"></i> <strong>${item.Fullname || 'Anggota'}</strong> (${item.MemberNo || '-'})</span>
+                        <span><i class="fa fa-barcode"></i> <code>${item.NomorBarcode}</code></span>
+                        ${item.Author ? `<span><i class="fa fa-pencil"></i> ${item.Author}</span>` : ''}
+                    </div>
+                    <div class="hi-subinfo">
+                        <span><i class="fa fa-calendar"></i> Tgl Pinjam: <strong>${this.formatDate(item.LoanDate)}</strong></span>
+                        <span>&bull;</span>
+                        <span>Jatuh Tempo: <strong>${this.formatDate(item.DueDate)}</strong></span>
+                        <span>&bull;</span>
+                        <span style="background:#eef2ff; color:#3730a3; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;">
+                            <i class="fa fa-calendar-check-o"></i> Durasi: ${item.duration_days ?? 10} hari
+                        </span>
+                    </div>
+                </div>
+                <div class="hi-date">
+                    <div style="font-size:11px; color:var(--gray-500); margin-bottom:2px;">Status Peminjaman:</div>
+                    <div style="margin-top:4px;">${statusBadge}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const cleanDate = dateString.replace(' ', 'T');
+        const d = new Date(cleanDate);
+        if (isNaN(d.getTime())) return dateString;
+        return d.toLocaleDateString('id-ID', {
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new LoanHistoryApp();
+});
 </script>
 <?= $this->endSection('script'); ?>

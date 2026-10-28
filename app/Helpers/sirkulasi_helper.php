@@ -333,6 +333,7 @@ if (!function_exists('cek_suspend_anggota')) {
         $db = \Config\Database::connect();
 
         // 1. Cek catatan pelanggaran aktif dengan JumlahSuspend > 0
+        $hasExpiredViolation = false;
         if ($db->tableExists('pelanggaran')) {
             $violations = $db->table('pelanggaran')
                 ->where('Member_id', $memberId)
@@ -358,6 +359,8 @@ if (!function_exists('cek_suspend_anggota')) {
                         $maxSuspendUntil = $untilDt;
                         $maxSuspendDays = $suspendDays;
                     }
+                } else {
+                    $hasExpiredViolation = true;
                 }
             }
 
@@ -370,6 +373,26 @@ if (!function_exists('cek_suspend_anggota')) {
                     'suspend_days'  => $maxSuspendDays,
                 ];
             }
+
+            // Jika ada pelanggaran yang masa berlakunya telah habis, nonaktifkan otomatis (active = 0)
+            if ($hasExpiredViolation) {
+                foreach ($violations as $v) {
+                    $createDt = new \DateTime($v->CreateDate);
+                    $suspendDays = (int)$v->JumlahSuspend;
+                    $untilDt = clone $createDt;
+                    $untilDt->modify("+{$suspendDays} days");
+                    $untilDt->setTime(23, 59, 59);
+
+                    if ($nowDt > $untilDt) {
+                        $db->table('pelanggaran')
+                            ->where('ID', $v->ID)
+                            ->update([
+                                'active'     => 0,
+                                'UpdateDate' => date('Y-m-d H:i:s'),
+                            ]);
+                    }
+                }
+            }
         }
 
         // 2. Cek status anggota di tabel members jika disuspend manual oleh admin (StatusAnggota_id = 5 adalah Suspend)
@@ -381,6 +404,18 @@ if (!function_exists('cek_suspend_anggota')) {
                 ->getRow();
 
             if ($member && (int)$member->StatusAnggota_id === 5) {
+                // Jika statusnya 5 tetapi karena pelanggaran sanksi yang sekarang sudah habis/kadaluarsa,
+                // kembalikan status anggota ke Aktif (3) secara otomatis.
+                if ($hasExpiredViolation) {
+                    $db->table('members')->where('ID', $memberId)->update(['StatusAnggota_id' => 3]);
+                    return [
+                        'is_suspended'  => false,
+                        'message'       => '',
+                        'suspend_until' => null,
+                        'suspend_days'  => 0,
+                    ];
+                }
+
                 return [
                     'is_suspended'  => true,
                     'message'       => 'Anggota sedang dalam status Suspend oleh admin perpustakaan.',
@@ -396,6 +431,45 @@ if (!function_exists('cek_suspend_anggota')) {
             'suspend_until' => null,
             'suspend_days'  => 0,
         ];
+    }
+}
+
+if (!function_exists('sinkronkan_status_suspend_anggota')) {
+    /**
+     * Menyinkronkan status keanggotaan dengan data suspend pelanggaran sirkulasi.
+     * Jika anggota diaktifkan kembali atau diubah statusnya ke selain Suspend (StatusAnggota_id != 5),
+     * maka semua catatan suspend aktif di tabel pelanggaran dinonaktifkan (active = 0).
+     *
+     * @param int|string $memberId
+     * @param int|string $newStatusId
+     * @return int Jumlah catatan pelanggaran suspend yang dinonaktifkan
+     */
+    function sinkronkan_status_suspend_anggota($memberId, $newStatusId): int {
+        if (empty($memberId)) {
+            return 0;
+        }
+
+        $newStatusId = (int) $newStatusId;
+        $db = \Config\Database::connect();
+
+        // 5 adalah ID status 'Suspend'
+        // Jika status baru BUKAN Suspend (misalnya 3 = Aktif, 4 = Nonaktif, 6 = Bebas Pustaka, dll)
+        if ($newStatusId !== 5 && $db->tableExists('pelanggaran')) {
+            $updated = $db->table('pelanggaran')
+                ->where('Member_id', $memberId)
+                ->where('JumlahSuspend >', 0)
+                ->where('active', 1)
+                ->update([
+                    'active'         => 0,
+                    'UpdateDate'     => date('Y-m-d H:i:s'),
+                    'UpdateBy'       => (function_exists('login_id') && login_id()) ? login_id() : ((function_exists('user_id') && user_id()) ? user_id() : 1),
+                    'UpdateTerminal' => (function_exists('service') && service('request')) ? service('request')->getIPAddress() : '127.0.0.1',
+                ]);
+
+            return $updated ? (int) $db->affectedRows() : 0;
+        }
+
+        return 0;
     }
 }
 

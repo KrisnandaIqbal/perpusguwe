@@ -83,25 +83,30 @@
         box-shadow: 0 0 0 4px rgba(45,101,212,.12);
     }
 
-    /* ── Extend days selector ── */
-    .extend-selector {
-        display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
+    /* ── Extend fixed duration card ── */
+    .extend-fixed-card {
+        display: inline-flex; align-items: center; gap: 16px;
+        background: linear-gradient(135deg, #eef3fd, #f4f7fe);
+        border: 2px solid var(--blue-200); border-radius: var(--radius-lg);
+        padding: 14px 28px; margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(45,101,212,0.08);
     }
-    .extend-opt {
-        flex: 1; min-width: 80px; max-width: 120px;
-        padding: 12px 10px; border-radius: var(--radius-md);
-        border: 2px solid var(--gray-300); background: var(--gray-100);
-        text-align: center; cursor: pointer; transition: all .2s; user-select: none;
+    .extend-fixed-card .efc-icon {
+        width: 46px; height: 46px; border-radius: 12px;
+        background: linear-gradient(135deg, var(--blue-800), var(--blue-500));
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 20px; flex-shrink: 0;
     }
-    .extend-opt .eo-days { font-size: 22px; font-weight: 800; color: var(--gray-500); display: block; }
-    .extend-opt .eo-label { font-size: 11px; color: var(--gray-500); font-weight: 600; }
-    .extend-opt:hover { border-color: var(--blue-200); background: var(--blue-50); }
-    .extend-opt.selected {
-        border-color: var(--blue-500); background: var(--blue-50);
-        box-shadow: 0 0 0 3px rgba(45,101,212,.15);
+    .extend-fixed-card .efc-title {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .6px; color: var(--blue-500); margin-bottom: 2px;
     }
-    .extend-opt.selected .eo-days  { color: var(--blue-800); }
-    .extend-opt.selected .eo-label { color: var(--blue-500); }
+    .extend-fixed-card .efc-val {
+        font-size: 20px; font-weight: 800; color: var(--blue-900); line-height: 1.2;
+    }
+    .extend-fixed-card .efc-desc {
+        font-size: 12px; color: var(--gray-500); font-weight: 500; margin-top: 2px;
+    }
 
     /* ── Buttons ── */
     .pm-btn {
@@ -230,16 +235,26 @@
     .history-header h6 { font-size: 15px; font-weight: 700; color: var(--blue-900); margin: 0; }
     .history-item {
         background: var(--gray-100); border-radius: var(--radius-md);
-        padding: 14px 16px; margin-bottom: 9px;
+        padding: 14px 18px; margin-bottom: 12px;
         border-left: 4px solid var(--teal-500);
-        display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        transition: all .2s;
     }
-    .history-item .hi-title  { font-size: 14px; font-weight: 700; color: var(--blue-900); margin-bottom: 3px; }
-    .history-item .hi-author { font-size: 12px; color: var(--gray-500); margin-bottom: 3px; }
-    .history-item .hi-barcode{ font-size: 12px; color: var(--gray-500); }
+    .history-item:hover {
+        background: #f8fafc;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .history-item .hi-title  { font-size: 14px; font-weight: 700; color: var(--blue-900); margin-bottom: 4px; line-height: 1.3; }
+    .history-item .hi-meta   { font-size: 12px; color: var(--gray-500); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .history-item .hi-subinfo{ font-size: 12px; color: var(--gray-500); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
     .history-item .hi-date   { font-size: 12px; color: var(--gray-500); white-space: nowrap; text-align: right; }
     .history-empty { text-align: center; padding: 28px; color: var(--gray-500); font-size: 14px; }
     .history-empty i { font-size: 28px; margin-bottom: 10px; display: block; }
+
+    @media (max-width: 768px) {
+        .history-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .history-item .hi-date { text-align: left; }
+    }
 
     /* ── Select all bar ── */
     .select-all-bar {
@@ -316,27 +331,16 @@
                                autocomplete="off" autofocus>
                     </div>
 
-                    <!-- Extend Days Selector -->
-                    <div id="extendSelectorWrap">
-                        <p style="text-align:center;font-size:13px;font-weight:700;color:var(--blue-900);margin-bottom:10px;">
-                            <i class="fa fa-calendar"></i>&nbsp; Durasi Perpanjangan
-                        </p>
-                        <div class="extend-selector">
-                            <div class="extend-opt selected" data-days="7" onclick="extendApp.selectDays(7, this)">
-                                <span class="eo-days">7</span>
-                                <span class="eo-label">Hari</span>
+                    <!-- Fixed Extension Duration (10 Hari Kerja) -->
+                    <div id="extendSelectorWrap" class="text-center">
+                        <div class="extend-fixed-card">
+                            <div class="efc-icon">
+                                <i class="fa fa-calendar-check-o"></i>
                             </div>
-                            <div class="extend-opt" data-days="14" onclick="extendApp.selectDays(14, this)">
-                                <span class="eo-days">14</span>
-                                <span class="eo-label">Hari</span>
-                            </div>
-                            <div class="extend-opt" data-days="21" onclick="extendApp.selectDays(21, this)">
-                                <span class="eo-days">21</span>
-                                <span class="eo-label">Hari</span>
-                            </div>
-                            <div class="extend-opt" data-days="30" onclick="extendApp.selectDays(30, this)">
-                                <span class="eo-days">30</span>
-                                <span class="eo-label">Hari</span>
+                            <div class="text-left">
+                                <div class="efc-title">Durasi Perpanjangan</div>
+                                <div class="efc-val">10 Hari Kerja</div>
+                                <div class="efc-desc">Sesuai durasi peminjaman (tidak termasuk Sabtu, Minggu, & hari libur)</div>
                             </div>
                         </div>
                     </div>
@@ -386,7 +390,7 @@
                         <div id="summaryBar" class="summary-bar d-none">
                             <div>
                                 <h6 id="summaryText">Siap diperpanjang</h6>
-                                <p id="summarySubtext">Perpanjangan selama <span id="summaryDays">7</span> hari</p>
+                                <p id="summarySubtext">Perpanjangan selama <b>10 hari kerja</b> (tidak termasuk akhir pekan & hari libur)</p>
                             </div>
                             <button type="button" id="confirmExtendBtn" class="pm-btn pm-btn-teal">
                                 <i class="fa fa-check"></i> Konfirmasi Perpanjangan
@@ -435,7 +439,7 @@ class ExtendApp {
         this.currentMemberId   = null;
         this.currentMemberName = null;
         this.booksData         = [];   // semua buku dari server
-        this.selectedDays      = 7;
+        this.selectedDays      = 10;
         window.extendApp       = this;
         this.init();
     }
@@ -444,6 +448,7 @@ class ExtendApp {
         this.bindEvents();
         this.focusInput();
         this.setupAutoScan();
+        this.loadHistory(); // Muat riwayat perpanjangan otomatis saat halaman dibuka
     }
 
     bindEvents() {
@@ -547,9 +552,11 @@ class ExtendApp {
 
     formatDate(d) {
         if (!d) return '-';
-        const date = typeof d === 'string' ? new Date(d) : d;
+        const cleanDate = typeof d === 'string' ? d.replace(' ', 'T') : d;
+        const date = typeof cleanDate === 'string' ? new Date(cleanDate) : cleanDate;
+        if (isNaN(date.getTime())) return d;
         return date.toLocaleDateString('id-ID', {
-            day: '2-digit', month: 'long', year: 'numeric'
+            day: '2-digit', month: 'short', year: 'numeric'
         });
     }
 
@@ -558,8 +565,8 @@ class ExtendApp {
         const now  = new Date();
 
         list.innerHTML = this.booksData.map((book, i) => {
-            const newDue      = this.addDays(book.due_date, this.selectedDays);
-            const isNewOverdue= newDue < now; // seharusnya tidak mungkin tapi antisipasi
+            const newDue      = book.new_due_date ? new Date(book.new_due_date) : this.addDays(book.due_date, 10);
+            const isNewOverdue= newDue < now;
             const overdueBadge= book.is_overdue
                 ? `<span class="status-badge status-overdue"><i class="fa fa-exclamation-circle"></i> Terlambat ${book.days_overdue} hari</span>`
                 : `<span class="status-badge status-onloan"><i class="fa fa-clock-o"></i> Sedang Dipinjam</span>`;
@@ -592,7 +599,7 @@ class ExtendApp {
                         <i class="fa fa-calendar-check-o"></i> ${this.formatDate(newDue)}
                     </span>
                     <span style="font-size:11px;color:var(--teal-600);font-weight:700;">
-                        +${this.selectedDays} hari
+                        +10 hari kerja
                     </span>
                 </div>
             </div>`;
@@ -666,7 +673,7 @@ class ExtendApp {
         const result = await Swal.fire({
             icon:              'question',
             title:             'Konfirmasi Perpanjangan',
-            html:              `<b>${selectedIds.length} buku</b> akan diperpanjang selama <b>${this.selectedDays} hari</b>.<br>Lanjutkan?`,
+            html:              `<b>${selectedIds.length} buku</b> akan diperpanjang selama <b>10 hari kerja</b>.<br>Lanjutkan?`,
             showCancelButton:  true,
             confirmButtonColor:'#0d8a6a',
             cancelButtonColor: '#6b7489',
@@ -681,7 +688,7 @@ class ExtendApp {
             const res  = await fetch('/sirkulasi-perpanjangan/process-extend', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `item_ids=${encodeURIComponent(JSON.stringify(selectedIds))}&extend_days=${this.selectedDays}`
+                body: `item_ids=${encodeURIComponent(JSON.stringify(selectedIds))}&extend_days=10`
             });
             const data = await res.json();
 
@@ -722,7 +729,7 @@ class ExtendApp {
 
     async loadHistory() {
         try {
-            let url = '/sirkulasi-perpanjangan/get-extend-history?limit=5';
+            let url = '<?= base_url('sirkulasi-perpanjangan/get-extend-history') ?>?limit=5';
             if (this.currentMemberId) url += '&member_id=' + this.currentMemberId;
             const res  = await fetch(url);
             const data = await res.json();
@@ -732,23 +739,32 @@ class ExtendApp {
 
     displayHistory(items) {
         const list = document.getElementById('historyList');
-        if (!items.length) {
+        if (!items || !items.length) {
             list.innerHTML = `<div class="history-empty"><i class="fa fa-inbox"></i> Belum ada riwayat perpanjangan</div>`;
             return;
         }
         list.innerHTML = items.map(item => `
             <div class="history-item fade-in">
-                <div>
+                <div style="flex: 1; min-width: 0;">
                     <div class="hi-title">${item.Title || 'Judul tidak tersedia'}</div>
-                    <div class="hi-author">${item.Author || 'Pengarang tidak tersedia'}</div>
-                    <div class="hi-barcode"><i class="fa fa-barcode"></i> ${item.NomorBarcode}</div>
+                    <div class="hi-meta">
+                        <span><i class="fa fa-user" style="color:var(--teal-600);"></i> <strong>${item.Fullname || 'Anggota'}</strong> (${item.MemberNo || '-'})</span>
+                        <span><i class="fa fa-barcode"></i> <code>${item.NomorBarcode}</code></span>
+                        ${item.Author ? `<span><i class="fa fa-pencil"></i> ${item.Author}</span>` : ''}
+                    </div>
+                    <div class="hi-subinfo">
+                        ${item.OriginalDueDate ? `<span>Jatuh Tempo Semula: <strong>${this.formatDate(item.OriginalDueDate)}</strong></span> <span>&bull;</span>` : ''}
+                        <span style="background:#ecfdf5; color:#065f46; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;">
+                            <i class="fa fa-plus-circle"></i> Tambahan: +10 Hari Kerja
+                        </span>
+                    </div>
                 </div>
-                <div class="hi-date" style="min-width:110px;">
-                    <div style="font-size:11px;color:var(--gray-500);margin-bottom:3px;">Diperpanjang</div>
-                    ${this.formatDate(item.DateExtend)}
-                    <div style="margin-top:4px;">
-                        <span class="status-badge status-onloan" style="font-size:10px;">
-                            <i class="fa fa-calendar"></i> s/d ${this.formatDate(item.DueDateExtend)}
+                <div class="hi-date">
+                    <div style="font-size:11px; color:var(--gray-500); margin-bottom:2px;">Diperpanjang pada:</div>
+                    <div style="font-size:12px; font-weight:700; color:var(--blue-900);">${this.formatDate(item.DateExtend)}</div>
+                    <div style="margin-top:6px;">
+                        <span class="status-badge" style="background:#edfaf4; color:#0a6e43; border:1px solid #bbf7d0;">
+                            <i class="fa fa-calendar-check-o"></i> Jatuh Tempo: ${this.formatDate(item.DueDateExtend)}
                         </span>
                     </div>
                 </div>

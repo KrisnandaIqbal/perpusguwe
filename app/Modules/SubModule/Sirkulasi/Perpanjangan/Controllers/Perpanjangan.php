@@ -105,6 +105,7 @@ public function checkBook()
 
         $dueDate   = new \DateTime($item->DueDate);
         $isOverdue = $today > $dueDate;
+        $newDueDateStr = hitungJatuhTempoHariKerja($item->DueDate, 10);
 
         $formattedItems[] = [
             'id'            => $item->ID,
@@ -114,6 +115,7 @@ public function checkBook()
             'barcode'       => $item->NomorBarcode,
             'loan_date'     => $item->LoanDate,
             'due_date'      => $item->DueDate,
+            'new_due_date'  => $newDueDateStr,
             'extend_count'  => $extendCount,
             'is_overdue'    => $isOverdue,
             'days_overdue'  => hitungHariKerjaTerlambat($item->DueDate, $today),
@@ -135,7 +137,7 @@ public function processExtend()
 {
     try {
         $itemIdsJson = $this->request->getPost('item_ids');
-        $extendDays  = (int)($this->request->getPost('extend_days') ?? 7);
+        $extendDays  = 10; // Durasi perpanjangan tetap 10 hari kerja sesuai durasi peminjaman
 
         if (empty($itemIdsJson)) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada buku yang dipilih untuk diperpanjang']);
@@ -168,7 +170,7 @@ public function processExtend()
             if (!$collectionLoanId) $collectionLoanId = $item->CollectionLoan_id;
             if (!$memberId)         $memberId         = $item->member_id;
 
-            // Hitung DueDate baru dari DueDate saat ini berdasarkan hari kerja
+            // Hitung DueDate baru dari DueDate saat ini berdasarkan 10 hari kerja
             $newDueDateStr  = hitungJatuhTempoHariKerja($item->DueDate, $extendDays);
             $newDueDate     = new \DateTime($newDueDateStr);
 
@@ -218,13 +220,13 @@ public function processExtend()
 
         session()->set('struk_perpanjangan', [
             'item_ids'       => $itemIds,
-            'extend_days'    => $extendDays,
+            'extend_days'    => '10 Hari Kerja',
             'extend_date'    => $extendDate,
         ]);
 
         return $this->response->setJSON([
             'status'    => 'success',
-            'message'   => "<b>$extendedCount buku</b> berhasil diperpanjang selama <b>$extendDays hari</b>!",
+            'message'   => "<b>$extendedCount buku</b> berhasil diperpanjang selama <b>10 hari kerja</b>!",
             'struk_url' => base_url('sirkulasi-perpanjangan/success'),
             'data'      => ['member_id' => $memberId, 'extended_count' => $extendedCount]
         ]);
@@ -322,10 +324,11 @@ public function getExtendHistory()
 
     $db    = db_connect();
     $query = $db->table('collectionloanextends cle')
-        ->select('cle.*, c.NomorBarcode, cat.Title, cat.Author')
+        ->select('cle.*, c.NomorBarcode, cat.Title, cat.Author, m.Fullname, m.MemberNo, cli.LoanDate, cli.DueDate as OriginalDueDate')
         ->join('collectionloanitems cli', 'cli.ID = cle.CollectionLoanItem_id')
         ->join('collections c', 'c.ID = cle.Collection_id')
         ->join('catalogs cat', 'cat.ID = c.Catalog_id', 'left')
+        ->join('members m', 'm.ID = cle.Member_id', 'left')
         ->where('cle.active', 1);
 
     if (!empty($member_id)) {

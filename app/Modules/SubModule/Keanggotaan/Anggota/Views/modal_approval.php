@@ -545,7 +545,11 @@
         $('#approval_member_no').text(data.MemberNo || '-');
         $('#approval_member_fullname').text(data.Fullname || '-');
         $('#approval_member_jenis_kelamin').text(data.JenisKelamin || '-');
-        $('#approval_member_status_badge').html(getStatusBadgeHtml(data.StatusAnggota));
+        var memberBadgeHtml = getStatusBadgeHtml(data.StatusAnggota);
+        if (data.is_suspended && data.suspend_until) {
+            memberBadgeHtml += '<div class="small text-danger font-weight-bold mt-1" style="font-size: 11px;"><i class="fa fa-ban"></i> s.d. ' + escAttr(data.suspend_until) + (data.suspend_days ? ' (sanksi ' + data.suspend_days + ' hari)' : '') + '</div>';
+        }
+        $('#approval_member_status_badge').html(memberBadgeHtml);
         $('#approval_member_jenis').text(data.JenisAnggota || '-');
         if (data.StatusNonAsn) {
             $('#dt_member_status_non_asn').show();
@@ -613,7 +617,11 @@
         // Ringkasan target
         $('#approval_status_target_name').text(data.Fullname || '-');
         $('#approval_status_target_no').text(data.MemberNo || '-');
-        $('#approval_status_current_badge').html(getStatusBadgeHtml(data.StatusAnggota));
+        var curBadgeHtml = getStatusBadgeHtml(data.StatusAnggota);
+        if (data.is_suspended && data.suspend_until) {
+            curBadgeHtml += ' <span class="badge badge-danger ml-1" style="font-size: 11px;"><i class="fa fa-ban"></i> s.d. ' + escAttr(data.suspend_until) + '</span>';
+        }
+        $('#approval_status_current_badge').html(curBadgeHtml);
 
         // Render radio buttons
         var $radioList = $('#approval_status_radio_list').empty();
@@ -634,6 +642,7 @@
                     '<label class="form-check-label d-flex align-items-center" for="st_radio_' + stId + '">' +
                         getStatusBadgeHtml(st.Nama) +
                         (isMenunggu ? ' <small class="text-muted ml-1">(khusus online)</small>' : '') +
+                        (st.Nama === 'Aktif' && data.is_suspended ? ' <small class="text-success font-weight-bold ml-2"><i class="fa fa-unlock"></i> Cabut Suspend & Aktifkan</small>' : '') +
                     '</label>' +
                 '</div>');
                 $radioList.append($item);
@@ -662,8 +671,9 @@
         if (!currentMemberData) return;
         var selectedVal = parseInt($(this).val(), 10);
         var currentVal = parseInt(currentMemberData.StatusAnggota_id, 10);
-        // Tombol simpan hanya aktif jika status berubah
-        $('#approval_status_save').prop('disabled', selectedVal === currentVal);
+        // Tombol simpan aktif jika status berubah atau jika anggota sedang disuspend dan memilih Aktif
+        var canSave = (selectedVal !== currentVal) || (currentMemberData.is_suspended && selectedVal === 3);
+        $('#approval_status_save').prop('disabled', !canSave);
     });
 
     // Handler tombol "Ubah Status" di Langkah 3A
@@ -686,7 +696,31 @@
         var newStatusName = selectedRadio.attr('data-name');
         var catatan = $.trim($('#approval_status_catatan').val());
 
-        if (isNaN(newStatusId) || newStatusId === parseInt(currentMemberData.StatusAnggota_id, 10)) {
+        if (isNaN(newStatusId)) {
+            return;
+        }
+        if (newStatusId === parseInt(currentMemberData.StatusAnggota_id, 10) && !currentMemberData.is_suspended) {
+            return;
+        }
+
+        // Jika anggota sedang suspend dan status diubah ke Aktif:
+        if (currentMemberData.is_suspended && newStatusName === 'Aktif') {
+            var suspendText = currentMemberData.suspend_until ? ' (sanksi s.d. ' + escAttr(currentMemberData.suspend_until) + ')' : '';
+            Swal.fire({
+                title: 'Cabut Suspend & Aktifkan?',
+                html: 'Anggota <strong>' + escAttr(currentMemberData.Fullname) + '</strong> saat ini sedang berstatus <strong>Suspend</strong>' + suspendText + '.<br><br>' +
+                      'Mengaktifkan kembali anggota akan <strong>mencabut sanksi keterlambatan</strong> dan mengaktifkan kembali hak peminjaman buku.<br><br>Apakah Anda yakin?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fa fa-check mr-1"></i> Ya, Aktifkan',
+                cancelButtonText: 'Batal'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    executeStatusSwitch(newStatusId, catatan);
+                }
+            });
             return;
         }
 

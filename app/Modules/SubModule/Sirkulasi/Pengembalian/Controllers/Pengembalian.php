@@ -399,9 +399,10 @@ class Pengembalian extends \Base\Controllers\BaseController
 		$member_id = $this->request->getGet('member_id'); // Menangkap member_id
 
 		$query = $this->db->table('collectionloanitems cli')
-			->select('cli.*, c.NomorBarcode, cat.Title, cat.Author')
+			->select('cli.*, c.NomorBarcode, cat.Title, cat.Author, m.Fullname, m.MemberNo')
 			->join('collections c', 'c.ID = cli.Collection_id')
 			->join('catalogs cat', 'cat.ID = c.Catalog_id', 'left')
+			->join('members m', 'm.ID = cli.member_id', 'left')
 			->where('cli.LoanStatus', 'Return');
 
 		// Filter history jika member_id tersedia
@@ -412,6 +413,13 @@ class Pengembalian extends \Base\Controllers\BaseController
 		$history = $query->orderBy('cli.ActualReturn', 'DESC')
 			->limit($limit, $offset)
 			->get()->getResult();
+
+		foreach ($history as $h) {
+			$loan = !empty($h->LoanDate) ? new \DateTime($h->LoanDate) : null;
+			$ret  = !empty($h->ActualReturn) ? new \DateTime($h->ActualReturn) : new \DateTime();
+			$h->duration_days = ($loan && $ret) ? $loan->diff($ret)->days : 0;
+			$h->is_on_time = ((int)$h->LateDays <= 0);
+		}
 
 		return $this->response->setJSON([
 			'status' => 'success',

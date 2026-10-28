@@ -170,7 +170,7 @@
                             </div>
                             <div>
                                 <div class="rstat-label">Diperpanjang</div>
-                                <div class="rstat-val"><?= esc($extend_days) ?> Hari</div>
+                                <div class="rstat-val"><?= (is_numeric($extend_days) ? esc($extend_days) . ' Hari' : esc($extend_days)) ?></div>
                             </div>
                             <div>
                                 <div class="rstat-label">Tanggal</div>

@@ -541,6 +541,8 @@ class AnggotaController extends \Base\Controllers\BaseController
                 } elseif (preg_match('/^(PENDING-|[0-9]{11}$)/', (string) $anggota->MemberNo)) {
                     $update_data['MemberNo'] = $anggota->MemberNo;
                 }
+                // Sinkronkan sanksi suspend jika status diubah ke selain Suspend (misal Aktif)
+                sinkronkan_status_suspend_anggota($ID, $update_data['StatusAnggota_id']);
 
                 $province = $this->request->getPost('Province');
                 if (!empty($province)) {
@@ -832,6 +834,7 @@ class AnggotaController extends \Base\Controllers\BaseController
         if ($field === 'StatusAnggota_id') {
             helper('anggota');
             $update_data = array_merge($update_data, memberApprovalData($id, $value));
+            sinkronkan_status_suspend_anggota($id, $value);
         }
 
         $anggotaUpdate = $this->anggotaModel->update($id, $update_data);

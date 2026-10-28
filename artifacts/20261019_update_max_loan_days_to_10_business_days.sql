@@ -17,6 +17,6 @@ WHERE id IN (19, 20, 21, 22, 23, 24);
 -- - Non ASN dan Magang (id: 20, 21, 23, 24) kembali ke 7 hari
 -- ============================================================================
 
--- ROLLBACK:
+-- ROLLBACK:    
 -- UPDATE jenis_anggota SET MaxLoanDays = 14 WHERE id IN (19, 22);
 -- UPDATE jenis_anggota SET MaxLoanDays = 7  WHERE id IN (20, 21, 23, 24);
