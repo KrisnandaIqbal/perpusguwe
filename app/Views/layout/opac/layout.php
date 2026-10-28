@@ -96,6 +96,16 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
             transition: all 0.3s;
         }
 
+        .navbar-toggler:focus {
+            box-shadow: none;
+            outline: none;
+        }
+
+        .navbar-toggler-icon-custom {
+            color: #ffffff !important;
+            font-size: 1.5rem;
+        }
+
         /* ✅ Brand area */
         .navbar-brand {
             max-width: 320px;
@@ -319,7 +329,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
             <button class="navbar-toggler border-0" type="button"
                 data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="fa-solid fa-bars navbar-toggler-icon-custom"></i>
+                <i class="fa-solid fa-bars text-white navbar-toggler-icon-custom"></i>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -349,6 +359,14 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                         </a>
                     </li>
 
+                    <?php if (env('Is_keanggotaan_online') == 1): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= base_url('home/pendaftaran-online') ?>">
+                            <i class="fa-solid fa-id-card me-1"></i>Pendaftaran Anggota
+                        </a>
+                    </li>
+                    <?php endif; ?>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#"
                             id="navbarDropdownLayanan" role="button"
@@ -361,13 +379,6 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                                     <i class="fa-solid fa-book-reader fa-fw text-secondary me-2"></i>Baca Ditempat
                                 </a>
                             </li>-->
-                            <?php if (env('Is_keanggotaan_online') == 1): ?>
-                            <li>
-                                <a class="dropdown-item" href="<?= base_url('home/pendaftaran-online') ?>">
-                                    <i class="fa-solid fa-id-card fa-fw text-secondary me-2"></i>Pendaftaran Anggota
-                                </a>
-                            </li>
-                            <?php endif; ?>
                             <!-- Menu Peminjaman & Pengembalian Mandiri disembunyikan sesuai butir 5 (fitur tetap aktif via direct URL) -->
                             <li style="display: none;">
                                 <a class="dropdown-item" href="<?= base_url('peminjaman-mandiri') ?>">

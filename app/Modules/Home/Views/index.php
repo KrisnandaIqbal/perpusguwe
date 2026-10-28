@@ -138,6 +138,26 @@
                             </button>
                         </div>
                     </form>
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mt-3 pt-3 border-top">
+                        <span class="text-secondary small fw-semibold me-1">
+                            <i class="fa-solid fa-bolt text-warning me-1"></i> Layanan Cepat:
+                        </span>
+                        <?php if (env('Is_keanggotaan_online') == 1): ?>
+                            <a href="<?= base_url('home/pendaftaran-online') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+                                <i class="fa-solid fa-id-card"></i>
+                                <span>Pendaftaran Anggota</span>
+                            </a>
+                        <?php endif; ?>
+                        <a href="<?= base_url('buku-tamu') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+                            <i class="fa-solid fa-address-book"></i>
+                            <span>Buku Tamu</span>
+                        </a>
+                        <a href="<?= base_url('opac/browse') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+                            <i class="fa-solid fa-compass"></i>
+                            <span>Jelajah Koleksi</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -192,7 +212,35 @@
     </div>
 </section>
 
-
+<?php if (env('Is_keanggotaan_online') == 1): ?>
+<!-- Banner Pendaftaran Anggota Online -->
+<section class="pb-2">
+    <div class="container">
+        <div class="card border-0 rounded-2xl shadow-soft overflow-hidden position-relative" style="background: linear-gradient(135deg, #1b3878 0%, #2563eb 100%);">
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-none d-lg-block opacity-10" style="pointer-events: none; background: radial-gradient(circle at 85% 20%, #ffffff 0, transparent 40%), radial-gradient(circle at 10% 90%, #93c5fd 0, transparent 35%);"></div>
+            <div class="card-body p-4 p-md-5 text-white position-relative z-1 text-center">
+                <div class="d-flex justify-content-center mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);">
+                        <i class="fa-solid fa-id-card fa-2x text-white"></i>
+                    </div>
+                </div>
+                <span class="badge rounded-pill fw-semibold px-3 py-2 mb-3" style="font-size: 0.75rem; background-color: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3); color: #dbeafe;">
+                    <i class="fa-solid fa-star me-1"></i>Pendaftaran Online
+                </span>
+                <h4 class="fw-bold mb-2 text-white" style="font-size: 1.5rem;">Belum Menjadi Anggota Perpustakaan?</h4>
+                <p class="mx-auto mb-4" style="line-height: 1.6; max-width: 640px; color: #dbeafe;">
+                    Daftarkan diri Anda secara online untuk menikmati kemudahan peminjaman buku, kartu anggota digital, dan akses fasilitas perpustakaan secara mandiri.
+                </p>
+                <a href="<?= base_url('home/pendaftaran-online') ?>" class="btn btn-light rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2" style="color: #1b3878;">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Daftar Anggota Sekarang</span>
+                    <i class="fa-solid fa-arrow-right small"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <section class="py-5 bg-light" id="koleksi">
     <div class="container">
