@@ -372,7 +372,7 @@
 
 		<!-- Navigation Tabs -->
 		<div class="nav-tabs-custom">
-			<a href="<?= base_url('buku-tamu') ?>" class="nav-tab">
+			<a href="<?= base_url('buku-tamu/anggota') ?>" class="nav-tab">
 				<i class="fas fa-user"></i>
 				<span>Anggota</span>
 			</a>

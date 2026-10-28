@@ -38,7 +38,18 @@ class GuestBook extends \App\Controllers\BaseController
 	}
 
 	
+	/** Pintu masuk buku tamu: langsung ke form bukan anggota; tab tipe lain tetap tersedia. */
 	public function index()
+	{
+		// Tautan lama dari scanner (buku-tamu?member_no=...) tetap jalan
+		if ($this->request->getGet('member_no') !== null) {
+			return redirect()->to(base_url('buku-tamu/anggota') . '?' . http_build_query($this->request->getGet()));
+		}
+
+		return redirect()->to(base_url('buku-tamu/non_anggota'));
+	}
+
+	public function anggota()
 	{
 
 		// Get member number from request — trim to handle barcode scanner spaces
@@ -124,7 +135,7 @@ class GuestBook extends \App\Controllers\BaseController
 
 		if (empty($member)) {
 			$this->session->setFlashdata('message', 'Nomor Anggota tidak ditemukan.');
-			return redirect()->to(base_url('buku-tamu'));
+			return redirect()->to(base_url('buku-tamu/anggota'));
 		}
 
 		$pilihan = IsianTamu::pilihanUnit($this->db);
@@ -136,7 +147,7 @@ class GuestBook extends \App\Controllers\BaseController
 		if ($hasil['errors'] !== []) {
 			$this->session->setFlashdata('isian_tamu', $this->request->getPost());
 			$this->session->setFlashdata('errors_tamu', $hasil['errors']);
-			return redirect()->to(base_url('buku-tamu') . '?member_no=' . rawurlencode($member->MemberNo));
+			return redirect()->to(base_url('buku-tamu/anggota') . '?member_no=' . rawurlencode($member->MemberNo));
 		}
 
 		$kunjunganId = (int) $this->request->getPost('kunjungan_id');
@@ -167,7 +178,7 @@ class GuestBook extends \App\Controllers\BaseController
 			$this->session->setFlashdata('message', 'Buku tamu gagal disimpan. Silakan hubungi petugas perpustakaan.');
 		}
 
-		return redirect()->to(base_url('buku-tamu'));
+		return redirect()->to(base_url('buku-tamu/anggota'));
 	}
 
 	/** Mencatat kunjungan anggota dari isian yang sudah diperiksa, lalu kembali ke layar pindai. */
@@ -189,7 +200,7 @@ class GuestBook extends \App\Controllers\BaseController
 			$this->session->setFlashdata('kunjungan_baru', ['id' => $id, 'member_no' => $member->MemberNo]);
 		}
 
-		return redirect()->to(base_url('buku-tamu'));
+		return redirect()->to(base_url('buku-tamu/anggota'));
 	}
 
 	/**

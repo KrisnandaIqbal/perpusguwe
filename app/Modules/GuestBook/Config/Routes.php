@@ -4,6 +4,7 @@
 $routes->group('buku-tamu', ['namespace' => 'GuestBook\Controllers'], function ($subroutes) {
 	$subroutes->add('', 'GuestBook::index');
 	$subroutes->add('index', 'GuestBook::index');
+	$subroutes->add('anggota', 'GuestBook::anggota');
 	$subroutes->add('lokasi', 'GuestBook::lokasi');
 	$subroutes->add('non_anggota', 'GuestBook::non_anggota');
 	$subroutes->add('rombongan', 'GuestBook::rombongan');

@@ -397,7 +397,7 @@
 
 		<!-- Navigation Tabs -->
 		<div class="nav-tabs-custom">
-			<a href="<?= base_url('buku-tamu') ?>" class="nav-tab active">
+			<a href="<?= base_url('buku-tamu/anggota') ?>" class="nav-tab active">
 				<i class="fas fa-user"></i>
 				<span>Anggota</span>
 			</a>
@@ -422,7 +422,7 @@
 			<?php if (!empty($kunjungan_baru)) : ?>
 				<p class="tamu-hitung">
 					Data kunjungan salah?
-					<a href="<?= base_url('buku-tamu') . '?' . http_build_query(['member_no' => $kunjungan_baru['member_no'], 'ubah' => $kunjungan_baru['id']]) ?>">Ubah</a>
+					<a href="<?= base_url('buku-tamu/anggota') . '?' . http_build_query(['member_no' => $kunjungan_baru['member_no'], 'ubah' => $kunjungan_baru['id']]) ?>">Ubah</a>
 				</p>
 			<?php endif; ?>
 
@@ -431,7 +431,7 @@
 				<h2 class="search-title">Cari Anggota Perpustakaan</h2>
 				<p class="search-subtitle">Masukkan nomor anggota untuk melanjutkan ke buku tamu</p>
 
-				<form method="get" action="<?= base_url('buku-tamu') ?>" class="search-form">
+				<form method="get" action="<?= base_url('buku-tamu/anggota') ?>" class="search-form">
 					<div class="search-input-group">
 						<input type="text"
 							class="search-input"

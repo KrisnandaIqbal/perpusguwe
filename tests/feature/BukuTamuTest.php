@@ -67,6 +67,31 @@ final class BukuTamuTest extends CIUnitTestCase
         return db_connect()->table('memberguesses')->where('Nama', $nama)->get()->getRow();
     }
 
+    public function testBukuTamuLangsungKeFormBukanAnggota(): void
+    {
+        $result = $this->get('buku-tamu');
+
+        $result->assertRedirect();
+        $this->assertSame(base_url('buku-tamu/non_anggota'), $result->response()->getHeaderLine('Location'));
+    }
+
+    public function testFormBukanAnggotaMenampilkanTabKeAnggotaDanRombongan(): void
+    {
+        $result = $this->get('buku-tamu/non_anggota');
+
+        $result->assertOK();
+        $this->assertStringContainsString('href="' . base_url('buku-tamu/anggota') . '"', $result->getBody());
+        $this->assertStringContainsString('href="' . base_url('buku-tamu/rombongan') . '"', $result->getBody());
+    }
+
+    public function testTautanPindaiLamaDiarahkanKeHalamanAnggota(): void
+    {
+        $result = $this->get('buku-tamu?member_no=12345');
+
+        $result->assertRedirect();
+        $this->assertSame(base_url('buku-tamu/anggota') . '?member_no=12345', $result->response()->getHeaderLine('Location'));
+    }
+
     public function testBukanAnggotaTersimpanDenganUnitDanWhatsApp(): void
     {
         $result = $this->post('buku-tamu/non_anggota', [
@@ -175,7 +200,7 @@ final class BukuTamuTest extends CIUnitTestCase
         ]);
 
         $result->assertRedirect();
-        $this->assertSame(base_url('buku-tamu') . '?member_no=' . rawurlencode($anggota->MemberNo), $result->response()->getHeaderLine('Location'));
+        $this->assertSame(base_url('buku-tamu/anggota') . '?member_no=' . rawurlencode($anggota->MemberNo), $result->response()->getHeaderLine('Location'));
         $this->assertNull($this->tamu('Anggota Salah Uji Otomatis'));
     }
 
@@ -183,7 +208,7 @@ final class BukuTamuTest extends CIUnitTestCase
     {
         $anggota = $this->anggotaUji('Anggota Lengkap Uji Otomatis', 2, '081200005555');
 
-        $result = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo));
+        $result = $this->get('buku-tamu/anggota?member_no=' . rawurlencode($anggota->MemberNo));
 
         // Membuka tautan pindai tidak mencatat apa pun; halaman mengirim form POST sendiri
         $result->assertOK();
@@ -208,13 +233,13 @@ final class BukuTamuTest extends CIUnitTestCase
     {
         $anggota = $this->anggotaUji('Anggota Koreksi Uji Otomatis', 2, '081200005555');
 
-        $this->catatKunjungan($anggota, '081200005555')->assertRedirectTo(base_url('buku-tamu'));
+        $this->catatKunjungan($anggota, '081200005555')->assertRedirectTo(base_url('buku-tamu/anggota'));
         $kunjungan = $this->tamu('Anggota Koreksi Uji Otomatis');
         $this->assertNotNull($kunjungan);
         $this->assertSame(['id' => (int) $kunjungan->ID, 'member_no' => $anggota->MemberNo], $_SESSION['kunjungan_baru'] ?? null);
 
         // Tautan "Ubah" membuka form terisi tanpa kirim otomatis, membawa kunjungan yang akan diubah
-        $form = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo) . '&ubah=' . $kunjungan->ID);
+        $form = $this->get('buku-tamu/anggota?member_no=' . rawurlencode($anggota->MemberNo) . '&ubah=' . $kunjungan->ID);
         $form->assertOK();
         $this->assertStringNotContainsString('data-kirim-otomatis', $form->getBody());
         $this->assertStringContainsString('name="kunjungan_id" value="' . $kunjungan->ID . '"', $form->getBody());
@@ -244,7 +269,7 @@ final class BukuTamuTest extends CIUnitTestCase
         // Tanpa satuan kerja, data belum lengkap: form tampil terisi dan kunjungan belum tercatat
         $anggota = $this->anggotaUji('Anggota Belum Lengkap Uji Otomatis', null, '081200006666');
 
-        $result = $this->get('buku-tamu?member_no=' . rawurlencode($anggota->MemberNo));
+        $result = $this->get('buku-tamu/anggota?member_no=' . rawurlencode($anggota->MemberNo));
 
         $result->assertOK();
         $this->assertNull($this->tamu('Anggota Belum Lengkap Uji Otomatis'));
