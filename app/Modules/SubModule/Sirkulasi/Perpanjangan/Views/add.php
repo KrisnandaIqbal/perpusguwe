@@ -529,7 +529,7 @@ class ExtendApp {
                 ? `<span class="status-badge status-overdue"><i class="fa fa-exclamation-circle"></i> Terlambat ${book.days_overdue} hari</span>`
                 : `<span class="status-badge status-onloan"><i class="fa fa-clock-o"></i> Sedang Dipinjam</span>`;
             const extendBadge = !book.can_extend
-                ? `<span class="extend-badge" style="background:var(--gray-100);color:var(--gray-500);">Batas perpanjangan tercapai (${book.extend_count}/${this.maxExtend})</span>`
+                ? `<span class="extend-badge" style="background:var(--warn-100);color:var(--warn-600);">Batas perpanjangan tercapai (${book.extend_count}/${this.maxExtend})</span>`
                 : book.extend_count > 0
                     ? `<span class="extend-badge"><i class="fa fa-refresh"></i> Perpanjang ke-${book.extend_count + 1}</span>`
                     : `<span class="extend-badge" style="background:var(--blue-50);color:var(--blue-500);">Perpanjangan Pertama</span>`;
