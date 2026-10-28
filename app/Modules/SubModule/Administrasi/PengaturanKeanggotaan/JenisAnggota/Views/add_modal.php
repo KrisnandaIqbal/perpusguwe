@@ -85,6 +85,22 @@
 						</div>
 						<div class="col-lg-6">
 							<div class="form-group">
+								<label for="frm_add_DayPerpanjang">Lama Perpanjangan (hari kerja)</label>
+								<div>
+									<input required type="number" min="0" class="form-control" id="frm_add_DayPerpanjang" name="DayPerpanjang" placeholder="0 = sama dengan lama pinjam" value="" />
+								</div>
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<div class="form-group">
+								<label for="frm_add_CountPerpanjang">Maksimal Perpanjangan (kali)</label>
+								<div>
+									<input required type="number" min="0" class="form-control" id="frm_add_CountPerpanjang" name="CountPerpanjang" placeholder="0 = tidak bisa diperpanjang" value="" />
+								</div>
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<div class="form-group">
 								<label for="UploadDokumenKeanggotaanOnline">Upload Dokumen Peminjaman</label>
 								<div>
 									<select class="form-control" id="frm_add_UploadDokumenKeanggotaanOnline" name="UploadDokumenKeanggotaanOnline">

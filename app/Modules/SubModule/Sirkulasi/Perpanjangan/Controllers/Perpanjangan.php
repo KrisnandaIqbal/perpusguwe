@@ -62,6 +62,38 @@ public function create()
     return view('Perpanjangan\Views\add', $this->data);
 }
 
+/**
+ * Aturan perpanjangan untuk satu anggota, diambil dari jenis_anggota.
+ * DayPerpanjang kosong/0 → pakai MaxLoanDays (perpanjangan = masa pinjam).
+ * CountPerpanjang 0 → jenis anggota ini tidak bisa memperpanjang.
+ */
+private function aturanPerpanjangan($db, $memberId): array
+{
+    $jenis = $db->table('members m')
+        ->select('ja.DayPerpanjang, ja.CountPerpanjang, ja.MaxLoanDays')
+        ->join('jenis_anggota ja', 'ja.id = m.JenisAnggota_id', 'left')
+        ->where('m.ID', $memberId)
+        ->get()->getRow();
+
+    $hari = (int) ($jenis->DayPerpanjang ?? 0);
+    if ($hari <= 0) {
+        $hari = (int) ($jenis->MaxLoanDays ?? 0);
+    }
+
+    return [
+        'hari' => $hari,
+        'maks' => max(0, (int) ($jenis->CountPerpanjang ?? 0)),
+    ];
+}
+
+private function jumlahPerpanjangan($db, $loanItemId): int
+{
+    return $db->table('collectionloanextends')
+        ->where('CollectionLoanItem_id', $loanItemId)
+        ->where('active', 1)
+        ->countAllResults();
+}
+
 public function checkBook()
 {
     $nomorBarcode = $this->request->getPost('nomorBarcode');
@@ -94,18 +126,16 @@ public function checkBook()
         ->where('cli.ActualReturn IS NULL')
         ->get()->getResult();
 
+    $aturan         = $this->aturanPerpanjangan($db, $scannedItem->member_id);
     $today          = new \DateTime();
     $formattedItems = [];
 
     foreach ($allItems as $item) {
-        $extendCount = $db->table('collectionloanextends')
-            ->where('CollectionLoanItem_id', $item->ID)
-            ->where('active', 1)
-            ->countAllResults();
+        $extendCount = $this->jumlahPerpanjangan($db, $item->ID);
+        $canExtend   = $aturan['hari'] > 0 && $extendCount < $aturan['maks'];
 
         $dueDate   = new \DateTime($item->DueDate);
         $isOverdue = $today > $dueDate;
-        $newDueDateStr = hitungJatuhTempoHariKerja($item->DueDate, 10);
 
         $formattedItems[] = [
             'id'            => $item->ID,
@@ -115,8 +145,9 @@ public function checkBook()
             'barcode'       => $item->NomorBarcode,
             'loan_date'     => $item->LoanDate,
             'due_date'      => $item->DueDate,
-            'new_due_date'  => $newDueDateStr,
             'extend_count'  => $extendCount,
+            'can_extend'    => $canExtend,
+            'new_due_date'  => $canExtend ? hitungJatuhTempoHariKerja($item->DueDate, $aturan['hari']) : null,
             'is_overdue'    => $isOverdue,
             'days_overdue'  => hitungHariKerjaTerlambat($item->DueDate, $today),
         ];
@@ -128,6 +159,8 @@ public function checkBook()
             'member_id'          => $scannedItem->member_id,
             'member_name'        => $scannedItem->Fullname,
             'collection_loan_id' => $scannedItem->CollectionLoan_id,
+            'extend_days'        => $aturan['hari'],
+            'max_extend'         => $aturan['maks'],
             'items'              => $formattedItems
         ]
     ]);
@@ -137,7 +170,6 @@ public function processExtend()
 {
     try {
         $itemIdsJson = $this->request->getPost('item_ids');
-        $extendDays  = 10; // Durasi perpanjangan tetap 10 hari kerja sesuai durasi peminjaman
 
         if (empty($itemIdsJson)) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada buku yang dipilih untuk diperpanjang']);
@@ -149,7 +181,6 @@ public function processExtend()
         }
 
         $db = db_connect();
-        $db->transStart();
 
         $loanItems = $db->table('collectionloanitems')
             ->whereIn('ID', $itemIds)
@@ -161,6 +192,25 @@ public function processExtend()
             return $this->response->setJSON(['status' => 'error', 'message' => 'Buku tidak ditemukan atau sudah dikembalikan']);
         }
 
+        // Durasi & batas perpanjangan ditentukan server dari jenis_anggota,
+        // bukan dari request. Semua dicek dulu sebelum ada yang ditulis.
+        $aturanPerAnggota = [];
+        foreach ($loanItems as $item) {
+            if (!isset($aturanPerAnggota[$item->member_id])) {
+                $aturanPerAnggota[$item->member_id] = $this->aturanPerpanjangan($db, $item->member_id);
+            }
+            $aturan = $aturanPerAnggota[$item->member_id];
+
+            if ($aturan['hari'] <= 0 || $aturan['maks'] <= 0) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Jenis anggota peminjam belum diatur untuk perpanjangan. Hubungi admin.']);
+            }
+            if ($this->jumlahPerpanjangan($db, $item->ID) >= $aturan['maks']) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Ada buku yang sudah mencapai batas perpanjangan (' . $aturan['maks'] . ' kali). Hapus centangnya lalu coba lagi.']);
+            }
+        }
+
+        $db->transStart();
+
         $extendDate       = date('Y-m-d H:i:s');
         $extendedCount    = 0;
         $collectionLoanId = null;
@@ -170,7 +220,8 @@ public function processExtend()
             if (!$collectionLoanId) $collectionLoanId = $item->CollectionLoan_id;
             if (!$memberId)         $memberId         = $item->member_id;
 
-            // Hitung DueDate baru dari DueDate saat ini berdasarkan 10 hari kerja
+            // Hitung DueDate baru dari DueDate saat ini berdasarkan hari kerja
+            $extendDays     = $aturanPerAnggota[$item->member_id]['hari'];
             $newDueDateStr  = hitungJatuhTempoHariKerja($item->DueDate, $extendDays);
             $newDueDate     = new \DateTime($newDueDateStr);
 
@@ -220,13 +271,13 @@ public function processExtend()
 
         session()->set('struk_perpanjangan', [
             'item_ids'       => $itemIds,
-            'extend_days'    => '10 Hari Kerja',
+            'extend_days'    => $extendDays,
             'extend_date'    => $extendDate,
         ]);
 
         return $this->response->setJSON([
             'status'    => 'success',
-            'message'   => "<b>$extendedCount buku</b> berhasil diperpanjang selama <b>10 hari kerja</b>!",
+            'message'   => "<b>$extendedCount buku</b> berhasil diperpanjang selama <b>$extendDays hari kerja</b>!",
             'struk_url' => base_url('sirkulasi-perpanjangan/success'),
             'data'      => ['member_id' => $memberId, 'extended_count' => $extendedCount]
         ]);
@@ -324,11 +375,10 @@ public function getExtendHistory()
 
     $db    = db_connect();
     $query = $db->table('collectionloanextends cle')
-        ->select('cle.*, c.NomorBarcode, cat.Title, cat.Author, m.Fullname, m.MemberNo, cli.LoanDate, cli.DueDate as OriginalDueDate')
+        ->select('cle.*, c.NomorBarcode, cat.Title, cat.Author')
         ->join('collectionloanitems cli', 'cli.ID = cle.CollectionLoanItem_id')
         ->join('collections c', 'c.ID = cle.Collection_id')
         ->join('catalogs cat', 'cat.ID = c.Catalog_id', 'left')
-        ->join('members m', 'm.ID = cle.Member_id', 'left')
         ->where('cle.active', 1);
 
     if (!empty($member_id)) {
