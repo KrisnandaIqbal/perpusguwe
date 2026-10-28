@@ -292,11 +292,20 @@ class Home extends \Base\Controllers\BaseController
         return view('Home\Views\pendaftaran-online', $this->data);
     }
 
-    public function tata_cara_sirkulasi()
+ public function tata_cara_sirkulasi()
     {
         $this->data['title'] = 'Tata Cara Sirkulasi';
+        $this->data['aturanPinjam'] = $this->db->table('jenis_anggota')
+            ->select('jenisanggota, MaxPinjamKoleksi, MaxLoanDays')
+            ->where('active', 1)
+            ->where('MaxLoanDays >', 0)
+            ->orderBy('jenisanggota', 'ASC')
+            ->get()
+            ->getResult();
+
         return view('Home\Views\tata-cara-sirkulasi', $this->data);
     }
+
 
     public function layanan_isbn()
     {
