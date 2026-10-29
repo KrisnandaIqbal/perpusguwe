@@ -15,6 +15,7 @@ class LaporanEmail extends \Base\Controllers\BaseController
     public function __construct()
     {
         $this->db = \Config\Database::connect();
+        EmailLogger::ensureInstalled();
     }
 
     public function index()

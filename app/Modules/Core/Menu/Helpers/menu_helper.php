@@ -214,6 +214,9 @@ if (!function_exists('is_accessed')) {
 if (!function_exists('display_menu_backend')) {
     function display_menu_backend($parent = 0, $level = 1, $group = null)
     {
+        if (class_exists('\App\Libraries\EmailLogger')) {
+            \App\Libraries\EmailLogger::ensureInstalled();
+        }
         return _render_menu_backend($parent, $level, $group)['html'];
     }
 }

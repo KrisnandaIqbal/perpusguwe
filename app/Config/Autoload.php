@@ -8,7 +8,7 @@ class Autoload extends \CodeIgniter\Config\AutoloadConfig {
         'Config'      => APPPATH.'Config'
     ];
     function __construct() {
-        if (!($tmp=read_cache('routes_list'))) {
+        if (!($tmp=read_cache('routes_list')) || !isset($tmp['LaporanEmail'])) {
             $loadModules = function($dir, &$modules=[]) use(&$loadModules) {
                 if (is_dir($dir)&&($scan=scandir($dir))) {
                     foreach (($scan=array_diff($scan, ['..', '.'])) as $value) if (is_dir($newPath=$dir.DIRECTORY_SEPARATOR.$value)) if (is_file($newPath.DIRECTORY_SEPARATOR.'Config'.DIRECTORY_SEPARATOR.'Routes.php')) $modules[$value] = $newPath; else $loadModules($newPath, $modules);
