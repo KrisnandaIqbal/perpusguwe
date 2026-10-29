@@ -52,11 +52,12 @@ class EmailNotificationLibrary
             return ['success' => false, 'message' => 'Email anggota tidak ditemukan.'];
         }
 
+        $subject = 'Notifikasi Keterlambatan Pengembalian Buku';
         $this->email->initialize($this->smtpConfig); // wajib, seperti member_notify()
         $this->email->clear();
         $this->email->setFrom($this->fromEmail, $this->fromName);
         $this->email->setTo($loanData->Email);
-        $this->email->setSubject('Notifikasi Keterlambatan Pengembalian Buku');
+        $this->email->setSubject($subject);
         $this->email->setMessage($this->buildSingleTemplate($loanData, $lateDays));
 
         try {
@@ -64,15 +65,44 @@ class EmailNotificationLibrary
             log_message('info', '[EmailNotif] Send to: ' . $loanData->Email . ' - ' . ($sent ? 'OK' : 'FAILED'));
 
             if ($sent) {
+                EmailLogger::log([
+                    'recipient_email' => $loanData->Email,
+                    'recipient_name'  => $loanData->Fullname ?? null,
+                    'member_no'       => $loanData->MemberNo ?? null,
+                    'member_id'       => $loanData->Member_id ?? null,
+                    'email_type'      => EmailLogger::TYPE_KETERLAMBATAN,
+                    'subject'         => $subject,
+                    'status'          => 'success',
+                ]);
                 return ['success' => true, 'message' => 'Email berhasil dikirim ke ' . $loanData->Email];
             }
 
             $debug = $this->email->printDebugger(['headers']);
             log_message('error', '[EmailNotif] Failed: ' . $debug);
+            EmailLogger::log([
+                'recipient_email' => $loanData->Email,
+                'recipient_name'  => $loanData->Fullname ?? null,
+                'member_no'       => $loanData->MemberNo ?? null,
+                'member_id'       => $loanData->Member_id ?? null,
+                'email_type'      => EmailLogger::TYPE_KETERLAMBATAN,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $debug,
+            ]);
             return ['success' => false, 'message' => 'Gagal kirim ke ' . $loanData->Email . '. Cek log untuk detail.'];
 
         } catch (\Exception $e) {
             log_message('error', '[EmailNotif] Exception: ' . $e->getMessage());
+            EmailLogger::log([
+                'recipient_email' => $loanData->Email,
+                'recipient_name'  => $loanData->Fullname ?? null,
+                'member_no'       => $loanData->MemberNo ?? null,
+                'member_id'       => $loanData->Member_id ?? null,
+                'email_type'      => EmailLogger::TYPE_KETERLAMBATAN,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $e->getMessage(),
+            ]);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -89,6 +119,7 @@ class EmailNotificationLibrary
     public function sendBulkOverdueNotification(array $groupedLoans): array
     {
         $result = ['sent' => 0, 'failed' => 0, 'errors' => []];
+        $subject = 'Notifikasi Keterlambatan Pengembalian Buku';
 
         foreach ($groupedLoans as $email => $loans) {
             if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -97,11 +128,12 @@ class EmailNotificationLibrary
                 continue;
             }
 
+            $firstLoan = $loans[0] ?? null;
             $this->email->initialize($this->smtpConfig); // reinit tiap iterasi
             $this->email->clear();
             $this->email->setFrom($this->fromEmail, $this->fromName);
             $this->email->setTo($email);
-            $this->email->setSubject('Notifikasi Keterlambatan Pengembalian Buku');
+            $this->email->setSubject($subject);
             $this->email->setMessage($this->buildBulkTemplate($loans));
 
             try {
@@ -110,15 +142,44 @@ class EmailNotificationLibrary
 
                 if ($sent) {
                     $result['sent']++;
+                    EmailLogger::log([
+                        'recipient_email' => $email,
+                        'recipient_name'  => $firstLoan->Fullname ?? null,
+                        'member_no'       => $firstLoan->MemberNo ?? null,
+                        'member_id'       => $firstLoan->Member_id ?? null,
+                        'email_type'      => EmailLogger::TYPE_KETERLAMBATAN,
+                        'subject'         => $subject,
+                        'status'          => 'success',
+                    ]);
                 } else {
                     $result['failed']++;
                     $debug = $this->email->printDebugger(['headers']);
                     log_message('error', '[EmailNotif] Bulk failed ' . $email . ': ' . $debug);
+                    EmailLogger::log([
+                        'recipient_email' => $email,
+                        'recipient_name'  => $firstLoan->Fullname ?? null,
+                        'member_no'       => $firstLoan->MemberNo ?? null,
+                        'member_id'       => $firstLoan->Member_id ?? null,
+                        'email_type'      => EmailLogger::TYPE_KETERLAMBATAN,
+                        'subject'         => $subject,
+                        'status'          => 'failed',
+                        'error_message'   => $debug,
+                    ]);
                     $result['errors'][] = "Gagal kirim ke {$email}";
                 }
             } catch (\Exception $e) {
                 $result['failed']++;
                 log_message('error', '[EmailNotif] Bulk exception ' . $email . ': ' . $e->getMessage());
+                EmailLogger::log([
+                    'recipient_email' => $email,
+                    'recipient_name'  => $firstLoan->Fullname ?? null,
+                    'member_no'       => $firstLoan->MemberNo ?? null,
+                    'member_id'       => $firstLoan->Member_id ?? null,
+                    'email_type'      => EmailLogger::TYPE_KETERLAMBATAN,
+                    'subject'         => $subject,
+                    'status'          => 'failed',
+                    'error_message'   => $e->getMessage(),
+                ]);
                 $result['errors'][] = "Error kirim ke {$email}: " . $e->getMessage();
             }
         }
@@ -143,11 +204,12 @@ class EmailNotificationLibrary
             return ['success' => false, 'message' => 'Format email tidak valid: ' . $loan->Email];
         }
 
+        $subject = 'Struk Peminjaman Buku - ID #' . $loan->ID;
         $this->email->initialize($this->smtpConfig);
         $this->email->clear();
         $this->email->setFrom($this->fromEmail, $this->fromName);
         $this->email->setTo($loan->Email);
-        $this->email->setSubject('Struk Peminjaman Buku - ID #' . $loan->ID);
+        $this->email->setSubject($subject);
         $this->email->setMessage($this->buildStrukTemplate($loan, $loanItems));
 
         try {
@@ -155,15 +217,44 @@ class EmailNotificationLibrary
             log_message('info', '[EmailNotif] Struk to: ' . $loan->Email . ' - ' . ($sent ? 'OK' : 'FAILED'));
 
             if ($sent) {
+                EmailLogger::log([
+                    'recipient_email' => $loan->Email,
+                    'recipient_name'  => $loan->Fullname ?? null,
+                    'member_no'       => $loan->MemberNo ?? null,
+                    'member_id'       => $loan->Member_id ?? null,
+                    'email_type'      => EmailLogger::TYPE_STRUK_PINJAM,
+                    'subject'         => $subject,
+                    'status'          => 'success',
+                ]);
                 return ['success' => true, 'message' => 'Struk berhasil dikirim ke ' . $loan->Email];
             }
 
             $debug = $this->email->printDebugger(['headers']);
             log_message('error', '[EmailNotif] Struk failed: ' . $debug);
+            EmailLogger::log([
+                'recipient_email' => $loan->Email,
+                'recipient_name'  => $loan->Fullname ?? null,
+                'member_no'       => $loan->MemberNo ?? null,
+                'member_id'       => $loan->Member_id ?? null,
+                'email_type'      => EmailLogger::TYPE_STRUK_PINJAM,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $debug,
+            ]);
             return ['success' => false, 'message' => 'Gagal mengirim struk ke ' . $loan->Email . '. Cek log untuk detail.'];
 
         } catch (\Exception $e) {
             log_message('error', '[EmailNotif] Struk exception: ' . $e->getMessage());
+            EmailLogger::log([
+                'recipient_email' => $loan->Email,
+                'recipient_name'  => $loan->Fullname ?? null,
+                'member_no'       => $loan->MemberNo ?? null,
+                'member_id'       => $loan->Member_id ?? null,
+                'email_type'      => EmailLogger::TYPE_STRUK_PINJAM,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $e->getMessage(),
+            ]);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -427,11 +518,12 @@ class EmailNotificationLibrary
             return ['success' => false, 'message' => 'Format email tidak valid: ' . $member->Email];
         }
 
+        $subject = 'Struk Pengembalian Buku - ' . date('d/m/Y H:i');
         $this->email->initialize($this->smtpConfig);
         $this->email->clear();
         $this->email->setFrom($this->fromEmail, $this->fromName);
         $this->email->setTo($member->Email);
-        $this->email->setSubject('Struk Pengembalian Buku - ' . date('d/m/Y H:i'));
+        $this->email->setSubject($subject);
         $this->email->setMessage($this->buildStrukPengembalianTemplate($member, $items));
 
         try {
@@ -439,15 +531,44 @@ class EmailNotificationLibrary
             log_message('info', '[EmailNotif] Struk pengembalian to: ' . $member->Email . ' - ' . ($sent ? 'OK' : 'FAILED'));
 
             if ($sent) {
+                EmailLogger::log([
+                    'recipient_email' => $member->Email,
+                    'recipient_name'  => $member->Fullname ?? null,
+                    'member_no'       => $member->MemberNo ?? null,
+                    'member_id'       => $member->ID ?? null,
+                    'email_type'      => EmailLogger::TYPE_STRUK_KEMBALI,
+                    'subject'         => $subject,
+                    'status'          => 'success',
+                ]);
                 return ['success' => true, 'message' => 'Struk pengembalian berhasil dikirim ke ' . $member->Email];
             }
 
             $debug = $this->email->printDebugger(['headers']);
             log_message('error', '[EmailNotif] Struk pengembalian failed: ' . $debug);
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => EmailLogger::TYPE_STRUK_KEMBALI,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $debug,
+            ]);
             return ['success' => false, 'message' => 'Gagal mengirim struk ke ' . $member->Email . '. Cek log untuk detail.'];
 
         } catch (\Exception $e) {
             log_message('error', '[EmailNotif] Struk pengembalian exception: ' . $e->getMessage());
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => EmailLogger::TYPE_STRUK_KEMBALI,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $e->getMessage(),
+            ]);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -465,11 +586,12 @@ class EmailNotificationLibrary
             return ['success' => false, 'message' => 'Format email tidak valid: ' . $member->Email];
         }
 
+        $subject = 'Struk Perpanjangan Buku - ' . date('d/m/Y H:i');
         $this->email->initialize($this->smtpConfig);
         $this->email->clear();
         $this->email->setFrom($this->fromEmail, $this->fromName);
         $this->email->setTo($member->Email);
-        $this->email->setSubject('Struk Perpanjangan Buku - ' . date('d/m/Y H:i'));
+        $this->email->setSubject($subject);
         $this->email->setMessage($this->buildStrukPerpanjanganTemplate($member, $items));
 
         try {
@@ -477,15 +599,44 @@ class EmailNotificationLibrary
             log_message('info', '[EmailNotif] Struk perpanjangan to: ' . $member->Email . ' - ' . ($sent ? 'OK' : 'FAILED'));
 
             if ($sent) {
+                EmailLogger::log([
+                    'recipient_email' => $member->Email,
+                    'recipient_name'  => $member->Fullname ?? null,
+                    'member_no'       => $member->MemberNo ?? null,
+                    'member_id'       => $member->ID ?? null,
+                    'email_type'      => EmailLogger::TYPE_STRUK_PERPANJANG,
+                    'subject'         => $subject,
+                    'status'          => 'success',
+                ]);
                 return ['success' => true, 'message' => 'Struk perpanjangan berhasil dikirim ke ' . $member->Email];
             }
 
             $debug = $this->email->printDebugger(['headers']);
             log_message('error', '[EmailNotif] Struk perpanjangan failed: ' . $debug);
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => EmailLogger::TYPE_STRUK_PERPANJANG,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $debug,
+            ]);
             return ['success' => false, 'message' => 'Gagal mengirim struk ke ' . $member->Email . '. Cek log untuk detail.'];
 
         } catch (\Exception $e) {
             log_message('error', '[EmailNotif] Struk perpanjangan exception: ' . $e->getMessage());
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => EmailLogger::TYPE_STRUK_PERPANJANG,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $e->getMessage(),
+            ]);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -778,11 +929,12 @@ class EmailNotificationLibrary
         $tempFile = tempnam(sys_get_temp_dir(), 'kartu_') . '.pdf';
         file_put_contents($tempFile, $pdfContent);
 
+        $subject = 'Kartu Anggota Digital - ' . $perpusName;
         $this->email->initialize($this->smtpConfig);
         $this->email->clear();
         $this->email->setFrom($this->fromEmail, $this->fromName);
         $this->email->setTo($member->Email);
-        $this->email->setSubject('Kartu Anggota Digital - ' . $perpusName);
+        $this->email->setSubject($subject);
         $bodyHtml = '<p>Kepada Yth. ' . esc($member->Fullname) . ',</p>'
                   . '<p>Terlampir kartu anggota digital Anda dalam format PDF. Mohon disimpan sebagai bukti keanggotaan.</p>'
                   . '<p>Terima kasih.</p>';
@@ -794,14 +946,43 @@ class EmailNotificationLibrary
             @unlink($tempFile);
             log_message('info', '[EmailNotif] Member card PDF to: ' . $member->Email . ' - ' . ($sent ? 'OK' : 'FAILED'));
             if ($sent) {
+                EmailLogger::log([
+                    'recipient_email' => $member->Email,
+                    'recipient_name'  => $member->Fullname ?? null,
+                    'member_no'       => $member->MemberNo ?? null,
+                    'member_id'       => $member->ID ?? null,
+                    'email_type'      => EmailLogger::TYPE_KARTU_DIGITAL,
+                    'subject'         => $subject,
+                    'status'          => 'success',
+                ]);
                 return ['success' => true, 'message' => 'Kartu berhasil dikirim ke ' . $member->Email];
             }
             $debug = $this->email->printDebugger(['headers']);
             log_message('error', '[EmailNotif] Member card PDF failed: ' . $debug);
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => EmailLogger::TYPE_KARTU_DIGITAL,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $debug,
+            ]);
             return ['success' => false, 'message' => 'Gagal mengirim kartu ke ' . $member->Email . '. Cek log untuk detail.'];
         } catch (\Exception $e) {
             @unlink($tempFile);
             log_message('error', '[EmailNotif] Member card PDF exception: ' . $e->getMessage());
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => EmailLogger::TYPE_KARTU_DIGITAL,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $e->getMessage(),
+            ]);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -932,7 +1113,11 @@ class EmailNotificationLibrary
             $member->Email ?? '',
             'Pendaftaran Anggota Diterima - ' . $this->fromName,
             $this->buildMembershipMailLayout('Pendaftaran Diterima', $content),
-            'Registration received'
+            'Registration received',
+            null,
+            null,
+            $member,
+            EmailLogger::TYPE_REGISTRASI_DITERIMA
         );
     }
 
@@ -979,7 +1164,9 @@ class EmailNotificationLibrary
             $this->buildMembershipMailLayout('Keanggotaan Disetujui', $content),
             'Membership approved + card',
             $tempFile,
-            'Kartu-Anggota-' . $member->MemberNo . '.pdf'
+            'Kartu-Anggota-' . $member->MemberNo . '.pdf',
+            $member,
+            EmailLogger::TYPE_REGISTRASI_DISETUJUI
         );
         @unlink($tempFile);
         return $result;
@@ -1004,12 +1191,24 @@ class EmailNotificationLibrary
             $member->Email ?? '',
             'Pendaftaran Anggota Belum Dapat Disetujui - ' . $this->fromName,
             $this->buildMembershipMailLayout('Pendaftaran Belum Dapat Disetujui', $content),
-            'Registration rejected'
+            'Registration rejected',
+            null,
+            null,
+            $member,
+            EmailLogger::TYPE_REGISTRASI_DITOLAK
         );
     }
 
-    private function sendMembershipMail(string $to, string $subject, string $html, string $logTag, ?string $attachPath = null, ?string $attachName = null): array
-    {
+    private function sendMembershipMail(
+        string $to,
+        string $subject,
+        string $html,
+        string $logTag,
+        ?string $attachPath = null,
+        ?string $attachName = null,
+        ?object $member = null,
+        string $emailType = EmailLogger::TYPE_REGISTRASI_DITERIMA
+    ): array {
         if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'message' => 'Email tidak valid atau kosong.'];
         }
@@ -1028,12 +1227,42 @@ class EmailNotificationLibrary
             $sent = $this->email->send();
             log_message('info', '[EmailNotif] ' . $logTag . ' to: ' . $to . ' - ' . ($sent ? 'OK' : 'FAILED'));
             if ($sent) {
+                EmailLogger::log([
+                    'recipient_email' => $to,
+                    'recipient_name'  => $member->Fullname ?? null,
+                    'member_no'       => $member->MemberNo ?? null,
+                    'member_id'       => $member->ID ?? null,
+                    'email_type'      => $emailType,
+                    'subject'         => $subject,
+                    'status'          => 'success',
+                ]);
                 return ['success' => true, 'message' => 'Email berhasil dikirim ke ' . $to];
             }
-            log_message('error', '[EmailNotif] ' . $logTag . ' failed: ' . $this->email->printDebugger(['headers']));
+            $debug = $this->email->printDebugger(['headers']);
+            log_message('error', '[EmailNotif] ' . $logTag . ' failed: ' . $debug);
+            EmailLogger::log([
+                'recipient_email' => $to,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => $emailType,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $debug,
+            ]);
             return ['success' => false, 'message' => 'Gagal mengirim email ke ' . $to . '. Cek log untuk detail.'];
         } catch (\Throwable $e) {
             log_message('error', '[EmailNotif] ' . $logTag . ' exception: ' . $e->getMessage());
+            EmailLogger::log([
+                'recipient_email' => $to,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => $emailType,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $e->getMessage(),
+            ]);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

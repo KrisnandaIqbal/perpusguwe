@@ -189,24 +189,38 @@ if (!function_exists('member_notify')) {
         $emailService->setSubject($subject);
         $emailService->setMessage($body);
 
-        // Send email
         try {
             $sent = $emailService->send();
-            
-            // Log email for debugging
             log_message('info', 'Email sent to: ' . $email . ' - Status: ' . ($sent ? 'Success' : 'Failed'));
-            
+            $recipientName = $data['Fullname'] ?? ($data['fullname'] ?? $username);
+            $memberNo      = $data['MemberNo'] ?? ($data['member_no'] ?? null);
+
             if ($sent) {
+                \App\Libraries\EmailLogger::log([
+                    'recipient_email' => $email,
+                    'recipient_name'  => $recipientName,
+                    'member_no'       => $memberNo,
+                    'email_type'      => \App\Libraries\EmailLogger::TYPE_AKUN_MEMBER,
+                    'subject'         => $subject,
+                    'status'          => 'success',
+                ]);
                 $response = [
                     'error' => false,
                     'message' => $succeed,
                     'data' => $data,
                 ];
             } else {
-                // Get email debug info
                 $debug_info = $emailService->printDebugger(['headers']);
                 log_message('error', 'Email send failed: ' . $debug_info);
-                
+                \App\Libraries\EmailLogger::log([
+                    'recipient_email' => $email,
+                    'recipient_name'  => $recipientName,
+                    'member_no'       => $memberNo,
+                    'email_type'      => \App\Libraries\EmailLogger::TYPE_AKUN_MEMBER,
+                    'subject'         => $subject,
+                    'status'          => 'failed',
+                    'error_message'   => $debug_info,
+                ]);
                 $response = [
                     'error' => true,
                     'message' => $failed,
@@ -215,6 +229,15 @@ if (!function_exists('member_notify')) {
             }
         } catch (\Exception $e) {
             log_message('error', 'Email exception: ' . $e->getMessage());
+            \App\Libraries\EmailLogger::log([
+                'recipient_email' => $email,
+                'recipient_name'  => $data['Fullname'] ?? ($data['fullname'] ?? $username),
+                'member_no'       => $data['MemberNo'] ?? ($data['member_no'] ?? null),
+                'email_type'      => \App\Libraries\EmailLogger::TYPE_AKUN_MEMBER,
+                'subject'         => $subject,
+                'status'          => 'failed',
+                'error_message'   => $e->getMessage(),
+            ]);
             $response = [
                 'error' => true,
                 'message' => $failed,

@@ -9,7 +9,55 @@ function reloadPermission()
 {
 	delete_cache('display_menu', true);
 	delete_cache('list_menu', true);
-	// callAuthAPI(session()->get('username'), session()->get('password'));
+
+	$currentUserId = session()->get('logged_in');
+	if (!$currentUserId) {
+		return;
+	}
+
+	$db = \Config\Database::connect();
+	$auth_permissions = $db->table('auth_permissions')->get()->getResultObject();
+	$result_auth_permissions = [];
+
+	$auth_user_permissions = $db->table('auth_users_permissions')->where('user_id', $currentUserId)->get()->getResultObject();
+	$result_auth_user_permissions = [];
+	foreach ($auth_user_permissions as $row) {
+		$result_auth_user_permissions[$row->permission_id] = $row->user_id;
+	}
+
+	if (!empty($result_auth_user_permissions)) {
+		foreach ($auth_permissions as $row) {
+			if (isset($result_auth_user_permissions[$row->id])) {
+				$result_auth_permissions[$row->name] = [$currentUserId];
+			}
+		}
+	} else {
+		$auth_groups_users = $db->table('auth_groups_users')->get()->getResultObject();
+		$result_auth_groups_users = [];
+		foreach ($auth_groups_users as $row) {
+			$result_auth_groups_users[$row->group_id][] = $row->user_id;
+		}
+
+		$auth_groups_permissions = $db->table('auth_groups_permissions')->get()->getResultObject();
+		$result_auth_groups_permissions = [];
+		foreach ($auth_groups_permissions as $row) {
+			$result_auth_groups_permissions[$row->permission_id][] = $row->group_id;
+		}
+
+		foreach ($auth_permissions as $row) {
+			if (isset($result_auth_groups_permissions[$row->id])) {
+				$user_ids = [];
+				foreach ($result_auth_groups_permissions[$row->id] as $list_group_id) {
+					if (isset($result_auth_groups_users[$list_group_id])) {
+						$user_ids = array_merge($user_ids, $result_auth_groups_users[$list_group_id]);
+					}
+				}
+				$result_auth_permissions[$row->name] = $user_ids;
+			}
+		}
+	}
+
+	session()->set('auth_permissions', $result_auth_permissions);
 }
 
 function read_cache($file)
@@ -260,7 +308,12 @@ function is_allowed($uri, $user_id = null)
 
 	if (is_profiling()) {
 		$auth_permissions = (array) session()->get('auth_permissions');
-		$terpilih		  = [];
+		$indexVariant     = str_ends_with($uri, '/') ? ($uri . 'index') : ($uri . '/index');
+		if (!isset($auth_permissions[$uri]) && !isset($auth_permissions[$indexVariant])) {
+			reloadPermission();
+			$auth_permissions = (array) session()->get('auth_permissions');
+		}
+		$terpilih = [];
 		if (!isset($auth_permissions[$uri])) { // ngak nemu uri terhadap permissionnya
 			if (str_ends_with($uri, '/')) { // jika uri end with /
 				if (isset($auth_permissions[$uri . 'index'])) { // tambahkan urinya/index

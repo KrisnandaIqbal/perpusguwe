@@ -117,11 +117,30 @@ class EmailPendaftaran
 
         if ($email->send()) {
             log_message('info', '[EmailPendaftaran] Penolakan terkirim ke pendaftar.');
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => EmailLogger::TYPE_REGISTRASI_DITOLAK,
+                'subject'         => $subject,
+                'status'          => 'success',
+            ]);
             return ['terkirim' => true, 'pesan' => 'Email pemberitahuan berhasil dikirim ke pendaftar.'];
         }
 
         $debug = $email->printDebugger(['headers']);
         log_message('error', '[EmailPendaftaran] Penolakan gagal dikirim: ' . $debug);
+        EmailLogger::log([
+            'recipient_email' => $member->Email,
+            'recipient_name'  => $member->Fullname ?? null,
+            'member_no'       => $member->MemberNo ?? null,
+            'member_id'       => $member->ID ?? null,
+            'email_type'      => EmailLogger::TYPE_REGISTRASI_DITOLAK,
+            'subject'         => $subject,
+            'status'          => 'failed',
+            'error_message'   => $debug,
+        ]);
         return ['terkirim' => false, 'pesan' => 'Gagal mengirim email pemberitahuan ke pendaftar.'];
     }
 
@@ -230,12 +249,39 @@ class EmailPendaftaran
             $email->attach($this->kartuPdf($member), 'attachment', 'kartu-anggota-' . $member->MemberNo . '.pdf', 'application/pdf');
         }
 
+        $typeMap = [
+            self::DITERIMA  => EmailLogger::TYPE_REGISTRASI_DITERIMA,
+            self::DISETUJUI => EmailLogger::TYPE_REGISTRASI_DISETUJUI,
+            self::PERBAIKAN => EmailLogger::TYPE_REGISTRASI_PERBAIKAN,
+        ];
+        $logType = $typeMap[$jenis] ?? EmailLogger::TYPE_REGISTRASI_DITERIMA;
+
         if ($email->send()) {
             log_message('info', '[EmailPendaftaran] ' . $jenis . ' terkirim ke ' . $member->Email);
+            EmailLogger::log([
+                'recipient_email' => $member->Email,
+                'recipient_name'  => $member->Fullname ?? null,
+                'member_no'       => $member->MemberNo ?? null,
+                'member_id'       => $member->ID ?? null,
+                'email_type'      => $logType,
+                'subject'         => $subject,
+                'status'          => 'success',
+            ]);
             return ['terkirim' => true, 'pesan' => 'Email terkirim ke ' . $member->Email . '.'];
         }
 
-        log_message('error', '[EmailPendaftaran] ' . $jenis . ' gagal ke ' . $member->Email . ': ' . $email->printDebugger(['headers']));
+        $debug = $email->printDebugger(['headers']);
+        log_message('error', '[EmailPendaftaran] ' . $jenis . ' gagal ke ' . $member->Email . ': ' . $debug);
+        EmailLogger::log([
+            'recipient_email' => $member->Email,
+            'recipient_name'  => $member->Fullname ?? null,
+            'member_no'       => $member->MemberNo ?? null,
+            'member_id'       => $member->ID ?? null,
+            'email_type'      => $logType,
+            'subject'         => $subject,
+            'status'          => 'failed',
+            'error_message'   => $debug,
+        ]);
         return ['terkirim' => false, 'pesan' => 'Email ke ' . $member->Email . ' gagal terkirim.'];
     }
 
