@@ -14,10 +14,11 @@ $laporan = [
 	"title" => "Laporan",
 	"icon" => "pe-7s-graph2",
 	"url" => "#",
-	"active" => ($segment1 === 'report'),
+	"active" => in_array($segment1, ['report', 'laporan-email']),
 	"subMenu" => [
 		get_menu_item("Laporan Anggota", "report/laporan_anggota", in_array($segment2, ['laporan_anggota']), "pe-7s-angle-right-circle"),
 		get_menu_item("Laporan Kunjungan", "report/laporan_kunjungan", in_array($segment2, ['laporan_kunjungan'])),
+		get_menu_item("Laporan Pengiriman Email", "laporan-email", in_array($segment1, ['laporan-email']), "pe-7s-mail"),
 	],
 ];
 $menuData[] = $laporan;

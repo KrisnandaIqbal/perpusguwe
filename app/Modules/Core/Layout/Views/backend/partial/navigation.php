@@ -73,6 +73,9 @@ $request = service('request'); ?>
         <li class=" "><a href="<?= base_url() ?>/report/visitors" class=""><i class="metismenu-icon pe-7s-graph2" style=""></i>
                 Laporan Kunjungan
             </a></li>
+        <li class=" "><a href="<?= base_url() ?>/laporan-email" class=""><i class="metismenu-icon pe-7s-mail" style=""></i>
+                Laporan Pengiriman Email
+            </a></li>
     </ul>
 </li>
 <li class="app-sidebar__heading">Admin</li>
