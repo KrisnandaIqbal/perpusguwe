@@ -121,10 +121,10 @@
     // ==========================================
 
     // Disable right-click
-    document.addEventListener('contextmenu', event => event.preventDefault());
+    // document.addEventListener('contextmenu', event => event.preventDefault());
 
     // Disable keyboard shortcuts (Save, Print, Copy, dll)
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function(e) { return;
         if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'c' || e.key === 'u')) {
             e.preventDefault();
             e.stopPropagation();
@@ -154,7 +154,7 @@
     document.addEventListener('dragstart', e => e.preventDefault());
 
     // Prevent leaving the page accidentally
-    window.onbeforeunload = function() {
+    window.onbeforeunload = null; var _off = function() {
         return "Apakah Anda yakin ingin meninggalkan halaman ini?";
     };
 
@@ -163,7 +163,7 @@
     const viewerContainer = document.querySelector('.viewer-container');
 
     // Fungsi untuk menyembunyikan konten secara instan
-    function hideContent() {
+    function hideContent() { return;
         if(viewerContainer) viewerContainer.style.opacity = '0';
         if(overlay) overlay.style.display = 'flex';
     }

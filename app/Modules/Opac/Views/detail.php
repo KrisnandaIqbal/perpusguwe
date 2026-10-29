@@ -300,6 +300,22 @@
                 </div>
             </div>
 
+            <?php if (!empty($files_digital)): ?>
+            <div class="card mb-3">
+                <div class="card-header"><i class="fas fa-file-pdf me-1"></i> Konten Digital</div>
+                <div class="list-group list-group-flush">
+                    <?php foreach ($files_digital as $i => $f): ?>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Dokumen PDF <?= $i + 1 ?></span>
+                        <a href="<?= base_url('katalog/view_decrypted/' . encData($f->ID)) ?>" target="_blank" class="btn btn-primary btn-sm">
+                            <i class="fas fa-book-open me-1"></i> Baca
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
             <?php if (!empty($roweksemplar) || !empty($roweksemplar_drm) || !empty($marc)): ?>
                 <div class="card shadow-lg border-0 mb-4">
                     <div class="card-header bg-success text-white">

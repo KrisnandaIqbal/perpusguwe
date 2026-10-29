@@ -290,6 +290,7 @@ private function loadRegularCatalogscache()
             ->findAll();
 
         $this->data['marc'] = $marc;
+        $this->data['files_digital'] = $this->fileModel->where('Catalog_id', $id)->findAll();
 
         $this->data['title']       = 'Detail Katalog - ' . $catalog['Title'];
         $this->data['catalog']     = $catalog;

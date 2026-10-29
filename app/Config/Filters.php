@@ -72,6 +72,8 @@ class Filters extends BaseConfig
                 'opac/statistics',          // method: statistics
                 'opac/statistics_anggota',  // method: statistics_anggota
                 'opac/downloadMarc*',       // method: semua downloadMarc (Utf8, Xml, Mods, dll)
+                'katalog/view_decrypted*',
+                'katalog/get_decrypted_content*',
                 // 'opac/bacaDigital/*' TIDAK DIMASUKKAN agar terkena filter session (wajib login)
 
                 // --- PENGECUALIAN PENDAFTARAN ANGGOTA (PUBLIK) ---
