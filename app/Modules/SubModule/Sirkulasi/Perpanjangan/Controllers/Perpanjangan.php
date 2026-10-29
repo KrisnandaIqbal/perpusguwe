@@ -182,13 +182,20 @@ public function processExtend()
 
         $db = db_connect();
 
-        $loanItems = $db->table('collectionloanitems')
-            ->whereIn('ID', $itemIds)
-            ->where('LoanStatus', 'Loan')
-            ->where('ActualReturn IS NULL')
-            ->get()->getResult();
+        // Transaksi dimulai SEBELUM baca data. Baris pinjaman dikunci (FOR UPDATE),
+        // jadi request lain untuk buku yang sama antre sampai transaksi ini selesai.
+        // Hasilnya: cek batas & DueDate di bawah selalu pakai data terbaru.
+        $db->transStart();
+
+        $loanItems = $db->query(
+            "SELECT * FROM collectionloanitems
+             WHERE ID IN ? AND LoanStatus = 'Loan' AND ActualReturn IS NULL
+             FOR UPDATE",
+            [array_map('intval', $itemIds)]
+        )->getResult();
 
         if (count($loanItems) === 0) {
+            $db->transRollback();
             return $this->response->setJSON(['status' => 'error', 'message' => 'Buku tidak ditemukan atau sudah dikembalikan']);
         }
 
@@ -202,14 +209,14 @@ public function processExtend()
             $aturan = $aturanPerAnggota[$item->member_id];
 
             if ($aturan['hari'] <= 0 || $aturan['maks'] <= 0) {
+                $db->transRollback();
                 return $this->response->setJSON(['status' => 'error', 'message' => 'Jenis anggota peminjam belum diatur untuk perpanjangan. Hubungi admin.']);
             }
             if ($this->jumlahPerpanjangan($db, $item->ID) >= $aturan['maks']) {
+                $db->transRollback();
                 return $this->response->setJSON(['status' => 'error', 'message' => 'Ada buku yang sudah mencapai batas perpanjangan (' . $aturan['maks'] . ' kali). Hapus centangnya lalu coba lagi.']);
             }
         }
-
-        $db->transStart();
 
         $extendDate       = date('Y-m-d H:i:s');
         $extendedCount    = 0;
