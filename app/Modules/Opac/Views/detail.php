@@ -301,14 +301,23 @@
             </div>
 
             <?php if (!empty($files_digital)): ?>
-            <div class="card mb-3">
-                <div class="card-header"><i class="fas fa-file-pdf me-1"></i> Konten Digital</div>
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-book-reader me-2"></i> Konten Digital</span>
+                    <span class="badge bg-light text-primary">Flipbook</span>
+                </div>
                 <div class="list-group list-group-flush">
                     <?php foreach ($files_digital as $i => $f): ?>
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Dokumen PDF <?= $i + 1 ?></span>
-                        <a href="<?= base_url('katalog/view_decrypted/' . encData($f->ID)) ?>" target="_blank" class="btn btn-primary btn-sm">
-                            <i class="fas fa-book-open me-1"></i> Baca
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-pdf text-danger fs-5 me-2"></i>
+                            <div>
+                                <span class="fw-bold">Dokumen PDF <?= $i + 1 ?></span>
+                                <div class="text-muted small">Membaca interaktif dengan efek balik lembar buku</div>
+                            </div>
+                        </div>
+                        <a href="<?= base_url('katalog/view_decrypted/' . encData($f->ID)) ?>" target="_blank" class="btn btn-primary btn-sm px-3">
+                            <i class="fas fa-book-open me-1"></i> Baca Flipbook
                         </a>
                     </div>
                     <?php endforeach; ?>

@@ -1,437 +1,373 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure E-Reader</title>
-    <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= esc($title ?? 'Baca Digital - Flipbook') ?></title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="<?= base_url('assets/vendors/fontawesome-pro-5/css/all.min.css'); ?>">
+    <!-- PDF Flipbook CSS -->
+    <link rel="stylesheet" href="<?= base_url('assets/vendors/pflip/css/pdfflip.css'); ?>">
+
     <style>
-        body { 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #f4f6f9; /* Background abu-abu lembut agar fokus ke dokumen */
+        * {
+            box-sizing: border-box;
         }
-        
-        /* Modern Toolbar Styling */
-        #toolbar { 
-            height: 65px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            z-index: 1000;
-        }
-        
-        .toolbar-group {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 4px;
-            border: 1px solid #e9ecef;
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1e24;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #f8f9fa;
         }
 
-        #page-num, #page-count { font-weight: 600; }
-        
-        /* Viewer Container & Paper Effect */
-        .viewer-container {
-            margin-top: 65px;
-            padding: 30px 15px;
+        /* Proteksi anti-select dan anti-drag */
+        body, #reader-container, #PDFF {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Larang mencetak / print to PDF */
+        @media print {
+            body {
+                display: none !important;
+            }
+        }
+
+        /* Top Bar Header */
+        #reader-header {
+            height: 54px;
+            background: linear-gradient(180deg, #212529 0%, #1a1d20 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
-            justify-content: center;
-            min-height: calc(100vh - 65px);
-            overflow: auto;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            z-index: 100;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
-        canvas { 
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); /* Efek bayangan kertas */
-            border-radius: 4px;
-            background-color: #fff;
-        }
-
-        #search-result {
-            font-size: 0.85rem;
-            color: #6c757d;
+        .header-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
             white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 70%;
+        }
+
+        .header-title-wrap i {
+            color: #0d6efd;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #ffffff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .header-badge {
+            font-size: 0.72rem;
+            font-weight: 500;
+            background: rgba(13, 110, 253, 0.2);
+            color: #6ea8fe;
+            border: 1px solid rgba(13, 110, 253, 0.4);
+            padding: 2px 8px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-header {
+            background: rgba(255, 255, 255, 0.08);
+            color: #e9ecef;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-header-danger {
+            background: rgba(220, 53, 69, 0.15);
+            color: #f8d7da;
+            border-color: rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-header-danger:hover {
+            background: rgba(220, 53, 69, 0.35);
+            color: #ffffff;
+            border-color: rgba(220, 53, 69, 0.5);
+        }
+
+        /* Flipbook Container */
+        #reader-container {
+            width: 100%;
+            height: calc(100% - 54px);
+            position: relative;
+            background: radial-gradient(circle at center, #2b313a 0%, #16191d 100%);
+        }
+
+        #PDFF {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Loading indicator styling */
+        #reader-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            border-top-color: #0d6efd;
+            border-radius: 50%;
+            animation: pdff-spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes pdff-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            color: #e9ecef;
+        }
+
+        .loading-subtext {
+            font-size: 0.8rem;
+            color: #adb5bd;
+            margin-top: 4px;
+        }
+
+        /* Penyesuaian toolbar pdfflip */
+        .pdff-container {
+            font-family: inherit !important;
         }
     </style>
 </head>
-<body>
-   <div id="protection-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f8f9fa; z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
-        <i class="bi bi-shield-lock-fill text-danger" style="font-size: 5rem;"></i>
-        <h3 class="text-dark mt-3 fw-bold">Tindakan Terdeteksi</h3>
-        <p class="text-muted text-center">Sistem mendeteksi aktivitas sistem (Screenshot / Pindah Tab / Mouse Keluar).<br>Tampilan disembunyikan untuk melindungi dokumen.</p>
-        <button id="resume-reading" class="btn btn-primary btn-lg mt-4 px-4 shadow-sm">
-            <i class="bi bi-eye me-2"></i> Lanjutkan Membaca
-        </button>
-    </div>
-    <!-- Navbar / Toolbar -->
-    <nav id="toolbar" class="navbar fixed-top navbar-expand-lg bg-white border-bottom">
-        <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-nowrap">
-            
-            <!-- Branding -->
-            <div class="d-flex align-items-center me-4">
-                <i class="bi bi-book-half fs-4 text-primary me-2"></i>
-                <span class="fw-bold text-dark fs-5 d-none d-md-inline">E-Reader</span>
-            </div>
+<body oncontextmenu="return false;">
 
-            <!-- Pagination Controls -->
-            <div class="d-flex align-items-center toolbar-group mx-auto">
-                <button id="prev" class="btn btn-light btn-sm" title="Halaman Sebelumnya">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-                
-                <span class="mx-3 text-muted" style="font-size: 0.9rem;">
-                    Hal <span id="page-num" class="text-dark">0</span> / <span id="page-count" class="text-dark">0</span>
-                </span>
-                
-                <button id="next" class="btn btn-light btn-sm me-2" title="Halaman Selanjutnya">
-                    <i class="bi bi-chevron-right"></i>
-                </button>
-
-                <div class="input-group input-group-sm" style="width: 130px;">
-                    <input type="number" id="page-input" class="form-control text-center" min="1" placeholder="Go to...">
-                    <button id="go-to-page" class="btn btn-primary"><i class="bi bi-arrow-right-short"></i></button>
-                </div>
-            </div>
-
-            <!-- Search Controls -->
-            <div class="d-flex align-items-center ms-4">
-                <span id="search-result" class="me-2 d-none d-lg-inline"></span>
-                <div class="input-group input-group-sm" style="width: 220px;">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" id="search-input" class="form-control border-start-0" placeholder="Cari teks...">
-                    <button id="search" class="btn btn-outline-secondary">Cari</button>
-                </div>
-            </div>
-
+    <!-- Header Navigation -->
+    <header id="reader-header">
+        <div class="header-title-wrap">
+            <i class="fas fa-book-open"></i>
+            <span class="header-title" title="<?= esc($title ?? 'Buku Digital') ?>"><?= esc($title ?? 'Buku Digital') ?></span>
+            <span class="header-badge"><i class="fas fa-cube me-1"></i> Flipbook 3D</span>
         </div>
-    </nav>
+        <div class="header-actions">
+            <button type="button" class="btn-header" onclick="toggleReaderFullscreen()" title="Layar Penuh">
+                <i class="fas fa-expand"></i> <span class="d-none d-sm-inline">Layar Penuh</span>
+            </button>
+            <a href="javascript:void(0)" onclick="closeReader()" class="btn-header btn-header-danger" title="Tutup Pembaca">
+                <i class="fas fa-times"></i> <span class="d-none d-sm-inline">Tutup</span>
+            </a>
+        </div>
+    </header>
 
-    <!-- PDF Viewer Area -->
-    <div class="viewer-container">
-        <canvas id="pdf-viewer"></canvas>
-    </div>
+    <!-- Flipbook Workspace -->
+    <main id="reader-container">
+        <div id="reader-loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Menyiapkan Buku Digital...</div>
+            <div class="loading-subtext">Memuat ke Flipbook 3D interaktif</div>
+        </div>
+        <div id="PDFF" style="display: none;"></div>
+    </main>
 
-   <script>
-    // ==========================================
-    // 1. SISTEM KEAMANAN & ANTI-SCREENSHOT
-    // ==========================================
+    <!-- Dependencies -->
+    <script src="<?= base_url('assets/vendors/pflip/js/libs/jquery.min.js'); ?>" type="text/javascript"></script>
+    <!-- Main PDF Flip Plugin -->
+    <script src="<?= base_url('assets/vendors/pflip/js/pdfflip.js'); ?>" type="text/javascript"></script>
 
-    // Disable right-click
-    // document.addEventListener('contextmenu', event => event.preventDefault());
+    <script type="text/javascript">
+        window.pdfflipLocation = '<?= base_url('assets/vendors/pflip'); ?>/';
 
-    // Disable keyboard shortcuts (Save, Print, Copy, dll)
-    document.addEventListener('keydown', function(e) { return;
-        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'c' || e.key === 'u')) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }
-        if (e.altKey) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }
-        if (e.key.match(/^F\d+$/) || e.keyCode >= 112 && e.keyCode <= 123) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (document.activeElement) document.activeElement.blur();
-            return false;
-        }
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }
-    }, true);
+        var option_PDFF = {
+            openPage: 1,
+            height: '100%',
+            enableSound: true,
+            downloadEnable: false,
+            direction: pdfflip.DIRECTION.LTR,
+            autoPlay: false,
+            autoPlayStart: false,
+            autoPlayDuration: 3000,
+            autoEnableOutline: false,
+            autoEnableThumbnail: false,
+            /* Terjemahan Bahasa Indonesia */
+            text: {
+                toggleSound: "Suara Balik Lembar",
+                toggleThumbnails: "Pratinjau Halaman",
+                toggleOutline: "Daftar Isi",
+                previousPage: "Halaman Sebelumnya",
+                nextPage: "Halaman Selanjutnya",
+                toggleFullscreen: "Layar Penuh",
+                zoomIn: "Perbesar",
+                zoomOut: "Perkecil",
+                downloadPDFFile: "Unduh PDF",
+                gotoFirstPage: "Halaman Pertama",
+                gotoLastPage: "Halaman Terakhir",
+                play: "Putar Otomatis",
+                pause: "Jeda Otomatis",
+                share: "Bagikan"
+            },
+            /* Pengaturan Animasi & Efek Flip */
+            hard: "none",
+            overwritePDFOutline: true,
+            duration: 800,
+            pageMode: pdfflip.PAGE_MODE.AUTO,
+            singlePageMode: pdfflip.SINGLE_PAGE_MODE.BOOKLET,
+            transparent: false,
+            scrollWheel: true,
+            zoomRatio: 1.5,
+            maxTextureSize: 1600,
+            backgroundColor: "#20252b",
+            controlsPosition: pdfflip.CONTROLSPOSITION.BOTTOM,
+            allControls: "thumbnail,altPrev,pageNumber,altNext,zoomIn,zoomOut,sound,fullScreen",
+            hideControls: "download,share,play,more"
+        };
 
-    // Disable copy, cut, dan drag
-    document.addEventListener('copy', e => { e.preventDefault(); return false; });
-    document.addEventListener('cut', e => { e.preventDefault(); return false; });
-    document.addEventListener('dragstart', e => e.preventDefault());
+        var currentBlobUrl = null;
 
-    // Prevent leaving the page accidentally
-    window.onbeforeunload = null; var _off = function() {
-        return "Apakah Anda yakin ingin meninggalkan halaman ini?";
-    };
+        // Muat file sebagai binary stream in-memory via fetch
+        // Pendekatan ini mencegah IDM / browser download manager mencegat unduhan
+        $(document).ready(function() {
+            var endpoint = '<?= base_url('katalog/get_decrypted_content/' . encData((string) $fileId)); ?>';
 
-    // --- LOGIKA OVERLAY ANTI-SCREENSHOT ---
-    const overlay = document.getElementById('protection-overlay');
-    const viewerContainer = document.querySelector('.viewer-container');
-
-    // Fungsi untuk menyembunyikan konten secara instan
-    function hideContent() { return;
-        if(viewerContainer) viewerContainer.style.opacity = '0';
-        if(overlay) overlay.style.display = 'flex';
-    }
-
-    // Fungsi untuk menampilkan kembali konten melalui klik tombol
-    document.getElementById('resume-reading').addEventListener('click', function() {
-        if(viewerContainer) viewerContainer.style.opacity = '1';
-        if(overlay) overlay.style.display = 'none';
-    });
-
-    // Sembunyikan saat window kehilangan fokus (Snipping Tool / pindah aplikasi)
-    window.addEventListener('blur', hideContent);
-
-    // Deteksi kombinasi tombol Mac (Cmd + Shift) atau Print Screen Windows
-    document.addEventListener('keydown', function(e) {
-        if ((e.metaKey && e.shiftKey) || e.key === 'PrintScreen') {
-            hideContent(); 
-            e.preventDefault();
-            return false;
-        }
-    }, true);
-
-    // Sembunyikan saat mouse keluar dari area browser (Cegah klik menu bar Apple)
-    document.addEventListener('mouseleave', function(e) {
-        if (e.clientY <= 0 || e.clientX <= 0 || (e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
-            hideContent();
-        }
-    });
-
-
-    // ==========================================
-    // 2. SISTEM PDF.js (RENDER, WATERMARK, SEARCH)
-    // ==========================================
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
-
-    let pdfDoc = null,
-        pageNum = 1,
-        pageRendering = false,
-        pageNumPending = null,
-        scale = 1.5,
-        canvas = document.getElementById('pdf-viewer'),
-        ctx = canvas.getContext('2d');
-
-    // Render Halaman PDF
-    function renderPage(num) {
-        pageRendering = true;
-        pdfDoc.getPage(num).then(function(page) {
-            let viewport = page.getViewport({scale: scale});
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            let renderContext = {
-                canvasContext: ctx,
-                viewport: viewport
-            };
-            let renderTask = page.render(renderContext);
-
-            renderTask.promise.then(function() {
-                pageRendering = false;
-                if (pageNumPending !== null) {
-                    renderPage(pageNumPending);
-                    pageNumPending = null;
+            fetch(endpoint, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
+            })
+            .then(function(res) {
+                if (!res.ok) {
+                    throw new Error('Gagal memuat dokumen (Status: ' + res.status + ')');
+                }
+                return res.arrayBuffer();
+            })
+            .then(function(buffer) {
+                var blob = new Blob([buffer], { type: 'application/pdf' });
+                currentBlobUrl = URL.createObjectURL(blob);
 
-                // Highlight hasil pencarian (jika ada)
-                highlightSearchResults(page);
-
-                // Tambahkan watermark setelah halaman selesai dirender
-                addWatermark();
-            });
-        });
-
-        document.getElementById('page-num').textContent = num;
-        document.getElementById('page-input').value = num;
-    }
-
-    // Fungsi Watermark
-    function addWatermark() {
-        const text = "Konten dilindungi undang-undang";
-        ctx.save();
-        ctx.globalAlpha = 0.08;
-        ctx.font = "bold 24px 'Segoe UI', Arial";
-        ctx.fillStyle = "#0d6efd"; 
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        const spacingX = 350;
-        const spacingY = 200;
-        for (let x = spacingX / 2; x < canvas.width; x += spacingX) {
-            for (let y = spacingY / 2; y < canvas.height; y += spacingY) {
-                ctx.save();
-                ctx.translate(x, y);
-                ctx.rotate(-Math.PI / 6);
-                ctx.fillText(text, 0, 0);
-                ctx.restore();
-            }
-        }
-        ctx.restore();
-    }
-
-    // --- LOGIKA PAGINASI ---
-    function queueRenderPage(num) {
-        if (pageRendering) {
-            pageNumPending = num;
-        } else {
-            renderPage(num);
-        }
-    }
-
-    function onPrevPage() {
-        if (pageNum <= 1) return;
-        pageNum--;
-        queueRenderPage(pageNum);
-    }
-
-    function onNextPage() {
-        if (pageNum >= pdfDoc.numPages) return;
-        pageNum++;
-        queueRenderPage(pageNum);
-    }
-
-   function goToPage() {
-        let pageInput = document.getElementById('page-input');
-        let pageRequested = parseInt(pageInput.value);
-
-        // Jika angka di kotak sama dengan halaman saat ini, fungsikan sebagai tombol "Next"
-        if (pageRequested === pageNum) {
-            if (pageNum < pdfDoc.numPages) {
-                pageNum++;
-                queueRenderPage(pageNum);
-            }
-            return;
-        }
-
-        // Jika pengguna mengetik angka baru, lompat ke halaman tersebut
-        if (pageRequested >= 1 && pageRequested <= pdfDoc.numPages) {
-            pageNum = pageRequested;
-            queueRenderPage(pageNum);
-        } else {
-            alert('Halaman tidak valid. Masukkan angka antara 1 dan ' + pdfDoc.numPages);
-            pageInput.value = pageNum; // Kembalikan teks ke angka semula
-        }
-    }
-
-    document.getElementById('prev').addEventListener('click', onPrevPage);
-    document.getElementById('next').addEventListener('click', onNextPage);
-    document.getElementById('go-to-page').addEventListener('click', goToPage);
-    document.getElementById('page-input').addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') goToPage();
-    });
-
-
-    // --- LOGIKA PENCARIAN ---
-    let searchText = '';
-    let searchResults = [];
-    let currentSearchIndex = -1;
-
-    function performSearch() {
-        let inputVal = document.getElementById('search-input').value.trim();
-        const resultEl = document.getElementById('search-result');
-
-        if (inputVal === '') {
-            resultEl.textContent = '';
-            searchResults = [];
-            currentSearchIndex = -1;
-            searchText = '';
-            queueRenderPage(pageNum);
-            return;
-        }
-
-        // PERBAIKAN: Jika kata kuncinya masih sama, cukup pindah ke hasil/halaman berikutnya
-        if (inputVal === searchText && searchResults.length > 0) {
-            updateSearchResult();
-            return;
-        }
-
-        // Jika kata kunci baru, mulai pencarian dari awal
-        searchText = inputVal;
-        resultEl.innerHTML = '<span class="text-primary spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Mencari...';
-        currentSearchIndex = -1;
-        searchResults = [];
-
-        if (!pdfDoc) return;
-
-        let countPromises = [];
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
-            countPromises.push(pdfDoc.getPage(i).then(function(page) {
-                return page.getTextContent().then(function(textContent) {
-                    return { pageNum: i, textContent: textContent };
+                $('#reader-loading').fadeOut(200, function() {
+                    $('#PDFF').show();
+                    $('#PDFF').flipBook(currentBlobUrl, option_PDFF);
                 });
-            }));
-        }
-
-        Promise.all(countPromises).then(function(pages) {
-            pages.forEach(content => {
-                let items = content.textContent.items;
-                let str = items.map(item => item.str).join(' ');
-
-                if (str.toLowerCase().includes(searchText.toLowerCase())) {
-                    searchResults.push({ pageNum: content.pageNum, items: items });
-                }
+            })
+            .catch(function(err) {
+                console.error('Flipbook load error:', err);
+                $('#reader-loading').html(
+                    '<div style="text-align: center; color: #ff6b6b; padding: 20px;">' +
+                        '<i class="fas fa-exclamation-triangle fa-3x mb-3"></i>' +
+                        '<div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 6px;">Gagal Menampilkan Flipbook</div>' +
+                        '<div style="font-size: 0.85rem; color: #adb5bd;">' + (err.message || 'Terjadi gangguan saat memuat file.') + '</div>' +
+                    '</div>'
+                );
             });
-            
-            if (searchResults.length === 0) {
-                resultEl.innerHTML = '<span class="text-danger">Tidak ditemukan.</span>';
+        });
+
+        // Bersihkan memori Blob URL saat jendela ditutup
+        window.addEventListener('beforeunload', function() {
+            if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+            }
+        });
+
+        function toggleReaderFullscreen() {
+            var btn = $('.pdff-ui-fullscreen');
+            if (btn.length > 0) {
+                btn.trigger('click');
             } else {
-                updateSearchResult();
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(function() {});
+                } else if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
             }
-        });
-    }
-
-    function updateSearchResult() {
-        const resultEl = document.getElementById('search-result');
-        if (searchResults.length > 0) {
-            // Maju ke indeks berikutnya, jika sudah di akhir, kembali ke 0
-            currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
-            let currentResult = searchResults[currentSearchIndex];
-            
-            resultEl.innerHTML = `Hasil <b>${currentSearchIndex + 1}</b> dari <b>${searchResults.length}</b> (Hal ${currentResult.pageNum})`;
-            pageNum = currentResult.pageNum;
-            queueRenderPage(pageNum);
         }
-    }
 
-    function highlightSearchResults(page) {
-        if (searchResults.length === 0 || currentSearchIndex < 0) return;
+        function closeReader() {
+            if (window.opener && !window.opener.closed) {
+                window.close();
+            } else if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '<?= base_url('opac') ?>';
+            }
+        }
 
-        let currentResult = searchResults[currentSearchIndex];
-        if (currentResult.pageNum !== page.pageNumber) return;
+        // Nonaktifkan klik kanan untuk mencegah unduh / save image / inspeksi
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
 
-        let items = currentResult.items;
-        let viewport = page.getViewport({ scale: scale });
-
-        ctx.save();
-        ctx.fillStyle = 'rgba(255, 225, 0, 0.4)'; // Warna stabilo
-        
-        items.forEach(item => {
-            // Cek apakah item teks mengandung kata yang dicari
-            if (item.str.toLowerCase().includes(searchText.toLowerCase())) {
-                let tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                let x = tx[4];
-                let y = tx[5];
-                let width = item.width * scale;
-                let height = item.height * scale;
-                ctx.fillRect(x, y - height - 2, width, height + 4); 
+        // Nonaktifkan tombol pintas Ctrl+S, Ctrl+P, Ctrl+U, F12
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'u' || e.key === 'S' || e.key === 'P' || e.key === 'U')) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.key === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c'))) {
+                e.preventDefault();
+                return false;
             }
         });
-        ctx.restore();
-    }
 
-    document.getElementById('search').addEventListener('click', performSearch);
-    document.getElementById('search-input').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') performSearch();
-    });
+        // Nonaktifkan drag & drop
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
 
-    // --- LOAD DOKUMEN PDF ---
-    let pdfUrl = '<?= base_url('katalog/get_decrypted_content/' . encData($fileId)) ?>';
-    
-    let loadingTask = pdfjsLib.getDocument(pdfUrl);
-    loadingTask.promise.then(function(pdfDoc_) {
-        pdfDoc = pdfDoc_;
-        document.getElementById('page-count').textContent = pdfDoc.numPages;
-        renderPage(pageNum);
-    }).catch(function(error) {
-        console.error("Error loading PDF: ", error);
-        alert("Gagal memuat dokumen PDF.");
-    });
-</script>
 </body>
 </html>

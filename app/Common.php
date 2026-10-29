@@ -106,7 +106,7 @@ function delete_cache($file = null, $recursive = false)
 function encData($data)
 {
 	$encrypter = service('encrypter');
-	return urlsafeB64encode($encrypter->encrypt($data));
+	return urlsafeB64encode($encrypter->encrypt((string) $data));
 }
 function decData($data)
 {

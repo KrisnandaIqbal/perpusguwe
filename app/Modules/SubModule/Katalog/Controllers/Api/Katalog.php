@@ -698,10 +698,12 @@ class Katalog extends \Base\Controllers\BaseResourceController
 		$encryption = new \App\Libraries\Encryption();
 		$encryption->decryptFile($this->modulePath . $file->FileURL, $tempDecryptedFile);
 
-		$this->response->setContentType('application/pdf');
-		$this->response->setHeader('Content-Disposition', 'inline; filename="' . $file->FileURL . '"');
+		$this->response->setContentType('application/octet-stream');
+		$this->response->setHeader('Accept-Ranges', 'none');
 		$this->response->setHeader('X-Frame-Options', 'SAMEORIGIN');
-		$this->response->setHeader('Content-Security-Policy', "default-src 'self'; object-src 'self'");
+		$this->response->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+		$this->response->setHeader('Pragma', 'no-cache');
+		$this->response->setHeader('X-Content-Type-Options', 'nosniff');
 
 		$content = file_get_contents($tempDecryptedFile);
 		unlink($tempDecryptedFile);
