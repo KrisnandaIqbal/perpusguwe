@@ -382,7 +382,7 @@ if (!empty($jenis_identitas)) {
         padding: 28px;
         box-shadow: var(--shadow-card);
         transition: border-color var(--transition-fast);
-        scroll-margin-top: 80px;
+        scroll-margin-top: 100px;
     }
 
     .rf-section-head {
@@ -2133,7 +2133,7 @@ if (!empty($jenis_identitas)) {
     /* ─── Responsive Adjustments ─── */
     @media (max-width: 992px) {
         .rf-layout {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0,1fr);
             gap: 28px;
         }
 
@@ -2155,7 +2155,7 @@ if (!empty($jenis_identitas)) {
 
     @media (max-width: 768px) {
         .rf-wrap {
-            padding-top: 80px;
+            padding-top: 100px;
             padding-bottom: 48px;
         }
 
@@ -2351,7 +2351,7 @@ if (!empty($jenis_identitas)) {
 
     @media (max-width: 380px) {
         .rf-wrap {
-            padding-top: 76px;
+            padding-top: 100px;
             padding-bottom: 36px;
         }
 
