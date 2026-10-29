@@ -710,6 +710,9 @@ private function getDayName($day_index)
             // Clear session
             $this->session->remove($sessionKey);
             
+            // Struk dikirim otomatis setelah commit; gagal kirim tidak membatalkan peminjaman
+            $this->session->set('email_struk_peminjaman_' . $collection_loan_id, $this->kirimStruk((int) $collection_loan_id));
+
             // Redirect to success page
             return redirect()->to('/sirkulasi-peminjaman/success?loan_id=' . $collection_loan_id);
             
@@ -759,10 +762,30 @@ private function getDayName($day_index)
         
         $this->data['loan'] = $loan;
         $this->data['loanItems'] = $loanItems;
+        $this->data['emailStatus'] = $this->session->get('email_struk_peminjaman_' . $loanId);
         
         return view('Peminjaman\Views\success', $this->data);
     }
     public function sendStruk(int $loanId): \CodeIgniter\HTTP\ResponseInterface
+    {
+        return $this->response->setJSON($this->kirimStruk($loanId));
+    }
+
+    /**
+     * Kirim struk peminjaman ke email anggota. Dipakai otomatis setelah transaksi tersimpan
+     * dan oleh tombol "Kirim Ulang Email". Tidak pernah melempar error.
+     */
+    private function kirimStruk(int $loanId): array
+    {
+        try {
+            return $this->kirimStrukInti($loanId);
+        } catch (\Throwable $e) {
+            log_message('error', '[EmailStruk] peminjaman ' . $loanId . ': ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Email gagal dikirim.'];
+        }
+    }
+
+    private function kirimStrukInti(int $loanId): array
     {
         $loan = $this->db->table('collectionloans as cl')
             ->select('cl.*, m.MemberNo, m.Fullname, m.Email, m.Phone, ja.MaxLoanDays, ja.MaxPinjamKoleksi, ja.jenisanggota as JenisAnggota_name')
@@ -773,7 +796,11 @@ private function getDayName($day_index)
             ->getRow();
 
         if (!$loan) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Data peminjaman tidak ditemukan.']);
+            return ['success' => false, 'message' => 'Data peminjaman tidak ditemukan.'];
+        }
+
+        if (empty($loan->Email) || !filter_var($loan->Email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Anggota tidak punya email, struk tidak dikirim.'];
         }
 
         $loanItems = $this->db->table('collectionloanitems as cli')
@@ -785,9 +812,8 @@ private function getDayName($day_index)
             ->getResult();
 
         $emailLib = new \App\Libraries\EmailNotificationLibrary();
-        $result   = $emailLib->sendStrukEmail($loan, $loanItems);
 
-        return $this->response->setJSON($result);
+        return $emailLib->sendStrukEmail($loan, $loanItems);
     }
 
 	public function apply_status($id)
