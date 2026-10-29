@@ -306,12 +306,16 @@ class Pengembalian extends \Base\Controllers\BaseController
             $msg .= "<br><small>&#9888; $violationCount pelanggaran keterlambatan telah dicatat.</small>";
         }
 
+        // Struk dikirim otomatis setelah commit; gagal kirim tidak membatalkan pengembalian
+        $emailStatus = $memberId ? $this->kirimStruk((int) $memberId, $itemIds) : ['success' => false, 'message' => 'Data anggota tidak ditemukan.'];
+
         // Store minimal struk data in session for the success page
         session()->set('struk_pengembalian', [
             'item_ids'        => $itemIds,
             'violation_count' => $violationCount,
             'total_denda'     => $totalDenda,
             'return_date'     => $returnDate,
+            'email_status'    => $emailStatus,
         ]);
 
         return $this->response->setJSON([
@@ -342,22 +346,37 @@ class Pengembalian extends \Base\Controllers\BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Data tidak lengkap.']);
         }
 
-        $member = $this->db->table('members')->where('ID', $memberId)->get()->getRow();
-        if (!$member) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Data anggota tidak ditemukan.']);
+        return $this->response->setJSON($this->kirimStruk($memberId, $itemIds));
+    }
+
+    /**
+     * Kirim struk pengembalian ke email anggota. Dipakai otomatis setelah pengembalian tersimpan
+     * dan oleh tombol "Kirim Ulang Email". Tidak pernah melempar error.
+     */
+    private function kirimStruk(int $memberId, array $itemIds): array
+    {
+        try {
+            $member = $this->db->table('members')->where('ID', $memberId)->get()->getRow();
+            if (!$member) {
+                return ['success' => false, 'message' => 'Data anggota tidak ditemukan.'];
+            }
+
+            if (empty($member->Email) || !filter_var($member->Email, FILTER_VALIDATE_EMAIL)) {
+                return ['success' => false, 'message' => 'Anggota tidak punya email, struk tidak dikirim.'];
+            }
+
+            $items = $this->db->table('collectionloanitems as cli')
+                ->select('cli.ID, cli.DueDate, cli.ActualReturn, cli.LateDays, col.NomorBarcode, col.CallNumber, cat.Title, cat.Author')
+                ->join('collections as col', 'col.ID = cli.Collection_id')
+                ->join('catalogs as cat', 'cat.ID = col.Catalog_id')
+                ->whereIn('cli.ID', $itemIds)
+                ->get()->getResult();
+
+            return (new \App\Libraries\EmailNotificationLibrary())->sendStrukPengembalianEmail($member, $items);
+        } catch (\Throwable $e) {
+            log_message('error', '[EmailStruk] pengembalian anggota ' . $memberId . ': ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Email gagal dikirim.'];
         }
-
-        $items = $this->db->table('collectionloanitems as cli')
-            ->select('cli.ID, cli.DueDate, cli.ActualReturn, cli.LateDays, col.NomorBarcode, col.CallNumber, cat.Title, cat.Author')
-            ->join('collections as col', 'col.ID = cli.Collection_id')
-            ->join('catalogs as cat', 'cat.ID = col.Catalog_id')
-            ->whereIn('cli.ID', $itemIds)
-            ->get()->getResult();
-
-        $emailLib = new \App\Libraries\EmailNotificationLibrary();
-        $result   = $emailLib->sendStrukPengembalianEmail($member, $items);
-
-        return $this->response->setJSON($result);
     }
 
     public function success()
@@ -388,6 +407,7 @@ class Pengembalian extends \Base\Controllers\BaseController
         $this->data['return_date']     = $struk['return_date'];
         $this->data['violation_count'] = $struk['violation_count'];
         $this->data['total_denda']     = $struk['total_denda'];
+        $this->data['emailStatus']     = $struk['email_status'] ?? null;
 
         return view('Pengembalian\Views\success', $this->data);
     }

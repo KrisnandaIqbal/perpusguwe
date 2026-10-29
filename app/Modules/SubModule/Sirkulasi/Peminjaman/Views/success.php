@@ -402,6 +402,13 @@ padding-top: 110px; }
                         </ul>
                     </div>
 
+                    <?php if (!empty($emailStatus)): ?>
+                        <p class="text-center no-print mt-3 mb-0" style="font-size:13px;color:<?= $emailStatus['success'] ? '#16a34a' : '#b45309' ?>">
+                            <i class="fa <?= $emailStatus['success'] ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
+                            <?= $emailStatus['success'] ? 'Struk sudah dikirim otomatis ke email anggota.' : esc($emailStatus['message']) ?>
+                        </p>
+                    <?php endif; ?>
+
                     <!-- Action Buttons -->
                     <div class="text-center mt-4 no-print" style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
                         <button type="button" class="sp-btn sp-btn-success" onclick="window.print()">
@@ -409,7 +416,7 @@ padding-top: 110px; }
                         </button>
                         <button type="button" class="sp-btn sp-btn-primary" id="btn-send-email"
                                 onclick="kirimStrukEmail(<?= esc($loan->ID) ?>, '<?= esc($loan->Email) ?>')">
-                            <i class="fa fa-envelope"></i> Kirim ke Email
+                            <i class="fa fa-envelope"></i> Kirim Ulang Email
                         </button>
                         <a href="<?= base_url('sirkulasi-peminjaman/create') ?>" class="sp-btn sp-btn-primary">
                             <i class="fa fa-plus"></i> Peminjaman Baru
@@ -473,7 +480,7 @@ padding-top: 110px; }
             return;
         }
         Swal.fire({
-            title: 'Kirim Struk?',
+            title: 'Kirim Ulang Struk?',
             html: 'Struk akan dikirim ' + label,
             icon: 'question',
             showCancelButton: true,
@@ -495,7 +502,7 @@ padding-top: 110px; }
             .catch(() => Swal.fire('Error', 'Terjadi kesalahan jaringan.', 'error'))
             .finally(() => {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-envelope"></i> Kirim ke Email';
+                btn.innerHTML = '<i class="fa fa-envelope"></i> Kirim Ulang Email';
             });
         });
     }

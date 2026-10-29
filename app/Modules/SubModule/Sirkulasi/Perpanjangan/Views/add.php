@@ -701,10 +701,17 @@ class ExtendApp {
         try {
             let url = '<?= base_url('sirkulasi-perpanjangan/get-extend-history') ?>?limit=5';
             if (this.currentMemberId) url += '&member_id=' + this.currentMemberId;
-            const res  = await fetch(url);
+            const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const type = res.headers.get('content-type') || '';
+            if (!type.includes('json')) throw new Error('respons bukan JSON, kemungkinan sesi habis atau akses ditolak');
             const data = await res.json();
-            if (data.status === 'success') this.displayHistory(data.data);
-        } catch (e) { console.error('Error loading history:', e); }
+            if (data.status !== 'success') throw new Error(data.message || 'gagal');
+            this.displayHistory(data.data);
+        } catch (e) {
+            console.error('Error loading history:', e);
+            document.getElementById('historyList').innerHTML = '<div class="history-empty"><i class="fa fa-exclamation-triangle"></i> Riwayat gagal dimuat (' + e.message + '). Klik Refresh untuk mencoba lagi.</div>';
+        }
     }
 
     displayHistory(items) {

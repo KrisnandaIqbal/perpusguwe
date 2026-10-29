@@ -269,10 +269,14 @@ public function processExtend()
             return $this->response->setJSON(['status' => 'error', 'message' => 'Terjadi kesalahan saat memproses database']);
         }
 
+        // Struk dikirim otomatis setelah commit; gagal kirim tidak membatalkan perpanjangan
+        $emailStatus = $memberId ? $this->kirimStruk((int) $memberId, $itemIds) : ['success' => false, 'message' => 'Data anggota tidak ditemukan.'];
+
         session()->set('struk_perpanjangan', [
             'item_ids'       => $itemIds,
             'extend_days'    => $extendDays,
             'extend_date'    => $extendDate,
+            'email_status'   => $emailStatus,
         ]);
 
         return $this->response->setJSON([
@@ -325,6 +329,7 @@ public function success()
     $this->data['items']       = $items;
     $this->data['extend_days'] = $struk['extend_days'];
     $this->data['extend_date'] = $struk['extend_date'];
+    $this->data['emailStatus'] = $struk['email_status'] ?? null;
 
     return view('Perpanjangan\Views\success', $this->data);
 }
@@ -338,33 +343,48 @@ public function sendStruk(): \CodeIgniter\HTTP\ResponseInterface
         return $this->response->setJSON(['success' => false, 'message' => 'Data tidak lengkap.']);
     }
 
-    $db     = db_connect();
-    $member = $db->table('members')->where('ID', $memberId)->get()->getRow();
-    if (!$member) {
-        return $this->response->setJSON(['success' => false, 'message' => 'Data anggota tidak ditemukan.']);
+    return $this->response->setJSON($this->kirimStruk($memberId, $itemIds));
+}
+
+/**
+ * Kirim struk perpanjangan ke email anggota. Dipakai otomatis setelah perpanjangan tersimpan
+ * dan oleh tombol "Kirim Ulang Email". Tidak pernah melempar error.
+ */
+private function kirimStruk(int $memberId, array $itemIds): array
+{
+    try {
+        $db     = db_connect();
+        $member = $db->table('members')->where('ID', $memberId)->get()->getRow();
+        if (!$member) {
+            return ['success' => false, 'message' => 'Data anggota tidak ditemukan.'];
+        }
+
+        if (empty($member->Email) || !filter_var($member->Email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Anggota tidak punya email, struk tidak dikirim.'];
+        }
+
+        $maxIds = $db->table('collectionloanextends')
+            ->select('MAX(ID) as max_id')
+            ->whereIn('CollectionLoanItem_id', $itemIds)
+            ->groupBy('CollectionLoanItem_id')
+            ->get()->getResultArray();
+        $maxIdList = array_column($maxIds, 'max_id');
+
+        $items = [];
+        if (!empty($maxIdList)) {
+            $items = $db->table('collectionloanextends as ce')
+                ->select('ce.ID, ce.DateExtend, ce.DueDateExtend, col.NomorBarcode, col.CallNumber, cat.Title, cat.Author')
+                ->join('collections as col', 'col.ID = ce.Collection_id')
+                ->join('catalogs as cat', 'cat.ID = col.Catalog_id')
+                ->whereIn('ce.ID', $maxIdList)
+                ->get()->getResult();
+        }
+
+        return (new \App\Libraries\EmailNotificationLibrary())->sendStrukPerpanjanganEmail($member, $items);
+    } catch (\Throwable $e) {
+        log_message('error', '[EmailStruk] perpanjangan anggota ' . $memberId . ': ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Email gagal dikirim.'];
     }
-
-    $maxIds = $db->table('collectionloanextends')
-        ->select('MAX(ID) as max_id')
-        ->whereIn('CollectionLoanItem_id', $itemIds)
-        ->groupBy('CollectionLoanItem_id')
-        ->get()->getResultArray();
-    $maxIdList = array_column($maxIds, 'max_id');
-
-    $items = [];
-    if (!empty($maxIdList)) {
-        $items = $db->table('collectionloanextends as ce')
-            ->select('ce.ID, ce.DateExtend, ce.DueDateExtend, col.NomorBarcode, col.CallNumber, cat.Title, cat.Author')
-            ->join('collections as col', 'col.ID = ce.Collection_id')
-            ->join('catalogs as cat', 'cat.ID = col.Catalog_id')
-            ->whereIn('ce.ID', $maxIdList)
-            ->get()->getResult();
-    }
-
-    $emailLib = new \App\Libraries\EmailNotificationLibrary();
-    $result   = $emailLib->sendStrukPerpanjanganEmail($member, $items);
-
-    return $this->response->setJSON($result);
 }
 
 public function getExtendHistory()
@@ -375,10 +395,11 @@ public function getExtendHistory()
 
     $db    = db_connect();
     $query = $db->table('collectionloanextends cle')
-        ->select('cle.*, c.NomorBarcode, cat.Title, cat.Author')
+        ->select('cle.*, c.NomorBarcode, cat.Title, cat.Author, m.Fullname, m.MemberNo')
         ->join('collectionloanitems cli', 'cli.ID = cle.CollectionLoanItem_id')
         ->join('collections c', 'c.ID = cle.Collection_id')
         ->join('catalogs cat', 'cat.ID = c.Catalog_id', 'left')
+        ->join('members m', 'm.ID = cle.Member_id', 'left')
         ->where('cle.active', 1);
 
     if (!empty($member_id)) {
