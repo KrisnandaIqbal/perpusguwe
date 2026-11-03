@@ -547,7 +547,8 @@
           <?php foreach (($jenis_anggota_list ?? []) as $row) : 
               $jaLower = strtolower(trim($row->jenisanggota));
               $isAsn = stripos($jaLower, 'asn') !== false && stripos($jaLower, 'non') === false;
-              $isChecked = ($row->id == $anggota->JenisAnggota_id);
+              // Hanya ASN yang aktif: anggota lama berjenis lain otomatis terpilih ASN saat disimpan
+              $isChecked = ($row->id == $anggota->JenisAnggota_id) || count($jenis_anggota_list ?? []) === 1;
           ?>
             <div class="admin-choice-card-item">
               <input type="radio" name="JenisAnggota_id" id="ja_adm_<?= $row->id ?>" 

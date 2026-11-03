@@ -691,11 +691,6 @@ if (!function_exists('alasanPerbaikan')) {
      */
     function alasanPerbaikan(bool $includeLegacy = false): array {
         $reasons = [
-            'nik_salah' => [
-                'label'        => 'Format NIK tidak valid',
-                'cara'         => 'Nomor Induk Kependudukan (NIK) harus berupa 16 digit angka sesuai KTP resmi.',
-                'daftar_ulang' => true,
-            ],
             'nip_salah' => [
                 'label'        => 'Format NIP tidak valid',
                 'cara'         => 'Nomor Induk Pegawai (NIP) harus berupa 18 digit angka resmi BKN tanpa spasi atau tanda baca.',
@@ -722,8 +717,8 @@ if (!function_exists('alasanPerbaikan')) {
                 'daftar_ulang' => true,
             ],
             'whatsapp_tidak_valid' => [
-                'label'        => 'Nomor WhatsApp atau kontak tidak aktif',
-                'cara'         => 'Pastikan nomor telepon/WhatsApp yang didaftarkan aktif dan dapat dihubungi.',
+                'label'        => 'Nomor handphone atau kontak tidak aktif',
+                'cara'         => 'Pastikan nomor handphone yang didaftarkan aktif dan dapat dihubungi.',
                 'daftar_ulang' => true,
             ],
             'data_ganda' => [
@@ -739,6 +734,7 @@ if (!function_exists('alasanPerbaikan')) {
         ];
 
         if ($includeLegacy) {
+            $reasons['nik_salah']     = ['label' => 'Format NIK tidak valid', 'cara' => 'Nomor Induk Kependudukan (NIK) harus berupa 16 digit angka sesuai KTP resmi.', 'daftar_ulang' => true];
             $reasons['identitas']     = ['label' => 'Nomor identitas tidak valid', 'cara' => 'Periksa lagi nomor identitas Anda.', 'daftar_ulang' => true];
             $reasons['unit_kerja']    = ['label' => 'Bukan pegawai atau unit kerja tidak sesuai', 'cara' => 'Pilih unit kerja tempat Anda bertugas.', 'daftar_ulang' => true];
             $reasons['jenis_anggota'] = ['label' => 'Jenis anggota tidak sesuai', 'cara' => 'Pilih jenis anggota yang sesuai.', 'daftar_ulang' => true];
