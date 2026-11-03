@@ -157,4 +157,54 @@ class CetakLabelController extends \Base\Controllers\BaseController
 
         return view('Eksemplar\Views\template\\' . $template, ['LabelData' => $LabelData]);
     }
+
+    /**
+     * Status cetak per barcode (untuk penanda di daftar Cetak Label).
+     * GET ?codes=A,B,C -> {"A":{"n":2,"last":"2026-10-22 09:04:05"}}
+     */
+    public function status()
+    {
+        $codes = array_values(array_unique(array_filter(
+            array_map('trim', explode(',', (string) $this->request->getGet('codes')))
+        )));
+        $codes = array_slice($codes, 0, 300);
+
+        $out = [];
+        if (!empty($codes)) {
+            $rows = db_connect()->table('item_label_print_log')
+                ->select('item_code, COUNT(*) AS n, MAX(print_date) AS last_print')
+                ->whereIn('item_code', $codes)
+                ->groupBy('item_code')
+                ->get()->getResultArray();
+            foreach ($rows as $r) {
+                $out[$r['item_code']] = ['n' => (int) $r['n'], 'last' => $r['last_print']];
+            }
+        }
+        // gabungkan dengan riwayat cetak dari SLiMS (system_log)
+        if (!empty($codes)) {
+            $dbx = db_connect();
+            $in  = implode(',', array_map(fn($c) => $dbx->escape($c), $codes));
+            $sql = "SELECT SUBSTRING_INDEX(log_msg, '||', 1) AS item_code, COUNT(*) AS n, MAX(log_date) AS last_print
+                    FROM `perpustakaan_kemnaker`.system_log
+                    WHERE log_location = 'label_barcode' AND action = 'Label Print'
+                      AND SUBSTRING_INDEX(log_msg, '||', 1) IN ($in)
+                    GROUP BY item_code";
+            try {
+                foreach ($dbx->query($sql)->getResultArray() as $r) {
+                    $c    = $r['item_code'];
+                    $n    = (int) $r['n'];
+                    $last = $r['last_print'];
+                    if (isset($out[$c])) {
+                        $n += $out[$c]['n'];
+                        if ($out[$c]['last'] > $last) { $last = $out[$c]['last']; }
+                    }
+                    $out[$c] = ['n' => $n, 'last' => $last];
+                }
+            } catch (\Throwable $e) {
+                // SLiMS tidak terbaca: abaikan, tetap tampilkan log INLISLite
+            }
+        }
+
+        return $this->response->setJSON((object) $out);
+    }
 }

@@ -80,7 +80,7 @@ class EksemplarLabelController extends \Base\Controllers\BaseController
         $db = db_connect();
 
         $eksemplarData = $db->table('collections as a')
-            ->select('a.ID, a.NomorBarcode, b.Title, b.CallNumber, b.DeweyNo')
+            ->select('a.ID, a.NomorBarcode, a.Catalog_id AS biblio_id, b.Title, b.Author, b.PublishYear, b.CallNumber, b.DeweyNo')
             ->join('catalogs b', 'b.ID = a.Catalog_id')
             ->whereIn('a.ID', $idsArr)
             ->get()
@@ -122,6 +122,7 @@ class EksemplarLabelController extends \Base\Controllers\BaseController
         $useQrCode = str_contains($template, 'qrcode') || str_contains($paperSize, 'qrcode');
 
         $LabelData = [];
+        $currentUser = user();
         foreach ($eksemplarData as $row) {
             $firstChar = strtoupper(substr((string) ($row->DeweyNo ?? ''), 0, 1));
             $LabelData[] = [
@@ -134,6 +135,22 @@ class EksemplarLabelController extends \Base\Controllers\BaseController
                                         ? get_qrcode_png($row->NomorBarcode)
                                         : get_barcode_png($row->NomorBarcode),
             ];
+
+            try {
+                $db->table('item_label_print_log')->insert([
+                    'item_code'    => $row->NomorBarcode,
+                    'biblio_id'    => $row->biblio_id,
+                    'title'        => $row->Title,
+                    'author'       => $row->Author,
+                    'publish_year' => $row->PublishYear,
+                    'call_number'  => $row->CallNumber,
+                    'print_date'   => date('Y-m-d H:i:s'),
+                    'user_id'      => $currentUser->id ?? null,
+                    'username'     => $currentUser->username ?? null,
+                ]);
+            } catch (\Throwable $e) {
+                log_message('error', 'Log cetak label gagal: ' . $e->getMessage());
+            }
         }
 
         if ($outputFormat === 'word') {

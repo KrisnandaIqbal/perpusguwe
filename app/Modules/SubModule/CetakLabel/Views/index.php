@@ -136,6 +136,10 @@ $paper_size_json = json_encode($paper_size_config, JSON_UNESCAPED_UNICODE);
 <?= $this->endSection('page'); ?>
 
 <?= $this->section('script'); ?>
+<style>
+#tbl_data tbody tr.row-printed > td { background-color: #ced4da !important; color: #343a40; }
+#tbl_data .printed-note { display: block; font-size: 11px; color: #495057; }
+</style>
 <script>
 $(document).ready(function () {
     var paperSizeConfig = <?= $paper_size_json ?>;
@@ -144,6 +148,27 @@ $(document).ready(function () {
     // key = ID eksemplar, value = { title, order }
     var selectedItems = {};
     var selectOrder = 0;
+
+    // Tandai baris yang barcode-nya sudah pernah tercatat di log cetak
+    function markPrinted() {
+        var $rows = $('#tbl_data tbody tr');
+        var codes = [];
+        $rows.each(function () {
+            var c = $.trim($(this).children('td').eq(2).text());
+            if (c) codes.push(c);
+        });
+        if (!codes.length) return;
+        $.getJSON('<?= site_url('cetak-label/status') ?>', { codes: codes.join(',') }, function (res) {
+            $rows.each(function () {
+                var $td = $(this).children('td').eq(2);
+                var c = $.trim($td.contents().first().text());
+                if (res[c]) {
+                    $(this).addClass('row-printed');
+                    $td.append('<span class="printed-note">Sudah dicetak ' + res[c].n + 'x, terakhir ' + res[c].last + '</span>');
+                }
+            });
+        });
+    }
 
     var t = $('#tbl_data').DataTable({
         processing: true,
@@ -164,6 +189,7 @@ $(document).ready(function () {
             { data: 'UpdateDate', className: 'text-center' }
         ],
         drawCallback: function () {
+            markPrinted();
             // setiap halaman baru dirender, centang ulang baris yang sudah dipilih sebelumnya
             $('#tbl_data tbody input.check').each(function () {
                 var id = $(this).val();
