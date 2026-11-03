@@ -27,17 +27,19 @@ class Registrasi extends BaseController
     {
         $data['title'] = 'Pendaftaran Anggota';
         
-        // Load data from master tables
-        // NIK and NIP from master_jenis_identitas
-        $data['jenis_identitas'] = $this->db->table('master_jenis_identitas')
-                                            ->where('active', 1)
-                                            ->get()->getResult();
-        
-        $data['jenis_anggota'] = $this->db->table('jenis_anggota')
-                                          ->where('active', 1)
-                                          ->whereIn('jenisanggota', ['ASN', 'Non ASN'])
-                                          ->orderBy("FIELD(jenisanggota, 'ASN', 'Non ASN')", 'ASC', false)
-                                          ->get()->getResult();
+        // Master ASN & NIP default
+        $asnRow = $this->db->table('jenis_anggota')
+                           ->where('active', 1)
+                           ->like('jenisanggota', 'ASN')
+                           ->notLike('jenisanggota', 'Non')
+                           ->get()->getRow();
+        $nipRow = $this->db->table('master_jenis_identitas')
+                           ->where('active', 1)
+                           ->like('Nama', 'NIP')
+                           ->get()->getRow();
+
+        $data['asn_id'] = $asnRow ? (int) $asnRow->id : 1;
+        $data['nip_id'] = $nipRow ? (int) $nipRow->id : 1;
 
         // R2: Saring unit induk Kementerian Ketenagakerjaan (ID: 1) khusus form registrasi online
         $data['unit_kerja'] = $this->db->table('master_unit')
@@ -99,9 +101,9 @@ class Registrasi extends BaseController
 
             if (!$bolehUlang) {
                 $messages = [
-                    'Phone'      => 'Nomor WhatsApp ini sudah terdaftar.',
+                    'Phone'      => 'Nomor handphone ini sudah terdaftar.',
                     'Email'      => 'Email sudah terdaftar sebelumnya.',
-                    'IdentityNo' => 'Nomor Identitas sudah terdaftar sebelumnya.',
+                    'IdentityNo' => 'NIP sudah terdaftar sebelumnya.',
                 ];
                 return $this->respond([
                     'registered' => true,
@@ -119,14 +121,25 @@ class Registrasi extends BaseController
             return redirect()->to(base_url('home/pendaftaran-online'));
         }
 
-        $jenisAnggotaId = $this->request->getPost('JenisAnggota_id');
+        $asnRow = $this->db->table('jenis_anggota')
+                           ->where('active', 1)
+                           ->like('jenisanggota', 'ASN')
+                           ->notLike('jenisanggota', 'Non')
+                           ->get()->getRow();
+        $nipRow = $this->db->table('master_jenis_identitas')
+                           ->where('active', 1)
+                           ->like('Nama', 'NIP')
+                           ->get()->getRow();
+
+        $jenisAnggotaId = $asnRow ? (int) $asnRow->id : ((int) $this->request->getPost('JenisAnggota_id') ?: 1);
+        $identityTypeId = $nipRow ? (int) $nipRow->id : ((int) $this->request->getPost('IdentityType_id') ?: 1);
+
         $fullname = $this->request->getPost('Fullname');
         $sexId = $this->request->getPost('Sex_id');
-        $identityTypeId = $this->request->getPost('IdentityType_id');
-        $identityNo = $this->request->getPost('IdentityNo');
+        $identityNo = trim((string) $this->request->getPost('IdentityNo'));
         $unitKerjaId = $this->request->getPost('UnitKerja_id');
         $subUnitKerjaId = $this->request->getPost('SubUnitKerja_id');
-        $statusNonAsn = $this->request->getPost('status_non_asn');
+        $statusNonAsn = null; // Magang & Non-ASN dihapus dari pendaftaran baru
         $address = $this->request->getPost('AddressNow');
         $email = $this->request->getPost('Email');
         $phone = $this->request->getPost('Phone');
@@ -134,7 +147,7 @@ class Registrasi extends BaseController
 
         // Validation Rules
         $rules = [
-            'JenisAnggota_id' => 'required',
+            'IdentityNo' => 'required',
             'Fullname' => 'required|min_length[3]|nama_orang',
             'Sex_id' => 'required',
             'UnitKerja_id' => 'required',
@@ -161,45 +174,6 @@ class Registrasi extends BaseController
                 'success' => false,
                 'message' => $unitCheck['message']
             ]);
-        }
-
-        // Conditional Rules
-        // Check if ASN or Non-ASN
-        $jenisAnggota = $this->db->table('jenis_anggota')->where('id', $jenisAnggotaId)->get()->getRow();
-        $isAsn = false;
-        if ($jenisAnggota && (stripos($jenisAnggota->jenisanggota, 'ASN') !== false && stripos($jenisAnggota->jenisanggota, 'Non') === false)) {
-            $isAsn = true;
-        }
-
-        $rules['IdentityNo'] = 'required';
-
-        if (!$isAsn) {
-            // Non-ASN (Umum, Mahasiswa, Magang, Non ASN) uses NIK
-            $nikType = $this->db->table('master_jenis_identitas')->where('IsNIK', 1)->get()->getRow();
-            if ($nikType) {
-                $identityTypeId = $nikType->id;
-            }
-
-            // Validasi ketat Status Non-ASN: hanya boleh 'staf', 'magang_nasional', atau 'magang_biasa' ('magang' ditolak untuk pendaftar baru)
-            $statusNonAsn = strtolower(trim((string) $statusNonAsn));
-            if (!in_array($statusNonAsn, ['staf', 'magang_nasional', 'magang_biasa'], true)) {
-                return $this->respond([
-                    'success' => false,
-                    'message' => 'Status Non-ASN wajib dipilih (Staf, Magang Nasional, atau Magang Reguler).',
-                    'errors' => ['status_non_asn' => 'Pilih salah satu status: Staf, Magang Nasional, atau Magang Reguler.']
-                ]);
-            }
-        } else {
-            // ASN strictly uses NIP
-            $nipType = $this->db->table('master_jenis_identitas')->like('Nama', 'NIP')->get()->getRow();
-            if ($nipType) {
-                $identityTypeId = $nipType->id;
-            } else {
-                $rules['IdentityType_id'] = 'required';
-            }
-
-            // Tipe ASN: abaikan input apa pun dan simpan NULL
-            $statusNonAsn = null;
         }
 
         if (!$this->validate($rules, $messages)) {
@@ -234,21 +208,12 @@ class Registrasi extends BaseController
             ]);
         }
 
-        if (!$isAsn) {
-            if (!IdentityValidator::isValidNIK($identityNo)) {
-                return $this->respond([
-                    'success' => false,
-                    'message' => 'Nomor Identitas untuk Non-ASN (NIK) harus 16 digit angka.'
-                ]);
-            }
-        } else {
-            // ASN is strictly NIP (18 digits)
-            if (!IdentityValidator::isValidNIP($identityNo)) {
-                return $this->respond([
-                    'success' => false,
-                    'message' => 'Format NIP untuk ASN tidak valid. Harus 18 digit angka resmi BKN.'
-                ]);
-            }
+        // Khusus ASN: Wajib NIP 18 digit resmi BKN
+        if (!IdentityValidator::isValidNIP($identityNo)) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Format NIP tidak valid. Harus 18 digit angka resmi BKN.'
+            ]);
         }
 
         // Duplicate Check
@@ -275,13 +240,13 @@ class Registrasi extends BaseController
             if (!$bolehUlang) {
                 if ($row->IdentityNo === $identityNo) {
                     $field = 'IdentityNo';
-                    $msg   = 'Nomor Identitas sudah terdaftar sebelumnya.';
+                    $msg   = 'NIP sudah terdaftar sebelumnya.';
                 } elseif ($row->Email === $email) {
                     $field = 'Email';
                     $msg   = 'Email sudah terdaftar sebelumnya.';
                 } else {
                     $field = 'Phone';
-                    $msg   = 'Nomor WhatsApp ini sudah terdaftar.';
+                    $msg   = 'Nomor handphone ini sudah terdaftar.';
                 }
 
                 return $this->respond([
