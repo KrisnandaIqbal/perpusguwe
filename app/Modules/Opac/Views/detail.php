@@ -5,6 +5,20 @@
     #bookTab .nav-link {
         color: #000;
     }
+    .subject-badge {
+        transition: all 0.2s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none !important;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .subject-badge:hover {
+        background-color: #334155 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(30, 41, 59, 0.25);
+        color: #fff !important;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -148,18 +162,17 @@
                             <h5 class="text-primary mb-3">
                                 <i class="fas fa-tags me-2"></i>Subjek
                             </h5>
-                            <div class="bg-light p-3 rounded">
+                            <div class="bg-light p-3 rounded d-flex flex-wrap gap-2">
                                 <?php
-                                $subjects = explode(';', $catalog['Subject']);
+                                $subjects = splitSubjects($catalog['Subject']);
                                 foreach ($subjects as $subject):
-                                    $subject = trim($subject);
-                                    if ($subject):
                                 ?>
-                                        <span class="badge bg-primary me-2 mb-2">
+                                        <a href="<?= base_url('opac?search=' . urlencode($subject) . '&search_by=Subject') ?>"
+                                           class="badge bg-primary subject-badge px-3 py-2 text-white"
+                                           title="Cari koleksi dengan subjek: <?= esc($subject) ?>">
                                             <i class="fas fa-tag me-1"></i><?= esc($subject) ?>
-                                        </span>
-                                <?php endif;
-                                endforeach; ?>
+                                        </a>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -625,15 +638,16 @@
 
                         <?php if (!empty($catalog['Subject'])): ?>
                             <?php
-                            $firstSubject = trim(explode(';', $catalog['Subject'])[0]);
-                            if ($firstSubject):
+                            $allSubjects = splitSubjects($catalog['Subject']);
+                            foreach ($allSubjects as $subItem):
                             ?>
-                                <a href="<?= base_url('opac?search=' . urlencode($firstSubject) . '&search_by=Subject') ?>"
-                                    class="btn btn-outline-info btn-sm">
+                                <a href="<?= base_url('opac?search=' . urlencode($subItem) . '&search_by=Subject') ?>"
+                                    class="btn btn-outline-info btn-sm text-start text-truncate"
+                                    title="Subjek: <?= esc($subItem) ?>">
                                     <i class="fas fa-tag me-1"></i>
-                                    Subjek: <?= esc(substr($firstSubject, 0, 20)) ?>...
+                                    Subjek: <?= esc($subItem) ?>
                                 </a>
-                            <?php endif; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
 
                         <?php if (!empty($catalog['PublishYear'])): ?>

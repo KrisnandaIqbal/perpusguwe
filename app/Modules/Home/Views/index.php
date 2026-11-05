@@ -61,12 +61,90 @@
         border-color: var(--brand-100);
     }
 
-    /* Image Utils */
+    /* Image Utils & Catalog Cards */
+    .catalog-card {
+        border: none;
+        border-radius: 16px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .catalog-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .book-cover-wrapper {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
     .book-cover {
-        height: 240px;
-        object-fit: contain;
         width: 100%;
+        height: 180px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
         background-color: #e2e8f0;
+    }
+
+    .catalog-card:hover .book-cover {
+        transform: scale(1.05);
+    }
+
+    .book-overlay {
+        background: rgba(42, 82, 152, 0.8);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .catalog-card:hover .book-overlay {
+        opacity: 1;
+    }
+
+    .book-meta {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 6px;
+    }
+
+    .book-meta i {
+        width: 16px;
+        color: #a0aec0;
+    }
+
+    .badge-floating {
+        position: absolute;
+        top: 10px;
+        left: -5px;
+        z-index: 10;
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .subject-badge-item {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 500;
+        font-size: 0.78rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none !important;
+    }
+
+    .subject-badge-item:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: #334155 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(30, 41, 59, 0.25);
     }
 
     .news-cover {
@@ -173,7 +251,7 @@
                     <div class="card-body p-0 d-flex flex-column align-items-center justify-content-center">
                         <i class="fa-solid fa-book-bookmark fa-2x mb-3" style="color: #1b3878;"></i>
                         <h2 class="fw-bolder text-brand mb-2 stat-number display-6"><?= $statistics['total_books'] ?? 0 ?></h2>
-                        <p class="text-dark fw-bold text-uppercase mb-0" style="letter-spacing: 1px; font-size: 0.85rem;">Koleksi Buku</p>
+                        <p class="text-dark fw-bold text-uppercase mb-0" style="letter-spacing: 1px; font-size: 0.85rem;">Koleksi Tersedia</p>
                     </div>
                 </div>
             </div>
@@ -253,34 +331,13 @@
 
         <div class="row g-4">
             <?php if (!empty($featured_books)): ?>
-                <?php foreach (array_slice($featured_books, 0, 5) as $i => $book): ?>
-                    <?php
-                    $defaultCover = base_url('assets/img/default-cover.webp');
-                    $thumbUrl     = get_catalog_thumb_url($book->CoverURL ?: '', 200, 340);
-                    ?>
-                    <div class="col-6 col-md-4 col-lg-2-4" style="width: 20%; min-width: 160px;">
-                        <div class="card h-100 border-0 shadow-sm hover-card rounded-xl overflow-hidden bg-white">
-                            <img src="<?= $thumbUrl ?>"
-                                 class="card-img-top book-cover"
-                                 alt="<?= esc($book->Title) ?>"
-                                 width="200"
-                                 height="340"
-                                 <?= $i > 0 ? 'loading="lazy"' : 'fetchpriority="high"' ?>
-                                 onerror="this.onerror=null; this.src='<?= $defaultCover ?>';">
-                            <div class="card-body d-flex flex-column p-3">
-                                <h6 class="card-title fw-bold fs-6 mb-1 line-clamp-2" title="<?= esc($book->Title) ?>"><?= esc($book->Title) ?></h6>
-                                <p class="card-text text-secondary small mb-3 text-truncate" title="<?= esc($book->Author) ?>">
-                                    <?= esc($book->Author ?: 'Anonim') ?>
-                                </p>
-                                <a href="<?= base_url('opac/detail/' . $book->ID) ?>" class="btn btn-outline-primary btn-sm mt-auto fw-semibold w-100 rounded-lg">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
+                <?php foreach (array_slice($featured_books, 0, 4) as $book): ?>
+                    <?= renderModernBookCard($book, 'col-lg-3 col-md-6') ?>
                 <?php endforeach; ?>
             <?php else: ?>
                 <div class="col-12 text-center py-5">
                     <i class="fa-solid fa-book-open fa-3x text-secondary opacity-50 mb-3"></i>
-                    <p class="text-secondary">Koleksi buku masih belum tersedia</p>
+                    <p class="text-secondary">Koleksi masih belum tersedia</p>
                 </div>
             <?php endif; ?>
         </div>
