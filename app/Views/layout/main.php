@@ -441,6 +441,7 @@ $page_title = ucfirst($segment2 ?: $segment1);
 
 
 <body>
+    <?= $this->include('App\Views\layout\partial\loader'); ?>
     <!-- Background Gradient -->
     <div class="argon-bg-gradient"></div>
 

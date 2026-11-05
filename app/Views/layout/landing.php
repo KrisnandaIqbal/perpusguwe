@@ -62,6 +62,7 @@ if ($request->getVar('fullscreen') == 1) {
 </head>
 
 <body>
+	<?= $this->include('App\Views\layout\partial\loader'); ?>
 	<div class="app-container app-theme-white body-tabs-shadow <?= $fullscreen ?> <?= get_parameter('container-header-class') ?> <?= get_parameter('container-sidebar-class') ?> <?= get_parameter('container-footer-class') ?>">
 
 		<div class="app-header" style="height:80px; background: #336899">

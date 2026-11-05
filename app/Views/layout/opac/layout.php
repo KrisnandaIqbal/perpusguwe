@@ -772,6 +772,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
 </head>
 
 <body>
+    <?= $this->include('App\Views\layout\partial\loader'); ?>
 
     <!-- ─── Navbar ─── -->
     <nav class="navbar navbar-expand-lg fixed-top navbar-custom shadow-sm">
