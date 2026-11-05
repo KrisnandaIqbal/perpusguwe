@@ -18,7 +18,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
     <link rel="icon" href="<?= !empty($logo) ? base_url('uploads/branch/' . $logo) : base_url('assets/img/logo-inlislite-icon.webp') ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css') ?>/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -303,6 +303,469 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
             color: #fff !important;
             border: none !important;
         }
+
+        /* ─── Modern Book Card (OPAC / Browse / Home) ─── */
+        .opac-modern-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 18px 16px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        }
+
+        .opac-modern-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        .opac-cover-stage {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4px 10px 14px;
+        }
+
+        .opac-book-3d {
+            position: relative;
+            width: 100%;
+            max-width: 215px;
+            aspect-ratio: 3 / 4.15;
+            border-radius: 4px 8px 8px 4px;
+            box-shadow:
+                -4px 0 8px rgba(0, 0, 0, 0.15),
+                0 12px 24px -4px rgba(15, 23, 42, 0.35),
+                inset 4px 0 8px rgba(255, 255, 255, 0.12);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .opac-modern-card:hover .opac-book-3d {
+            transform: translateY(-3px) scale(1.015);
+            box-shadow:
+                -5px 2px 10px rgba(0, 0, 0, 0.18),
+                0 16px 28px -4px rgba(15, 23, 42, 0.42),
+                inset 4px 0 8px rgba(255, 255, 255, 0.15);
+        }
+
+        .opac-real-cover-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .opac-generated-cover {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 16px 15px 14px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* Lipatan punggung buku (Book Spine Crease) */
+        .opac-book-spine {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 14px;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.18) 0%,
+                rgba(0, 0, 0, 0.35) 45%,
+                rgba(255, 255, 255, 0.12) 75%,
+                transparent 100%
+            );
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Ornamen garis geometris halus pada sampul */
+        .opac-cover-geo-circle {
+            position: absolute;
+            top: -18px;
+            right: -32px;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+
+        .opac-cover-geo-rect {
+            position: absolute;
+            bottom: 42px;
+            left: 22px;
+            width: 56px;
+            height: 56px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+
+        .opac-cover-top {
+            position: relative;
+            z-index: 3;
+            gap: 6px;
+        }
+
+        .opac-cover-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.56rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            padding: 3px 7px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 135px;
+        }
+
+        .opac-cover-year {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .opac-cover-middle {
+            position: relative;
+            z-index: 3;
+            padding: 8px 0;
+        }
+
+        .opac-cover-title {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #ffffff;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .opac-cover-author {
+            font-size: 0.66rem;
+            line-height: 1.35;
+            color: rgba(255, 255, 255, 0.72);
+            font-weight: 400;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .opac-cover-bottom {
+            position: relative;
+            z-index: 3;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 8px;
+            gap: 6px;
+        }
+
+        .opac-cover-call {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.65);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .opac-cover-edition {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: right;
+        }
+
+        /* Status & Sirkulasi di bawah cover */
+        .opac-status-pill {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        .opac-status-pill.status-available {
+            background-color: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+
+        .opac-status-pill.status-borrowed {
+            background-color: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fde68a;
+        }
+
+        .opac-eks-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .opac-call-row {
+            font-size: 0.76rem;
+            color: #64748b;
+        }
+
+        .opac-call-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: #1e40af;
+            background-color: #eff6ff;
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        .opac-shelf-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.73rem;
+            color: #64748b;
+            margin-left: 3px;
+        }
+
+        .opac-book-heading {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 0.96rem;
+            font-weight: 700;
+            line-height: 1.42;
+            margin-top: 2px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.72rem;
+        }
+
+        .opac-book-heading a {
+            color: #0f172a;
+            transition: color 0.2s ease;
+        }
+
+        .opac-book-heading a:hover {
+            color: #1b3878;
+        }
+
+        .opac-book-author {
+            font-size: 0.8rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .opac-book-submeta {
+            font-size: 0.74rem;
+            color: #94a3b8;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.05rem;
+        }
+
+        .opac-btn-detail {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1e293b;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: all 0.2s ease;
+        }
+
+        .opac-btn-detail:hover {
+            background-color: #1b3878;
+            border-color: #1b3878;
+            color: #ffffff;
+        }
+
+        /* ─── Pop-Up Modal Deskripsi Bibliografis OPAC ─── */
+        .opac-meta-modal .modal-dialog {
+            max-width: 720px;
+        }
+
+        .opac-meta-modal .modal-content {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.38);
+            padding: 30px 34px 26px;
+            background: #ffffff;
+        }
+
+        .opac-modal-kicker {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .opac-modal-title {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 1.32rem;
+            font-weight: 700;
+            line-height: 1.38;
+            color: #0f172a;
+            margin-bottom: 0;
+        }
+
+        .opac-modal-close-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .opac-modal-close-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
+        .opac-modal-ddc-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e293b;
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .opac-modal-field-label {
+            font-size: 0.74rem;
+            color: #94a3b8;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+
+        .opac-modal-field-value {
+            font-size: 0.84rem;
+            color: #1e293b;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .opac-modal-field-value.shelf-highlight {
+            font-family: 'JetBrains Mono', monospace;
+            color: #1b3878;
+            font-size: 0.8rem;
+        }
+
+        .opac-modal-section-heading {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .opac-modal-abstract {
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.62;
+            margin-bottom: 12px;
+        }
+
+        .opac-modal-subjects {
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .opac-modal-subjects a {
+            color: #475569;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+
+        .opac-modal-subjects a:hover {
+            color: #1b3878;
+            text-decoration: underline;
+        }
+
+        .opac-modal-input {
+            font-size: 0.84rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #1e293b;
+            background-color: #f8fafc;
+        }
+
+        .opac-modal-input:focus {
+            background-color: #ffffff;
+            border-color: #1b3878;
+            box-shadow: 0 0 0 3px rgba(27, 56, 120, 0.12);
+            outline: none;
+        }
+
+        .opac-modal-btn-pinjam {
+            background-color: #1b3878;
+            color: #ffffff;
+            font-size: 0.84rem;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 10px 18px;
+            border: none;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .opac-modal-btn-pinjam:hover {
+            background-color: #152c5e;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 576px) {
+            .opac-meta-modal .modal-content {
+                padding: 20px;
+            }
+            .opac-modal-title {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 
     <?= $this->renderSection('style') ?>
@@ -491,6 +954,102 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
         </div>
     </footer>
 
+    <!-- ─── Modal Pop-Up Deskripsi Bibliografis OPAC ─── -->
+    <div class="modal fade opac-meta-modal" id="opacBookMetaModal" tabindex="-1" aria-labelledby="opacModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                    <div>
+                        <div class="opac-modal-kicker">DESKRIPSI BIBLIOGRAFIS OPAC KEMNAKER</div>
+                        <h3 class="opac-modal-title" id="opacModalTitle">-</h3>
+                    </div>
+                    <button type="button" class="opac-modal-close-btn" data-bs-dismiss="modal" aria-label="Tutup">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Body: 2 Kolom (Sampul di Kiri, Detail di Kanan) -->
+                <div class="row g-4 align-items-start">
+                    <!-- Kolom Kiri: Sampul Buku 3D -->
+                    <div class="col-sm-4 d-flex flex-column align-items-center">
+                        <div class="opac-book-3d w-100" id="opacModalBook3d" style="max-width: 195px;">
+                            <img src="" alt="" id="opacModalCoverImg" class="opac-real-cover-img" style="display: none;"
+                                 onerror="this.style.display='none'; document.getElementById('opacModalGenCover').style.display='flex';">
+                            <div class="opac-generated-cover" id="opacModalGenCover" style="display: flex;">
+                                <div class="opac-book-spine"></div>
+                                <div class="opac-cover-geo-circle"></div>
+                                <div class="opac-cover-geo-rect"></div>
+
+                                <div class="opac-cover-top d-flex justify-content-between align-items-center">
+                                    <span class="opac-cover-tag" id="opacModalCoverTag">-</span>
+                                    <span class="opac-cover-year" id="opacModalCoverYear"></span>
+                                </div>
+
+                                <div class="opac-cover-middle my-auto">
+                                    <div class="opac-cover-title" id="opacModalCoverTitle">-</div>
+                                    <div class="opac-cover-author" id="opacModalCoverAuthor">-</div>
+                                </div>
+
+                                <div class="opac-cover-bottom d-flex justify-content-between align-items-end">
+                                    <span class="opac-cover-call" id="opacModalCoverCall">-</span>
+                                    <span class="opac-cover-edition" id="opacModalCoverEdition">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a href="#" id="opacModalFullDetailLink" class="btn btn-link btn-sm text-decoration-none mt-3 fw-semibold" style="color: #1b3878; font-size: 0.76rem;">
+                            <i class="fa-solid fa-up-right-from-square me-1"></i>Halaman Detail &amp; MARC
+                        </a>
+                    </div>
+
+                    <!-- Kolom Kanan: Metadata & Sirkulasi -->
+                    <div class="col-sm-8">
+                        <!-- Baris Badge Status & DDC -->
+                        <div class="d-flex flex-wrap align-items-center gap-2 pb-3 mb-3 border-bottom">
+                            <span id="opacModalStatusBadge" class="opac-status-pill status-available">
+                                <i class="fa-regular fa-circle-check me-1"></i>Tersedia di Rak
+                            </span>
+                            <span class="opac-modal-ddc-pill" id="opacModalDdcBadge">DDC: -</span>
+                        </div>
+
+                        <!-- Grid 2x2 Informasi Utama -->
+                        <div class="row g-3 pb-3 mb-3 border-bottom">
+                            <div class="col-6">
+                                <div class="opac-modal-field-label">Pengarang / Penyusun</div>
+                                <div class="opac-modal-field-value" id="opacModalAuthor">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="opac-modal-field-label">Lokasi Rak Fisik</div>
+                                <div class="opac-modal-field-value shelf-highlight">
+                                    <i class="fa-solid fa-location-dot me-1"></i><span id="opacModalShelf">-</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="opac-modal-field-label">Penerbit &amp; Tahun</div>
+                                <div class="opac-modal-field-value fw-normal" id="opacModalPubYear">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="opac-modal-field-label">ISBN &amp; Edisi</div>
+                                <div class="opac-modal-field-value fw-normal" id="opacModalIsbnEdition" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Abstrak / Ringkasan Koleksi -->
+                        <div>
+                            <div class="opac-modal-section-heading">ABSTRAK / RINGKASAN KOLEKSI</div>
+                            <p class="opac-modal-abstract" id="opacModalAbstract">-</p>
+                            <div class="opac-modal-subjects">
+                                <strong class="text-dark">Tajuk Subjek:</strong>
+                                <span id="opacModalSubjects">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="<?= base_url('assets/js'); ?>/jquery-4.0.0.min.js"></script>
     <script src="<?= base_url('assets/js'); ?>/bootstrap.min.js"></script>
     <script src="<?= base_url('assets/js'); ?>/sweetalert2@8.js"></script>
@@ -505,6 +1064,102 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                 return fire(opsi, ...lainnya);
             };
         })();
+
+        // Handler Pop-Up Deskripsi Bibliografis OPAC
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalEl = document.getElementById('opacBookMetaModal');
+            if (!modalEl) return;
+
+            let currentBookData = null;
+
+            document.addEventListener('click', function (e) {
+                const trigger = e.target.closest('.js-open-book-modal');
+                if (!trigger) return;
+
+                const card = trigger.closest('.opac-modern-card');
+                if (!card || !card.dataset.bookMeta) return;
+
+                e.preventDefault();
+
+                try {
+                    const data = JSON.parse(card.dataset.bookMeta);
+                    currentBookData = data;
+                    populateAndShowBookModal(data);
+                } catch (err) {
+                    console.error('Gagal memuat metadata buku:', err);
+                    window.location.href = trigger.getAttribute('href');
+                }
+            });
+
+            function populateAndShowBookModal(data) {
+                document.getElementById('opacModalTitle').textContent = data.title || 'Tanpa Judul';
+                document.getElementById('opacModalAuthor').textContent = data.author || '-';
+                document.getElementById('opacModalShelf').textContent = data.shelfLoc || 'Rak Koleksi Umum';
+                document.getElementById('opacModalPubYear').textContent = data.pubAndYear || '-';
+                document.getElementById('opacModalIsbnEdition').textContent = data.isbnAndEdition || '-';
+                document.getElementById('opacModalDdcBadge').textContent = 'DDC: ' + (data.callNumber || '-');
+                document.getElementById('opacModalAbstract').textContent = data.abstract || '-';
+                document.getElementById('opacModalFullDetailLink').setAttribute('href', data.detailUrl || '#');
+
+                // Status ketersediaan
+                const statusBadge = document.getElementById('opacModalStatusBadge');
+                if (data.isAvailable) {
+                    statusBadge.className = 'opac-status-pill status-available';
+                    statusBadge.innerHTML = '<i class="fa-regular fa-circle-check me-1"></i>' + (data.statusModalText || 'Tersedia di Rak');
+                } else {
+                    statusBadge.className = 'opac-status-pill status-borrowed';
+                    statusBadge.innerHTML = '<i class="fa-regular fa-clock me-1"></i>' + (data.statusModalText || 'Dipinjam');
+                }
+
+                // Tajuk Subjek
+                const subjContainer = document.getElementById('opacModalSubjects');
+                subjContainer.innerHTML = '';
+                const subjects = Array.isArray(data.subjects) ? data.subjects : ['Koleksi Umum'];
+                subjects.forEach(function (subj, idx) {
+                    const a = document.createElement('a');
+                    a.href = '<?= base_url('opac') ?>?search=' + encodeURIComponent(subj) + '&search_by=Subject';
+                    a.textContent = subj;
+                    subjContainer.appendChild(a);
+                    if (idx < subjects.length - 1) {
+                        subjContainer.appendChild(document.createTextNode(' · '));
+                    }
+                });
+
+                // Sampul Buku 3D di dalam Modal
+                const book3d = document.getElementById('opacModalBook3d');
+                const coverImg = document.getElementById('opacModalCoverImg');
+                const genCover = document.getElementById('opacModalGenCover');
+
+                book3d.style.background = data.paletteBg || 'linear-gradient(145deg, #10254c 0%, #0a1833 100%)';
+
+                const coverTag = document.getElementById('opacModalCoverTag');
+                coverTag.textContent = data.topLabel || 'KOLEKSI';
+                coverTag.style.background = data.palettePillBg || 'rgba(245, 158, 11, 0.16)';
+                coverTag.style.color = data.paletteAccent || '#f59e0b';
+
+                document.getElementById('opacModalCoverYear').textContent = data.year || '';
+                document.getElementById('opacModalCoverTitle').textContent = data.title || '';
+                document.getElementById('opacModalCoverAuthor').textContent = data.author || '';
+                document.getElementById('opacModalCoverCall').textContent = data.callNumber || '';
+
+                const coverEd = document.getElementById('opacModalCoverEdition');
+                coverEd.textContent = data.footerRight || '';
+                coverEd.style.color = data.paletteAccent || '#f59e0b';
+
+                if (data.hasCover && data.coverImgSrc) {
+                    coverImg.src = data.coverImgSrc;
+                    coverImg.alt = data.title || '';
+                    coverImg.style.display = 'block';
+                    genCover.style.display = 'none';
+                } else {
+                    coverImg.style.display = 'none';
+                    genCover.style.display = 'flex';
+                }
+
+                const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modalInstance.show();
+            }
+        });
     </script>
 
     <?= $this->renderSection('script') ?>

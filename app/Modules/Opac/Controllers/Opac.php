@@ -105,11 +105,14 @@ private function loadRegularCatalogs()
 
     $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
 
-    $search = sanitizeSearch($this->request->getVar('search'));
+    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN'];
+    $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
+    $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
 
-    if ($search) {
-        $rawSearch = $this->request->getVar('search');
-        $searchBy  = sanitizeSearch($this->request->getVar('search_by') ?? 'Title');
+    $rawSearch = (string) ($this->request->getVar('search') ?? '');
+    $search    = sanitizeSearch($rawSearch);
+
+    if ($search !== '') {
         $this->applyFulltextSearch($builder, $search, $searchBy, $rawSearch);
     }
 
@@ -118,33 +121,50 @@ private function loadRegularCatalogs()
         $value = $this->request->getVar($filter);
         if (!empty($value)) {
             if ($filter === 'Author') {
-                $authors = array_filter(array_map('trim', preg_split('/[;,]+/', $value)));
-                foreach ($authors as $author) {
-                    $builder->orLike('Author', sanitizeSearch($author));
+                $authors = array_values(array_filter(array_map('trim', preg_split('/[;,]+/', (string) $value))));
+                if (!empty($authors)) {
+                    $builder->groupStart();
+                    foreach ($authors as $idx => $author) {
+                        $cleanAuthor = sanitizeSearch($author);
+                        if ($idx === 0) {
+                            $builder->like('Author', $cleanAuthor);
+                        } else {
+                            $builder->orLike('Author', $cleanAuthor);
+                        }
+                    }
+                    $builder->groupEnd();
                 }
+            } elseif ($filter === 'Subject') {
+                // Hindari duplikasi filter jika sudah dicari melalui search + search_by=Subject dengan nilai sama
+                if ($searchBy === 'Subject' && mb_strtolower(trim((string) $value)) === mb_strtolower(trim($rawSearch))) {
+                    continue;
+                }
+                $this->applyFulltextSearch($builder, sanitizeSearch((string) $value), 'Subject', (string) $value);
             } else {
-                $builder->like($filter, sanitizeSearch($value));
+                $builder->like($filter, sanitizeSearch((string) $value));
             }
         }
     }
 
     $catalogs = $builder->paginate($perPage, 'default', $currentPage);
+    $catalogs = enrichCatalogsWithCirculation($catalogs);
     $pager    = $this->katalogModel->pager;
 
     $this->data['pager']         = $pager;
     $this->data['catalogs']      = $catalogs;
     $this->data['total_records'] = $pager->getTotal();
 
-    $this->data['publisher_counts']       = array_count_values(array_map(fn($p) => rtrim(trim($p), ','), array_column($catalogs, 'Publisher')));
-    $this->data['author_counts']          = array_count_values(array_map(fn($a) => rtrim(trim($a), ','), array_column($catalogs, 'Author')));
-    $this->data['publish_location_counts'] = array_count_values(array_map(fn($l) => rtrim(trim($l), ','), array_column($catalogs, 'PublishLocation')));
-    $this->data['subject_counts']         = array_count_values(array_map(fn($s) => rtrim(trim($s), ','), array_column($catalogs, 'Subject')));
-    $this->data['year_counts']            = array_count_values(array_map(fn($d) => date('Y', strtotime($d)), array_column($catalogs, 'EndDate')));
+    $this->loadTopSidebarFacets();
 
-    $this->data['search']    = esc($this->request->getVar('search') ?? '');
-    $allowedSearchBy         = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN'];
-    $searchBy                = $this->request->getVar('search_by') ?? 'Title';
-    $this->data['search_by'] = in_array($searchBy, $allowedSearchBy) ? $searchBy : 'Title';
+    // Jika diakses via ?Subject=... tanpa parameter search, sinkronkan ke tampilan pencarian Subjek
+    $subjectParam = trim((string) ($this->request->getVar('Subject') ?? ''));
+    if ($rawSearch === '' && $subjectParam !== '') {
+        $this->data['search']    = esc($subjectParam);
+        $this->data['search_by'] = 'Subject';
+    } else {
+        $this->data['search']    = esc($rawSearch);
+        $this->data['search_by'] = $searchBy;
+    }
 }
 
 private function loadRegularCatalogscache()
@@ -152,6 +172,11 @@ private function loadRegularCatalogscache()
     $cacheTTL    = 3600;
     $perPage     = 12;
     $currentPage = $this->request->getVar('page') ?? 1;
+
+    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN'];
+    $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
+    $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
+    $rawSearch       = (string) ($this->request->getVar('search') ?? '');
 
     $requestParams = $this->request->getGet();
     ksort($requestParams);
@@ -169,13 +194,11 @@ private function loadRegularCatalogscache()
 
     } else {
         // ========== CACHE MISS ==========
-        $builder = $this->katalogModel->select('catalogs.*')->orderBy("ID", "DESC");
+        $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
 
-        $search = sanitizeSearch($this->request->getVar('search'));
+        $search = sanitizeSearch($rawSearch);
 
-        if ($search) {
-            $rawSearch = $this->request->getVar('search');
-            $searchBy  = sanitizeSearch($this->request->getVar('search_by') ?? 'Title');
+        if ($search !== '') {
             $this->applyFulltextSearch($builder, $search, $searchBy, $rawSearch);
         }
 
@@ -184,17 +207,32 @@ private function loadRegularCatalogscache()
             $value = $this->request->getVar($filter);
             if (!empty($value)) {
                 if ($filter === 'Author') {
-                    $authors = array_filter(array_map('trim', preg_split('/[;,]+/', $value)));
-                    foreach ($authors as $author) {
-                        $builder->orLike('Author', sanitizeSearch($author));
+                    $authors = array_values(array_filter(array_map('trim', preg_split('/[;,]+/', (string) $value))));
+                    if (!empty($authors)) {
+                        $builder->groupStart();
+                        foreach ($authors as $idx => $author) {
+                            $cleanAuthor = sanitizeSearch($author);
+                            if ($idx === 0) {
+                                $builder->like('Author', $cleanAuthor);
+                            } else {
+                                $builder->orLike('Author', $cleanAuthor);
+                            }
+                        }
+                        $builder->groupEnd();
                     }
+                } elseif ($filter === 'Subject') {
+                    if ($searchBy === 'Subject' && mb_strtolower(trim((string) $value)) === mb_strtolower(trim($rawSearch))) {
+                        continue;
+                    }
+                    $this->applyFulltextSearch($builder, sanitizeSearch((string) $value), 'Subject', (string) $value);
                 } else {
-                    $builder->like($filter, sanitizeSearch($value));
+                    $builder->like($filter, sanitizeSearch((string) $value));
                 }
             }
         }
 
         $catalogs     = $builder->paginate($perPage, 'default', $currentPage);
+        $catalogs     = enrichCatalogsWithCirculation($catalogs);
         $pager        = $this->katalogModel->pager;
         $totalRecords = $pager->getTotal();
 
@@ -206,21 +244,136 @@ private function loadRegularCatalogscache()
         $dataToCache = [
             'total_records'          => $totalRecords,
             'catalogs'               => $catalogs,
-            'publisher_counts'       => array_count_values(array_map(fn($p) => rtrim(trim($p), ','), array_column($catalogs, 'Publisher'))),
-            'author_counts'          => array_count_values(array_map(fn($a) => rtrim(trim($a), ','), array_column($catalogs, 'Author'))),
-            'publish_location_counts' => array_count_values(array_map(fn($l) => rtrim(trim($l), ','), array_column($catalogs, 'PublishLocation'))),
-            'subject_counts'         => array_count_values(array_map(fn($s) => rtrim(trim($s), ','), array_column($catalogs, 'Subject'))),
-            'year_counts'            => array_count_values(array_map(fn($d) => date('Y', strtotime($d)), array_column($catalogs, 'EndDate'))),
         ];
 
         cache()->save($cacheKey, $dataToCache, $cacheTTL);
         $this->data = array_merge($this->data, $dataToCache);
     }
 
-    $this->data['search']    = esc($this->request->getVar('search') ?? '');
-    $allowedSearchBy         = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN'];
-    $searchBy                = $this->request->getVar('search_by') ?? 'Title';
-    $this->data['search_by'] = in_array($searchBy, $allowedSearchBy) ? $searchBy : 'Title';
+    $this->loadTopSidebarFacets();
+
+    $subjectParam = trim((string) ($this->request->getVar('Subject') ?? ''));
+    if ($rawSearch === '' && $subjectParam !== '') {
+        $this->data['search']    = esc($subjectParam);
+        $this->data['search_by'] = 'Subject';
+    } else {
+        $this->data['search']    = esc($rawSearch);
+        $this->data['search_by'] = $searchBy;
+    }
+}
+
+/**
+ * Memuat data statistik agregat teratas (penerbit, pengarang, subjek populer, kota terbit, tahun terbit)
+ * didasarkan pada data terbanyak dari seluruh koleksi katalog di perpustakaan.
+ */
+private function loadTopSidebarFacets(): void
+{
+    $cacheKey = 'opac_top_sidebar_facets_v2';
+    $cached = cache($cacheKey);
+
+    if ($cached !== null && is_array($cached)) {
+        $this->data = array_merge($this->data, $cached);
+        return;
+    }
+
+    $db = \Config\Database::connect();
+
+    // 1. Penerbit Teratas (Top 10)
+    $publisherRows = $db->query("
+        SELECT TRIM(TRAILING ',' FROM TRIM(TRAILING ';' FROM TRIM(Publisher))) as name, COUNT(*) as cnt
+        FROM catalogs
+        WHERE IsOPAC = 1 AND Publisher IS NOT NULL AND TRIM(Publisher) != ''
+        GROUP BY name
+        ORDER BY cnt DESC
+        LIMIT 10
+    ")->getResultArray();
+
+    $publisherCounts = [];
+    foreach ($publisherRows as $row) {
+        if (!empty($row['name'])) {
+            $publisherCounts[$row['name']] = (int)$row['cnt'];
+        }
+    }
+
+    // 2. Pengarang Teratas (Top 10)
+    $authorRows = $db->query("
+        SELECT TRIM(TRAILING ';' FROM TRIM(TRAILING ',' FROM TRIM(Author))) as name, COUNT(*) as cnt
+        FROM catalogs
+        WHERE IsOPAC = 1 AND Author IS NOT NULL AND TRIM(Author) != ''
+        GROUP BY name
+        ORDER BY cnt DESC
+        LIMIT 10
+    ")->getResultArray();
+
+    $authorCounts = [];
+    foreach ($authorRows as $row) {
+        if (!empty($row['name'])) {
+            $authorCounts[$row['name']] = (int)$row['cnt'];
+        }
+    }
+
+    // 3. Kota Terbit Teratas (Top 10)
+    $locationRows = $db->query("
+        SELECT TRIM(TRAILING ':' FROM TRIM(TRAILING ',' FROM TRIM(PublishLocation))) as name, COUNT(*) as cnt
+        FROM catalogs
+        WHERE IsOPAC = 1 AND PublishLocation IS NOT NULL AND TRIM(PublishLocation) != ''
+        GROUP BY name
+        ORDER BY cnt DESC
+        LIMIT 10
+    ")->getResultArray();
+
+    $locationCounts = [];
+    foreach ($locationRows as $row) {
+        if (!empty($row['name'])) {
+            $locationCounts[$row['name']] = (int)$row['cnt'];
+        }
+    }
+
+    // 4. Tahun Terbit Teratas (Top 10)
+    $yearRows = $db->query("
+        SELECT PublishYear as name, COUNT(*) as cnt
+        FROM catalogs
+        WHERE IsOPAC = 1 AND PublishYear IS NOT NULL AND PublishYear REGEXP '^[12][0-9]{3}$'
+        GROUP BY PublishYear
+        ORDER BY cnt DESC
+        LIMIT 10
+    ")->getResultArray();
+
+    $yearCounts = [];
+    foreach ($yearRows as $row) {
+        if (!empty($row['name'])) {
+            $yearCounts[(string)$row['name']] = (int)$row['cnt'];
+        }
+    }
+
+    // 5. Subjek Populer Teratas (Top 10, dipecah per subjek individual)
+    $subjectRows = $db->query("
+        SELECT Subject
+        FROM catalogs
+        WHERE IsOPAC = 1 AND Subject IS NOT NULL AND TRIM(Subject) != ''
+    ")->getResultArray();
+
+    helper('opac');
+    $allSubjectCounts = [];
+    foreach ($subjectRows as $row) {
+        $subs = splitSubjects($row['Subject']);
+        foreach ($subs as $s) {
+            $allSubjectCounts[$s] = ($allSubjectCounts[$s] ?? 0) + 1;
+        }
+    }
+    arsort($allSubjectCounts);
+    $subjectCounts = array_slice($allSubjectCounts, 0, 10, true);
+
+    $facets = [
+        'publisher_counts'        => $publisherCounts,
+        'author_counts'           => $authorCounts,
+        'publish_location_counts' => $locationCounts,
+        'year_counts'             => $yearCounts,
+        'subject_counts'          => $subjectCounts,
+    ];
+
+    cache()->save($cacheKey, $facets, 3600);
+    $this->data = array_merge($this->data, $facets);
 }
  
 
@@ -423,7 +576,8 @@ public function browse()
             break;
     }
 
-    $this->data['catalogs']    = $this->katalogModel->paginate($perPage, 'browse', $currentPage);
+    $catalogs                  = $this->katalogModel->paginate($perPage, 'browse', $currentPage);
+    $this->data['catalogs']    = enrichCatalogsWithCirculation($catalogs);
     $this->data['pager']       = $this->katalogModel->pager;
     $this->data['perPage']     = $perPage;
     $this->data['browse_type'] = esc($browseType);
@@ -1610,7 +1764,7 @@ public function browse()
      * Apply FULLTEXT search to query builder, fallback to LIKE when term is too short.
      * Requires FULLTEXT indexes on catalogs table — see app/Database/opac_fulltext_indexes.sql
      */
-    private function applyFulltextSearch($builder, string $search, string $searchBy, string $rawSearch = null): void
+    private function applyFulltextSearch($builder, string $search, string $searchBy, ?string $rawSearch = null): void
     {
         $rawSearch = $rawSearch ?? $search;
 
@@ -1640,8 +1794,15 @@ public function browse()
 
             case 'Subject':
                 $term = $this->toFtTerm($search);
-                $term ? $builder->where("MATCH(Subject) AGAINST ('{$term}' IN BOOLEAN MODE)", null, false)
-                      : $builder->like('Subject', $search);
+                $cleanLike = trim(preg_replace('/[+><\~*"@\\\\\'`]/', '', $rawSearch));
+                if ($term) {
+                    $builder->groupStart()
+                            ->where("MATCH(Subject) AGAINST ('{$term}' IN BOOLEAN MODE)", null, false)
+                            ->orLike('Subject', $cleanLike ?: $search)
+                            ->groupEnd();
+                } else {
+                    $builder->like('Subject', $cleanLike ?: $search);
+                }
                 break;
 
             case 'ISBN':
@@ -1677,12 +1838,17 @@ public function browse()
      */
     private function toFtTerm(string $search): string
     {
+        // Ganti tanda hubung, underscore, garis miring, kurung, dan tanda baca pemisah kata dengan spasi
+        // agar kata majemuk seperti 'Perundang-undangan' menjadi 'perundang undangan' (sesuai tokenisasi MySQL FULLTEXT)
+        $search = preg_replace('/[\-_\/.,;:&()]/', ' ', $search);
+
         // Hapus operator FULLTEXT Boolean dan single quote sebagai lapisan keamanan tambahan
-        $search = preg_replace('/[+\-><()\~*"@\'\\\\]/', '', $search);
+        $search = preg_replace('/[+><\~*"@\'\\\\]/', '', $search);
         $words  = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
         $terms  = [];
         foreach ($words as $word) {
-            if (mb_strlen($word) < 2) continue;
+            // Token < 3 karakter diabaikan dari prefiks '+' agar tidak menyebabkan 0 hasil pada MySQL InnoDB boolean mode
+            if (mb_strlen($word) < 3) continue;
             $terms[] = '+' . $word . '*';
         }
         return implode(' ', $terms);

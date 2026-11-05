@@ -9,6 +9,27 @@
         font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
+    .subject-badge-item {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 500;
+        font-size: 0.78rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none !important;
+    }
+    .subject-badge-item:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: #334155 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(30, 41, 59, 0.25);
+    }
+
     /* Hero Section */
     .hero-section {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -262,7 +283,6 @@
                 <div class="glass-card">
                     
                     <form method="GET" action="<?= base_url('opac') ?>">
-                        <?= csrf_field() ?>
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
                                 <select class="form-select custom-input" name="search_by">
@@ -470,100 +490,54 @@
             </div>
 
             <div class="col-lg-9 catalog-section">
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <?php
+                $activeSubject  = (($search_by ?? '') === 'Subject' && !empty($search))
+                    ? $search
+                    : (string) (request()->getVar('Subject') ?? '');
+                $activeAuthor   = (string) (request()->getVar('Author') ?? '');
+                $activePub      = (string) (request()->getVar('Publisher') ?? '');
+                $activeYear     = (string) (request()->getVar('PublishYear') ?? '');
+                $activeLocation = (string) (request()->getVar('PublishLocation') ?? '');
+                $hasActiveQuery = !empty($search) || $activeSubject !== '' || $activeAuthor !== '' || $activePub !== '' || $activeYear !== '' || $activeLocation !== '';
+                ?>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-2 border-bottom">
                     <h4 class="mb-0 fw-bold text-dark">
-                        <?= !empty($member_no) ? '<i class="fas fa-star text-warning me-2"></i>Rekomendasi Untuk Anda' : '<i class="fas fa-stream text-primary me-2"></i>Koleksi Terbaru' ?>
+                        <?php if (!empty($member_no)): ?>
+                            <i class="fas fa-star text-warning me-2"></i>Rekomendasi Untuk Anda
+                        <?php elseif ($activeSubject !== ''): ?>
+                            <i class="fas fa-tags text-primary me-2"></i>Subjek: <span class="text-primary"><?= esc($activeSubject) ?></span>
+                        <?php elseif (!empty($search)): ?>
+                            <i class="fas fa-search text-primary me-2"></i>Hasil Pencarian: <span class="text-primary"><?= esc($search) ?></span>
+                        <?php elseif ($activeAuthor !== ''): ?>
+                            <i class="fas fa-user-edit text-primary me-2"></i>Pengarang: <span class="text-primary"><?= esc($activeAuthor) ?></span>
+                        <?php elseif ($activePub !== ''): ?>
+                            <i class="fas fa-building text-primary me-2"></i>Penerbit: <span class="text-primary"><?= esc($activePub) ?></span>
+                        <?php elseif ($activeYear !== ''): ?>
+                            <i class="fas fa-calendar-alt text-primary me-2"></i>Tahun Terbit: <span class="text-primary"><?= esc($activeYear) ?></span>
+                        <?php elseif ($activeLocation !== ''): ?>
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>Kota Terbit: <span class="text-primary"><?= esc($activeLocation) ?></span>
+                        <?php else: ?>
+                            <i class="fas fa-stream text-primary me-2"></i>Koleksi Terbaru
+                        <?php endif; ?>
                     </h4>
+                    <?php if ($hasActiveQuery): ?>
+                        <a href="<?= base_url('opac') ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            <i class="fas fa-times me-1"></i>Tampilkan Semua Koleksi
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="row g-4">
                     <?php
                     $displayCatalogs = (!empty($member_no) && isset($recommendations)) ? $recommendations : ($catalogs ?? []);
+                    if (!empty($member_no) && !empty($displayCatalogs)) {
+                        $displayCatalogs = enrichCatalogsWithCirculation($displayCatalogs);
+                    }
                     ?>
 
                     <?php if (!empty($displayCatalogs)): ?>
                         <?php foreach ($displayCatalogs as $catalog): ?>
-                            <div class="col-md-6">
-                                <div class="card catalog-card p-3">
-                                    <div class="row g-0 h-100">
-
-                                        <div class="col-4 position-relative">
-                                            <?php if (!empty($member_no)): ?>
-                                                <span class="badge bg-<?= $is_cold_start ? 'warning text-dark' : 'success' ?> badge-floating">
-                                                    <i class="fas <?= $is_cold_start ? 'fa-fire' : 'fa-magic' ?> me-1"></i>
-                                                    <?= $is_cold_start ? 'Populer' : 'Cocok' ?>
-                                                </span>
-                                            <?php elseif (isset($catalog->ISDRM) && $catalog->ISDRM == 1): ?>
-                                                <span class="badge bg-info text-white badge-floating">
-                                                    <i class="fas fa-globe me-1"></i>E-Book
-                                                </span>
-                                            <?php endif; ?>
-
-                                            <div class="book-cover-wrapper h-100">
-                                                <?php
-                                                $coverURL = !empty($member_no) ? ($catalog['CoverURL'] ?? '') : ($catalog->CoverURL ?? '');
-                                                $title = !empty($member_no) ? ($catalog['Title'] ?? 'Book') : ($catalog->Title ?? 'Book');
-                                                $coverPath = base_url('uploads/katalog/' . ($coverURL ?: 'default-cover.jpg'));
-                                                $defaultCover = base_url('assets/img/default-cover.png');
-                                                ?>
-                                                <img src="<?= $coverPath ?>" alt="Cover <?= esc($title) ?>" class="book-cover" onerror="this.src='<?= $defaultCover ?>'">
-                                                <div class="book-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                                    <?php $bookID = !empty($member_no) ? ($catalog['ID'] ?? 0) : ($catalog->ID ?? 0); ?>
-                                                    <a href="<?= base_url('opac/detail/' . $bookID) ?>" class="btn btn-light btn-sm rounded-pill fw-bold">
-                                                        <i class="fas fa-eye me-1"></i>Lihat
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-8 ps-3 d-flex flex-column">
-                                            <?php
-                                            if (!empty($member_no)) {
-                                                $bookTitle = $catalog['Title'] ?? 'Tanpa Judul';
-                                                $bookAuthor = $catalog['Author'] ?? '-';
-                                                $bookPublisher = $catalog['Publisher'] ?? '-';
-                                                $bookYear = $catalog['PublishYear'] ?? '-';
-                                                $bookSubject = $catalog['Subject'] ?? '';
-                                            } else {
-                                                $bookTitle = $catalog->Title ?? 'Tanpa Judul';
-                                                $bookAuthor = $catalog->Author ?? '-';
-                                                $bookPublisher = $catalog->Publisher ?? '-';
-                                                $bookYear = $catalog->PublishYear ?? '-';
-                                                $bookSubject = $catalog->Subject ?? '';
-                                            }
-                                            ?>
-
-                                            <h5 class="card-title text-dark fw-bold mb-2" style="font-size: 1.05rem; line-height: 1.4;">
-                                                <a href="<?= base_url('opac/detail/' . $bookID) ?>" class="text-decoration-none text-dark">
-                                                    <?= esc(substr($bookTitle, 0, 65)) ?><?= strlen($bookTitle) > 65 ? '...' : '' ?>
-                                                </a>
-                                            </h5>
-
-                                            <div class="book-meta mt-1">
-                                                <span class="d-block mb-1 text-truncate" title="<?= esc($bookAuthor) ?>">
-                                                    <i class="fas fa-user-edit"></i> <?= esc($bookAuthor) ?>
-                                                </span>
-                                                <span class="d-block mb-1 text-truncate" title="<?= esc($bookPublisher) ?>">
-                                                    <i class="fas fa-building"></i> <?= esc($bookPublisher) ?>
-                                                </span>
-                                                <span class="d-block">
-                                                    <i class="fas fa-calendar-alt"></i> <?= esc($bookYear) ?>
-                                                </span>
-                                            </div>
-
-                                            <div class="mt-auto pt-2 border-top">
-                                                <?php if (!empty($bookSubject)): ?>
-                                                    <span class="badge bg-light text-secondary border text-truncate d-inline-block" style="max-width: 100%;">
-                                                        <?= esc($bookSubject) ?>
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-light text-secondary border">Umum</span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <?= renderModernBookCard($catalog, 'col-xl-4 col-md-6') ?>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <div class="col-12">
@@ -574,7 +548,7 @@
                                 <h4 class="text-dark fw-bold">
                                     <?php if (!empty($member_no)): ?>
                                         Tidak ada rekomendasi untuk anggota ini
-                                    <?php elseif (isset($search) && $search): ?>
+                                    <?php elseif ($hasActiveQuery): ?>
                                         Koleksi tidak ditemukan
                                     <?php else: ?>
                                         Mulai temukan koleksi
@@ -583,7 +557,7 @@
                                 <p class="text-muted mb-4 px-3">
                                     <?php if (!empty($member_no)): ?>
                                         Anggota mungkin belum memiliki riwayat peminjaman yang cukup untuk menampilkan rekomendasi personal.
-                                    <?php elseif (isset($search) && $search): ?>
+                                    <?php elseif ($hasActiveQuery): ?>
                                         Coba gunakan kata kunci yang lebih umum atau periksa ejaan Anda.
                                     <?php endif; ?>
                                 </p>
