@@ -28,6 +28,7 @@ class Filters extends BaseConfig
         'cors'             => \App\Filters\Cors::class,
         'permissions'     => \App\Filters\Permissions::class,
         'session'         => \Myth\Auth\Filters\LoginFilter::class,
+        'maintenance'     => \App\Filters\Maintenance::class,
     ];
 
     /**
@@ -39,6 +40,7 @@ class Filters extends BaseConfig
      */
     public array $globals = [
         'before' => [
+            'maintenance',
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
