@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "sweetalert2": "^11.26.23"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }

@@ -1,0 +1,85 @@
+/* Tambahan di atas landing.css (hasil build desain Figma "Proto 1").
+   Ukuran dan proporsi mengikuti desain; ukuran akhir diatur oleh penskalaan di landing.js. */
+
+/* Layar penuh: tanpa bingkai kartu */
+.page-shell { padding: 0; min-height: 100vh; }
+/* Jangan beri overflow pada .site-frame: itu mematikan blur (backdrop-filter) navbar kaca.
+   Penahan scroll horizontal dipasang per bagian. */
+.site-frame { width: 100%; max-width: none; box-shadow: none; overflow: visible; }
+.hero, .shortcuts, .showcase, .catalog-cta, .site-footer { overflow-x: clip; }
+
+/* Tautan (bukan tombol) memakai gaya yang sama dengan komponen desain */
+a.shortcut-card, a.btn-small { text-decoration: none; }
+a.btn-small { display: inline-flex; align-items: center; justify-content: center; }
+.showcase-actions { justify-content: flex-end; }
+.showcase-empty { grid-column: 1 / -1; padding: 40px 0; text-align: center; color: var(--muted); font-size: 14px; }
+.omni-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.footer-brand, .footer-col a { text-decoration: none; }
+
+/* Hero (801 px ke atas): tinggi hero mengikuti kolom teks supaya kolom pencarian langsung terlihat saat halaman dibuka.
+   Foto mengisi tinggi itu dan naik sedikit ke area header; garis akhirnya adalah kartu "Anggota terdaftar",
+   sejajar dengan baris "Populer" di kolom kiri. Foto turun sampai kartu: 3/4 tinggi kartu berada di dalam foto,
+   tulisan di foto dinaikkan agar tidak tertutup kartu. */
+@media (min-width: 801px) {
+    .hero { align-items: stretch; min-height: 0; padding-top: 0; padding-bottom: 56px; }
+    .hero .hero-copy { align-self: end; padding-top: 24px; padding-bottom: 0; }
+    .hero .hero-visual { align-self: stretch; min-height: 0; }
+    .hero .hero-image-wrap { top: -26px; bottom: 14px; height: auto; }
+    .hero .image-caption { bottom: 74px; }
+    .hero .floating-card.card-bottom { bottom: 0; }
+    .hero .floating-card.card-top { top: 42px; }
+}
+@media (max-width: 800px) {
+    .hero-visual { min-height: 580px; }
+    .hero-image-wrap { height: 560px; }
+}
+@media (max-width: 560px) {
+    .hero-visual { min-height: 500px; }
+    .hero-image-wrap { height: 480px; }
+}
+/* Kartu pembaca menggantung di bawah foto supaya tidak menutupi tulisan */
+@media (min-width: 561px) { .floating-card.card-bottom { bottom: -46px; } }
+
+/* Sampul asli di kartu buku */
+.showcase-cover img { width: min(150px, 72%); aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px 8px 8px 3px; box-shadow: 0 18px 30px #10152138; background: #fff; }
+
+/* Sampul buatan (katalog tanpa gambar) dan animasi hover: buku mendongak */
+.book-cover-md, .showcase-cover img { transform-origin: 50% 100%; transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .35s; }
+.showcase-card:hover .book-cover-md,
+.showcase-card:hover .showcase-cover img { transform: perspective(900px) rotateX(9deg) rotate(-3deg) translateY(-12px); box-shadow: 0 30px 36px #10152140; }
+.book-cover-light { box-shadow: 0 18px 30px #10152124, inset 0 0 0 1px #d6dbe6; }
+.book-cover-light .book-cover-title { color: inherit; }
+.book-cover-light .book-cover-spine { background: #00000026; }
+@media (prefers-reduced-motion: reduce) { .book-cover-md, .showcase-cover img { transition: none; } .showcase-card:hover .book-cover-md, .showcase-card:hover .showcase-cover img { transform: none; } }
+
+/* Navbar melayang saat halaman digulir */
+.site-header { position: sticky; top: 0; z-index: 50; }
+.site-header::before { content: ""; position: absolute; z-index: -1; inset: 10px max(8px, calc(clamp(24px, 5vw, 76px) - 28px)); border-radius: 22px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; }
+.site-header::before { transform: translateY(-6px); }
+.site-header.is-stuck::before { opacity: 1; transform: none; }
+@media (max-width: 560px) { .site-header::before { inset: 8px; border-radius: 16px; } }
+
+/* === Liquid glass navbar (hapus blok ini sampai "akhir liquid glass" untuk kembali ke gaya putih biasa) === */
+.site-header::before {
+    background: radial-gradient(120% 140% at 12% -20%, #ffffff80 0%, #ffffff00 55%), linear-gradient(135deg, #ffffffcc 0%, #ffffff80 45%, #ffffffb3 100%);
+    -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
+    backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
+    box-shadow: inset 0 1px 0 #fffffff2, inset 0 -1px 0 #ffffff59, inset 0 0 0 1px #ffffff73, 0 12px 32px #1621332e, 0 2px 6px #1621331a;
+}
+/* Catatan: jangan menambah lapisan pseudo kedua (::after) atau mix-blend-mode di navbar, keduanya mematikan blur di belakang kaca. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .site-header::before { background: #fffffff0; } }
+/* === akhir liquid glass === */
+
+/* Teks brand di navbar: "Perpustakaan" lebih besar dan ada jarak antar baris */
+.brand-copy { gap: 4px; line-height: 1.2; }
+.brand-copy strong { font-size: 19px; line-height: 1.15; }
+.brand-copy span { line-height: 1.3; }
+@media (max-width: 560px) { .brand-copy strong { font-size: 16px; } }
+
+/* Perbaikan keterbacaan (hasil uji T17): abu-abu teks sekunder dipekatkan agar lulus kontras 4,5:1.
+   Warna lama dari desain (#747C8C) hanya 4,0 sampai 4,2:1 pada teks kecil. */
+:root { --muted: #5b6272; }
+.catalog-search input::placeholder { color: #687081; }
+
+/* Penanda posisi saat kolom pencarian dipilih dengan keyboard (hasil uji T16). */
+.catalog-search:focus-within { outline: 2px solid #0f3fb4; outline-offset: 3px; }

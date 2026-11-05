@@ -45,6 +45,9 @@ class Home extends \Base\Controllers\BaseController
         } else {
             $pageData = [
                 'featured_books' => $this->getFeaturedBooks(),
+                'popular_books'  => $this->getPopularBooks(),
+                'total_catalogs' => $this->getTotalCatalogs(),
+                'subjects'       => $this->getTopSubjects(),
                 'statistics'     => $this->getLibraryStatistics(),
                 'news'           => $this->getNews(),
                 'banners'        => $this->getBannersData(),
@@ -74,6 +77,57 @@ class Home extends \Base\Controllers\BaseController
                 ->getResult();
         } catch (\Exception $e) {
             return [];
+        }
+    }
+
+    /**
+     * Buku yang paling sering dipinjam, untuk tab "Populer".
+     */
+    private function getPopularBooks()
+    {
+        try {
+            return $this->db->table('collectionloanitems')
+                ->select('catalogs.ID, catalogs.Title, catalogs.Author, catalogs.Publisher, catalogs.Subject, catalogs.CoverURL, catalogs.PublishYear, COUNT(collectionloanitems.ID) AS Loans')
+                ->join('collections', 'collections.ID = collectionloanitems.Collection_id')
+                ->join('catalogs', 'catalogs.ID = collections.Catalog_id')
+                ->where('catalogs.IsOPAC', 1)
+                ->groupBy('catalogs.ID')
+                ->orderBy('Loans', 'DESC')
+                ->limit(4)
+                ->get()
+                ->getResult();
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Subjek terbanyak (subjek pertama tiap katalog), untuk kisi subjek di beranda.
+     */
+    private function getTopSubjects()
+    {
+        try {
+            return $this->db->table('catalogs')
+                ->select("TRIM(SUBSTRING_INDEX(Subject, ';', 1)) AS Nama, COUNT(*) AS Jumlah", false)
+                ->where('IsOPAC', 1)
+                ->where("Subject <> ''", null, false)
+                ->groupBy('Nama')
+                ->having("Nama <> ''", null, false)
+                ->orderBy('Jumlah', 'DESC')
+                ->limit(8)
+                ->get()
+                ->getResult();
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    private function getTotalCatalogs()
+    {
+        try {
+            return $this->db->table('catalogs')->where('IsOPAC', 1)->countAllResults();
+        } catch (\Exception $e) {
+            return 0;
         }
     }
 
@@ -263,17 +317,26 @@ class Home extends \Base\Controllers\BaseController
 
         try {
             $books = $this->katalogModel
-                ->select('ID, Title, Author, Publisher, ControlNumber')
+                ->select('ID, Title, Author, Publisher, ControlNumber, PublishYear')
+                ->where('IsOPAC', 1)
                 ->groupStart()
                 ->like('Title', $keyword)
                 ->orLike('Author', $keyword)
                 ->orLike('Publisher', $keyword)
                 ->groupEnd()
-                ->limit(10)
+                ->limit(4)
                 ->findAll();
 
             return $this->response->setJSON([
                 'status' => 'success',
+                'total' => $this->katalogModel
+                    ->where('IsOPAC', 1)
+                    ->groupStart()
+                    ->like('Title', $keyword)
+                    ->orLike('Author', $keyword)
+                    ->orLike('Publisher', $keyword)
+                    ->groupEnd()
+                    ->countAllResults(),
                 'data' => $books
             ]);
         } catch (\Exception $e) {

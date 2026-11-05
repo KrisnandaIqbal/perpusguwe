@@ -1,473 +1,439 @@
-<?= $this->extend('App\Views\layout\opac\layout'); ?>
+<?php
+// Beranda: tampilan dari desain Figma "Proto 1" (landing page perpustakaan).
+// CSS: public/assets/home/landing.css, JS: public/assets/home/landing.js
+$db = db_connect();
+$param = static function (string $name, string $default = '') use ($db) {
+    $row = $db->table('settingparameters')->where('Name', $name)->get()->getRow();
+    return ($row && $row->Value !== '') ? $row->Value : $default;
+};
+$namaPerpustakaan = $param('NamaPerpustakaan', 'Perpustakaan Kemnaker RI');
+// Alamat dan email tetap (bukan dari pengaturan), supaya footer selalu menampilkan data Kemnaker RI.
+$alamat           = 'Jl. Jenderal Gatot Subroto Kav. 51, RT.5/RW.4, Kuningan Timur, Setiabudi, Jakarta Selatan 12950 · Gedung B';
 
-<?= $this->section('style') ?>
-<style>
-    /* Hero Section (Murni Gambar) */
-    /* Menjadi: */
-    .hero-section {
-        margin-top: 76px;
-        position: relative;
-        overflow: hidden;
-        background-color: #e2e8f0;
+$surel            = 'perpustakaan@kemnaker.go.id';
+
+// Footer: jam layanan, akun sosial, dan direktori. Ganti di sini bila ada perubahan.
+$jamLayanan = [['Senin – Kamis', '07.30 – 16.00 WIB'], ['Jumat', '07.30 – 16.30 WIB']];
+$sosial = [
+    'instagram' => ['Instagram', 'https://www.instagram.com/kemnaker/'],
+    'facebook'  => ['Facebook', 'https://www.facebook.com/KemnakerRI'],
+    'x'         => ['X', 'https://x.com/KemnakerRI'],
+    'youtube'   => ['YouTube', 'https://www.youtube.com/@KemnakerRI'],
+];
+$direktori = [
+    ['Kementerian Ketenagakerjaan', 'https://kemnaker.go.id'],
+    ['Perpustakaan Nasional RI', 'https://www.perpusnas.go.id'],
+    ['Satu Data Ketenagakerjaan', 'https://satudata.kemnaker.go.id'],
+    ['SIAPkerja', 'https://siapkerja.kemnaker.go.id'],
+    ['JDIH Kemnaker', 'https://jdih.kemnaker.go.id'],
+];
+
+$assets = base_url('assets/home');
+
+$icons = [
+    'search'   => '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/>',
+    'up-right' => '<path d="M7 17 17 7M9 7h8v8"/>',
+    'right'    => '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    'menu'     => '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    'close'    => '<path d="m6 6 12 12M18 6 6 18"/>',
+    'chevron'  => '<path d="m6 9 6 6 6-6"/>',
+    'home'     => '<path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19Z"/>',
+    'grid'     => '<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>',
+    'tamu'     => '<path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6Z"/><path d="M6 3.5v17M9.5 8h5.5M9.5 11.5h5.5M9.5 15h3"/>',
+    'registrasi' => '<circle cx="9.5" cy="8" r="3.5"/><path d="M3.5 19.5c.6-3.3 3-5.3 6-5.3s5.4 2 6 5.3M18.5 8v6M15.5 11h6"/>',
+    'pinjam'   => '<path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M8 8.5v7M11 8.5v7M13.5 8.5v7M16 8.5v7M3 12h18"/>',
+    'kembali'  => '<path d="M3.5 13.5 6 6h12l2.5 7.5V18a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2Z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5M12 3v7M9.5 7.5 12 10l2.5-2.5"/>',
+    'baca'     => '<path d="M3 10.5h18M5 10.5V20M19 10.5V20M8 10.5V7.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3"/><path d="M9.5 4h5"/>',
+    'isbn'     => '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M7 8v6M9.5 8v6M12 8v6M15.5 8v6M17.5 8v6M7 16.5h10.5"/>',
+    'pin'      => '<path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/>',
+    'mail'     => '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4.5 7 7.5 6 7.5-6"/>',
+    'clock'    => '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    'external' => '<path d="M7 17 17 7M9 7h8v8"/>',
+    'instagram' => '<rect x="4" y="4" width="16" height="16" rx="4.5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.8" cy="7.2" r=".6"/>',
+    'facebook' => '<path d="M14 8.5h2.5V5H14c-2.2 0-3.5 1.5-3.5 3.6V11H8v3.5h2.5V20H14v-5.5h2.4L17 11h-3V9c0-.3.3-.5.6-.5Z"/>',
+    'x'        => '<path d="m5 5 14 14M19 5 5 19"/>',
+    'youtube'  => '<rect x="3.5" y="6.5" width="17" height="11" rx="3"/><path d="m10.5 9.5 4 2.5-4 2.5Z"/>',
+    'sirkulasi' => '<path d="M4.5 9.5A8 8 0 0 1 19 7.5M19.5 14.5A8 8 0 0 1 5 16.5"/><path d="M19.5 3.5v4.5H15M4.5 20.5V16H9"/>',
+];
+$icon = static function (string $name, string $class = '') use ($icons): string {
+    return '<svg class="' . $class . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $icons[$name] . '</svg>';
+};
+$iconIsiPath = [
+    'instagram' => 'M12 7.3a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm6-7.9a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0ZM21.1 8c-.1-1.5-.4-2.8-1.5-3.9S17.5 2.7 16 2.6c-1.5-.1-6.1-.1-7.7 0-1.5.1-2.8.4-3.9 1.5S2.9 6.5 2.8 8c-.1 1.6-.1 6.2 0 7.8.1 1.5.4 2.8 1.5 3.9s2.4 1.4 3.9 1.5c1.6.1 6.1.1 7.7 0 1.5-.1 2.8-.4 3.9-1.5s1.4-2.4 1.5-3.9c.1-1.6.1-6.2 0-7.8Zm-2 9.5a3.1 3.1 0 0 1-1.8 1.8c-1.2.5-4.2.4-5.5.4s-4.3.1-5.5-.4a3.1 3.1 0 0 1-1.8-1.8c-.5-1.2-.4-4.2-.4-5.5s-.1-4.3.4-5.5a3.1 3.1 0 0 1 1.8-1.8c1.2-.5 4.2-.4 5.5-.4s4.3-.1 5.5.4a3.1 3.1 0 0 1 1.8 1.8c.5 1.2.4 4.2.4 5.5s.1 4.3-.4 5.5Z',
+    'facebook'  => 'M13.4 21v-7.6h2.6l.4-3h-3V8.5c0-.9.2-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.7v3h2.6V21h3.1Z',
+    'x'         => 'M17.2 3.5h2.9l-6.3 7.2 7.4 9.8h-5.8l-4.5-5.9-5.2 5.9H2.8l6.7-7.7-7.1-9.3h5.9l4.1 5.4 4.8-5.4Zm-1 15.3h1.6L7.5 5.1H5.8l10.4 13.7Z',
+    'youtube'   => 'M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4a2.5 2.5 0 0 0-1.8 1.8C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8c.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8ZM10 15V9l5.2 3-5.2 3Z',
+];
+$iconIsi = static function (string $name) use ($iconIsiPath): string {
+    return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' . $iconIsiPath[$name] . '"/></svg>';
+};
+$star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z"/></svg>';
+
+$keanggotaanOnline = env('Is_keanggotaan_online') == 1;
+
+// Layanan: url ke halaman yang sudah ada di aplikasi ini.
+$services = [
+    'registrasi' => ['title' => 'Pendaftaran Anggota', 'short' => 'Daftar anggota secara mandiri', 'url' => base_url('home/pendaftaran_online'), 'keywords' => 'daftar registrasi anggota member kartu', 'enabled' => $keanggotaanOnline],
+    'pinjam'     => ['title' => 'Peminjaman', 'short' => 'Pindai barcode, langsung pinjam', 'url' => base_url('peminjaman-mandiri'), 'keywords' => 'pinjam peminjaman sirkulasi scan barcode', 'enabled' => true],
+    'kembali'    => ['title' => 'Pengembalian', 'short' => 'Kembalikan buku lewat drop-box', 'url' => base_url('pengembalian-mandiri'), 'keywords' => 'kembali pengembalian sirkulasi drop box', 'enabled' => true],
+    'baca'       => ['title' => 'Baca di Tempat', 'short' => 'Reservasi meja di ruang baca', 'url' => base_url('baca-ditempat'), 'keywords' => 'baca tempat ruang meja reservasi', 'enabled' => true],
+    'isbn'       => ['title' => 'Layanan ISBN', 'short' => 'Ajukan ISBN publikasi Anda', 'url' => base_url('home/layanan-isbn'), 'keywords' => 'isbn perpusnas terbit publikasi penerbit', 'enabled' => true],
+    'tamu'       => ['title' => 'Buku Tamu', 'short' => 'Catat kunjungan Anda', 'url' => base_url('buku-tamu'), 'keywords' => 'tamu kunjungan pengunjung', 'enabled' => true],
+    'sirkulasi'  => ['title' => 'Tata Cara Sirkulasi', 'short' => 'Panduan pinjam & kembali buku', 'url' => base_url('home/tata-cara-sirkulasi'), 'keywords' => 'sirkulasi tata cara aturan panduan pinjam kembali denda perpanjang', 'enabled' => true],
+];
+$layananMenu   = ['registrasi', 'baca', 'isbn', 'sirkulasi'];
+$shortcutOrder = ['registrasi', 'pinjam', 'kembali', 'baca', 'isbn', 'tamu'];
+$services = array_filter($services, static fn($s) => $s['enabled']);
+$layananMenu   = array_values(array_filter($layananMenu, static fn($id) => isset($services[$id])));
+$shortcutOrder = array_values(array_filter($shortcutOrder, static fn($id) => isset($services[$id])));
+
+$jsServices = [];
+foreach ($shortcutOrder as $id) {
+    $jsServices[] = ['id' => $id, 'title' => $services[$id]['title'], 'short' => $services[$id]['short'], 'url' => $services[$id]['url'], 'keywords' => $services[$id]['keywords'], 'icon' => $icon($id)];
+}
+
+// Sampul buku buatan sendiri untuk katalog tanpa gambar sampul.
+// Warna mengikuti unit penerbit: [latar, aksen]. Buku umum dapat warna acak (tetap per buku) dari $warnaAcak.
+$warnaDivisi = [
+    ['pola' => '/barenbang/i',                                         'warna' => ['#ea580c', '#ffe1c9'], 'terang' => false],
+    ['pola' => '/binalavotas/i',                                       'warna' => ['#1d4ed8', '#cfe0ff'], 'terang' => false],
+    ['pola' => '/\birjen\b|inspektorat\s+jenderal/i',                  'warna' => ['#eaff00', '#2f3300'], 'terang' => true],
+    ['pola' => '/\bsekjen\b|\bsetjen\b|sekretariat\s+jenderal/i',      'warna' => ['#a7f0b4', '#14532d'], 'terang' => true],
+    ['pola' => '/\bphi\b|\bjsk\b|hubungan\s+industrial\s+dan\s+jaminan/i', 'warna' => ['#ffffff', '#1f2a44'], 'terang' => true],
+    ['pola' => '/binapenta/i',                                         'warna' => ['#ff8fc1', '#5c0a33'], 'terang' => true],
+    ['pola' => '/binwasnaker/i',                                       'warna' => ['#d91f26', '#ffd9d9'], 'terang' => false],
+];
+$warnaAcak = [
+    ['#6c3fd1', '#e2d6ff'], ['#0f766e', '#ccfbf1'], ['#101521', '#f2b544'], ['#7c4a2d', '#f6dcc4'],
+    ['#7e1f6b', '#f7d3ee'], ['#1f6f5c', '#c9f0de'], ['#3a3f4b', '#e6e8ee'], ['#4b2e83', '#d9ccff'],
+];
+$punyaSampul = static fn($book) => !empty($book->CoverURL) && is_file(FCPATH . 'uploads/katalog/' . $book->CoverURL);
+$gayaSampul = static function ($book) use ($warnaDivisi, $warnaAcak): array {
+    $teks = ($book->Author ?? '') . ' ' . ($book->Publisher ?? '');
+    foreach ($warnaDivisi as $divisi) {
+        if (preg_match($divisi['pola'], $teks)) {
+            return ['warna' => $divisi['warna'], 'terang' => $divisi['terang']];
+        }
     }
+    return ['warna' => $warnaAcak[crc32((string) $book->ID) % count($warnaAcak)], 'terang' => false];
+};
 
-    .hero-bg {
-        width: 100%;
-        height: auto;
-        display: block;
-        object-fit: contain;
-    }
+$opacUrl      = base_url('opac');
+$featured     = array_slice($featured_books ?? [], 0, 4);
+$popular      = $popular_books ?? [];
+$newest       = $featured[0] ?? null;
+$coverFor     = static fn($book) => get_catalog_thumb_url($book->CoverURL ?: '', 300, 450);
+$defaultCover = base_url('assets/img/default-cover.webp');
+$totalMembers = (int) ($statistics['total_members'] ?? 0);
+$totalCatalogs = (int) ($total_catalogs ?? 0);
+$subjects      = $subjects ?? [];
+?>
+<!doctype html>
+<html lang="id">
 
-    /* Overlapping Search Box */
-    .search-overlap {
-        margin-top: -40px;
-        /* Menarik kotak pencarian ke atas agar menimpa gambar banner */
-        position: relative;
-        z-index: 10;
-    }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= esc($title ?? 'Beranda') ?> | <?= esc($namaPerpustakaan) ?></title>
+    <link rel="icon" href="<?= base_url('assets/img/logo-inlislite-icon.webp') ?>">
+    <link rel="stylesheet" href="<?= $assets ?>/landing.css?v=20">
+    <link rel="stylesheet" href="<?= $assets ?>/landing-extra.css?v=39">
+</head>
 
-    .search-input-group i {
-        position: absolute;
-        left: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--slate-500);
-        z-index: 5;
-    }
+<body>
+    <?= $this->include('App\Views\layout\partial\loader'); ?>
+    <main class="page-shell">
+        <div class="site-frame">
 
-    .search-input-group input {
-        padding-left: 55px;
-        border-radius: 1rem !important;
-        background-color: var(--slate-50);
-        border: 1px solid var(--slate-100);
-        font-size: 1rem;
-    }
-
-    .search-input-group input:focus {
-        background-color: white;
-        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
-        border-color: var(--brand-500);
-    }
-
-    /* Cards & Hover Effects */
-    .hover-card {
-        transition: all 0.3s ease;
-        border: 1px solid var(--slate-100);
-    }
-
-    .hover-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1);
-        border-color: var(--brand-100);
-    }
-
-    /* Image Utils */
-    .book-cover {
-        height: 240px;
-        object-fit: contain;
-        width: 100%;
-        background-color: #e2e8f0;
-    }
-
-    .news-cover {
-        height: 100px;
-        object-fit: cover;
-        width: 100%;
-        border-radius: 0.75rem;
-    }
-
-    .news-main-cover {
-        height: 380px;
-        object-fit: cover;
-        width: 100%;
-    }
-
-    /* Custom Title Color */
-    .section-title {
-        color: #1b3878 !important;
-    }
-</style>
-<?= $this->endSection() ?>
-
-<?= $this->section('content') ?>
-
-<section class="hero-section">
-    <?php if (!empty($banners)): ?>
-        <div id="heroBannerCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="4000">
-            <div class="carousel-inner h-100">
-                <?php foreach ($banners as $i => $b): ?>
-                    <div class="carousel-item h-100 <?= $i === 0 ? 'active' : '' ?>">
-                        <img src="<?= base_url('uploads/banner/' . esc($b->file_cover)) ?>"
-                            alt="Banner <?= $i + 1 ?>"
-                            class="hero-bg">
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <?php if (count($banners) > 1): ?>
-                <button class="carousel-control-prev" type="button" data-bs-target="#heroBannerCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#heroBannerCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
-                <div class="carousel-indicators">
-                    <?php foreach ($banners as $i => $b): ?>
-                        <button type="button" data-bs-target="#heroBannerCarousel" data-bs-slide-to="<?= $i ?>" <?= $i === 0 ? 'class="active"' : '' ?>></button>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-    <?php else: ?>
-        <img src="<?= base_url('assets/img/default-banner.jpg') ?>" alt="Banner Perpustakaan" class="hero-bg">
-    <?php endif; ?>
-</section>
-
-<div class="container search-overlap">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card rounded-2xl shadow-soft border-0 p-2 bg-white">
-                <div class="card-body p-3">
-                    <form id="searchForm" action="<?= base_url('opac') ?>" method="GET" class="row g-2">
-                        <div class="col-md-9 position-relative search-input-group">
-                            <i class="fa-solid fa-search"></i>
-                            <input type="text" id="searchInput" name="search" class="form-control form-control-lg py-3" placeholder="Cari judul buku, penulis, atau penerbit..." autocomplete="off">
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-brand w-100 h-100 rounded-xl fw-bold" style="font-size: 1.05rem;">
-                                Cari Buku
-                            </button>
-                        </div>
-                    </form>
-
-                    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mt-3 pt-3 border-top">
-                        <span class="text-secondary small fw-semibold me-1">
-                            <i class="fa-solid fa-bolt text-warning me-1"></i> Layanan Cepat:
-                        </span>
-                        <?php if (env('Is_keanggotaan_online') == 1): ?>
-                            <a href="<?= base_url('home/pendaftaran-online') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1">
-                                <i class="fa-solid fa-id-card"></i>
-                                <span>Pendaftaran Anggota</span>
-                            </a>
-                        <?php endif; ?>
-                        <a href="<?= base_url('buku-tamu') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1">
-                            <i class="fa-solid fa-address-book"></i>
-                            <span>Buku Tamu</span>
-                        </a>
-                        <a href="<?= base_url('opac/browse') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1">
-                            <i class="fa-solid fa-compass"></i>
-                            <span>Jelajah Koleksi</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<section class="py-5 mt-3">
-    <div class="container">
-        <div class="row text-center g-4 justify-content-center">
-
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm rounded-2xl h-100 hover-card bg-white p-3 p-md-4">
-                    <div class="card-body p-0 d-flex flex-column align-items-center justify-content-center">
-                        <i class="fa-solid fa-book-bookmark fa-2x mb-3" style="color: #1b3878;"></i>
-                        <h2 class="fw-bolder text-brand mb-2 stat-number display-6"><?= $statistics['total_books'] ?? 0 ?></h2>
-                        <p class="text-dark fw-bold text-uppercase mb-0" style="letter-spacing: 1px; font-size: 0.85rem;">Koleksi Buku</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm rounded-2xl h-100 hover-card bg-white p-3 p-md-4">
-                    <div class="card-body p-0 d-flex flex-column align-items-center justify-content-center">
-                        <i class="fa-solid fa-users fa-2x mb-3" style="color: #1b3878;"></i>
-                        <h2 class="fw-bolder text-brand mb-2 stat-number display-6"><?= $statistics['total_members'] ?? 0 ?></h2>
-                        <p class="text-dark fw-bold text-uppercase mb-0" style="letter-spacing: 1px; font-size: 0.85rem;">Anggota Aktif</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm rounded-2xl h-100 hover-card bg-white p-3 p-md-4">
-                    <div class="card-body p-0 d-flex flex-column align-items-center justify-content-center">
-                        <i class="fa-solid fa-hand-holding-hand fa-2x mb-3" style="color: #1b3878;"></i>
-                        <h2 class="fw-bolder text-brand mb-2 stat-number display-6"><?= $statistics['books_borrowed'] ?? 0 ?></h2>
-                        <p class="text-dark fw-bold text-uppercase mb-0" style="letter-spacing: 1px; font-size: 0.85rem;">Buku Dipinjam</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm rounded-2xl h-100 hover-card bg-white p-3 p-md-4">
-                    <div class="card-body p-0 d-flex flex-column align-items-center justify-content-center">
-                        <i class="fa-solid fa-person-walking fa-2x mb-3" style="color: #1b3878;"></i>
-                        <h2 class="fw-bolder text-brand mb-2 stat-number display-6"><?= $statistics['visitors_today'] ?? 0 ?></h2>
-                        <p class="text-dark fw-bold text-uppercase mb-0" style="letter-spacing: 1px; font-size: 0.85rem;">Pengunjung Hari Ini</p>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-<?php if (env('Is_keanggotaan_online') == 1): ?>
-<!-- Banner Pendaftaran Anggota Online -->
-<section class="pb-2">
-    <div class="container">
-        <div class="card border-0 rounded-2xl shadow-soft overflow-hidden position-relative" style="background: linear-gradient(135deg, #1b3878 0%, #2563eb 100%);">
-            <div class="position-absolute top-0 start-0 w-100 h-100 d-none d-lg-block opacity-10" style="pointer-events: none; background: radial-gradient(circle at 85% 20%, #ffffff 0, transparent 40%), radial-gradient(circle at 10% 90%, #93c5fd 0, transparent 35%);"></div>
-            <div class="card-body p-4 p-md-5 text-white position-relative z-1 text-center">
-                <div class="d-flex justify-content-center mb-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);">
-                        <i class="fa-solid fa-id-card fa-2x text-white"></i>
-                    </div>
-                </div>
-                <span class="badge rounded-pill fw-semibold px-3 py-2 mb-3" style="font-size: 0.75rem; background-color: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3); color: #dbeafe;">
-                    <i class="fa-solid fa-star me-1"></i>Pendaftaran Online
-                </span>
-                <h4 class="fw-bold mb-2 text-white" style="font-size: 1.5rem;">Belum Menjadi Anggota Perpustakaan?</h4>
-                <p class="mx-auto mb-4" style="line-height: 1.6; max-width: 640px; color: #dbeafe;">
-                    Daftarkan diri Anda secara online untuk menikmati kemudahan peminjaman buku, kartu anggota digital, dan akses fasilitas perpustakaan secara mandiri.
-                </p>
-                <a href="<?= base_url('home/pendaftaran-online') ?>" class="btn btn-light rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2" style="color: #1b3878;">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <span>Daftar Anggota Sekarang</span>
-                    <i class="fa-solid fa-arrow-right small"></i>
+            <header class="site-header">
+                <a href="#beranda" class="brand" aria-label="<?= esc($namaPerpustakaan) ?> - Beranda">
+                    <img class="brand-mark" src="<?= $assets ?>/logo-kemnaker.png" alt="" width="40" height="40">
+                    <span class="brand-copy">
+                        <strong>Perpustakaan</strong>
+                        <span>Kementerian Ketenagakerjaan RI</span>
+                    </span>
                 </a>
-            </div>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
 
-<section class="py-5 bg-light" id="koleksi">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-end mb-4">
-            <div>
-                <h3 class="fw-bold mb-1 section-title">Koleksi Terbaru</h3>
-                <p class="text-secondary mb-0">Buku-buku yang baru saja ditambahkan.</p>
-            </div>
-        </div>
+                <nav class="main-nav" id="main-nav" aria-label="Navigasi utama">
+                    <a href="#beranda" class="active"><?= $icon('home', 'nav-icon') ?>Beranda</a>
+                    <a href="<?= $opacUrl ?>"><?= $icon('search', 'nav-icon') ?>Cari Koleksi</a>
+                    <a href="<?= $services['tamu']['url'] ?>" class="nav-link"><?= $icon('tamu', 'nav-icon') ?>Buku Tamu</a>
 
-        <div class="row g-4">
-            <?php if (!empty($featured_books)): ?>
-                <?php foreach (array_slice($featured_books, 0, 5) as $i => $book): ?>
-                    <?php
-                    $defaultCover = base_url('assets/img/default-cover.webp');
-                    $thumbUrl     = get_catalog_thumb_url($book->CoverURL ?: '', 200, 340);
-                    ?>
-                    <div class="col-6 col-md-4 col-lg-2-4" style="width: 20%; min-width: 160px;">
-                        <div class="card h-100 border-0 shadow-sm hover-card rounded-xl overflow-hidden bg-white">
-                            <img src="<?= $thumbUrl ?>"
-                                 class="card-img-top book-cover"
-                                 alt="<?= esc($book->Title) ?>"
-                                 width="200"
-                                 height="340"
-                                 <?= $i > 0 ? 'loading="lazy"' : 'fetchpriority="high"' ?>
-                                 onerror="this.onerror=null; this.src='<?= $defaultCover ?>';">
-                            <div class="card-body d-flex flex-column p-3">
-                                <h6 class="card-title fw-bold fs-6 mb-1 line-clamp-2" title="<?= esc($book->Title) ?>"><?= esc($book->Title) ?></h6>
-                                <p class="card-text text-secondary small mb-3 text-truncate" title="<?= esc($book->Author) ?>">
-                                    <?= esc($book->Author ?: 'Anonim') ?>
-                                </p>
-                                <a href="<?= base_url('opac/detail/' . $book->ID) ?>" class="btn btn-outline-primary btn-sm mt-auto fw-semibold w-100 rounded-lg">Lihat Detail</a>
+                    <div class="nav-dropdown" id="nav-dropdown">
+                        <button type="button" class="nav-link dropdown-trigger" aria-expanded="false" aria-controls="layanan-menu">
+                            <?= $icon('grid', 'nav-icon') ?>Layanan<?= $icon('chevron', 'chevron') ?>
+                        </button>
+                        <div class="dropdown-panel" id="layanan-menu">
+                            <span class="dropdown-title">Layanan perpustakaan</span>
+                            <ul>
+                                <?php foreach ($layananMenu as $id) : $s = $services[$id]; ?>
+                                    <li>
+                                        <a class="dropdown-item" href="<?= $s['url'] ?>">
+                                            <span class="dropdown-icon"><?= $icon($id) ?></span>
+                                            <span class="dropdown-copy">
+                                                <strong><?= esc($s['title']) ?></strong>
+                                                <small><?= esc($s['short']) ?></small>
+                                            </span>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="header-actions">
+                    <button class="menu-button" id="menu-button" type="button" aria-label="Buka menu" aria-expanded="false">
+                        <span data-open><?= $icon('menu') ?></span>
+                        <span data-close hidden><?= $icon('close') ?></span>
+                    </button>
+                </div>
+            </header>
+
+            <section class="hero" id="beranda">
+                <div class="hero-copy">
+                    <div class="eyebrow"><span></span> Pusat literasi ketenagakerjaan</div>
+                    <h1>
+                        Pengetahuan Untuk<br>
+                        <span>Kemajuan Pekerja</span><br>
+                        Indonesia.
+                    </h1>
+                    <p>Cari buku, regulasi, riset, hingga layanan perpustakaan dalam satu kolom pencarian.</p>
+
+                    <div class="omnisearch" id="omnisearch">
+                        <form class="catalog-search" action="<?= $opacUrl ?>" method="get" role="search">
+                            <?= $icon('search', 'search-icon') ?>
+                            <label class="sr-only" for="omnisearch-input">Cari buku, penulis, topik, atau layanan</label>
+                            <input id="omnisearch-input" name="search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="omni-results" placeholder="Cari judul, penulis, topik, atau layanan">
+                            <button type="submit" aria-label="Cari di katalog"><?= $icon('up-right') ?></button>
+                        </form>
+                        <ul class="omni-results" id="omni-results" role="listbox" hidden></ul>
+
+                        <div class="omni-suggestions">
+                            <span>Populer:</span>
+                            <?php foreach (['K3', 'Hukum ketenagakerjaan', 'SKKNI', 'Statistik', 'ISBN'] as $item) : ?>
+                                <button type="button" data-suggest="<?= esc($item) ?>"><?= esc($item) ?></button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-visual" aria-label="Interior perpustakaan modern">
+                    <div class="visual-orbit orbit-one"></div>
+                    <div class="visual-orbit orbit-two"></div>
+                    <div class="hero-image-wrap">
+                        <img src="<?= $assets ?>/library-hero.jpg?v=2" alt="Ruang baca perpustakaan dengan rak buku kayu, bangku, dan meja baca">
+                        <div class="image-shade"></div>
+                        <div class="image-caption">
+                            <span>01 / Ruang Baca</span>
+                            <strong>Tempat ide bertemu dan bertumbuh.</strong>
+                        </div>
+                    </div>
+
+                    <?php if ($newest) : ?>
+                        <a class="floating-card card-top" href="<?= base_url('opac/detail/' . $newest->ID) ?>" style="text-decoration:none;color:inherit">
+                            <span class="mini-icon">Aa</span>
+                            <div>
+                                <small>Koleksi baru</small>
+                                <strong><?= esc(mb_strimwidth($newest->Title, 0, 28, '…')) ?></strong>
+                            </div>
+                        </a>
+                    <?php endif; ?>
+                    <?php if ($totalMembers > 0) : ?>
+                        <div class="floating-card card-bottom">
+                            <div class="reader-avatars"><span>A</span><span>D</span><span>R</span></div>
+                            <div>
+                                <strong><?= number_format($totalMembers, 0, ',', '.') ?></strong>
+                                <small>Anggota terdaftar</small>
                             </div>
                         </div>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <section class="shortcuts" id="layanan" aria-labelledby="shortcut-title">
+                <div class="shortcuts-head">
+                    <h2 id="shortcut-title">Akses cepat layanan</h2>
+                    <span><?= count($shortcutOrder) ?> layanan · langsung dari halaman ini</span>
+                </div>
+                <div class="shortcut-grid">
+                    <?php foreach ($shortcutOrder as $index => $id) : $s = $services[$id]; ?>
+                        <a href="<?= $s['url'] ?>" class="shortcut-card">
+                            <span class="shortcut-top">
+                                <span class="shortcut-icon"><?= $icon($id) ?></span>
+                                <span class="shortcut-number"><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                            </span>
+                            <strong><?= esc($s['title']) ?></strong>
+                            <small><?= esc($s['short']) ?></small>
+                            <span class="shortcut-go">Buka <?= $icon('right') ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+
+            <section class="showcase" id="unggulan">
+                <div class="section-head">
+                    <div>
+                        <div class="section-kicker"><span></span> Pilihan pustakawan</div>
+                        <h2>Buku unggulan &amp; populer.</h2>
+                    </div>
+                    <div class="tab-switch" role="tablist" aria-label="Kategori showcase">
+                        <button type="button" role="tab" aria-selected="true" class="is-active" data-tab="terbaru">Unggulan</button>
+                        <button type="button" role="tab" aria-selected="false" data-tab="populer">Populer</button>
+                    </div>
+                </div>
+
+                <?php
+                $panels = ['terbaru' => $featured, 'populer' => $popular];
+                foreach ($panels as $key => $list) : ?>
+                    <div class="showcase-grid" role="tabpanel" data-panel="<?= $key ?>" <?= $key === 'terbaru' ? '' : 'hidden' ?>>
+                        <?php if (empty($list)) : ?>
+                            <p class="showcase-empty">Belum ada data untuk ditampilkan.</p>
+                        <?php endif; ?>
+                        <?php foreach ($list as $index => $book) : ?>
+                            <article class="showcase-card">
+                                <div class="showcase-cover">
+                                    <span class="showcase-rank">#<?= $index + 1 ?></span>
+                                    <?php if ($punyaSampul($book)) : ?>
+                                        <img src="<?= $coverFor($book) ?>" alt="" loading="lazy" onerror="this.onerror=null;this.src='<?= $defaultCover ?>'">
+                                    <?php else :
+                                        $gaya     = $gayaSampul($book);
+                                        $penulis  = trim((string) $book->Author, " ;,\t\n");
+                                        $kategori = trim(explode(';', (string) ($book->Subject ?? ''))[0], " ,\t\n");
+                                    ?>
+                                        <div class="book-cover book-cover-md<?= $gaya['terang'] ? ' book-cover-light' : '' ?>" style="background:<?= $gaya['warna'][0] ?>;color:<?= $gaya['warna'][1] ?>" aria-hidden="true">
+                                            <span class="book-cover-spine"></span>
+                                            <span class="book-cover-category"><?= esc(mb_strimwidth($kategori ?: 'Koleksi', 0, 26, '…')) ?></span>
+                                            <strong class="book-cover-title"><?= esc($book->Title) ?></strong>
+                                            <span class="book-cover-author"><?= esc(mb_strimwidth($penulis ?: 'Anonim', 0, 34, '…')) ?></span>
+                                            <span class="book-cover-shape" style="background:<?= $gaya['warna'][1] ?>"></span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="showcase-info">
+                                    <span class="showcase-meta">
+                                        <?php if ($key === 'populer') : ?>
+                                            <?= $star ?> <span><?= (int) $book->Loans ?> kali dipinjam</span>
+                                        <?php else : ?>
+                                            <span><?= esc($book->PublishYear ?: 'Koleksi baru') ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                    <h3><?= esc($book->Title) ?></h3>
+                                    <p><?= esc(trim((string) $book->Author, " ;,	
+") ?: 'Anonim') ?></p>
+                                    <div class="showcase-actions">
+                                        <a class="btn-small" href="<?= base_url('opac/detail/' . $book->ID) ?>">Lihat</a>
+                                    </div>
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
                     </div>
                 <?php endforeach; ?>
-            <?php else: ?>
-                <div class="col-12 text-center py-5">
-                    <i class="fa-solid fa-book-open fa-3x text-secondary opacity-50 mb-3"></i>
-                    <p class="text-secondary">Koleksi buku masih belum tersedia</p>
+            </section>
+
+            <section class="catalog-cta" id="katalog">
+                <div class="catalog-cta-copy">
+                    <div class="section-kicker"><span></span> Eksplorasi katalog OPAC</div>
+                    <h2>Jelajahi <?= $totalCatalogs ? number_format($totalCatalogs, 0, ',', '.') . ' judul' : 'seluruh' ?> koleksi berdasarkan subjek.</h2>
+                    <p>Cari berdasarkan judul, penulis, atau kode buku, lalu cek nomor panggil dan ketersediaan eksemplar.</p>
+                    <a class="cta-button" href="<?= $opacUrl ?>">Buka katalog lengkap <?= $icon('right') ?></a>
                 </div>
-            <?php endif; ?>
-        </div>
+                <?php if (!empty($subjects)) : ?>
+                    <ul class="subject-list">
+                        <?php foreach ($subjects as $subjek) : ?>
+                            <li>
+                                <a href="<?= $opacUrl ?>?Subject=<?= urlencode($subjek->Nama) ?>">
+                                    <span><?= esc($subjek->Nama) ?></span>
+                                    <small><?= number_format((int) $subjek->Jumlah, 0, ',', '.') ?> judul</small>
+                                    <?= $icon('up-right') ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </section>
 
-        <div class="text-center mt-5">
-            <a href="<?= base_url('opac') ?>" class="btn btn-brand rounded-pill px-5 py-2 fw-semibold shadow-sm">
-                Lihat Semua Koleksi <i class="fa-solid fa-arrow-right ms-2"></i>
-            </a>
-        </div>
-    </div>
-</section>
+            <footer class="site-footer" id="kontak">
+                <div class="footer-main">
+                    <div class="footer-about">
+                        <a href="#beranda" class="footer-brand">
+                            <img src="<?= $assets ?>/logo-kemnaker-white.png" alt="" width="40" height="40">
+                            <span>
+                                <strong>Perpustakaan Kemnaker</strong>
+                                <small>Kementerian Ketenagakerjaan Republik Indonesia</small>
+                            </span>
+                        </a>
+                        <p class="footer-description">Perpustakaan Kementerian Ketenagakerjaan Republik Indonesia berkomitmen menyediakan layanan perpustakaan yang berkualitas bagi seluruh pegawai dan masyarakat. Kami menghimpun koleksi buku, regulasi, laporan riset, dan publikasi ketenagakerjaan untuk mendukung perumusan kebijakan serta peningkatan literasi insan ketenagakerjaan Indonesia.</p>
 
-<section class="py-5" id="berita">
-    <div class="container my-4">
-        <h3 class="fw-bold mb-4 d-flex align-items-center section-title">
-            <div class="bg-brand rounded-pill me-3" style="width: 5px; height: 30px;"></div>
-            Berita & Pengumuman
-        </h3>
+                        <ul class="footer-contact">
+                            <li><?= $icon('pin') ?><span><?= esc($alamat) ?></span></li>
+                            <li><?= $icon('mail') ?><a href="mailto:<?= esc($surel) ?>"><?= esc($surel) ?></a></li>
+                            <li>
+                                <?= $icon('clock') ?>
+                                <span>
+                                    <?php foreach ($jamLayanan as [$hari, $jam]) : ?>
+                                        <span class="footer-hours"><b><?= esc($hari) ?></b> <?= esc($jam) ?></span>
+                                    <?php endforeach; ?>
+                                </span>
+                            </li>
+                        </ul>
 
-        <?php if (!empty($news)): ?>
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <?php
-                    $highlight = $news[0];
-                    $highlightImg = base_url('uploads/berita/' . ($highlight['file_cover'] ?: 'default.jpg'));
-                    ?>
-                    <a href="<?= base_url('news/detail/' . $highlight['id'] . '/' . $highlight['slug']) ?>" class="card border-0 rounded-2xl overflow-hidden text-decoration-none shadow-sm hover-card position-relative text-white h-100">
-                        <img src="<?= $highlightImg ?>" onerror="this.src='https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1350&q=80'" class="news-main-cover">
-                        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to top, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.4) 50%, transparent 100%);"></div>
-
-                        <div class="position-absolute bottom-0 start-0 p-4 w-100">
-                            <span class="badge bg-brand mb-2 py-1 px-3 rounded-pill"><?= date('d M Y', strtotime($highlight['created_at'])) ?></span>
-                            <h4 class="fw-bold mb-2 line-clamp-2"><?= esc($highlight['title']) ?></h4>
-                            <p class="small text-light text-opacity-75 mb-0 line-clamp-2"><?= strip_tags($highlight['content']) ?></p>
+                        <div class="footer-socials">
+                            <?php foreach ($sosial as $id => [$nama, $url]) : ?>
+                                <a href="<?= esc($url) ?>" target="_blank" rel="noreferrer" aria-label="<?= esc($nama) ?> Kemnaker"><?= $iconIsi($id) ?></a>
+                            <?php endforeach; ?>
                         </div>
-                    </a>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="d-flex flex-column h-100 justify-content-between">
-                        <?php for ($i = 1; $i < count($news) && $i <= 3; $i++):
-                            $article = $news[$i];
-                            $imgFile = base_url('uploads/berita/' . ($article['file_cover'] ?: 'default.jpg'));
-                        ?>
-                            <a href="<?= base_url('news/detail/' . $article['id'] . '/' . $article['slug']) ?>" class="d-flex gap-3 text-decoration-none text-dark hover-card p-3 rounded-xl border border-light mb-3 bg-white shadow-sm h-100 align-items-center">
-                                <div class="flex-shrink-0" style="width: 120px;">
-                                    <img src="<?= $imgFile ?>" onerror="this.src='https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=500&q=60'" class="news-cover">
-                                </div>
-                                <div>
-                                    <small class="text-secondary fw-semibold d-block mb-1"><i class="fa-regular fa-calendar me-1"></i> <?= date('d M Y', strtotime($article['created_at'])) ?></small>
-                                    <h6 class="fw-bold mb-1 line-clamp-2 text-dark" style="line-height: 1.4;"><?= esc($article['title']) ?></h6>
-                                    <span class="text-brand small fw-bold mt-2 d-inline-block">Baca Selengkapnya</span>
-                                </div>
-                            </a>
-                        <?php endfor; ?>
                     </div>
+
+                    <nav class="footer-col" aria-label="Layanan">
+                        <h2>Layanan</h2>
+                        <ul>
+                            <li><a href="<?= $opacUrl ?>">Katalog (OPAC)</a></li>
+                            <?php foreach (['registrasi' => 'Pendaftaran Anggota', 'pinjam' => 'Peminjaman Mandiri', 'kembali' => 'Pengembalian Mandiri', 'baca' => 'Baca di Tempat', 'isbn' => 'Layanan ISBN'] as $id => $label) : if (!isset($services[$id])) continue; ?>
+                                <li><a href="<?= $services[$id]['url'] ?>"><?= esc($label) ?></a></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </nav>
+
+                    <nav class="footer-col" aria-label="Petunjuk">
+                        <h2>Petunjuk</h2>
+                        <ul>
+                            <li><a href="<?= $services['sirkulasi']['url'] ?>">Tata Cara Sirkulasi</a></li>
+                            <li><button type="button" data-rules>Tata Tertib Keanggotaan</button></li>
+                            <li><a href="<?= $services['tamu']['url'] ?>">Buku Tamu</a></li>
+                            <li><a href="mailto:<?= esc($surel) ?>?subject=Usulan%20Buku">Usulan Buku</a></li>
+                        </ul>
+                    </nav>
+
+                    <nav class="footer-col" aria-label="Direktori">
+                        <h2>Direktori</h2>
+                        <ul>
+                            <?php foreach ($direktori as [$nama, $url]) : ?>
+                                <li><a href="<?= esc($url) ?>" target="_blank" rel="noreferrer"><?= esc($nama) ?><?= $icon('up-right', 'footer-ext') ?></a></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </nav>
                 </div>
-            </div>
-            <div class="text-center mt-5">
-                <a href="<?= base_url('news') ?>" class="btn btn-brand rounded-pill px-5 py-2 fw-semibold shadow-sm">
-                    Lihat Semua Berita <i class="fa-solid fa-arrow-right ms-2"></i>
-                </a>
-            </div>
-        <?php else: ?>
-            <div class="text-center text-secondary py-5 bg-white rounded-2xl border border-light shadow-sm">
-                <i class="fa-regular fa-newspaper fa-3x mb-3 text-secondary opacity-50"></i>
-                <p class="mb-0">Belum ada berita yang dipublikasikan.</p>
-            </div>
-        <?php endif; ?>
-    </div>
-</section>
 
-<?= $this->endSection() ?>
+                <div class="footer-bottom">
+                    <span>© <?= date('Y') ?> Perpustakaan Kementerian Ketenagakerjaan. Seluruh hak cipta dilindungi.</span>
+                    <span class="footer-mark">Kementerian Ketenagakerjaan · Republik Indonesia</span>
+                </div>
+            </footer>
+        </div>
+    </main>
 
-<?= $this->section('script') ?>
-<script>
-    $(document).ready(function() {
+    <script>
+        window.HOME_DATA = {
+            opacUrl: <?= json_encode($opacUrl) ?>,
+            searchUrl: <?= json_encode(base_url('home/search-books')) ?>,
+            rulesUrl: <?= json_encode($assets . '/tata-tertib.json') ?>,
+            detailUrl: <?= json_encode(base_url('opac/detail')) ?>,
+            services: <?= json_encode($jsServices, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+            arrow: <?= json_encode($icon('up-right', 'omni-all-icon')) ?>
+        };
+    </script>
+    <script src="<?= $assets ?>/landing.js?v=21"></script>
+</body>
 
-        // Counter Animation for Statistics
-        function animateCounters() {
-            $('.stat-number').each(function() {
-                const $this = $(this);
-                const textVal = $this.text().replace(/[,.]/g, '');
-                const target = parseInt(textVal);
-
-                if (isNaN(target) || target === 0) return;
-
-                const increment = Math.ceil(target / 40);
-                let current = 0;
-
-                const timer = setInterval(function() {
-                    current += increment;
-                    if (current >= target) {
-                        current = target;
-                        clearInterval(timer);
-                    }
-                    $this.text(current.toLocaleString('id-ID'));
-                }, 40);
-            });
-        }
-
-        // Trigger animasi angka jika box statistik masuk ke layar viewport
-        if ('IntersectionObserver' in window) {
-            const statsObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        animateCounters();
-                        statsObserver.unobserve(entry.target);
-                    }
-                });
-            });
-
-            const statElement = document.querySelector('.stat-number');
-            if (statElement) {
-                statsObserver.observe(statElement);
-            }
-        } else {
-            animateCounters();
-        }
-
-        // --- Live Search Auto Suggestion ---
-        let searchTimeout;
-        $('#searchInput').on('input', function() {
-            const query = $(this).val().trim();
-            clearTimeout(searchTimeout);
-
-            if (query.length >= 3) {
-                searchTimeout = setTimeout(function() {
-                    performAutoComplete(query);
-                }, 300);
-            } else {
-                $('.search-suggestions').remove();
-            }
-        });
-
-        function performAutoComplete(query) {
-            $.ajax({
-                url: '<?= base_url('opac/searchBooks') ?>',
-                method: 'GET',
-                data: {
-                    q: query
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        showSearchSuggestions(response.data);
-                    }
-                }
-            });
-        }
-
-        function showSearchSuggestions(books) {
-            $('.search-suggestions').remove();
-            if (books.length > 0) {
-                let suggestionsHtml = '<div class="search-suggestions position-absolute w-100 bg-white border rounded shadow-lg z-3 mt-1" style="max-height: 250px; overflow-y: auto; top: 100%; border-radius: 1rem;">';
-
-                books.forEach(function(book) {
-                    suggestionsHtml += `
-                        <div class="suggestion-item p-3 border-bottom" style="cursor: pointer; transition: background 0.2s;">
-                            <div class="fw-bold small text-dark">${book.Title}</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">${book.Author || 'Penulis tidak diketahui'}</div>
-                        </div>
-                    `;
-                });
-                suggestionsHtml += '</div>';
-
-                // Append di container search input
-                $('.search-input-group').append(suggestionsHtml);
-
-                $('.suggestion-item').hover(function() {
-                    $(this).addClass('bg-light');
-                }, function() {
-                    $(this).removeClass('bg-light');
-                }).on('click', function() {
-                    $('#searchInput').val($(this).find('.fw-bold').text());
-                    $('.search-suggestions').remove();
-                    $('#searchForm').submit();
-                });
-            }
-        }
-
-        // Menutup autocomplete jika klik di luar area input
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('.search-input-group').length) {
-                $('.search-suggestions').remove();
-            }
-        });
-    });
-</script>
-<?= $this->endSection() ?>
+</html>
