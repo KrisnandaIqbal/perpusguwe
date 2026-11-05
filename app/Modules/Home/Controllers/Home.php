@@ -35,6 +35,7 @@ class Home extends \Base\Controllers\BaseController
     public function index()
     {
         $this->data['title'] = 'Beranda - Perpustakaan Digital';
+        $this->data['loader_splash'] = true;
 
         $useCache = env('is_home_cache') == 1;
         $cacheKey = 'home_index_data';
