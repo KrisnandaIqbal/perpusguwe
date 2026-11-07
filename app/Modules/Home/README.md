@@ -8,7 +8,8 @@ Halaman `/` yang dibuka pengunjung. Navbar-nya dipakai bersama halaman OPAC, ber
 | --- | --- |
 | Data yang dikirim ke halaman (buku, subjek, statistik) | `Controllers/Home.php`, metode `index()` |
 | Kerangka halaman (urutan bagian, tag `<head>`) | `Views/index.php` |
-| Teks dan susunan satu bagian | `Views/landing/hero.php`, `shortcuts.php`, `showcase.php`, `catalog.php`, `footer.php` |
+| Teks dan susunan satu bagian | `Views/landing/hero.php`, `shortcuts.php`, `showcase.php`, `catalog.php` |
+| Footer (beranda dan OPAC) | `app/Views/layout/partial/footer_publik.php`, gaya `public/assets/home/footer.css` |
 | Daftar layanan, isi footer, foto hero, warna sampul buku | `Helpers/landing_helper.php` |
 | Navbar | `app/Views/layout/partial/navbar_publik.php` + `public/assets/home/navbar.css` + `navbar.js` |
 | Tampilan beranda | `public/assets/home/landing-extra.css` (ubah di sini), `landing.css` (dasar dari Figma) |

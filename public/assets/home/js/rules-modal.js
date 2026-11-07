@@ -66,4 +66,6 @@
     document.querySelectorAll('[data-rules]').forEach(function (button) {
         button.addEventListener('click', function () { rulesTrigger = button; openRules(); });
     });
+    // Tautan footer dari halaman lain membuka beranda dengan #tata-tertib.
+    if (location.hash === '#tata-tertib') openRules();
 })();

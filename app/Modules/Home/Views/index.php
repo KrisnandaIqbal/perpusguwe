@@ -4,7 +4,7 @@
 //   Fungsi    : Helpers/landing_helper.php (ikon, layanan, sampul buku, foto hero)
 //   Gaya      : public/assets/home/landing.css + landing-extra.css, navbar di navbar.css
 //   Perilaku  : public/assets/home/js/*.js (daftarnya di Views/landing/scripts.php)
-//   Navbar    : layout/partial/navbar_publik.php (dipakai juga oleh halaman OPAC)
+//   Navbar    : layout/partial/navbar_publik.php, footer: layout/partial/footer_publik.php (dipakai juga oleh halaman OPAC)
 ?>
 <!doctype html>
 <html lang="id">
@@ -30,7 +30,7 @@
             <?= $this->include('Home\Views\landing\shortcuts') ?>
             <?= $this->include('Home\Views\landing\showcase') ?>
             <?= $this->include('Home\Views\landing\catalog') ?>
-            <?= $this->include('Home\Views\landing\footer') ?>
+            <?= $this->include('App\Views\layout\partial\footer_publik') ?>
         </div>
     </main>
 

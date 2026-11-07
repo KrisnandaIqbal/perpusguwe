@@ -11,7 +11,7 @@ html { scroll-padding-top: var(--nav-h, 98px); } /* loncat ke #anchor tidak tert
 /* Jangan beri overflow pada .site-frame: itu mematikan blur (backdrop-filter) navbar kaca.
    Penahan scroll horizontal dipasang per bagian. */
 .site-frame { width: 100%; max-width: none; box-shadow: none; overflow: visible; }
-.hero, .shortcuts, .showcase, .catalog-cta, .site-footer { overflow-x: clip; }
+.hero, .shortcuts, .showcase, .catalog-cta { overflow-x: clip; }
 
 /* Tautan (bukan tombol) memakai gaya yang sama dengan komponen desain */
 a.shortcut-card, a.btn-small { text-decoration: none; }
@@ -19,7 +19,6 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .showcase-actions { justify-content: flex-end; }
 .showcase-empty { grid-column: 1 / -1; padding: 40px 0; text-align: center; color: var(--muted); font-size: 14px; }
 .omni-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-.footer-brand, .footer-col a { text-decoration: none; }
 
 /* Hero (801 px ke atas): tinggi hero mengikuti kolom teks supaya kolom pencarian langsung terlihat saat halaman dibuka.
    Foto mengisi tinggi itu; garis akhirnya adalah kartu "Anggota terdaftar",
@@ -165,14 +164,8 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
    Pengecualian yang diterima: titik carousel foto (44 x 30, jaraknya dikunci JS; foto juga bisa dipilih dengan geser dan tombol panah). */
 .omni-suggestions button,
 .tab-switch button,
-.btn-small,
-.footer-col a,
-.footer-col button,
-.footer-contact a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
-.footer-col a, .footer-col button, .footer-contact a { justify-content: flex-start; }
+.btn-small { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
 .omni-suggestions button { min-width: 44px; }
-.footer-col ul { gap: 0; }
-.footer-socials a { width: 44px; height: 44px; }
 .catalog-search button { width: 46px; height: 46px; }
 .catalog-search input { min-height: 44px; }
 

@@ -8,8 +8,8 @@
     ukurBar();
     window.addEventListener('resize', ukurBar);
 
-    // Kaca muncul saat halaman digulir; di halaman dalam (data-glass="always") selalu ada karena latarnya tidak seragam.
-    function markStuck() { bar.classList.toggle('is-stuck', bar.dataset.glass === 'always' || window.scrollY > 24); }
+    // Kaca muncul saat halaman digulir; di bagian atas navbar polos, di beranda maupun halaman dalam.
+    function markStuck() { bar.classList.toggle('is-stuck', window.scrollY > 24); }
     markStuck();
     window.addEventListener('scroll', markStuck, { passive: true });
 

@@ -1,13 +1,17 @@
 <?php
-// Footer: tentang perpustakaan, kontak, jam layanan, media sosial, dan tautan. Isi tetapnya ada di landing_footer().
+// Footer publik: tentang perpustakaan, kontak, jam layanan, media sosial, dan tautan. Dipakai beranda dan layout OPAC.
+// Isi tetapnya ada di landing_footer(). CSS: assets/home/footer.css.
+helper('landing');
 ['alamat' => $alamat, 'surel' => $surel, 'jam' => $jamLayanan, 'sosial' => $sosial, 'direktori' => $direktori] = landing_footer();
 $services = landing_services();
 $opacUrl  = base_url('opac');
+$_depan   = in_array(trim(current_url(true)->getPath(), '/'), ['', 'home', 'index.php'], true);
 ?>
+<link rel="stylesheet" href="<?= landing_asset('footer.css') ?>">
 <footer class="site-footer" id="kontak">
     <div class="footer-main">
         <div class="footer-about">
-            <a href="#beranda" class="footer-brand">
+            <a href="<?= $_depan ? '#beranda' : base_url('home') ?>" class="footer-brand">
                 <img src="<?= landing_asset('logo-kemnaker-white.png') ?>" alt="" width="40" height="40">
                 <span>
                     <strong>Perpustakaan Kemnaker</strong>
@@ -50,7 +54,7 @@ $opacUrl  = base_url('opac');
             <h2>Petunjuk</h2>
             <ul>
                 <li><a href="<?= $services['sirkulasi']['url'] ?>">Tata Cara Sirkulasi</a></li>
-                <li><button type="button" data-rules>Tata Tertib Keanggotaan</button></li>
+                <li><?php if ($_depan) : ?><button type="button" data-rules>Tata Tertib Keanggotaan</button><?php else : ?><a href="<?= base_url('home') ?>#tata-tertib">Tata Tertib Keanggotaan</a><?php endif; ?></li>
                 <li><a href="<?= $services['tamu']['url'] ?>">Buku Tamu</a></li>
                 <li><a href="mailto:<?= esc($surel) ?>?subject=Usulan%20Buku">Usulan Buku</a></li>
             </ul>

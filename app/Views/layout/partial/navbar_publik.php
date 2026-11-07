@@ -13,7 +13,7 @@ $_panah = landing_icon('chevron', 'gn-chev');
 ?>
 <link rel="stylesheet" href="<?= $_aset ?>/navbar.css?v=1">
 
-<header class="gn-bar"<?= $_depan ? '' : ' data-glass="always"' ?>>
+<header class="gn-bar">
     <a href="<?= base_url('home') ?>" class="gn-brand" aria-label="Perpustakaan Kementerian Ketenagakerjaan RI - Beranda">
         <img class="gn-brand-mark" src="<?= $_aset ?>/logo-kemnaker.png" alt="" width="40" height="40">
         <span class="gn-brand-copy">

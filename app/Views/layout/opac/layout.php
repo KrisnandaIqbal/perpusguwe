@@ -88,57 +88,6 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
             overflow: hidden;
         }
 
-        /* ─── Footer ─── */
-        .footer-custom {
-            background-color: var(--slate-900);
-            color: white;
-            padding: 60px 0 30px;
-            margin-top: 80px;
-            border-top: 1px solid var(--slate-800);
-        }
-
-        .footer-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: white;
-        }
-
-        .footer-links {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .footer-links li {
-            margin-bottom: 12px;
-        }
-
-        .footer-links a {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: 0.3s;
-        }
-
-        .footer-links a:hover {
-            color: var(--brand-500);
-            padding-left: 5px;
-        }
-
-        .footer-contact li {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        .footer-contact i {
-            color: var(--brand-500);
-            margin-top: 4px;
-        }
-
         /* ─── Pagination Custom ─── */
         .pagination .page-link {
             color: #1b3878;
@@ -668,49 +617,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
     </main>
 
     <!-- ─── Footer ─── -->
-    <footer class="footer-custom">
-        <div class="container">
-            <div class="row mb-5">
-
-                <div class="col-lg-4 mb-4 mb-lg-0">
-                    <div class="d-flex align-items-center gap-3 mb-4">
-                        <img src="<?=  base_url('assets/img/Logo-Inlislite.webp') ?>"
-                            alt="Logo" class="rounded bg-white p-1" style="width:150px;height:70px;object-fit:cover;">
-                        <h4 class="m-0 fw-bold"><?= esc($nama_perpustakaan) ?></h4>
-                    </div>
-                    <p class="text-secondary" style="font-size:0.9rem;line-height:1.8;">
-                        <?= esc($tentang_kami) ?>
-                    </p>
-                </div>
-
-                <div class="col-lg-2 col-md-6 mb-4 mb-lg-0 offset-lg-1">
-                    <h5 class="footer-title">Layanan</h5>
-                    <ul class="footer-links">
-                        <?php if (env('Is_keanggotaan_online') == 1): ?><li><a href="<?= base_url('home/pendaftaran-online') ?>">Pendaftaran Anggota</a></li><?php endif; ?>
-                        <!-- Disembunyikan sesuai butir 5 -->
-                        <li style="display: none;"><a href="<?= base_url('peminjaman-mandiri') ?>">Peminjaman Mandiri</a></li>
-                        <li style="display: none;"><a href="<?= base_url('pengembalian-mandiri') ?>">Pengembalian Mandiri</a></li>
-                        <li><a href="<?= base_url('opac') ?>">OPAC</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-4 col-md-6">
-                    <h5 class="footer-title">Kontak & Lokasi</h5>
-                    <ul class="footer-links footer-contact">
-                        <li><i class="fa-solid fa-location-dot"></i> <span><?= esc($alamat) ?></span></li>
-                        <li><i class="fa-solid fa-phone"></i> <span><?= esc($phone)  ?></span></li>
-                        <li><i class="fa-solid fa-envelope"></i> <span><?= esc($email)  ?></span></li>
-                    </ul>
-                </div>
-
-            </div>
-            <div class="border-top border-secondary pt-4 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-center">
-                <p class="text-secondary mb-0" style="font-size:0.8rem;">
-                    &copy; <?= date('Y') ?> <?= esc($nama_perpustakaan) ?>. All rights reserved.
-                </p>
-            </div>
-        </div>
-    </footer>
+    <?= $this->include('App\Views\layout\partial\footer_publik') ?>
 
     <!-- ─── Modal Pop-Up Deskripsi Bibliografis OPAC ─── -->
     <div class="modal fade opac-meta-modal" id="opacBookMetaModal" tabindex="-1" aria-labelledby="opacModalTitle" aria-hidden="true">
