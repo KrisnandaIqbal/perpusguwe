@@ -33,7 +33,7 @@ class Home extends \Base\Controllers\BaseController
         $this->settingModel = new \PenomoranKoleksi\Models\PenomoranKoleksiModel();
         $this->beritaModel = new \Berita\Models\BeritaModel();
         $this->db = \Config\Database::connect('data');
-        helper(['reference', 'landing']);
+        helper(['reference', 'landing', 'opac']);
     }
 
     public function index()
@@ -78,11 +78,13 @@ class Home extends \Base\Controllers\BaseController
     private function getFeaturedBooks()
     {
         try {
-            return $this->db->table('catalogs')
+            $books = $this->db->table('catalogs')
+                ->where('IsOPAC', 1)
                 ->orderBy('CreateDate', 'DESC')
                 ->limit(8)
                 ->get()
                 ->getResult();
+            return enrichCatalogsWithCirculation($books);
         } catch (\Exception $e) {
             return [];
         }

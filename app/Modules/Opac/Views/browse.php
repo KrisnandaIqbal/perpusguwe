@@ -31,13 +31,75 @@
     }
     .catalog-card {
         border: none;
-        border-radius: 12px;
+        border-radius: 16px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        height: 100%;
+        overflow: hidden;
     }
     .catalog-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    .book-cover-wrapper {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .book-cover {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .catalog-card:hover .book-cover {
+        transform: scale(1.05);
+    }
+    .book-overlay {
+        background: rgba(42, 82, 152, 0.8);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .catalog-card:hover .book-overlay {
+        opacity: 1;
+    }
+    .book-meta {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 6px;
+    }
+    .book-meta i {
+        width: 16px;
+        color: #a0aec0;
+    }
+    .badge-floating {
+        position: absolute;
+        top: 10px;
+        left: -5px;
+        z-index: 10;
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .subject-badge-item {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 500;
+        font-size: 0.78rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none !important;
+    }
+    .subject-badge-item:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: #334155 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(30, 41, 59, 0.25);
     }
 </style>
 <?= $this->endSection() ?>
@@ -218,51 +280,9 @@
 
                     <!-- Grid View (Default) -->
                     <div id="gridView" class="view-container">
-                        <div class="row">
+                        <div class="row g-4">
                             <?php foreach ($catalogs as $catalog): ?>
-                                <div class="col-lg-4 col-md-6 mb-4">
-                                    <div class="card catalog-card h-100">
-                                        <div class="card-header bg-<?= $browse_type == 'author' ? 'primary' : ($browse_type == 'title' ? 'success' : 'info') ?> text-white">
-                                            <h6 class="card-title mb-0 text-truncate">
-                                                <i class="fas fa-<?= $browse_type == 'author' ? 'user' : ($browse_type == 'title' ? 'book' : 'tag') ?> me-2"></i>
-                                                <?= esc($catalog->ControlNumber ?? 'N/A') ?>
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <h5 class="card-title text-primary">
-                                                <?= esc(substr($catalog->Title ?? 'Tanpa Judul', 0, 60)) ?>
-                                                <?= strlen($catalog->Title ?? '') > 60 ? '...' : '' ?>
-                                            </h5>
-                                            <div class="mb-3">
-                                                <small class="text-muted d-block mb-1">
-                                                    <i class="fas fa-user me-1"></i>
-                                                    <strong>Pengarang:</strong> <?= esc($catalog->Author ?? 'N/A') ?>
-                                                </small>
-                                                <small class="text-muted d-block mb-1">
-                                                    <i class="fas fa-building me-1"></i>
-                                                    <strong>Penerbit:</strong> <?= esc($catalog->Publisher ?? 'N/A') ?>
-                                                </small>
-                                                <small class="text-muted d-block">
-                                                    <i class="fas fa-calendar me-1"></i>
-                                                    <strong>Tahun:</strong> <?= esc($catalog->PublishYear ?? 'N/A') ?>
-                                                </small>
-                                            </div>
-                                            <?php if (!empty($catalog->Subject)): ?>
-                                                <span class="badge bg-secondary">
-                                                    <i class="fas fa-tag me-1"></i>
-                                                    <?= esc(substr($catalog->Subject, 0, 30)) ?>
-                                                    <?= strlen($catalog->Subject) > 30 ? '...' : '' ?>
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="card-footer bg-transparent">
-                                            <a href="<?= base_url('opac/detail/' . $catalog->ID) ?>"
-                                               class="btn btn-primary btn-sm">
-                                                <i class="fas fa-eye me-1"></i>Detail
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                                <?= renderModernBookCard($catalog, 'col-lg-3 col-md-6') ?>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -275,7 +295,9 @@
                                     <div class="row align-items-center">
                                         <div class="col-md-8">
                                             <h5 class="mb-1 text-primary">
-                                                <?= esc($catalog->Title ?? 'Tanpa Judul') ?>
+                                                <a href="<?= base_url('opac/detail/' . $catalog->ID) ?>" class="text-decoration-none text-primary">
+                                                    <?= esc($catalog->Title ?? 'Tanpa Judul') ?>
+                                                </a>
                                             </h5>
                                             <p class="mb-1 text-muted small">
                                                 <strong>Pengarang:</strong> <?= esc($catalog->Author ?? 'N/A') ?> &nbsp;|&nbsp;
@@ -283,9 +305,15 @@
                                                 <strong>Tahun:</strong> <?= esc($catalog->PublishYear ?? 'N/A') ?>
                                             </p>
                                             <?php if (!empty($catalog->Subject)): ?>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-tags me-1"></i><?= esc($catalog->Subject) ?>
-                                                </small>
+                                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                                    <?php foreach (splitSubjects($catalog->Subject) as $subItem): ?>
+                                                        <a href="<?= base_url('opac?search=' . urlencode($subItem) . '&search_by=Subject') ?>"
+                                                           class="badge subject-badge-item"
+                                                           title="Cari subjek: <?= esc($subItem) ?>">
+                                                            <i class="fas fa-tag me-1"></i><?= esc($subItem) ?>
+                                                        </a>
+                                                    <?php endforeach; ?>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
                                         <div class="col-md-4 text-end">
@@ -333,8 +361,10 @@
                                             </td>
                                             <td>
                                                 <strong>
-                                                    <?= esc(substr($catalog->Title ?? 'Tanpa Judul', 0, 50)) ?>
-                                                    <?= strlen($catalog->Title ?? '') > 50 ? '...' : '' ?>
+                                                    <a href="<?= base_url('opac/detail/' . $catalog->ID) ?>" class="text-decoration-none text-dark">
+                                                        <?= esc(substr($catalog->Title ?? 'Tanpa Judul', 0, 50)) ?>
+                                                        <?= strlen($catalog->Title ?? '') > 50 ? '...' : '' ?>
+                                                    </a>
                                                 </strong>
                                             </td>
                                             <td><?= esc($catalog->Author ?? 'N/A') ?></td>
@@ -460,10 +490,11 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     const currentLetter = '<?= $letter ?? '' ?>';
     if (currentLetter) {
-        document.querySelectorAll('.catalog-card h5').forEach(function(el) {
-            if (el.textContent.trim().toLowerCase().startsWith(currentLetter.toLowerCase())) {
-                const first = el.innerHTML.charAt(0);
-                el.innerHTML = '<span class="bg-warning px-1 rounded">' + first + '</span>' + el.innerHTML.slice(1);
+        document.querySelectorAll('.opac-book-heading a').forEach(function(el) {
+            const text = el.textContent.trim();
+            if (text.toLowerCase().startsWith(currentLetter.toLowerCase())) {
+                const first = text.charAt(0);
+                el.innerHTML = '<span class="bg-warning px-1 rounded">' + first + '</span>' + text.slice(1);
             }
         });
     }
