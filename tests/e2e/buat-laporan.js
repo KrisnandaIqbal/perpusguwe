@@ -81,7 +81,7 @@ const alur = {
         |               |               |               |                     |
         v               v               v               v                     v
    BILAH MENU      BAGIAN UTAMA     AKSES CEPAT        BUKU                KATALOG
-   Beranda         judul            6 kartu            pilihan Unggulan    8 subjek
+   Beranda         judul            6 kartu            pilihan Terbaru    8 subjek
    Cari Koleksi    kolom pencarian  layanan            pilihan Populer     + tombol
    Buku Tamu       saran Populer    saat kursor        saat kursor         "Buka katalog
    Layanan (turun) foto + kartu     diarahkan:         diarahkan: sampul   lengkap"

@@ -1,8 +1,13 @@
-/* Tambahan di atas landing.css (hasil build desain Figma "Proto 1").
-   Ukuran dan proporsi mengikuti desain; ukuran akhir diatur oleh penskalaan di landing.js. */
+/* Perubahan kita di atas landing.css (dasar dari desain Figma "Proto 1"). Berkas ini dimuat setelah landing.css dan tanpa @layer,
+   jadi aturannya menang. Ubah tampilan di sini; landing.css cukup dibaca sebagai dasar. Penskalaan layar lebar ada di js/layout.js. */
 
-/* Layar penuh: tanpa bingkai kartu */
-.page-shell { padding: 0; min-height: 100vh; }
+/* Layar penuh tanpa bingkai kartu. Atasnya diberi ruang setinggi navbar publik yang fixed-top (--nav-h diisi navbar.js);
+   latarnya sama dengan .site-frame supaya ruang itu tidak abu-abu. */
+.page-shell { min-height: 100vh; padding: var(--nav-h, 98px) 0 0; background: #f9fbfc; }
+html { scroll-padding-top: var(--nav-h, 98px); } /* loncat ke #anchor tidak tertutup navbar */
+/* Jendela Tata Tertib harus di atas navbar (z-index 1030). */
+.modal-backdrop { z-index: 1100; }
+
 /* Jangan beri overflow pada .site-frame: itu mematikan blur (backdrop-filter) navbar kaca.
    Penahan scroll horizontal dipasang per bagian. */
 .site-frame { width: 100%; max-width: none; box-shadow: none; overflow: visible; }
@@ -17,17 +22,45 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .footer-brand, .footer-col a { text-decoration: none; }
 
 /* Hero (801 px ke atas): tinggi hero mengikuti kolom teks supaya kolom pencarian langsung terlihat saat halaman dibuka.
-   Foto mengisi tinggi itu dan naik sedikit ke area header; garis akhirnya adalah kartu "Anggota terdaftar",
+   Foto mengisi tinggi itu; garis akhirnya adalah kartu "Anggota terdaftar",
    sejajar dengan baris "Populer" di kolom kiri. Foto turun sampai kartu: 3/4 tinggi kartu berada di dalam foto,
    tulisan di foto dinaikkan agar tidak tertutup kartu. */
 @media (min-width: 801px) {
-    .hero { align-items: stretch; min-height: 0; padding-top: 0; padding-bottom: 56px; }
-    .hero .hero-copy { align-self: end; padding-top: 24px; padding-bottom: 0; }
+    /* Tinggi minimum dari js/layout.js (--hero-min), dibatasi 1000px supaya layar yang sangat tinggi tidak membuat celah kosong. */
+    .hero { align-items: stretch; min-height: min(var(--hero-min, 0px), 1000px); padding-top: 12px; padding-bottom: 24px; }
+    /* Kolom teks dimulai dari atas; jarak judul, paragraf, dan kolom pencarian masing-masing 30px. Foto tetap: atasnya sejajar label
+       "Pusat Literasi" (top: 24px) dan tingginya mengikuti baris hero (bukan kolom teks). */
+    /* top: 32px menurunkan teks tanpa mengubah tata letak, jadi foto tidak ikut bergeser; teks kira-kira di tengah tinggi foto. */
+    .hero .hero-copy { align-self: start; position: relative; top: 32px; padding-top: 24px; padding-bottom: 0; }
+    .hero .hero-copy > p { margin-top: 30px; margin-bottom: 0; }
+    .hero .hero-copy > .omnisearch { margin-top: 30px; }
+    /* Judul: satuan vw tidak ikut diperkecil oleh zoom di js/layout.js, jadi di layar lebar judul melar jadi 4 baris.
+       Batas 71px = nilai desain di lebar 1420 px (5vw); zoom lalu membesarkannya sebanding dengan halaman. */
+    .hero h1 { font-size: clamp(48px, min(5vw, 71px), 82px); }
+    /* Baris hero setinggi isinya; ruang ekstra dari --hero-min dibagi rata di atas dan bawah (align-content), bukan
+       dipakai melarkan foto. Foto setinggi kolom teks: tepi bawahnya sejajar dengan bawah baris "Populer", tepi atasnya
+       sejajar label di atas judul, dan tidak naik ke area navbar. */
+    .hero { align-content: stretch; }
     .hero .hero-visual { align-self: stretch; min-height: 0; }
-    .hero .hero-image-wrap { top: -26px; bottom: 14px; height: auto; }
-    .hero .image-caption { bottom: 74px; }
+    .hero .hero-image-wrap { top: 24px; bottom: 0; height: auto; }
+    .hero .image-caption { bottom: 36px; }
     .hero .floating-card.card-bottom { bottom: 0; }
     .hero .floating-card.card-top { top: 42px; }
+}
+@media (min-width: 1200px) {
+    /* Foto sejajar dengan batas kanan konten (jarak kanan = jarak kiri teks).
+       Kartu melayang separuh badannya di dalam foto, separuh di luar: pusat kartu tepat di garis tepi foto.
+       Pakai properti translate (bukan transform) supaya tidak bentrok dengan animasi melayang.
+       Kartu kanan dibatasi min(50%, ruang di tepi kanan - 14px) agar tidak terpotong di tepi layar; ruang itu ikut lebar layar (5vw). */
+    .hero { --foto-kanan: 0px; --foto-lebar: min(43vw, 610px); }
+    .hero .hero-image-wrap { right: var(--foto-kanan); width: var(--foto-lebar); }
+    /* --lengkung-kartu / --lengkung-orbit dihitung js/hero.js (tepi foto menjorok karena sudut atas bundar). */
+    .hero .hero-visual { --foto-kiri: calc(100% - var(--foto-kanan) - var(--foto-lebar)); }
+    .hero .floating-card.card-top { left: calc(var(--foto-kiri) + var(--lengkung-kartu, 0px)); translate: -50% 0; }
+    .hero .floating-card.card-bottom { right: var(--foto-kanan); translate: min(50%, calc(clamp(24px, 5vw, 76px) - 8px)) 0; }
+    /* Lingkaran hias di belakang foto: yang kecil separuh tertutup foto; yang besar dicerminkan ke kanan bawah (ujungnya keluar 70px dari tepi foto, tidak melewati ruang di tepi layar). */
+    .hero .orbit-one { left: calc(var(--foto-kiri) + var(--lengkung-orbit, 0px) - 89px); }
+    .hero .orbit-two { left: auto; right: calc(var(--foto-kanan) - 70px); transform: rotate(-20deg); }
 }
 @media (max-width: 800px) {
     .hero-visual { min-height: 580px; }
@@ -38,7 +71,9 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
     .hero-image-wrap { height: 480px; }
 }
 /* Kartu pembaca menggantung di bawah foto supaya tidak menutupi tulisan */
-@media (min-width: 561px) { .floating-card.card-bottom { bottom: -46px; } }
+/* Berlaku di semua lebar: di ponsel (320 sampai 414 px) kartu sebelumnya menutupi kalimat di foto.
+   Nilai -30px: kartu menggantung di bawah foto tanpa menyentuh kalimat (jarak 10 px) dan tanpa menempel ke bagian biru di bawah hero (jarak 16 px). */
+.floating-card.card-bottom { bottom: -30px; }
 
 /* Sampul asli di kartu buku */
 .showcase-cover img { width: min(150px, 72%); aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px 8px 8px 3px; box-shadow: 0 18px 30px #10152138; background: #fff; }
@@ -52,29 +87,16 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .book-cover-light .book-cover-spine { background: #00000026; }
 @media (prefers-reduced-motion: reduce) { .book-cover-md, .showcase-cover img { transition: none; } .showcase-card:hover .book-cover-md, .showcase-card:hover .showcase-cover img { transform: none; } }
 
-/* Navbar melayang saat halaman digulir */
-.site-header { position: sticky; top: 0; z-index: 50; }
-.site-header::before { content: ""; position: absolute; z-index: -1; inset: 10px max(8px, calc(clamp(24px, 5vw, 76px) - 28px)); border-radius: 22px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; }
-.site-header::before { transform: translateY(-6px); }
-.site-header.is-stuck::before { opacity: 1; transform: none; }
-@media (max-width: 560px) { .site-header::before { inset: 8px; border-radius: 16px; } }
-
-/* === Liquid glass navbar (hapus blok ini sampai "akhir liquid glass" untuk kembali ke gaya putih biasa) === */
-.site-header::before {
-    background: radial-gradient(120% 140% at 12% -20%, #ffffff80 0%, #ffffff00 55%), linear-gradient(135deg, #ffffffcc 0%, #ffffff80 45%, #ffffffb3 100%);
-    -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
-    backdrop-filter: blur(20px) saturate(190%) brightness(1.06);
-    box-shadow: inset 0 1px 0 #fffffff2, inset 0 -1px 0 #ffffff59, inset 0 0 0 1px #ffffff73, 0 12px 32px #1621332e, 0 2px 6px #1621331a;
+/* Kartu melayang di foto hero: kaca yang sama dengan navbar (navbar.css, pembiasan di tepi), karena sebagian badannya menimpa foto. */
+.hero .floating-card {
+    background: linear-gradient(160deg, #ffffffa6 0%, #ffffff73 100%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    border: 0;
+    box-shadow: inset 1.5px 1.5px 1px -0.5px #ffffff, inset -1.5px -1.5px 1px -0.5px #ffffffb3, inset 0 0 12px 1px #ffffff59, inset 0 0 0 1px #ffffff80, 0 10px 28px #16213329, 0 2px 6px #1621331a;
 }
-/* Catatan: jangan menambah lapisan pseudo kedua (::after) atau mix-blend-mode di navbar, keduanya mematikan blur di belakang kaca. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .site-header::before { background: #fffffff0; } }
-/* === akhir liquid glass === */
-
-/* Teks brand di navbar: "Perpustakaan" lebih besar dan ada jarak antar baris */
-.brand-copy { gap: 4px; line-height: 1.2; }
-.brand-copy strong { font-size: 19px; line-height: 1.15; }
-.brand-copy span { line-height: 1.3; }
-@media (max-width: 560px) { .brand-copy strong { font-size: 16px; } }
+.lens-ok .hero .floating-card.card-top { -webkit-backdrop-filter: url(#lens-kartu-atas) saturate(150%); backdrop-filter: url(#lens-kartu-atas) saturate(150%); }
+.lens-ok .hero .floating-card.card-bottom { -webkit-backdrop-filter: url(#lens-kartu-bawah) saturate(150%); backdrop-filter: url(#lens-kartu-bawah) saturate(150%); }
 
 /* Perbaikan keterbacaan (hasil uji T17): abu-abu teks sekunder dipekatkan agar lulus kontras 4,5:1.
    Warna lama dari desain (#747C8C) hanya 4,0 sampai 4,2:1 pada teks kecil. */
@@ -83,3 +105,76 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 
 /* Penanda posisi saat kolom pencarian dipilih dengan keyboard (hasil uji T16). */
 .catalog-search:focus-within { outline: 2px solid #0f3fb4; outline-offset: 3px; }
+
+/* Perbaikan kontras kecil */
+.shortcut-number { opacity: .85; }
+.reader-avatars span:nth-child(3) { background: #4d6bd0; }
+.floating-card small { color: #5b6272; }
+
+
+/* Hasil audit antislop.
+   R-10: efek kaca hanya di bilah menu atas, latar jendela, dan dua kartu melayang di foto hero (atas permintaan pemilik; lihat blok liquid glass).
+   R-19: kartu melayang bergerak tiga kali saat halaman dibuka untuk menarik mata ke info baru, lalu diam. Tidak bergerak selamanya.
+   R-25: lapisan gelap di bawah foto dipertegas agar tulisan putih di atas foto terbaca di titik terterang. */
+
+@media (prefers-reduced-motion: reduce) { .floating-card { animation: none; } }
+.image-shade { background: linear-gradient(#0000 35%, #060e20d9); }
+
+
+
+/* Kartu melayang muncul saat ada pembaruan. Kartu hanya dibuat bila ada koleksi atau anggota baru (Home.php). Setelah layar
+   pemuatan selesai, kartu masuk satu per satu (js/hero.js memasang kelas .kartu-masuk), lalu melayang tiga kali dan diam (R-19). Tanpa JavaScript kartu langsung terlihat. */
+@keyframes kartu-masuk { from { opacity: 0; scale: .86; } to { opacity: 1; scale: 1; } }
+.hero-visual .floating-card { animation: kartu-masuk .7s cubic-bezier(.2, .8, .2, 1) both, float 5s ease-in-out infinite; animation-iteration-count: 1, 3; animation-delay: .1s, .1s; }
+.hero-visual .floating-card.card-bottom { animation-delay: .5s, -2.3s; }
+.js-kartu .hero-visual:not(.kartu-masuk) .floating-card { opacity: 0; animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .hero-visual .floating-card { animation: none; opacity: 1; } }
+
+/* Carousel foto hero (vertikal). Foto diambil dari public/assets/home/hero/ (lihat landing_hero_photos() di landing_helper.php). Foto bergeser ke atas atau ke bawah; bisa dipilih lewat titik,
+   digeser dengan mouse atau jari, atau memakai tombol panah atas dan bawah. Otomatis tiap beberapa detik; berhenti saat kursor
+   atau fokus ada di foto. Paginasi gaya "Social Pagination" (wayfinder): deretan lingkaran, dan lingkaran putih "menetes"
+   memanjang ke lingkaran tujuan lalu menyusut di sana. Tanpa geseran otomatis bila pengunjung memilih "kurangi gerakan". */
+.hero-slides { position: absolute; inset: 0; overflow: hidden; touch-action: pan-x; cursor: grab; user-select: none; -webkit-user-select: none; }
+.hero-slides.menyeret { cursor: grabbing; }
+.hero-slide { position: absolute; inset: 0; opacity: 1; transform: translateY(calc(var(--o, 0) * 100% + var(--tarik, 0px))); transition: transform .85s cubic-bezier(.65, 0, .2, 1); -webkit-user-drag: none; }
+.hero-slide:not(.is-active) { --o: 1; }
+.hero-slide.tanpa-gerak, .menyeret .hero-slide { transition: none; }
+/* landing.css memperbesar semua img di dalam foto saat kursor di atasnya; itu menimpa posisi geser dan menumpuk semua foto. */
+.hero-image-wrap:hover .hero-slide { transform: translateY(calc(var(--o, 0) * 100% + var(--tarik, 0px))); }
+/* Tengah paginasi di tengah bagian foto yang lurus (di bawah lengkung kubah: 48% teratas tidak dihitung), yaitu 74% tinggi foto. */
+.hero-nav { position: absolute; right: 10px; top: calc((48% + 100%) / 2); z-index: 3; display: flex; flex-direction: column; transform: translateY(-50%); }
+.hero-dot { position: relative; width: 44px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.hero-dot::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #ffffff73; box-shadow: 0 1px 4px #00000040; transition: background .2s, transform .2s; }
+.hero-dot:hover::before { background: #ffffffb3; transform: scale(1.12); }
+.hero-tetes { position: absolute; left: 17px; top: 10px; z-index: 1; width: 10px; height: 10px; border-radius: 99px; background: #fff; box-shadow: 0 1px 4px #00000040; pointer-events: none; transition: top .26s cubic-bezier(.4, 0, .2, 1), height .26s cubic-bezier(.4, 0, .2, 1); }
+.hero-dot:focus-visible { outline: 2px solid #fff; outline-offset: -6px; border-radius: 12px; }
+@media (prefers-reduced-motion: reduce) { .hero-slide { transition: none; } .hero-tetes { transition: none; } }
+/* Kartu pembaruan tampil sebentar lalu pamit (waktunya diatur di js/hero.js, KARTU_TAMPIL_MS). */
+@keyframes kartu-keluar { to { opacity: 0; scale: .9; } }
+.hero-visual .floating-card.is-pergi { animation: kartu-keluar .5s ease forwards; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .hero-visual .floating-card.is-pergi { animation: none; opacity: 0; } }
+
+/* Source Serif 4 untuk judul konten yang dibaca; UI (tombol, menu, meta) tetap Plus Jakarta Sans. */
+:root { --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif; }
+.hero h1, .section-head h2, .catalog-cta h2, .showcase-info h3 { font-family: var(--font-serif); font-weight: 600; letter-spacing: -.01em; }
+.showcase-info h3 { font-size: 16px; letter-spacing: 0; }
+/* Di ukuran besar, opsz otomatis memilih potongan "display" yang tipis; kunci ke potongan teks supaya lebih tebal. */
+.hero h1 { font-variation-settings: "opsz" 24; }
+
+/* Target sentuh minimal 44 px (antislop R-03). Tampilan hampir sama; yang membesar adalah area tekan.
+   Pengecualian yang diterima: titik carousel foto (44 x 30, jaraknya dikunci JS; foto juga bisa dipilih dengan geser dan tombol panah). */
+.omni-suggestions button,
+.tab-switch button,
+.btn-small,
+.footer-col a,
+.footer-col button,
+.footer-contact a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
+.footer-col a, .footer-col button, .footer-contact a { justify-content: flex-start; }
+.omni-suggestions button { min-width: 44px; }
+.footer-col ul { gap: 0; }
+.footer-socials a { width: 44px; height: 44px; }
+.catalog-search button { width: 46px; height: 46px; }
+.catalog-search input { min-height: 44px; }
+
+/* Baris keadaan di bawah hasil pencarian: "Mencari buku…" atau pesan gagal (antislop R-27). */
+.omni-status { padding: 9px 10px; color: var(--muted); font-size: 12px; }

@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Perpustakaan Kemnaker (Beranda)
-description: Portal perpustakaan ketenagakerjaan yang bersih dan tegas, biru institusi di atas permukaan putih sejuk, kontrol berbentuk kapsul, satu font.
+description: Portal perpustakaan ketenagakerjaan yang bersih dan tegas, biru institusi di atas permukaan putih sejuk, kontrol berbentuk kapsul, dua keluarga huruf (sans untuk antarmuka, serif untuk judul konten).
 dials:
   energy: 3
   rhythm: 3
@@ -29,22 +29,22 @@ colors:
   focus-ring: "#0F3FB4"
 typography:
   display:
-    fontFamily: "Plus Jakarta Sans"
+    fontFamily: "Source Serif 4"
     fontSize: "clamp(48px, 5vw, 82px)"
     lineHeight: 1.08
-    fontWeight: 700
-    letterSpacing: "-0.055em"
+    fontWeight: 600
+    letterSpacing: "-0.01em"
   section-title:
-    fontFamily: "Plus Jakarta Sans"
+    fontFamily: "Source Serif 4"
     fontSize: "clamp(32px, 3.4vw, 50px)"
     lineHeight: 1.1
-    fontWeight: 700
-    letterSpacing: "-0.05em"
+    fontWeight: 600
+    letterSpacing: "-0.01em"
   card-title:
-    fontFamily: "Plus Jakarta Sans"
-    fontSize: 15px
+    fontFamily: "Source Serif 4"
+    fontSize: 16px
     lineHeight: 1.35
-    fontWeight: 500
+    fontWeight: 600
   body:
     fontFamily: "Plus Jakarta Sans"
     fontSize: 15px
@@ -105,10 +105,10 @@ Portal perpustakaan instansi pemerintah untuk pegawai dan masyarakat. Kesannya t
 
 ## Asal dan susunan berkas
 
-- Desain asli dibuat di Figma Make (proyek "Proto 1"). Berkas `public/assets/home/landing.css` adalah hasil olahan dari desain itu. **Jangan diubah langsung.** Tambahan dan penyesuaian ditulis di `public/assets/home/landing-extra.css`.
-- Perilaku halaman (menu turun, pilihan tab, pencarian, jendela informasi, bilah menu mengambang, dan perbesaran layar) ada di `public/assets/home/landing.js`.
-- Isi halaman depan ada di `app/Modules/Home/Views/index.php`. Halaman baru memakai kelas yang sudah tersedia di `landing.css`. Jangan menambah Tailwind, Bootstrap, atau pustaka CSS lain di halaman ini.
-- Setiap kali CSS atau JS diubah, naikkan angka `?v=` pada tautan berkasnya di tampilan agar peramban tidak memakai salinan lama.
+- Desain asli dibuat di Figma Make (proyek "Proto 1"). Berkas `public/assets/home/landing.css` adalah dasar dari desain itu (sudah dirapikan dan layar Figma yang tidak dipakai dibuang). Ubah tampilan di `public/assets/home/landing-extra.css`, yang dimuat setelahnya dan menang atas `landing.css`.
+- Perilaku halaman ada di `public/assets/home/js/` (satu berkas per fitur: pilihan tab, pencarian, jendela informasi, carousel foto, perbesaran layar) dan `navbar.js` (menu turun dan bilah menu mengambang). Peta lengkapnya di `app/Modules/Home/README.md`.
+- Isi halaman depan: kerangka di `app/Modules/Home/Views/index.php`, tiap bagian di `Views/landing/`, data tetap dan fungsi bantu di `Helpers/landing_helper.php`. Halaman baru memakai kelas yang sudah tersedia di `landing.css`. Jangan menambah Tailwind, Bootstrap, atau pustaka CSS lain di halaman ini.
+- Nomor versi aset (`?v=`) diisi otomatis oleh `landing_asset()` dari waktu ubah berkas; tidak perlu dinaikkan manual.
 - Percobaan tampilan yang mungkin dibatalkan ditulis dalam blok berkomentar `=== nama ... === akhir nama ===` supaya mudah dihapus.
 
 ## Warna
@@ -134,7 +134,8 @@ Aturan:
 
 - Hanya **satu** warna identitas, yaitu biru. Dilarang menambah warna baru (oranye, ungu, atau warna bergradasi) untuk tombol atau judul.
 - Teks di atas `blue` selalu putih (kontras 8,79 banding 1). Teks pendamping di atas biru memakai putih dengan ketebalan warna minimal 72% (kontras 5,31 banding 1); jangan lebih rendah.
-- Warna bergradasi dan bayangan berwarna tidak dipakai sebagai hiasan. Satu-satunya efek kaca ada pada bilah menu atas.
+- Warna bergradasi dan bayangan berwarna tidak dipakai sebagai hiasan. Efek kaca (blur) hanya di tiga tempat: bilah menu atas, dua kartu melayang di foto hero, dan latar jendela informasi.
+- Tulisan putih di atas foto harus lolos 4,5 banding 1 di titik terterang, bukan hanya rata-ratanya. Lapisan gelap di bawah foto (`.image-shade`) diatur untuk itu (4,86 banding 1 di titik terburuk); ukur ulang bila foto diganti.
 
 ### Kontras yang sudah diukur
 
@@ -154,13 +155,19 @@ Desain asli memakai `muted-design` dan hijau lama untuk teks kecil. Pada halaman
 
 ## Huruf
 
-**Satu keluarga huruf: Plus Jakarta Sans** (ketebalan 400, 500, 600, 700, dan 800), dimuat dari Google Fonts. Huruf kedua pernah dicoba (Lora untuk judul) lalu dibatalkan. Jangan menambahkannya lagi tanpa keputusan baru.
+**Dua keluarga huruf**, dimuat dari Google Fonts:
+
+- **Source Serif 4** (ketebalan 600) untuk judul konten yang dibaca: judul utama, judul bagian, judul halaman dalam, dan judul buku di kartu. Variabelnya `--font-serif` di `landing-extra.css`. Judul utama dikunci ke potongan teks (`font-variation-settings: "opsz" 24`) karena potongan *display* otomatis di ukuran besar terlalu tipis.
+- **Plus Jakarta Sans** (ketebalan 400, 500, 600, 700, dan 800) untuk semua yang lain: menu, tombol, kolom isian, label, teks meta, dan paragraf.
+
+Aturan praktis: serif untuk judul konten yang dibaca, sans untuk yang diklik atau dioperasikan. Jangan memakai serif untuk teks di bawah 14 px. Pernah dicoba dan tidak dipakai: Lora, Newsreader, Fraunces, dan Instrument Serif. Jangan menambah keluarga ketiga tanpa keputusan baru.
 
 | Peran | Ukuran | Ketebalan | Catatan |
 | --- | --- | --- | --- |
-| Judul utama | `clamp(48px, 5vw, 82px)` | 700 | Jarak antar huruf `-0.055em`, tinggi baris `1.08`, garis bawah biru pada frasa kunci |
-| Judul bagian | `clamp(32px, 3.4vw, 50px)` | 700 | Jarak antar huruf `-0.05em` |
-| Judul kartu | 14 sampai 15 px | 500 sampai 700 | |
+| Judul utama | `clamp(48px, 5vw, 82px)` | 600 | Source Serif 4. Jarak antar huruf `-0.01em`, tinggi baris `1.08`, garis bawah biru pada frasa kunci |
+| Judul bagian | `clamp(32px, 3.4vw, 50px)` | 600 | Source Serif 4. Jarak antar huruf `-0.01em` |
+| Judul kartu buku | 16 px | 600 | Source Serif 4 |
+| Judul kartu lain | 14 sampai 15 px | 500 sampai 700 | Plus Jakarta Sans |
 | Paragraf | 15 px, tinggi baris `1.8` | 400 | Lebar paling banyak 540 px |
 | Label huruf kapital | 11 px, jarak antar huruf `0.13em` | 800 | Disertai garis biru pendek di kiri (`.eyebrow`, `.section-kicker`) |
 | Tombol kecil | 12 sampai 15 px | 700 | |
@@ -173,8 +180,8 @@ Aturan: jangan menurunkan ukuran teks di bawah 11 px, dan teks isi tidak di bawa
 - **Margin samping**: `clamp(24px, 5vw, 76px)` di kiri dan kanan semua bagian (20 px di ponsel).
 - **Jarak vertikal**: bagian utama tanpa jarak atas (tingginya mengikuti kolom teks), "Akses cepat layanan" 36 dan 40 px, bagian buku 96 dan 90 px, bagian katalog 84 px, dan bagian bawah halaman 72 px di atas.
 - **Susunan kolom**: layanan 6 kolom (jarak 12 px), buku 4 kolom (jarak 22 px), subjek 2 kolom (jarak 10 px). Titik perubahan tampilan: lebar 1080, 800, dan 560 px.
-- **Perbesaran layar.** Desain dibuat untuk lebar 1420 px. Pada layar 1024 px ke atas, `landing.js` memperbesar seluruh halaman sebesar lebar layar dibagi 1420 (paling kecil 1 kali). Konstanta `SKALA` mengalikan semuanya. **Jangan membesarkan teks dengan menimpa ukuran satu per satu**, karena itu merusak proporsi dan membuat jarak berantakan. Kalau terasa kecil, ubah `SKALA`.
-- **Bagian utama**: foto berbentuk kubah di kanan. Tepi bawah kartu jumlah anggota yang melayang sejajar dengan baris terakhir di kolom kiri.
+- **Perbesaran layar.** Desain dibuat untuk lebar 1420 px. Pada layar 1024 px ke atas, `js/layout.js` memperbesar seluruh halaman sebesar lebar layar dibagi 1420, dikali konstanta `SKALA` (sekarang 0,75), paling kecil 1 kali dan paling besar 2 kali. Artinya layar sampai sekitar 1890 px tampil seperti desain. **Jangan membesarkan teks dengan menimpa ukuran satu per satu**, karena itu merusak proporsi dan membuat jarak berantakan. Kalau terasa kecil, ubah `SKALA`.
+- **Bagian utama**: foto berbentuk kubah di kanan. Tepi bawah kartu jumlah anggota yang melayang sejajar dengan baris terakhir di kolom kiri (desktop). Di ponsel kartu menggantung 30 px di bawah foto agar tidak menutupi tulisan di foto (diuji di 320 sampai 480 px, tes T25).
 
 ## Bentuk sudut
 
@@ -192,13 +199,14 @@ Bentuk kapsul untuk semua kontrol yang bisa ditekan, sudut sedang untuk wadah. J
 ## Kedalaman dan gerak
 
 - Bayangan lembut dan dingin, hanya untuk bagian yang terangkat: kolom pencarian `0 16px 40px rgba(47,58,77,.08)`, hasil pencarian dan kartu mengambang `0 26px 50px rgba(22,33,51,.16)`, foto utama `0 30px 55px rgba(25,37,58,.18)`.
-- **Bilah menu mengambang** (muncul saat halaman digulir): kotak kaca buram (`backdrop-filter: blur(20px) saturate(190%)`) dengan sudut `22px`. Catatan teknis yang sudah terbukti: jangan beri `overflow` pada `.site-frame`, jangan tambah lapisan `::after` atau `mix-blend-mode` pada bilah menu, karena semuanya mematikan efek buram.
-- Gerak: muncul perlahan (`rise`, 0,42 detik), jendela informasi (`pop`, 0,26 detik), kartu mengambang naik-turun 9 px selama 5 detik (`float`), kartu naik 4 sampai 6 px saat kursor diarahkan, dan sampul buku miring ke atas saat kursor diarahkan (`perspective(900px) rotateX(9deg) rotate(-3deg) translateY(-12px)`).
+- **Bilah menu publik** (satu partial, `app/Views/layout/partial/navbar_publik.php`, dipakai beranda dan halaman OPAC/berita/buku tamu; gaya di `public/assets/home/navbar.css`, perilaku di `navbar.js`, semua kelas berawalan `gn-`): kaca cair (*liquid glass*) bersudut `22px`, tinggi 98 px, `position: fixed`. Kaca muncul saat halaman digulir di beranda dan selalu ada di halaman dalam. Di Chromium tepi kaca membiaskan latar lewat filter SVG; peramban lain memakai `blur(14px)`. Isi: logo Kemnaker, Beranda, OPAC, Browse, Buku Tamu, Pendaftaran Anggota (bila keanggotaan online aktif), menu turun Layanan dan Statistik, dan tombol **Masuk** (berubah jadi Dashboard bila sudah login). Di bawah 1100 px menunya menjadi kartu putih yang dibuka tombol. Catatan teknis yang sudah terbukti: jangan beri `overflow` pada `.site-frame`, jangan tambah lapisan `::after` atau `mix-blend-mode` pada bilah menu, karena semuanya mematikan efek buram.
+- Gerak: muncul perlahan (`rise`, 0,42 detik), jendela informasi (`pop`, 0,26 detik), kartu mengambang naik-turun 9 px selama 5 detik sebanyak tiga kali lalu diam (`float`; gerak tanpa henti tidak dipakai), kartu naik 4 sampai 6 px saat kursor diarahkan, dan sampul buku miring ke atas saat kursor diarahkan (`perspective(900px) rotateX(9deg) rotate(-3deg) translateY(-12px)`).
 - Semua gerak yang tidak penting harus berhenti bila pengguna memilih pengaturan `prefers-reduced-motion: reduce` (kurangi gerakan) di perangkatnya.
 
 ## Komponen
 
 - **Bilah menu atas**: logo dan dua baris teks ("Perpustakaan" tebal 19 px, lalu "KEMENTERIAN KETENAGAKERJAAN RI" huruf kapital kecil), diikuti menu (Beranda, Cari Koleksi, Buku Tamu, dan Layanan dengan menu turun). Menu aktif berwarna biru dengan garis bawah. Di ponsel berubah menjadi tombol menu dan teks kecil di bawah nama disembunyikan.
+- **Tombol "Masuk"** (`.login-button`): di kanan bilah menu atas. Berbentuk kapsul biru setinggi 44 px menuju `/login`; saat kursor diarahkan berubah menjadi `ink`.
 - **Kolom pencarian**: berbentuk kapsul setinggi 62 px dengan tombol bulat biru di kanan. Hasilnya muncul di bawahnya: layanan yang cocok, buku dari katalog, lalu tautan "Lihat semua hasil di katalog OPAC". Dapat dipakai dengan panah atas dan bawah, Enter, dan Esc.
 - **Kartu layanan** (`.shortcut-card`): di atas latar biru, putih transparan. Saat kursor diarahkan atau kartu dipilih dengan keyboard: latar menjadi putih, teks `ink`, ikon biru berisi ikon putih, dan tulisan "BUKA" biru. Kartu yang berupa tautan **tidak boleh** diberi `style="color: ..."` langsung di tagnya, karena menimpa warna saat kursor diarahkan (pernah menyebabkan teks putih di atas latar putih).
 - **Kartu buku** (`.showcase-card`): sampul di atas, lalu tahun atau jumlah peminjaman, judul, penulis, dan tombol "Lihat". Nomor urut `#1` di pojok.
@@ -234,7 +242,7 @@ Bentuk kapsul untuk semua kontrol yang bisa ditekan, sudut sedang untuk wadah. J
 ## Kemudahan akses
 
 - Tombol dan tautan punya penanda posisi yang jelas saat dipilih dengan keyboard (garis luar biru 2 px, berjarak 2 px). Jangan menghapus garis luar tanpa pengganti. Kolom pencarian memakai penanda pada pembungkusnya: `.catalog-search:focus-within { outline: 2px solid #0F3FB4; outline-offset: 3px; }`.
-- Area yang ditekan minimal 40 px; tinggi kolom pencarian 62 px.
+- Area yang ditekan minimal 44 x 44 px dengan jarak antar tombol (aturan R-03). Beberapa bagian bawaan desain Figma masih lebih kecil (saran "Populer" 31 px, tab 38 px, tombol "Lihat" 34 px, tautan di bagian bawah halaman 20 px); itu dicatat sebagai pekerjaan lanjutan, dan komponen baru tidak boleh meniru ukuran itu. Tinggi kolom pencarian 62 px.
 - Menu turun, hasil pencarian, dan jendela informasi dapat dipakai dengan keyboard (Tab, panah, Enter, Esc).
 - Gambar hiasan memakai `alt=""`; gambar yang bermakna punya `alt` yang menjelaskan isinya.
 - Perhatikan tabel kontras di atas. Teks pendamping berukuran kecil memakai `muted-text`; teks contoh di kolom pencarian memakai `#687081` (4,97 : 1 di atas putih).
@@ -244,8 +252,8 @@ Bentuk kapsul untuk semua kontrol yang bisa ditekan, sudut sedang untuk wadah. J
 - Latar utama ungu-biru bergradasi, bola cahaya melayang, bintik cahaya, atau latar berpola jaring.
 - Tiga atau empat kartu fitur yang sama persis (ikon, judul, dua baris teks) hanya untuk mengisi halaman. Pakai kartu hanya untuk data atau tautan yang nyata.
 - Emoji sebagai ikon, ikon dari paket acak, atau ilustrasi stok yang umum.
-- Efek kaca di luar bilah menu atas.
-- Huruf kedua, huruf serif untuk judul, atau lebih dari satu keluarga huruf dalam satu layar.
+- Efek kaca (blur) di luar bilah menu atas, dua kartu melayang di foto hero, dan latar jendela informasi.
+- Keluarga huruf ketiga, atau serif untuk teks kecil, menu, tombol, dan label (serif hanya untuk judul konten).
 - Tombol berwarna oranye, ungu, atau bergradasi. Satu-satunya tombol berwarna adalah biru institusi.
 - Statistik, nilai bintang, atau jumlah pembaca karangan, serta keterangan status yang tidak menandai keadaan nyata.
 - Kalimat pembuka basa-basi ("Selamat datang di portal kami yang inovatif") dan kata berlebihan seperti "revolusioner" atau "solusi terpadu".
