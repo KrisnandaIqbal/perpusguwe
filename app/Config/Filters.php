@@ -72,6 +72,8 @@ class Filters extends BaseConfig
                 'opac/browse',              // method: browse
                 'opac/subjek*',             // method: subjek
                 'subjek*',                  // route: subjek
+                'opac/ddc*',                // method: ddc redirect
+                'ddc*',                     // route: ddc redirect
                 'opac/export',              // method: export
                 'opac/statistics',          // method: statistics
                 'opac/statistics_anggota',  // method: statistics_anggota
@@ -118,6 +120,8 @@ class Filters extends BaseConfig
                 'opac/browse',
                 'opac/subjek*',
                 'subjek*',
+                'opac/ddc*',
+                'ddc*',
                 'opac/export',
                 'opac/statistics',
                 'opac/statistics_anggota',

@@ -290,6 +290,7 @@
                                     <option value="Title" <?= ($search_by ?? '') == 'Title' ? 'selected' : '' ?>>Judul</option>
                                     <option value="Author" <?= ($search_by ?? '') == 'Author' ? 'selected' : '' ?>>Pengarang</option>
                                     <option value="Subject" <?= ($search_by ?? '') == 'Subject' ? 'selected' : '' ?>>Subjek</option>
+                                    <option value="DeweyNo" <?= ($search_by ?? '') == 'DeweyNo' ? 'selected' : '' ?>>Klasifikasi DDC</option>
                                     <option value="Publisher" <?= ($search_by ?? '') == 'Publisher' ? 'selected' : '' ?>>Penerbit</option>
                                     <option value="ISBN" <?= ($search_by ?? '') == 'ISBN' ? 'selected' : '' ?>>ISBN</option>
                                 </select>
@@ -494,11 +495,14 @@
                 $activeSubject  = (($search_by ?? '') === 'Subject' && !empty($search))
                     ? $search
                     : (string) (request()->getVar('Subject') ?? '');
+                $activeDewey    = (($search_by ?? '') === 'DeweyNo' && !empty($search))
+                    ? $search
+                    : (string) (request()->getVar('DeweyNo') ?? '');
                 $activeAuthor   = (string) (request()->getVar('Author') ?? '');
                 $activePub      = (string) (request()->getVar('Publisher') ?? '');
                 $activeYear     = (string) (request()->getVar('PublishYear') ?? '');
                 $activeLocation = (string) (request()->getVar('PublishLocation') ?? '');
-                $hasActiveQuery = !empty($search) || $activeSubject !== '' || $activeAuthor !== '' || $activePub !== '' || $activeYear !== '' || $activeLocation !== '';
+                $hasActiveQuery = !empty($search) || $activeSubject !== '' || $activeDewey !== '' || $activeAuthor !== '' || $activePub !== '' || $activeYear !== '' || $activeLocation !== '';
                 ?>
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-2 border-bottom">
                     <h4 class="mb-0 fw-bold text-dark">
@@ -506,6 +510,8 @@
                             <i class="fas fa-star text-warning me-2"></i>Rekomendasi Untuk Anda
                         <?php elseif ($activeSubject !== ''): ?>
                             <i class="fas fa-tags text-primary me-2"></i>Subjek: <span class="text-primary"><?= esc($activeSubject) ?></span>
+                        <?php elseif ($activeDewey !== ''): ?>
+                            <i class="fas fa-shapes text-primary me-2"></i>Klasifikasi DDC: <span class="text-primary"><?= esc($activeDewey) ?></span>
                         <?php elseif (!empty($search)): ?>
                             <i class="fas fa-search text-primary me-2"></i>Hasil Pencarian: <span class="text-primary"><?= esc($search) ?></span>
                         <?php elseif ($activeAuthor !== ''): ?>

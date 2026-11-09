@@ -8,6 +8,8 @@ $routes->group('opac', ['namespace' => 'Opac\Controllers'], function ($subroutes
 	$subroutes->add('statistics', 'Opac::statistics');
 	$subroutes->add('statistics_anggota', 'Opac::statistics_anggota');
 	$subroutes->add('browse', 'Opac::browse');
+	$subroutes->add('ddc', 'Opac::ddc');
+	$subroutes->add('ddc/(:any)', 'Opac::ddc/$1');
 	$subroutes->add('subjek', 'Opac::subjek');
 	$subroutes->add('subjek/(:any)', 'Opac::subjek/$1');
 	$subroutes->add('detail/(:any)', 'Opac::detail/$1');
