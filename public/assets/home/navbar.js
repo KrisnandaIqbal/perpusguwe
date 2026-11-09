@@ -106,8 +106,14 @@
 
     window.pkLensa = buatLensa;
     var gambar = buatLensa('lens-filter', bar, '::before', 2.5, 46);
+    // Tiap dropdown punya filter sendiri karena tingginya berbeda; peta digambar ulang bila ukuran panel berubah.
+    var panel = Array.prototype.map.call(bar.querySelectorAll('.gn-panel'), function (el, i) {
+        el.style.setProperty('--lensa', 'url(#lens-panel-' + i + ')');
+        return buatLensa('lens-panel-' + i, el, null, 2.5, 46);
+    }).filter(Boolean);
+    var gambarSemua = function () { gambar(); panel.forEach(function (f) { f(); }); };
     var timer;
-    gambar();
-    window.addEventListener('resize', function () { clearTimeout(timer); timer = setTimeout(gambar, 120); });
-    window.addEventListener('load', gambar);
+    gambarSemua();
+    window.addEventListener('resize', function () { clearTimeout(timer); timer = setTimeout(gambarSemua, 120); });
+    window.addEventListener('load', gambarSemua);
 })();
