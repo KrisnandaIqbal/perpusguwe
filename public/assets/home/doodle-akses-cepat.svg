@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 330" preserveAspectRatio="xMidYMid slice" fill="#fff">
+  <!-- Lingkaran lembut tumpang tindih, terpotong di tepi (gaya kartu Repository) -->
+  <circle cx="230" cy="-20" r="170" opacity=".06"/>
+  <circle cx="610" cy="370" r="200" opacity=".07"/>
+  <circle cx="760" cy="300" r="90" opacity=".05"/>
+  <circle cx="1210" cy="-50" r="130" opacity=".05"/>
+  <circle cx="1440" cy="250" r="160" opacity=".07"/>
+</svg>

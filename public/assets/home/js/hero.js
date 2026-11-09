@@ -1,6 +1,6 @@
-// Hero: kaca cair di dua kartu pembaruan, lengkung foto, dan kemunculan kartu setelah layar pemuatan hilang.
+// Hero: liquid glass di dua floating card, lengkung foto, dan kemunculan card setelah layar pemuatan hilang.
 (function () {
-    // Kaca cair (Liquid Glass) untuk dua kartu melayang di foto hero: tepi kaca membiaskan latar di belakangnya
+    // Liquid glass untuk dua floating card di foto hero: tepi glass membiaskan background di belakangnya
     // seperti lensa pembesar. Tiap elemen punya filter SVG sendiri (peta pergeseran digambar sesuai ukurannya).
     // backdrop-filter dengan url() hanya jalan di Chromium; peramban lain tetap memakai kaca buram biasa (lihat CSS).
     var buatLensa = window.pkLensa; // dibuat navbar.js (hanya Chromium)

@@ -99,7 +99,6 @@ const DAFTAR_KONTRAS = [
   ['.omni-suggestions span', 'Tulisan "Populer:"'],
   ['.shortcuts-head h2', 'Judul "Akses cepat layanan" (putih di atas biru)'],
   ['.shortcut-card small', 'Keterangan kartu layanan'],
-  ['.section-kicker', 'Label kecil biru di bagian buku'],
   ['.showcase .section-head h2', 'Judul bagian buku'],
   ['.showcase-meta', 'Keterangan kecil di kartu buku'],
   ['.showcase-info h3', 'Judul buku'],

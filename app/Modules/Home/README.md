@@ -24,7 +24,7 @@ Dimuat berurutan oleh `Views/landing/scripts.php`. `util.js` harus pertama.
 | --- | --- |
 | `util.js` | `Landing.esc()` dan `Landing.normalize()`, dipakai berkas lain |
 | `layout.js` | Memperbesar halaman di layar lebar, menghitung tinggi minimum hero |
-| `hero.js` | Kaca cair di dua kartu pembaruan, lengkung foto, kemunculan kartu |
+| `hero.js` | Liquid glass di dua floating card, lengkung foto, kemunculan card |
 | `hero-carousel.js` | Carousel foto hero (titik, geser, tombol panah, otomatis) |
 | `showcase.js` | Tab "Terbaru" dan "Populer" |
 | `omnisearch.js` | Kolom pencarian hero (layanan, buku, tautan OPAC) |

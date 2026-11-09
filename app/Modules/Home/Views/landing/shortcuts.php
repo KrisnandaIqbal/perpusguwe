@@ -5,7 +5,6 @@ $shortcuts = landing_shortcuts();
 <section class="shortcuts" id="layanan" aria-labelledby="shortcut-title">
     <div class="shortcuts-head">
         <h2 id="shortcut-title">Akses cepat layanan</h2>
-        <span><?= count($shortcuts) ?> layanan · langsung dari halaman ini</span>
     </div>
     <div class="shortcut-grid">
         <?php foreach ($shortcuts as $index => $s) : ?>

@@ -372,8 +372,7 @@ html {
   position: relative;
 }
 
-.eyebrow,
-.section-kicker {
+.eyebrow {
   color: var(--blue);
   letter-spacing: .13em;
   text-transform: uppercase;
@@ -385,8 +384,7 @@ html {
   display: flex;
 }
 
-.eyebrow span,
-.section-kicker span {
+.eyebrow span {
   background: var(--blue);
   width: 26px;
   height: 2px;
@@ -826,11 +824,6 @@ html {
   font-weight: 700;
 }
 
-.shortcuts-head span {
-  opacity: .7;
-  font-size: 11px;
-}
-
 .shortcut-grid {
   grid-template-columns: repeat(6,1fr);
   gap: 12px;
@@ -936,10 +929,6 @@ html {
   gap: 40px;
   margin-bottom: 40px;
   display: flex;
-}
-
-.section-head .section-kicker {
-  margin-bottom: 18px;
 }
 
 .section-head h2 {

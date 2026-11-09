@@ -8,7 +8,6 @@ $bintang      = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="current
 <section class="showcase" id="buku">
     <div class="section-head">
         <div>
-            <div class="section-kicker"><span></span> Dari katalog perpustakaan</div>
             <h2>Buku terbaru &amp; populer.</h2>
         </div>
         <div class="tab-switch" role="tablist" aria-label="Kategori showcase">

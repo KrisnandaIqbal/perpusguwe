@@ -16,16 +16,27 @@
     content: ""; position: absolute; z-index: -1; pointer-events: none;
     inset: 10px max(8px, calc(clamp(24px, 5vw, 76px) - 28px)); border-radius: 22px;
     opacity: 0; transform: translateY(-6px); transition: opacity .25s, transform .25s;
-    background: linear-gradient(160deg, #ffffff66 0%, #ffffff33 100%);
+    background: linear-gradient(160deg, #ffffff99 0%, #ffffff80 100%);
     -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
     box-shadow: inset 1.5px 1.5px 1px -0.5px #fff, inset -1.5px -1.5px 1px -0.5px #ffffffb3, inset 0 0 12px 1px #ffffff59, inset 0 0 0 1px #ffffff80, 0 10px 28px #1621331f, 0 2px 6px #1621330f;
 }
 .gn-bar.is-stuck::before { opacity: 1; transform: none; }
 .lens-ok .gn-bar::before {
-    background: linear-gradient(160deg, #ffffff8c 0%, #ffffff66 100%);
+    background: linear-gradient(160deg, #ffffffb3 0%, #ffffff99 100%);
     -webkit-backdrop-filter: url(#lens-filter) saturate(150%); backdrop-filter: url(#lens-filter) saturate(150%);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .gn-bar::before { background: #fffffff0; } }
+
+/* ALTERNATIF: navbar putih solid (tetap sticky, tanpa kaca). Untuk memakainya, hapus tanda komentar blok di bawah ini
+   (hapus baris pembuka komentar dan penutupnya). Dua selektor dibutuhkan karena .lens-ok .gn-bar::before lebih spesifik.
+   Tidak ada JS yang perlu diubah: kelas .lens-ok tetap terpasang tapi tidak berpengaruh lagi. */
+/*
+.gn-bar::before, .lens-ok .gn-bar::before {
+    background: #fff;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    box-shadow: 0 1px 0 #e8ebf0, 0 8px 24px #1621331a;
+}
+*/
 
 .gn-brand { display: flex; align-items: center; gap: 11px; min-height: 44px; color: inherit; flex: none; }
 .gn-brand-mark { width: 40px; height: 40px; object-fit: contain; }

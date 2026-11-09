@@ -1,4 +1,4 @@
-// Navbar publik (partial layout/partial/navbar_publik.php): menu ponsel, menu turun, kaca saat digulir, dan kaca cair (Liquid Glass).
+// Navbar publik (partial layout/partial/navbar_publik.php): menu ponsel, dropdown, glass saat digulir, dan liquid glass.
 (function () {
     var bar = document.querySelector('.gn-bar');
     if (!bar) return;
@@ -52,7 +52,9 @@
     // di Chromium; peramban lain memakai kaca buram biasa (lihat navbar.css). window.pkLensa dipakai juga oleh kartu hero di js/hero.js.
     var brands = (navigator.userAgentData && navigator.userAgentData.brands) || [];
     var chromium = brands.some(function (b) { return /Chromium/.test(b.brand); }) || (!navigator.userAgentData && /Chrome\//.test(navigator.userAgent));
-    if (!chromium) return;
+    // Semua peramban iOS berbasis WebKit; filter url() di backdrop-filter-nya membalik (mirror) isi di belakang kaca.
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!chromium || ios) return;
     var NS = 'http://www.w3.org/2000/svg';
     var lensSvg = document.createElementNS(NS, 'svg');
     lensSvg.setAttribute('width', '0'); lensSvg.setAttribute('height', '0'); lensSvg.setAttribute('aria-hidden', 'true');

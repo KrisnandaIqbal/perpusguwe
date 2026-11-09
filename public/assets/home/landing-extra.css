@@ -13,6 +13,13 @@ html { scroll-padding-top: var(--nav-h, 98px); } /* loncat ke #anchor tidak tert
 .site-frame { width: 100%; max-width: none; box-shadow: none; overflow: visible; }
 .hero, .shortcuts, .showcase, .catalog-cta { overflow-x: clip; }
 
+/* Akses cepat: lingkaran lembut statis yang terpotong di tepi, seperti kartu Repository; gambarnya doodle-akses-cepat.svg. */
+.shortcuts { background-image: url("doodle-akses-cepat.svg"); background-size: cover; background-position: center; }
+.shortcut-card {
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    box-shadow: inset 1.5px 1.5px 1px -0.5px #ffffff59, inset -1px -1px 1px -0.5px #ffffff2e, inset 0 0 10px 1px #ffffff0d;
+}
+
 /* Tautan (bukan tombol) memakai gaya yang sama dengan komponen desain */
 a.shortcut-card, a.btn-small { text-decoration: none; }
 a.btn-small { display: inline-flex; align-items: center; justify-content: center; }
@@ -112,8 +119,8 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 
 
 /* Hasil audit antislop.
-   R-10: efek kaca hanya di bilah menu atas, latar jendela, dan dua kartu melayang di foto hero (atas permintaan pemilik; lihat blok liquid glass).
-   R-19: kartu melayang bergerak tiga kali saat halaman dibuka untuk menarik mata ke info baru, lalu diam. Tidak bergerak selamanya.
+   R-10: efek glass hanya di navbar, background modal, dan dua floating card di foto hero (atas permintaan pemilik; lihat blok liquid glass).
+   R-19: floating card bergerak tiga kali saat halaman dibuka untuk menarik mata ke info baru, lalu diam. Tidak bergerak selamanya.
    R-25: lapisan gelap di bawah foto dipertegas agar tulisan putih di atas foto terbaca di titik terterang. */
 
 @media (prefers-reduced-motion: reduce) { .floating-card { animation: none; } }

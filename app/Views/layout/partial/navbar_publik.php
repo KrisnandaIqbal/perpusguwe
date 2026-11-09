@@ -11,7 +11,7 @@ $_aktif = static function (bool $cocok): string {
 $_ikon = static fn(string $nama): string => landing_icon($nama, 'gn-icon');
 $_panah = landing_icon('chevron', 'gn-chev');
 ?>
-<link rel="stylesheet" href="<?= $_aset ?>/navbar.css?v=1">
+<link rel="stylesheet" href="<?= $_aset ?>/navbar.css?v=2">
 
 <header class="gn-bar">
     <a href="<?= base_url('home') ?>" class="gn-brand" aria-label="Perpustakaan Kementerian Ketenagakerjaan RI - Beranda">
@@ -66,4 +66,4 @@ $_panah = landing_icon('chevron', 'gn-chev');
         </button>
     </div>
 </header>
-<script src="<?= $_aset ?>/navbar.js?v=1"></script>
+<script src="<?= $_aset ?>/navbar.js?v=2"></script>

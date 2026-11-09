@@ -1,16 +1,8 @@
 <?= $this->extend('App\Views\layout\opac\layout'); ?>
 
 <?php
-// Sidebar data
-$_db = db_connect();
-$_perpusNama = $_db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow();
-$_perpusAlamat = $_db->table('settingparameters')->where('Name', 'NamaLokasiPerpustakaan')->get()->getRow();
-$_perpusPhone = $_db->table('settingparameters')->where('Name', 'Phone')->get()->getRow();
-$_perpusEmail = $_db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->get()->getRow();
-$_namaPerpus = $_perpusNama ? $_perpusNama->Value : 'Perpustakaan';
-$_alamatPerpus = $_perpusAlamat ? $_perpusAlamat->Value : 'Jl. Jendral Gatot Subroto Kav. 51, Jakarta Selatan 12950';
-$_phonePerpus = $_perpusPhone ? $_perpusPhone->Value : '';
-$_emailPerpus = $_perpusEmail ? $_perpusEmail->Value : '';
+helper('landing');
+
 
 $_nipId = $nip_id ?? '';
 $_asnId = $asn_id ?? '';
@@ -19,65 +11,59 @@ $_asnId = $asn_id ?? '';
 <?= $this->section('style') ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
 
 <style>
-    /* ─────────────────────────────────────────────────────────────
-       DESIGN SYSTEM TOKENS — Modern Editorial Minimal ("Digital Library")
-       Linear / Stripe / Vercel inspired aesthetic
-       ───────────────────────────────────────────────────────────── */
+    /* Token desain mengikuti DESIGN.md (satu warna identitas: biru institusi).
+       Nama variabel lama dipertahankan supaya aturan di bawah ikut berganti warna. */
     :root {
-        /* Palette: Deep obsidian navy brand, single calm electric royal blue accent */
-        --navy-950: #0a0f1d;
-        --navy-900: #0f172a;
-        --navy-850: #131c31;
-        --navy-800: #1e293b;
-        --navy-700: #334155;
+        --navy-950: #151922;
+        --navy-900: #151922;
+        --navy-850: #1b2130;
+        --navy-800: #2a3142;
+        --navy-700: #5b6272;
 
-        --accent-50:  #eff6ff;
-        --accent-100: #dbeafe;
-        --accent-200: #bfdbfe;
-        --accent-500: #3b82f6;
-        --accent-600: #2563eb;
-        --accent-700: #1d4ed8;
+        --accent-50:  #eef2fc;
+        --accent-100: #dce5f8;
+        --accent-200: #b8c9ef;
+        --accent-500: #0f3fb4;
+        --accent-600: #0f3fb4;
+        --accent-700: #0b3290;
 
-        /* Warm editorial off-white surface, crisp white cards */
-        --bg-page: #fbfbfa;
+        --bg-page: #f1f4f8;
         --bg-card: #ffffff;
-        --bg-card-hover: #fafafa;
+        --bg-card-hover: #f9fbfc;
         --bg-input: #ffffff;
+        --bg-panel: #eef1f6;
 
-        /* Ultra-fine borders (1px hairline) */
-        --border-subtle: #e6e8eb;
-        --border-card: #e5e7eb;
-        --border-input: #d1d5db;
-        --border-focus: #2563eb;
+        --border-subtle: #eef0f4;
+        --border-card: #e3e7ee;
+        --border-input: #d3d9e3;
+        --border-focus: #0f3fb4;
 
-        /* Typography colors */
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
-        --text-subtle: #94a3b8;
+        /* muted 6,11:1 di atas putih; placeholder 4,97:1 */
+        --text-primary: #151922;
+        --text-secondary: #5b6272;
+        --text-muted: #5b6272;
+        --text-subtle: #687081;
 
-        /* Status colors */
-        --emerald-600: #059669;
-        --emerald-50:  #ecfdf5;
-        --emerald-200: #a7f3d0;
-        --rose-600:    #dc2626;
-        --rose-50:     #fef2f2;
-        --rose-200:    #fecaca;
+        --emerald-600: #0f7a52;
+        --emerald-50:  #e3f6ed;
+        --emerald-200: #a9dfc5;
+        --rose-600:    #c0392b;
+        --rose-50:     #fdebe5;
+        --rose-200:    #f2b8ab;
 
-        /* Typography */
-        --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        --font-heading: 'Plus Jakarta Sans', sans-serif;
+        --font-body: 'Plus Jakarta Sans', sans-serif;
+        --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+        --font-mono: 'Plus Jakarta Sans', sans-serif;
 
-        /* Shadows: Flat editorial, sharp 1px hairline border + delicate depth */
-        --shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.03);
-        --shadow-card:   0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
-        --shadow-float:  0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-        --ring-focus:    0 0 0 3px rgba(37, 99, 235, 0.14);
+        --shadow-subtle: 0 1px 2px rgba(22, 33, 51, 0.04);
+        --shadow-card:   0 1px 2px rgba(22, 33, 51, 0.04), 0 8px 24px -12px rgba(22, 33, 51, 0.08);
+        --shadow-float:  0 26px 50px rgba(22, 33, 51, 0.16);
+        --ring-focus:    0 0 0 2px #ffffff, 0 0 0 4px #0f3fb4;
 
         /* Transitions */
         --transition-fast: 160ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -329,15 +315,15 @@ $_asnId = $asn_id ?? '';
 
     /* Stepper Error State (Red Alert) */
     .rf-step.has-error .rf-step-num {
-        background: #fee2e2 !important;
-        color: #dc2626 !important;
+        background: #fdebe5 !important;
+        color: #c0392b !important;
         border-color: #f87171 !important;
-        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.2);
     }
 
     .rf-step.has-error .rf-step-label,
     .rf-step.has-error .rf-step-title {
-        color: #dc2626 !important;
+        color: #c0392b !important;
     }
 
     /* Stepper Connector Line */
@@ -505,9 +491,9 @@ $_asnId = $asn_id ?? '';
     }
 
     .rf-card-icon.is-asn {
-        background: #eff6ff;
-        border-color: #bfdbfe;
-        color: #1d4ed8;
+        background: #eef2fc;
+        border-color: #b8c9ef;
+        color: #0b3290;
     }
 
     .rf-card-icon.is-nonasn {
@@ -535,7 +521,7 @@ $_asnId = $asn_id ?? '';
     .rf-card-chip.is-asn {
         background: #dbeafe;
         color: #1e40af;
-        border: 1px solid #bfdbfe;
+        border: 1px solid #b8c9ef;
     }
 
     .rf-card-chip.is-nonasn {
@@ -623,8 +609,8 @@ $_asnId = $asn_id ?? '';
     /* Selected State (High clarity, glowing border, vibrant check) */
     .rf-radio-card input[type="radio"]:checked + .rf-card-choice {
         border-color: var(--accent-600);
-        background-color: #f8faff;
-        box-shadow: 0 0 0 1px var(--accent-600), 0 8px 24px -4px rgba(37, 99, 235, 0.16);
+        background-color: #eef2fc;
+        box-shadow: 0 0 0 1px var(--accent-600), 0 8px 24px -4px rgba(15, 63, 180, 0.16);
     }
 
     .rf-radio-card input[type="radio"]:checked + .rf-card-choice .rf-card-radio-mark {
@@ -700,9 +686,9 @@ $_asnId = $asn_id ?? '';
     }
 
     .rf-gender-icon-male {
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        color: #1d4ed8;
+        background: #eef2fc;
+        border: 1px solid #b8c9ef;
+        color: #0b3290;
     }
 
     .rf-gender-icon-female {
@@ -763,8 +749,8 @@ $_asnId = $asn_id ?? '';
     /* Selected state */
     .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner {
         border-color: var(--accent-600);
-        background-color: #f8faff;
-        box-shadow: 0 0 0 1px var(--accent-600), 0 4px 16px -2px rgba(37, 99, 235, 0.14);
+        background-color: #eef2fc;
+        box-shadow: 0 0 0 1px var(--accent-600), 0 4px 16px -2px rgba(15, 63, 180, 0.14);
     }
 
     .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner .rf-gender-radio-mark {
@@ -852,14 +838,14 @@ $_asnId = $asn_id ?? '';
 
     .rf-digit-badge.is-valid {
         background: var(--emerald-50) !important;
-        color: #059669 !important;
-        border-color: #a7f3d0 !important;
+        color: #0f7a52 !important;
+        border-color: #a9dfc5 !important;
     }
 
     .rf-digit-badge.is-error {
-        background: #fee2e2 !important;
-        color: #dc2626 !important;
-        border-color: #fca5a5 !important;
+        background: #fdebe5 !important;
+        color: #c0392b !important;
+        border-color: #f2b8ab !important;
     }
 
     /* Field Status Badge (Valid / Error in label header) */
@@ -880,16 +866,16 @@ $_asnId = $asn_id ?? '';
 
     .rf-badge-status.is-error {
         display: inline-flex;
-        background: #fee2e2;
-        color: #dc2626;
-        border-color: #fca5a5;
+        background: #fdebe5;
+        color: #c0392b;
+        border-color: #f2b8ab;
     }
 
     .rf-badge-status.is-valid {
         display: inline-flex;
-        background: #ecfdf5;
-        color: #059669;
-        border-color: #a7f3d0;
+        background: #e3f6ed;
+        color: #0f7a52;
+        border-color: #a9dfc5;
     }
 
     /* Inputs, Select, Textarea (Strict 48px height, 10px radius) */
@@ -937,25 +923,25 @@ $_asnId = $asn_id ?? '';
     .rf-input.has-error,
     .rf-select.has-error,
     .rf-select-trigger.has-error {
-        border-color: #ef4444 !important;
+        border-color: #c0392b !important;
         background-color: #fff8f8 !important;
     }
 
     .rf-input.has-error:focus,
     .rf-select.has-error:focus,
     .rf-select-trigger.has-error:focus {
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+        box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.15) !important;
     }
 
     .rf-input.is-valid,
     .rf-select-trigger.is-valid {
-        border-color: #10b981 !important;
+        border-color: #0f7a52 !important;
         background-color: #f0fdf4 !important;
     }
 
     .rf-input.is-valid:focus,
     .rf-select-trigger.is-valid:focus {
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+        box-shadow: 0 0 0 3px rgba(15, 122, 82, 0.15) !important;
     }
 
     /* Floating input status icons */
@@ -994,12 +980,12 @@ $_asnId = $asn_id ?? '';
     .rf-input.has-error ~ .rf-input-icon.is-error,
     .rf-select-trigger.has-error .rf-input-icon.is-error {
         display: flex;
-        color: #ef4444;
+        color: #c0392b;
     }
 
     .rf-input.is-valid ~ .rf-input-icon.is-valid {
         display: flex;
-        color: #10b981;
+        color: #0f7a52;
     }
 
     /* Field Feedback Message below inputs */
@@ -1014,13 +1000,13 @@ $_asnId = $asn_id ?? '';
 
     .rf-field-feedback.is-error {
         display: flex !important;
-        color: #dc2626 !important;
+        color: #c0392b !important;
         font-weight: 500;
     }
 
     .rf-field-feedback.is-valid {
         display: flex !important;
-        color: #059669 !important;
+        color: #0f7a52 !important;
         font-weight: 500;
     }
 
@@ -1033,12 +1019,12 @@ $_asnId = $asn_id ?? '';
 
     /* ─── Top Error Summary Banner (Red Editorial Box) ─── */
     .rf-error-summary {
-        background: #fef2f2;
-        border: 1.5px solid #fecaca;
+        background: #fdebe5;
+        border: 1.5px solid #f2b8ab;
         border-radius: 14px;
         padding: 20px 24px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.08);
+        box-shadow: 0 4px 16px rgba(192, 57, 43, 0.08);
         animation: rfSlideDown 200ms ease-out;
     }
 
@@ -1064,8 +1050,8 @@ $_asnId = $asn_id ?? '';
         width: 32px;
         height: 32px;
         border-radius: 8px;
-        background: #fee2e2;
-        color: #dc2626;
+        background: #fdebe5;
+        color: #c0392b;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1100,8 +1086,8 @@ $_asnId = $asn_id ?? '';
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #b91c1c;
-        background: #fee2e2;
-        border: 1px solid #fca5a5;
+        background: #fdebe5;
+        border: 1px solid #f2b8ab;
         padding: 4px 10px;
         border-radius: 6px;
         white-space: nowrap;
@@ -1127,9 +1113,9 @@ $_asnId = $asn_id ?? '';
     }
 
     .rf-agree-box.has-error {
-        border-color: #ef4444 !important;
+        border-color: #c0392b !important;
         background-color: #fff8f8 !important;
-        box-shadow: 0 0 0 1px #fca5a5;
+        box-shadow: 0 0 0 1px #f2b8ab;
     }
 
     /* Custom Select Chevron */
@@ -1387,7 +1373,7 @@ $_asnId = $asn_id ?? '';
         align-items: flex-start;
         gap: 6px;
         font-size: 0.77rem;
-        color: #2563eb;
+        color: #0f3fb4;
         margin-top: 6px;
         line-height: 1.4;
     }
@@ -1397,7 +1383,7 @@ $_asnId = $asn_id ?? '';
         height: 14px;
         flex-shrink: 0;
         margin-top: 1px;
-        color: #3b82f6;
+        color: #0f3fb4;
     }
 
     .rf-error-msg {
@@ -1844,7 +1830,7 @@ $_asnId = $asn_id ?? '';
         line-height: 1.4;
     }
 
-    /* Editorial Dark Help Card (Linear / Vercel style) */
+    /* Kartu bantuan gelap */
     .rf-side-card.dark {
         background: var(--navy-950);
         border-color: rgba(255, 255, 255, 0.08);
@@ -1885,7 +1871,7 @@ $_asnId = $asn_id ?? '';
     .rf-dark-icon {
         width: 16px;
         height: 16px;
-        color: #38bdf8;
+        color: #8fa7e6;
         flex-shrink: 0;
         margin-top: 2px;
     }
@@ -1906,7 +1892,7 @@ $_asnId = $asn_id ?? '';
     }
 
     .rf-dark-content a:hover {
-        color: #38bdf8;
+        color: #8fa7e6;
         text-decoration: underline;
     }
 
@@ -2383,6 +2369,212 @@ $_asnId = $asn_id ?? '';
         }
     }
 
+    /* ─── Halaman registrasi: hero, stepper, kartu, sidebar (desain Figma "Proto 1" + DESIGN.md) ─── */
+    .rf-wrap { padding: 138px 0 96px; }
+    .rf-wrap .container { max-width: 1360px; padding-inline: clamp(24px, 5vw, 76px); }
+
+    .rf-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: 48px;
+        align-items: center;
+        margin-bottom: 44px;
+    }
+    .rf-hero-copy { min-width: 0; }
+    .rf-title {
+        font-family: var(--font-serif);
+        font-weight: 600;
+        font-size: clamp(32px, 3.8vw, 54px);
+        line-height: 1.08;
+        letter-spacing: -0.01em;
+        font-variation-settings: "opsz" 24;
+        color: var(--navy-950);
+        margin: 0 0 22px;
+    }
+    .rf-title-mark { position: relative; display: inline-block; }
+    @media (min-width: 769px) {
+        .rf-title-line { white-space: nowrap; }
+        .rf-title-mark { display: block; width: fit-content; }
+    }
+    .rf-title-mark::after {
+        content: ""; position: absolute; left: 2%; right: 1%; bottom: -5px; height: 5px;
+        background: var(--accent-600); border-radius: 100%; transform: rotate(-1.5deg);
+    }
+    .rf-lead { font-size: 15px; line-height: 1.8; max-width: 540px; color: var(--text-secondary); margin: 0 0 26px; }
+    .rf-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+    .rf-chips li {
+        display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px;
+        background: #fff; border: 1px solid var(--border-card); border-radius: 999px;
+        font-size: 13px; font-weight: 700; color: var(--navy-950);
+    }
+    .rf-chips svg { width: 16px; height: 16px; color: var(--accent-600); flex: none; }
+
+    /* Pratinjau kartu: replika kartu cetak 342 x 216. Semua ukuran dalam --u (1 px desain) supaya ikut mengecil. */
+    .rf-card-stage { position: relative; width: 100%; max-width: 480px; justify-self: center; padding: 0 30px 40px 0; }
+    .rf-card-tilt { position: relative; }
+    .rf-mcard {
+        --u: calc(100cqw / 342);
+        container-type: inline-size;
+        position: relative; width: 100%; aspect-ratio: 342 / 216; overflow: hidden;
+        border-radius: 3.5088% / 5.5556%;
+        box-shadow: 0 12px 48px rgba(27, 58, 92, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rf-mcard-front { z-index: 1; background: #f0ebe1; color: #0d1c2e; transform: rotate(-3deg); }
+    .rf-mcard-back { position: absolute; inset: 0; z-index: 0; background: #0d1c2e; transform: translate(24px, 22px) rotate(3deg); }
+    .rf-mc-motif { position: absolute; display: block; object-fit: contain; }
+    .rf-mcard-front .rf-mc-motif { left: calc(168 * var(--u)); top: calc(3 * var(--u)); width: calc(210 * var(--u)); height: calc(210 * var(--u)); opacity: 0.85; }
+    .rf-mcard-back .rf-mc-motif { left: calc(71 * var(--u)); top: calc(8 * var(--u)); width: calc(200 * var(--u)); height: calc(200 * var(--u)); opacity: 0.14; }
+    .rf-mc-kolom {
+        position: absolute; left: calc(18 * var(--u)); top: calc(14 * var(--u));
+        width: calc(150 * var(--u)); height: calc(186 * var(--u));
+        display: flex; flex-direction: column; align-items: flex-start; gap: calc(10 * var(--u));
+    }
+    .rf-mc-logo { display: block; width: auto; height: calc(36 * var(--u)); }
+    .rf-mc-foto {
+        position: relative; flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; overflow: hidden;
+        border-radius: calc(3 * var(--u)); background: rgba(13, 28, 46, 0.08);
+        display: grid; place-items: center;
+        font-size: calc(14 * var(--u)); font-weight: 800; color: rgba(13, 28, 46, 0.5);
+    }
+    .rf-mc-foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .rf-mc-label { font-weight: 700; text-transform: uppercase; white-space: nowrap; opacity: 0.5; font-size: calc(7 * var(--u)); letter-spacing: calc(1.12 * var(--u)); line-height: calc(10.5 * var(--u)); }
+    .rf-mc-nama { max-width: calc(150 * var(--u)); }
+    .rf-mc-nama .rf-mc-value { padding-top: calc(3 * var(--u)); font-size: calc(16 * var(--u)); font-weight: 800; line-height: calc(19.2 * var(--u)); letter-spacing: calc(-0.16 * var(--u)); }
+    .rf-mc-nama.is-dua .rf-mc-value { line-height: calc(18 * var(--u)); }
+    .rf-mc-baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: calc(4 * var(--u)); margin-bottom: calc(-4 * var(--u)); }
+    .rf-mc-nomor { margin-left: calc(1 * var(--u)); }
+    .rf-mc-nomor .rf-mc-value { padding-top: calc(8 * var(--u)); font-size: calc(13 * var(--u)); font-weight: 800; line-height: calc(18 * var(--u)); white-space: nowrap; }
+    .rf-mc-tegak {
+        position: absolute; right: calc(13.5 * var(--u)); top: calc(18 * var(--u));
+        display: flex; flex-direction: column; align-items: flex-end; gap: calc(1 * var(--u));
+        font-size: calc(5.5 * var(--u)); font-weight: 700; line-height: calc(6 * var(--u)); opacity: 0.35;
+    }
+    /* Kursor di atas kartu: kartu depan meluruskan diri, kartu belakang mendekat */
+    @media (hover: hover) {
+        .rf-card-stage:hover .rf-mcard-front { transform: rotate(0deg); }
+        .rf-card-stage:hover .rf-mcard-back { transform: translate(16px, 14px) rotate(1.5deg); }
+    }
+
+    .rf-live-pill {
+        position: absolute; z-index: 2; left: 14px; bottom: 0; margin: 0;
+        display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 14px;
+        background: #fff; border-radius: 999px; box-shadow: 0 14px 30px rgba(22, 33, 51, 0.16);
+        font-size: 12px; font-weight: 700; color: var(--navy-950);
+    }
+    .rf-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald-600); }
+
+    /* Stepper */
+    .rf-stepper { padding: 14px 22px; border-radius: 20px; margin-bottom: 32px; gap: 14px; box-shadow: var(--shadow-card); }
+    .rf-step { flex: 0 0 auto; gap: 12px; padding: 6px 8px; border-radius: 14px; }
+    .rf-step-num { width: 36px; height: 36px; border-radius: 10px; font-size: 14px; background: #fff; border-color: var(--border-card); }
+    .rf-step-label { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; line-height: 1.2; }
+    .rf-step-title { font-size: 14px; font-weight: 700; margin-top: 3px; }
+    .rf-step-line { flex: 1 1 24px; margin: 0; background: var(--border-card); }
+    .rf-step.active .rf-step-num { background: var(--navy-950); border-color: var(--navy-950); }
+
+    /* Kolom form dan kartu section */
+    #formRegistrasi { display: flex; flex-direction: column; gap: 24px; }
+    .rf-sidebar { top: 118px; gap: 24px; }
+    .rf-section { margin: 0; border-radius: 24px; scroll-margin-top: 120px; }
+    .rf-section-num { width: 32px; height: 32px; border-radius: 9px; font-size: 12px; }
+    .rf-section-title { font-size: 18px; letter-spacing: -0.01em; }
+    .rf-section-desc { font-size: 14px; line-height: 1.6; }
+    .rf-required-tag {
+        font-size: 11px; font-weight: 800; letter-spacing: 0.08em; white-space: nowrap;
+        color: var(--text-muted); background: var(--bg-panel); border: 0; padding: 5px 9px; border-radius: 6px;
+    }
+
+    /* Kontrol */
+    .rf-label { font-size: 14px; font-weight: 700; }
+    .rf-input, .rf-select, .rf-select-trigger { height: 52px; border-radius: 12px; font-size: 14px; }
+    textarea.rf-input { height: auto; min-height: 120px; }
+    .rf-input:hover, .rf-select:hover, .rf-select-trigger:hover { border-color: var(--text-subtle); }
+    .rf-input:focus, .rf-select:focus, .rf-select-trigger:focus,
+    .rf-custom-select.is-open .rf-select-trigger { border-color: var(--accent-600); box-shadow: var(--ring-focus); }
+    .rf-select-trigger:disabled, .rf-select-trigger.is-disabled { background-color: var(--bg-panel) !important; border-color: var(--border-card) !important; }
+    .rf-digit-badge { background: var(--bg-panel); border: 0; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+    .rf-gender-card-inner { min-height: 60px; border-radius: 14px; box-shadow: none; }
+    .rf-gender-card:hover .rf-gender-card-inner { background: #fff; border-color: var(--text-subtle); transform: none; box-shadow: none; }
+    .rf-gender-card input[type="radio"]:checked + .rf-gender-card-inner { background: var(--accent-50); box-shadow: none; }
+    .rf-hint { font-size: 13px; }
+
+    /* Toggle foto: radio tetap bisa difokus keyboard */
+    .rf-photo-toggle { background: var(--bg-panel); border: 0; border-radius: 12px; padding: 4px; }
+    .rf-photo-toggle label { position: relative; min-height: 44px; padding: 0 16px; border-radius: 9px; font-size: 14px; font-weight: 600; }
+    .rf-photo-toggle input[type="radio"] { display: block; position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+    .rf-photo-toggle label:focus-within { outline: 2px solid var(--accent-600); outline-offset: 2px; }
+    .rf-photo-toggle label.is-checked { background: #fff; color: var(--navy-950); font-weight: 700; box-shadow: 0 1px 3px rgba(22, 33, 51, 0.1); }
+
+    .rf-agree-box { background: var(--bg-page); border-radius: 16px; padding: 18px 20px; }
+    .rf-agree-row input[type="checkbox"] { width: 20px; height: 20px; }
+
+    /* Aksi */
+    .rf-actions { flex-wrap: wrap; justify-content: space-between; gap: 14px; padding-top: 20px; }
+    .rf-progress { display: flex; align-items: center; gap: 8px; margin: 0 auto 0 0; font-size: 13px; color: var(--text-muted); }
+    .rf-progress svg { width: 16px; height: 16px; flex: none; }
+    .rf-progress strong { color: var(--navy-950); font-weight: 800; }
+    .rf-progress.is-done, .rf-progress.is-done strong { color: var(--emerald-600); }
+    .rf-btn { height: 48px; border-radius: 12px; font-size: 14px; font-weight: 700; }
+    .rf-btn:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+    .rf-btn-primary { background: var(--accent-600); box-shadow: none; }
+    .rf-btn-primary:hover:not(:disabled) { background: var(--navy-950); transform: none; box-shadow: none; }
+    .rf-btn-primary:disabled { background: var(--border-card); color: var(--text-muted); }
+    .rf-btn-ghost { background: #fff; border-color: var(--border-input); color: var(--navy-950); }
+    .rf-btn-ghost:hover { background: #fff; border-color: var(--accent-600); color: var(--accent-600); }
+
+    /* Sidebar */
+    .rf-side-card { padding: 26px; border-radius: 24px; }
+    .rf-side-title { font-size: 16px; }
+    .rf-side-sub { font-size: 13px; }
+    .rf-benefits-list li { font-size: 14px; }
+    .rf-timeline-title { font-size: 14px; }
+    .rf-timeline-desc { font-size: 13px; }
+    .rf-timeline-node { border-color: var(--border-input); }
+    .rf-timeline-item:first-child .rf-timeline-node { border-color: var(--accent-600); }
+    .rf-timeline::before { background: var(--border-card); }
+    .rf-side-card.dark { background: #11161f; border-color: #11161f; box-shadow: none; }
+    .rf-side-card.dark .rf-side-sub { color: #a3abba; }
+    .rf-dark-content strong { color: #fff; font-size: 13px; }
+    .rf-dark-content span, .rf-dark-content a { display: block; font-size: 13px; line-height: 1.5; color: #a3abba; }
+    .rf-dark-content .rf-dark-sub { font-size: 12px; margin-bottom: 4px; }
+    .rf-dark-content a:hover { color: #fff; }
+
+    @media (min-width: 769px) {
+        .rf-section { padding: 32px; }
+        .rf-section-desc { padding-left: 44px; }
+    }
+    @media (min-width: 993px) {
+        .rf-layout { grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; }
+    }
+    @media (max-width: 992px) {
+        .rf-hero { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+        .rf-card-stage { justify-self: start; }
+    }
+    @media (max-width: 800px) {
+        .rf-wrap { padding-top: 112px; }
+    }
+    @media (max-width: 640px) {
+        .rf-wrap { padding-bottom: 64px; }
+        .rf-section { border-radius: 18px; }
+        .rf-stepper { padding: 8px 10px; gap: 4px; border-radius: 16px; }
+        .rf-step { flex: 1 1 0; justify-content: center; padding: 6px 4px; gap: 6px; min-height: 44px; }
+        .rf-step-num { width: 26px; height: 26px; font-size: 12px; border-radius: 8px; }
+        .rf-step-line { flex: 0 0 12px; }
+        .rf-mcard-front { transform: rotate(-2deg); }
+        .rf-mcard-back { transform: translate(16px, 16px) rotate(2deg); }
+        .rf-card-stage { padding: 0 20px 40px 0; }
+        .rf-actions { flex-direction: column; align-items: stretch; }
+        .rf-progress { order: 0; margin: 0; }
+        #btnSubmitRegistrasi { order: 1; }
+        #btnReset { order: 2; }
+    }
+    @media (max-width: 380px) {
+        .rf-step { padding: 4px 2px; gap: 4px; }
+        .rf-step-num { width: 22px; height: 22px; font-size: 11px; }
+        .rf-step-line { flex-basis: 6px; }
+    }
+
     /* Prefers Reduced Motion */
     @media (prefers-reduced-motion: reduce) {
         *, ::before, ::after {
@@ -2400,24 +2592,49 @@ $_asnId = $asn_id ?? '';
 <div class="rf-wrap">
     <div class="container">
 
-        <!-- Breadcrumb -->
-        <nav class="rf-breadcrumb" aria-label="Breadcrumb">
-            <a href="<?= base_url('opac') ?>">Beranda</a>
-            <span class="sep">/</span>
-            <a href="<?= base_url('opac') ?>">Layanan Pemustaka</a>
-            <span class="sep">/</span>
-            <span class="current">Registrasi Keanggotaan</span>
-        </nav>
+        <section class="rf-hero" aria-labelledby="rfJudul">
+            <div class="rf-hero-copy">
+                <h1 class="rf-title" id="rfJudul"><span class="rf-title-line">Registrasi Keanggotaan</span> <span class="rf-title-mark">Perpustakaan</span></h1>
+                <p class="rf-lead">Akses koleksi cetak, repositori ilmiah, dan ruang baca digital terpadu melalui Kartu Anggota resmi Perpustakaan Kementerian Ketenagakerjaan.</p>
 
-        <!-- Title Section -->
-        <div class="rf-title-section">
-            <div class="rf-title-row">
-                <div class="rf-title-main">
-                    <h1 class="rf-title">Registrasi Keanggotaan Perpustakaan</h1>
-                    <p class="rf-lead">Akses koleksi cetak, repositori ilmiah, dan ruang baca digital terpadu melalui Kartu Anggota resmi.</p>
-                </div>
+                <ul class="rf-chips">
+                    <li><?= landing_icon('jam') ?>± 5 menit pengisian</li>
+                    <li><?= landing_icon('perisai') ?>Verifikasi 1×24 jam kerja</li>
+                    <li><?= landing_icon('surat') ?>Kartu digital via email</li>
+                </ul>
             </div>
-        </div>
+
+            <div class="rf-card-stage">
+                <?php /* Replika sisi depan dan belakang kartu cetak (Anggota/Views/pdf/kartu-anggota.php, 342 x 216 px). Ukuran memakai satuan --u supaya ikut mengecil di layar sempit. */ ?>
+                <div class="rf-card-tilt">
+                    <div class="rf-mcard rf-mcard-back" aria-hidden="true">
+                        <img class="rf-mc-motif" src="<?= base_url('assets/img/kartu/logo-kemnaker-krem.png') ?>" alt="">
+                    </div>
+                    <div class="rf-mcard rf-mcard-front" role="img" aria-label="Pratinjau sisi depan Kartu Anggota, terisi sesuai data formulir">
+                        <img class="rf-mc-motif" src="<?= base_url('assets/img/kartu/logo-kemnaker.png') ?>" alt="">
+                        <div class="rf-mc-kolom">
+                            <img class="rf-mc-logo" src="<?= base_url('assets/img/kartu/logo-kemnaker-teks.webp') ?>" alt="">
+                            <div class="rf-mc-foto">
+                                <span id="mcPhotoQ">?</span>
+                                <img id="mcPhotoImg" alt="" hidden>
+                            </div>
+                            <div class="rf-mc-nama" id="mcNama">
+                                <div class="rf-mc-label">Nama</div>
+                                <div class="rf-mc-value" id="mcName"><span class="rf-mc-baris">Nama Lengkap</span></div>
+                            </div>
+                            <div class="rf-mc-nomor">
+                                <div class="rf-mc-label">No. Anggota</div>
+                                <div class="rf-mc-value">Setelah verifikasi</div>
+                            </div>
+                        </div>
+                        <div class="rf-mc-tegak" aria-hidden="true">
+                            <?php foreach (str_split('PERPUSTAKAAN') as $_huruf) : ?><span><?= $_huruf ?></span><?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+                <p class="rf-live-pill"><span class="rf-live-dot" aria-hidden="true"></span>Pratinjau langsung</p>
+            </div>
+        </section>
 
         <!-- Progress Stepper (Connected Timeline) -->
         <div class="rf-stepper" role="tablist" aria-label="Alur Pendaftaran">
@@ -2542,6 +2759,7 @@ $_asnId = $asn_id ?? '';
                                 <span class="rf-section-num">02</span>
                                 <h2 class="rf-section-title">Data Diri & Satuan Kerja</h2>
                             </div>
+                            <span class="rf-required-tag">Wajib Diisi</span>
                         </div>
                         <p class="rf-section-desc">Lengkapi identitas diri pemustaka sesuai kartu tanda pengenal kedinasan atau KTP resmi.</p>
 
@@ -2759,6 +2977,7 @@ $_asnId = $asn_id ?? '';
                                 <span class="rf-section-num">03</span>
                                 <h2 class="rf-section-title">Kontak & Notifikasi Akun</h2>
                             </div>
+                            <span class="rf-required-tag">Wajib Diisi</span>
                         </div>
                         <p class="rf-section-desc">Alamat korespondensi untuk pengiriman barcode kartu digital dan notifikasi sirkulasi buku.</p>
 
@@ -2840,6 +3059,10 @@ $_asnId = $asn_id ?? '';
 
                         <!-- Action Buttons -->
                         <div class="rf-actions">
+                            <p class="rf-progress" id="rfProgress" role="status">
+                                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0v.5a.75.75 0 001.5 0v-.5zm0 2.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0V7.25z" clip-rule="evenodd"/></svg>
+                                <span id="rfProgressText"><strong>9</strong> isian wajib belum lengkap</span>
+                            </p>
                             <button type="reset" class="rf-btn rf-btn-ghost" id="btnReset">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
@@ -2921,64 +3144,6 @@ $_asnId = $asn_id ?? '';
                             <div class="rf-timeline-title">Aktivasi Barcode Digital</div>
                             <div class="rf-timeline-desc">Kartu digital diterbitkan & langsung siap digunakan di sirkulasi.</div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Help & Contact Card (Editorial Dark) -->
-                <div class="rf-side-card dark">
-                    <div class="rf-side-header">
-                        <h3 class="rf-side-title">Bantuan & Layanan Fisik</h3>
-                        <p class="rf-side-sub">Meja Layanan Pemustaka</p>
-                    </div>
-                    <div class="rf-dark-list">
-                        <div class="rf-dark-item">
-                            <svg class="rf-dark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                            <div class="rf-dark-content">
-                                <strong>Jam Operasional:</strong>
-                                <span>Senin – Jumat: 08.00–16.00 WIB<br>Istirahat: 12.00–13.00 WIB</span>
-                            </div>
-                        </div>
-
-                        <?php if (!empty($_alamatPerpus)): ?>
-                        <div class="rf-dark-item">
-                            <svg class="rf-dark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                                <circle cx="12" cy="10" r="3"/>
-                            </svg>
-                            <div class="rf-dark-content">
-                                <strong>Alamat Perpustakaan:</strong>
-                                <span> Jl.Jenderal Gatot Subroto Kav. 51, RT.5/RW.4, Kuningan Timur, Kecamatan Setiabudi, Kota Jakarta Selatan, DKI Jakarta 12950. Gedung B</span>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($_emailPerpus)): ?>
-                        <div class="rf-dark-item">
-                            <svg class="rf-dark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                <polyline points="22,6 12,13 2,6"/>
-                            </svg>
-                            <div class="rf-dark-content">
-                                <strong>Surel Layanan:</strong>
-                                <a href="mailto:perpustakaan@kemnaker.go.id">perpustakaan@kemnaker.go.id</a>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($_phonePerpus)): ?>
-                        <div class="rf-dark-item">
-                            <svg class="rf-dark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
-                            </svg>
-                            <div class="rf-dark-content">
-                                <strong>Telepon Layanan:</strong>
-                                <span>08119521151</span>
-                            </div>
-                        </div>
-                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -3953,10 +4118,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (resetBtnEl) {
         resetBtnEl.addEventListener('click', function() {
             setTimeout(function() {
-                if (jaRadios.length > 0) {
-                    jaRadios[0].checked = true;
-                    applyJenisAnggota(jaRadios[0]);
-                }
+
                 inputIdentityNo.value = '';
                 inputIdentityNo.classList.remove('has-error', 'is-valid');
                 digitCount.className = 'rf-digit-badge';
@@ -3987,7 +4149,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 persetujuanFeedback.style.display = 'none';
                 persetujuanFeedback.innerHTML = '';
 
-                hideAndResetStatusNonAsn();
 
                 isPhoneDuplicate = false;
                 isEmailDuplicate = false;
@@ -4537,6 +4698,107 @@ document.addEventListener('DOMContentLoaded', function() {
         alertEl.style.display = 'block';
         alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('formRegistrasi');
+    if (!form) return;
+
+    const el = (id) => document.getElementById(id);
+    const nip = el('IdentityNo'), nama = el('Fullname'), unit = el('UnitKerja_id'), sub = el('SubUnitKerja_id');
+    const alamat = el('AddressNow'), email = el('Email'), hp = el('Phone'), setuju = el('Persetujuan');
+    const wrapSub = el('wrapperSubUnitKerja');
+    const progress = el('rfProgress'), progressText = el('rfProgressText');
+    const mcName = el('mcName'), mcNama = el('mcNama'), mcPhotoImg = el('mcPhotoImg'), mcPhotoQ = el('mcPhotoQ');
+    const photoPreview = el('photoPreview');
+    const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    function sisaIsian() {
+        const subLengkap = unit.value
+            ? (wrapSub.style.display === 'none' || sub.disabled || !!sub.value)
+            : false;
+        const hpDigit = hp.value.replace(/\D/g, '').length;
+        const lengkap = [
+            nip.value.length === 18,
+            nama.value.trim().length >= 3,
+            !!form.querySelector('input[name="Sex_id"]:checked'),
+            !!unit.value,
+            subLengkap,
+            alamat.value.trim().length >= 5,
+            reEmail.test(email.value.trim()),
+            hpDigit >= 9 && hpDigit <= 13,
+            setuju.checked,
+        ];
+        return lengkap.filter((ok) => !ok).length;
+    }
+
+    // Port namaKartuBaris() di app/Helpers/anggota_helper.php: maksimal 15 huruf per baris, 2 baris seimbang, lalu inisial dari kata terakhir.
+    const BATAS_NAMA = 15;
+    function pecahSeimbang(kata) {
+        let terbaik = null;
+        for (let k = 1; k < kata.length; k++) {
+            const baris = [kata.slice(0, k).join(' '), kata.slice(k).join(' ')];
+            const panjang = Math.max(baris[0].length, baris[1].length);
+            if (terbaik === null || panjang < terbaik[0]) terbaik = [panjang, baris];
+        }
+        return terbaik[1];
+    }
+    function namaBaris(nama) {
+        const kata = nama.trim().split(/\s+/).filter(Boolean);
+        if (kata.length <= 1) return kata;
+        for (let i = kata.length - 1; ; i--) {
+            const satu = kata.join(' ');
+            const baris = satu.length <= BATAS_NAMA ? [satu] : pecahSeimbang(kata);
+            const muat = Math.max(...baris.map((b) => b.length)) <= BATAS_NAMA;
+            if (muat || i < 1) return baris;
+            kata[i] = kata[i].charAt(0) + '.';
+        }
+    }
+
+    function perbarui() {
+        const sisa = sisaIsian();
+        progress.classList.toggle('is-done', sisa === 0);
+        progressText.innerHTML = sisa === 0
+            ? 'Semua isian wajib sudah lengkap'
+            : '<strong>' + sisa + '</strong> isian wajib belum lengkap';
+
+        const baris = namaBaris(nama.value);
+        mcName.replaceChildren(...(baris.length ? baris : ['Nama Lengkap']).map((teks) => {
+            const span = document.createElement('span');
+            span.className = 'rf-mc-baris';
+            span.textContent = teks;
+            return span;
+        }));
+        mcNama.classList.toggle('is-dua', baris.length > 1);
+    }
+
+    function jadwalkan() {
+        perbarui();
+        setTimeout(perbarui, 0);
+    }
+
+    function sinkronFoto() {
+        const src = photoPreview.getAttribute('src');
+        if (src) {
+            mcPhotoImg.src = src;
+            mcPhotoImg.hidden = false;
+            mcPhotoQ.hidden = true;
+        } else {
+            mcPhotoImg.removeAttribute('src');
+            mcPhotoImg.hidden = true;
+            mcPhotoQ.hidden = false;
+        }
+    }
+
+    form.addEventListener('input', jadwalkan);
+    form.addEventListener('change', jadwalkan);
+    form.addEventListener('reset', function () { setTimeout(perbarui, 120); });
+    el('btnReset').addEventListener('click', function () { setTimeout(perbarui, 120); });
+    new MutationObserver(sinkronFoto).observe(photoPreview, { attributes: true, attributeFilter: ['src'] });
+
+    perbarui();
+    sinkronFoto();
 });
 </script>
 <style>
