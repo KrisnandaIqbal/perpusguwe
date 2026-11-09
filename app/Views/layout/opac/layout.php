@@ -812,6 +812,12 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link <?= (url_is('opac/subjek*') || url_is('subjek*')) ? 'active' : '' ?>" href="<?= base_url('opac/subjek') ?>">
+                            <i class="fa-solid fa-tags me-1"></i>Subjek
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link" href="<?= base_url('opac/browse') ?>">
                             <i class="fa-solid fa-compass me-1"></i>Browse
                         </a>
@@ -933,6 +939,7 @@ $email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->ge
                         <li style="display: none;"><a href="<?= base_url('peminjaman-mandiri') ?>">Peminjaman Mandiri</a></li>
                         <li style="display: none;"><a href="<?= base_url('pengembalian-mandiri') ?>">Pengembalian Mandiri</a></li>
                         <li><a href="<?= base_url('opac') ?>">OPAC</a></li>
+                        <li><a href="<?= base_url('opac/subjek') ?>">Browse Subjek</a></li>
                     </ul>
                 </div>
 

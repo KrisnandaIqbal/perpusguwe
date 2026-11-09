@@ -180,11 +180,12 @@
                             </a>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <a href="<?= base_url('opac/browse?type=subject&letter=' . ($letter ?? 'A')) ?>"
-                               class="btn <?= ($browse_type ?? '') == 'subject' ? 'btn-info' : 'btn-outline-info' ?> btn-lg w-100">
+                            <a href="<?= base_url('opac/subjek') ?>"
+                               class="btn <?= ($browse_type ?? '') == 'subject' ? 'btn-info' : 'btn-outline-info' ?> btn-lg w-100"
+                               title="Buka halaman direktori browse subjek">
                                 <i class="fas fa-tags fa-2x mb-2 d-block"></i>
                                 <strong>Subjek</strong><br>
-                                <small>Browse berdasarkan subjek</small>
+                                <small>Buka halaman browse subjek</small>
                             </a>
                         </div>
                     </div>

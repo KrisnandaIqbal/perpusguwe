@@ -587,6 +587,175 @@ public function browse()
     return view('Opac\Views\browse', $this->data);
 }
 
+/**
+ * Halaman browse/jelajah subjek terpisah (OPAC umum dan anggota)
+ * Menampilkan daftar seluruh tajuk subjek urut abjad (A-Z) dan dikelompokkan,
+ * dilengkapi pencarian instan, subjek populer, dan tautan langsung ke koleksi buku terkait.
+ */
+public function subjek()
+{
+    $this->data['title'] = 'Jelajah Subjek - Perpustakaan Kemnaker RI';
+
+    $letter = trim((string) (
+        (method_exists($this->request, 'getVar') ? $this->request->getVar('letter') : null)
+        ?? (method_exists($this->request, 'getGet') ? $this->request->getGet('letter') : null)
+        ?? ($_GET['letter'] ?? '')
+    ));
+    $query  = trim((string) (
+        (method_exists($this->request, 'getVar') ? $this->request->getVar('q') : null)
+        ?? (method_exists($this->request, 'getGet') ? $this->request->getGet('q') : null)
+        ?? ($_GET['q'] ?? '')
+    ));
+
+    // Cache daftar subjek teragregasi selama 10 menit untuk performa maksimal
+    $cacheKey  = 'opac_subjects_directory_v2';
+    $cacheData = cache($cacheKey);
+
+    if (!$cacheData) {
+        $rows = $this->db->table('catalogs')
+            ->select('Subject')
+            ->where('IsOPAC', 1)
+            ->where("Subject IS NOT NULL AND Subject != ''", null, false)
+            ->get()
+            ->getResultArray();
+
+        $subjectMap = [];
+        $totalCatalogsWithSubject = count($rows);
+
+        foreach ($rows as $r) {
+            $parts = explode(';', $r['Subject']);
+            $seenInThisCatalog = [];
+
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p === '') continue;
+                $clean = trim($p, " \t\n\r\0\x0B.,;:-");
+                if ($clean === '') continue;
+
+                $lower = mb_strtolower($clean);
+                if (isset($seenInThisCatalog[$lower])) continue;
+                $seenInThisCatalog[$lower] = true;
+
+                if (!isset($subjectMap[$lower])) {
+                    $firstChar = mb_strtoupper(mb_substr($clean, 0, 1));
+                    if (!preg_match('/^[A-Z]$/', $firstChar)) {
+                        $firstChar = '#';
+                    }
+
+                    // Deteksi subdivisi sub-tajuk dengan pemisah '--'
+                    $subParts = explode('--', $clean);
+                    $mainTerm = trim($subParts[0]);
+                    $subTerm  = isset($subParts[1]) ? trim(implode(' -- ', array_slice($subParts, 1))) : null;
+
+                    $subjectMap[$lower] = [
+                        'name'      => $clean,
+                        'main_term' => $mainTerm,
+                        'sub_term'  => $subTerm,
+                        'count'     => 0,
+                        'letter'    => $firstChar,
+                    ];
+                }
+                $subjectMap[$lower]['count']++;
+            }
+        }
+
+        // Urutkan secara alfabetis berdasarkan nama subjek
+        uasort($subjectMap, static function ($a, $b) {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        // 12 Subjek terpopuler dengan jumlah koleksi terbanyak
+        $topList = $subjectMap;
+        uasort($topList, static function ($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+        $topSubjects = array_slice(array_values($topList), 0, 12);
+
+        // Pengelompokan berdasarkan huruf A-Z dan #
+        $grouped = [];
+        $letterCounts = [];
+        foreach (range('A', 'Z') as $char) {
+            $grouped[$char] = [];
+            $letterCounts[$char] = 0;
+        }
+        $grouped['#'] = [];
+        $letterCounts['#'] = 0;
+
+        foreach ($subjectMap as $item) {
+            $l = $item['letter'];
+            $grouped[$l][] = $item;
+            $letterCounts[$l]++;
+        }
+
+        $cacheData = [
+            'total_subjects'    => count($subjectMap),
+            'total_catalogs'    => $totalCatalogsWithSubject,
+            'top_subjects'      => $topSubjects,
+            'grouped_by_letter' => $grouped,
+            'letter_counts'     => $letterCounts,
+            'all_subjects'      => array_values($subjectMap),
+        ];
+
+        cache()->save($cacheKey, $cacheData, 600);
+    }
+
+    $allSubjects     = $cacheData['all_subjects'];
+    $groupedByLetter = $cacheData['grouped_by_letter'];
+    $letterCounts    = $cacheData['letter_counts'];
+    $topSubjects     = $cacheData['top_subjects'];
+    $totalSubjects   = $cacheData['total_subjects'];
+    $totalCatalogs   = $cacheData['total_catalogs'];
+
+    // Saring data jika ada query parameter pencarian (q) atau huruf (letter)
+    $filteredGrouped = $groupedByLetter;
+    $activeLetter    = '';
+    $searchQuery     = '';
+    $matchedCount    = $totalSubjects;
+
+    if ($query !== '') {
+        $searchQuery  = $query;
+        $filteredGrouped = [];
+        $queryLower   = mb_strtolower($query);
+        $matchedCount = 0;
+
+        foreach ($groupedByLetter as $l => $items) {
+            $matchingItems = [];
+            foreach ($items as $it) {
+                if (mb_stripos($it['name'], $queryLower) !== false) {
+                    $matchingItems[] = $it;
+                    $matchedCount++;
+                }
+            }
+            if (!empty($matchingItems)) {
+                $filteredGrouped[$l] = $matchingItems;
+            }
+        }
+    } elseif ($letter !== '' && strtoupper($letter) !== 'ALL' && strtoupper($letter) !== 'SEMUA') {
+        $activeLetter = strtoupper($letter);
+        if (isset($groupedByLetter[$activeLetter])) {
+            $filteredGrouped = [
+                $activeLetter => $groupedByLetter[$activeLetter]
+            ];
+            $matchedCount = count($groupedByLetter[$activeLetter]);
+        } else {
+            $filteredGrouped = [];
+            $matchedCount    = 0;
+        }
+    }
+
+    $this->data['total_subjects']    = $totalSubjects;
+    $this->data['total_catalogs']    = $totalCatalogs;
+    $this->data['top_subjects']      = $topSubjects;
+    $this->data['grouped_by_letter'] = $filteredGrouped;
+    $this->data['letter_counts']     = $letterCounts;
+    $this->data['active_letter']     = $activeLetter;
+    $this->data['search_query']      = $searchQuery;
+    $this->data['matched_count']     = $matchedCount;
+    $this->data['alphabet']          = range('A', 'Z');
+
+    return view('Opac\Views\subjek', $this->data);
+}
+
     public function export()
     {
         $format = $this->request->getVar('format') ?? 'excel';

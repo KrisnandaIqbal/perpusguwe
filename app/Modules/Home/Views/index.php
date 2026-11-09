@@ -157,6 +157,7 @@ $subjects      = $subjects ?? [];
                 <nav class="main-nav" id="main-nav" aria-label="Navigasi utama">
                     <a href="#beranda" class="active"><?= $icon('home', 'nav-icon') ?>Beranda</a>
                     <a href="<?= $opacUrl ?>"><?= $icon('search', 'nav-icon') ?>Cari Koleksi</a>
+                    <a href="<?= base_url('opac/subjek') ?>"><?= $icon('isbn', 'nav-icon') ?>Subjek</a>
                     <a href="<?= $services['tamu']['url'] ?>" class="nav-link"><?= $icon('tamu', 'nav-icon') ?>Buku Tamu</a>
 
                     <div class="nav-dropdown" id="nav-dropdown">
@@ -336,7 +337,10 @@ $subjects      = $subjects ?? [];
                     <div class="section-kicker"><span></span> Eksplorasi katalog OPAC</div>
                     <h2>Jelajahi <?= $totalCatalogs ? number_format($totalCatalogs, 0, ',', '.') . ' judul' : 'seluruh' ?> koleksi berdasarkan subjek.</h2>
                     <p>Cari berdasarkan judul, penulis, atau kode buku, lalu cek nomor panggil dan ketersediaan eksemplar.</p>
-                    <a class="cta-button" href="<?= $opacUrl ?>">Buka katalog lengkap <?= $icon('right') ?></a>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                        <a class="cta-button" href="<?= $opacUrl ?>">Buka katalog lengkap <?= $icon('right') ?></a>
+                        <a class="cta-button" style="background:#eef2f7;color:#1e293b;border:1px solid #cbd5e1;" href="<?= base_url('opac/subjek') ?>">Lihat semua subjek <?= $icon('up-right') ?></a>
+                    </div>
                 </div>
                 <?php if (!empty($subjects)) : ?>
                     <ul class="subject-list">
@@ -389,6 +393,7 @@ $subjects      = $subjects ?? [];
                         <h2>Layanan</h2>
                         <ul>
                             <li><a href="<?= $opacUrl ?>">Katalog (OPAC)</a></li>
+                            <li><a href="<?= base_url('opac/subjek') ?>">Browse Subjek</a></li>
                             <?php foreach (['registrasi' => 'Pendaftaran Anggota', 'pinjam' => 'Peminjaman Mandiri', 'kembali' => 'Pengembalian Mandiri', 'baca' => 'Baca di Tempat', 'isbn' => 'Layanan ISBN'] as $id => $label) : if (!isset($services[$id])) continue; ?>
                                 <li><a href="<?= $services[$id]['url'] ?>"><?= esc($label) ?></a></li>
                             <?php endforeach; ?>

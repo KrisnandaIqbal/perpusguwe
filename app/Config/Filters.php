@@ -70,6 +70,8 @@ class Filters extends BaseConfig
                 'opac/detail/*',            // method: detail
                 'opac/search',              // method: search
                 'opac/browse',              // method: browse
+                'opac/subjek*',             // method: subjek
+                'subjek*',                  // route: subjek
                 'opac/export',              // method: export
                 'opac/statistics',          // method: statistics
                 'opac/statistics_anggota',  // method: statistics_anggota
@@ -114,6 +116,8 @@ class Filters extends BaseConfig
                 'opac/detail/*',
                 'opac/search',
                 'opac/browse',
+                'opac/subjek*',
+                'subjek*',
                 'opac/export',
                 'opac/statistics',
                 'opac/statistics_anggota',
