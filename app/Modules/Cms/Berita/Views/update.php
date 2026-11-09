@@ -113,8 +113,8 @@ $request = service('request');
                         <div class="position-relative form-group">
                             <label for="title">Judul Berita*</label>
                             <div>
-                                <input type="text" class="form-control" id="title" name="title" placeholder="Judul Berita" value="<?= set_value('title', $berita->title) ?>" />
-                                <small class="info help-block text-muted">Permalink: <a href="<?= permalink('berita/' . $berita->slug) ?>" target="_blank"><?= permalink('berita/' . $berita->slug) ?></a></small>
+                                <input type="text" class="form-control" id="title" name="title" placeholder="Judul Berita" value="<?= set_value('title', $berita->title) ?>" maxlength="120" />
+                                <small class="info help-block text-muted">Maksimal 120 karakter agar tampil utuh di beranda.<br>Permalink: <a href="<?= permalink('berita/' . $berita->slug) ?>" target="_blank"><?= permalink('berita/' . $berita->slug) ?></a></small>
                             </div>
                         </div>
                     </div>

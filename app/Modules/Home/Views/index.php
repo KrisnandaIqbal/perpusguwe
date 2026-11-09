@@ -30,6 +30,7 @@
             <?= $this->include('Home\Views\landing\shortcuts') ?>
             <?= $this->include('Home\Views\landing\showcase') ?>
             <?= $this->include('Home\Views\landing\catalog') ?>
+            <?= $this->include('Home\Views\landing\berita') ?>
             <?= $this->include('App\Views\layout\partial\footer_publik') ?>
         </div>
     </main>

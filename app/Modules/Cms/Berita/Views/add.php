@@ -81,7 +81,8 @@ $slug = $request->getGet('slug') ?? '';
                         <div class="position-relative form-group">
                             <label for="title">Judul Berita*</label>
                             <div>
-                                <input type="text" class="form-control" name="title" id="title" placeholder="Judul Berita " value="<?= set_value('title') ?>" required />
+                                <input type="text" class="form-control" name="title" id="title" placeholder="Judul Berita " value="<?= set_value('title') ?>" maxlength="120" required />
+                                <small class="info help-block text-muted">Maksimal 120 karakter agar tampil utuh di beranda.</small>
                             </div>
                         </div>
                     </div>

@@ -67,9 +67,10 @@ class Berita extends \Base\Controllers\BaseController
         $this->validation->setRules([
             'title' => [
                 'label' => 'Judul Berita',
-                'rules' => 'required',
+                'rules' => 'required|max_length[120]',
                 'errors' => [
-                    'required' => 'Judul Berita wajib diisi.',
+                    'required'   => 'Judul Berita wajib diisi.',
+                    'max_length' => 'Judul Berita maksimal 120 karakter.',
                 ]
             ],
             'file_cover' => [
@@ -244,9 +245,10 @@ class Berita extends \Base\Controllers\BaseController
         $this->validation->setRules([
             'title' => [
                 'label' => 'Judul Berita',
-                'rules' => 'required',
+                'rules' => 'required|max_length[120]',
                 'errors' => [
-                    'required' => 'Judul Berita wajib diisi.',
+                    'required'   => 'Judul Berita wajib diisi.',
+                    'max_length' => 'Judul Berita maksimal 120 karakter.',
                 ]
             ],
             'file_cover' => [
