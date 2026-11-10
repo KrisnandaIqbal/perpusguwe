@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Studi kasus landing page</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap">
+<style>
+:root{--blue:#0F3FB4;--ink:#151922;--page:#F9FBFC;--panel:#EEF1F6;--border:#E3E7EE;--muted:#5B6272;--foot:#11161F}
+*{box-sizing:border-box;margin:0}
+body{width:1600px;background:var(--page);font-family:"Plus Jakarta Sans",sans-serif;color:var(--ink);padding:60px 100px 120px}
+.serif{font-family:"Source Serif 4",Georgia,serif;font-weight:600}
+.banner{position:relative;height:640px;border-radius:28px;background:var(--blue);overflow:hidden;color:#fff}
+.banner .t{position:absolute;left:64px;top:72px;width:520px}
+.banner h1{font-size:54px;line-height:1.1;letter-spacing:-.01em}
+.banner p{margin-top:22px;font-size:16px;line-height:1.8;color:rgba(255,255,255,.78);width:400px}
+.banner .meta{position:absolute;left:64px;bottom:56px;font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+.fan{position:absolute;inset:0}
+.ph{position:absolute;width:250px;background:#fff;border-radius:40px;padding:10px;box-shadow:0 30px 50px rgba(8,22,60,.35);transform-origin:center;transform:perspective(2200px) rotateX(52deg) rotateZ(-34deg)}
+.ph img{display:block;width:100%;border-radius:31px}
+.about{display:grid;grid-template-columns:640px 1fr;gap:80px;align-items:center;margin-top:110px}
+.stage{position:relative;height:640px}
+.stage .ph{transform:perspective(2000px) rotateX(18deg) rotateY(0) rotateZ(-14deg);box-shadow:0 40px 60px rgba(25,37,58,.22)}
+.mini{position:absolute;width:150px;border-radius:14px;box-shadow:0 26px 50px rgba(22,33,51,.16);border:1px solid var(--border)}
+.num{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.1em}
+h2{font-size:44px;letter-spacing:-.01em;margin:10px 0 22px}
+.about p{font-size:15px;line-height:1.8;color:var(--muted);max-width:520px}
+.chips{display:flex;gap:26px;margin-top:40px}
+.chip{width:110px;font-size:13px;font-weight:700}
+.chip b{display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;background:var(--blue);color:#fff;font-size:16px;margin-bottom:10px}
+.win{background:#fff;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 30px 55px rgba(25,37,58,.14)}
+.win .bar{height:40px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 16px}
+.win .bar i{width:11px;height:11px;border-radius:50%;background:var(--border)}
+.win img{display:block;width:100%}
+.desk{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:30px}
+.sec{margin-top:170px}
+.type{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:30px}
+.card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:34px 38px;min-height:300px}
+.card small{font-size:13px;color:var(--muted)}
+.card .n{font-size:26px;font-weight:800;margin:8px 0 14px}
+.tag{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:6px 16px;font-size:12px;margin-right:8px}
+.big{font-size:96px;font-weight:800;margin-top:46px}
+.glyph{font-size:19px;letter-spacing:.06em;line-height:1.5;margin-top:26px;color:var(--ink);word-break:break-all}
+.pal{display:flex;gap:56px;margin-top:40px}
+.sw{width:112px}.sw div{height:54px;border-radius:12px;border:1px solid var(--border)}
+.sw span{display:block;font-size:12px;margin-top:10px;color:var(--muted)}
+.sw b{display:block;font-size:13px;margin-top:2px}
+</style></head><body>
+
+<section class="banner">
+  <div class="t"><h1 class="serif">Perpustakaan Kemnaker,<br>halaman depan</h1>
+  <p>Cari buku, regulasi, riset, hingga layanan perpustakaan dalam satu kolom pencarian.</p></div>
+  <div class="meta">Portal perpustakaan<br>Kementerian Ketenagakerjaan RI</div>
+  <div class="fan">
+    <div class="ph" style="left:640px;top:-170px"><img src="shots/ponsel-atas.png"></div>
+    <div class="ph" style="left:900px;top:-40px"><img src="shots/ponsel-layanan.png"></div>
+    <div class="ph" style="left:1130px;top:100px"><img src="shots/ponsel-buku.png"></div>
+    <div class="ph" style="left:700px;top:150px"><img src="shots/ponsel-katalog.png"></div>
+  </div>
+</section>
+
+<section class="about">
+  <div class="stage">
+    <div class="ph" style="left:90px;top:40px;width:300px"><img src="shots/ponsel-gulir.png"></div>
+    <img class="mini" style="left:0;top:20px" src="shots/ponsel-buku.png">
+    <img class="mini" style="left:460px;top:400px" src="shots/ponsel-layanan.png">
+  </div>
+  <div>
+    <div class="num">01</div>
+    <h2 class="serif">About project</h2>
+    <p>Halaman depan portal perpustakaan untuk pegawai dan masyarakat. Pengunjung bisa mencari koleksi, membuka layanan mandiri, dan melihat buku terbaru tanpa berpindah halaman. Navbar berubah menjadi liquid glass saat halaman digulir.</p>
+    <div class="chips">
+      <div class="chip"><b>01</b>Hero dan pencarian</div>
+      <div class="chip"><b>02</b>Akses cepat layanan</div>
+      <div class="chip"><b>03</b>Katalog dan buku</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="num">02</div><h2 class="serif" style="margin-bottom:0">Tampilan desktop</h2>
+  <div class="desk">
+    <div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="shots/desktop-atas.png"></div>
+    <div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="shots/desktop-gulir.png"></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="num">03</div><h2 class="serif" style="margin-bottom:0">Fonts &amp; colors</h2>
+  <div class="type">
+    <div class="card"><small>Source Serif 4</small><div class="n serif">Judul yang dibaca</div><span class="tag">semibold</span><div class="big serif">Aa</div></div>
+    <div class="card"><small>Plus Jakarta Sans</small><div class="n">Menu, button, dan paragraf</div><span class="tag">regular</span><span class="tag">medium</span><span class="tag">bold</span>
+      <div class="glyph">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789</div></div>
+  </div>
+  <div class="pal">
+    <div class="sw"><div style="background:#0F3FB4"></div><span>Blue</span><b>#0F3FB4</b></div>
+    <div class="sw"><div style="background:#151922"></div><span>Ink</span><b>#151922</b></div>
+    <div class="sw"><div style="background:#F9FBFC"></div><span>Page</span><b>#F9FBFC</b></div>
+    <div class="sw"><div style="background:#EEF1F6"></div><span>Panel</span><b>#EEF1F6</b></div>
+    <div class="sw"><div style="background:#11161F"></div><span>Footer</span><b>#11161F</b></div>
+  </div>
+</section>
+</body></html>

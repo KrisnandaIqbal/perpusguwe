@@ -45,6 +45,8 @@ class BaseController extends Controller
 		// Do Not Edit This Line
 		parent::initController($request, $response, $logger);
 
+		$this->data['nama_perpustakaan'] = $this->_getPerpustakaanName();
+
 		// Preload any models, libraries, etc, here.
 		helper(['url', 'text', 'form', 'html', 'file', 'cookie', 'auth', 'app', 'common']);
 
@@ -61,6 +63,19 @@ class BaseController extends Controller
 
 		// dd(str_replace(base_url(), '', current_url()));
 	}
+
+	protected function _getPerpustakaanName(): string
+	{
+		$value = db_connect('data')
+			->table('settingparameters')
+			->select('Value')
+			->where('Name', 'NamaPerpustakaan')
+			->get()
+			->getRow('Value');
+
+		return $value ?: 'Perpustakaan Mitra';
+	}
+
 	public function do_upload()
 	{
 		$response = [

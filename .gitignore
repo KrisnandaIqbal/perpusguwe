@@ -161,3 +161,8 @@ playwright/.cache/
 docs/laporan-uji-landing/img/
 docs/laporan-uji-landing/hasil.json
 docs/laporan-uji-landing/*.html
+
+*.fig
+anti-slop/*
+bukti-log-2026-10-22/*
+.agents/

@@ -75,9 +75,9 @@ if (!function_exists('display_menu_module')) {
     {
         $baseModel = new \Base\Models\BaseModel();
         $query = $baseModel->query(
-            "select a.id, a.name as label, a.type, a.active, a.controller, a.slug, deriv.count 
+            "select a.id, a.name as label, a.type, a.active, a.controller, a.slug, deriv.count
             from c_menus a left outer join (
-                select parent, count(*) as count 
+                select parent, count(*) as count
                     from c_menus group by parent
                 ) deriv on a.id = deriv.parent where  a.parent= " .
                 $parent .
@@ -206,7 +206,7 @@ if (!function_exists('is_accessed')) {
         } else {
             $permission = $permission.'/access';
         }
-      
+
         return is_allowed($permission, $user_id);
     }
 }
@@ -335,6 +335,20 @@ if (!function_exists('_render_menu_backend')) {
                         <span>' . esc($row->name) . '</span>
                     </a>
                 </li>';
+            }
+
+            if (is_member('admin') && trim($row->controller, '/') === 'parameter') {
+                $settingsPath = 'master-nama-perpustakaan';
+                $settingsActive = ($currentPath === $settingsPath)
+                    || strpos($currentPath, $settingsPath . '/') === 0;
+                $html .= '
+                <li>
+                    <a href="' . base_url($settingsPath) . '" class="' . ($settingsActive ? 'active' : '') . '">
+                        <i class="fas fa-book"></i>
+                        <span>Profil Perpustakaan</span>
+                    </a>
+                </li>';
+                if ($settingsActive) $hasActive = true;
             }
         }
 

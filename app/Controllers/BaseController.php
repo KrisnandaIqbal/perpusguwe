@@ -55,6 +55,7 @@ abstract class BaseController extends Controller
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
 
+
         // Preload any models, libraries, etc, here.
 
         // E.g.: $this->session = \Config\Services::session();
@@ -76,4 +77,11 @@ abstract class BaseController extends Controller
         $groceryCrud = new GroceryCrud($config, $db);
         return $groceryCrud;
     }
+
+    public function _getPerpustakaanName()
+    {
+        $value = db_connect('data')->table('settingparameters')->select('Value')->where('Name', 'NamaPerpustakaan')->get()->getRow('Value');
+        return $value ?: 'Perpustakaan Mitra';
+    }
+
 }

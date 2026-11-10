@@ -71,7 +71,7 @@ $_depan   = in_array(trim(current_url(true)->getPath(), '/'), ['', 'home', 'inde
     </div>
 
     <div class="footer-bottom">
-        <span>© <?= date('Y') ?> Perpustakaan Kementerian Ketenagakerjaan. Seluruh hak cipta dilindungi.</span>
+        <span>© <?= date('Y') ?> <?= $nama_perpustakaan ?>. Seluruh hak cipta dilindungi.</span>
         <span class="footer-mark">Kementerian Ketenagakerjaan · Republik Indonesia</span>
     </div>
 </footer>

@@ -1,6 +1,5 @@
 <?php
-$db=db_connect();
-$nama_perpustakaan=$db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value?:"Perpustakaan Mitra;";
+$nama_perpustakaan = $this->_getPerpustakaanName();
 $year = date('Y');
 ?>
 <div class="app-wrapper-footer">
