@@ -35,12 +35,24 @@
         </div>
         <div class="card-body">
             <?= get_message('message'); ?>
+            <form method="get" class="form-inline mb-3">
+                <label class="mr-2" for="sumber">Sumber</label>
+                <select name="sumber" id="sumber" class="form-control mr-2" onchange="this.form.submit()">
+                    <option value="">Semua</option>
+                    <option value="manual" <?= $sumber === 'manual' ? 'selected' : '' ?>>Manual</option>
+                    <option value="pencarian" <?= $sumber === 'pencarian' ? 'selected' : '' ?>>Dari pencarian</option>
+                </select>
+            </form>
             <table style="width: 100%;" id="tbl_usulankoleksis" class="table table-hover table-striped table-bordered">
                 <thead>
                     <tr>
                         <th><?= lang('UsulanKoleksi.field.no') ?> </th>
                         <th><?= lang('UsulanKoleksi.field.title') ?></th>
                         <th><?= lang('UsulanKoleksi.field.author') ?></th>
+                        <th>Sumber</th>
+                        <th>Dicari</th>
+                        <th>Klik OneSearch</th>
+                        <th>Terakhir dicari</th>
                         <th><?= lang('UsulanKoleksi.field.description') ?></th>
                         <th><?= lang('UsulanKoleksi.field.created_by') ?></th>
                         <th><?= lang('UsulanKoleksi.field.updated_by') ?></th>
@@ -55,6 +67,10 @@
                                 <?= _spec($row->title); ?> <br>
                             </td>
                             <td><?= _spec($row->author); ?></td>
+                            <td><?= $row->source === 'pencarian' ? 'Pencarian' : 'Manual' ?></td>
+                            <td><?= (int) $row->request_count ?></td>
+                            <td><?= (int) $row->onesearch_click_count ?></td>
+                            <td><?= _spec($row->last_searched_at ?? '-'); ?></td>
                             <td><?= _spec($row->description); ?></td>
                             <td width="100">
                                 <span class="badge badge-info"><?= _spec($row->created_at); ?></span><br>
@@ -87,7 +103,7 @@
 <?= $this->section('script'); ?>
 
 <script>
-    setDataTable('#tbl_usulankoleksis', disableOrderCols = [0, 6], defaultOrderCols = [5, 'desc'], autoNumber = true);
+    setDataTable('#tbl_usulankoleksis', disableOrderCols = [0, 10], defaultOrderCols = [4, 'desc'], autoNumber = true);
 
     $("body").on("click", ".remove-data", function() {
         var url = $(this).attr('data-href');
