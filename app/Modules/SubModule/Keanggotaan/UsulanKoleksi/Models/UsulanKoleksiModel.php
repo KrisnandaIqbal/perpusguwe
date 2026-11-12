@@ -2,7 +2,7 @@
 
 namespace UsulanKoleksi\Models;
 
-class UsulanKoleksiModel extends \hamkamannan\adminigniter\Models\BaseModel
+class UsulanKoleksiModel extends \Base\Models\BaseModel
 {
     protected $table      = 't_usulankoleksi';
     protected $primaryKey = 'id';

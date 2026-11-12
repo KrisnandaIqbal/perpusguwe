@@ -1,5 +1,5 @@
 <?php $core = config('Core');
-$layout = (!empty($core->layout_backend)) ? $core->layout_backend : 'hamkamannan\adminigniter\Views\layout\backend\main'; ?>
+$layout = (!empty($core->layout_backend)) ? $core->layout_backend : 'App\Views\layout\main'; ?>
 <?= $this->extend($layout); ?>
 <?= $this->section('style'); ?>
 

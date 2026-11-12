@@ -2,7 +2,7 @@
 
 namespace PemesananKoleksi\Models;
 
-class PemesananKoleksiModel extends \hamkamannan\adminigniter\Models\BaseModel
+class PemesananKoleksiModel extends \Base\Models\BaseModel
 {
     protected $table      = 't_pemesanankoleksi';
     protected $primaryKey = 'id';

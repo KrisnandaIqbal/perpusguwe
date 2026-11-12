@@ -118,9 +118,11 @@ class MasterKelasBesar extends \Base\Controllers\BaseController
     public function delete($id)
     {
         if ($this->masterkelasbesar->delete($id)) {
-            session()->setFlashdata('message', alert_success('Data berhasil dihapus'));
+            set_message('toastr_msg', 'Data berhasil dihapus');
+            set_message('toastr_type', 'success');
         } else {
-            session()->setFlashdata('message', alert_error('Gagal menghapus data'));
+            set_message('toastr_msg', 'Gagal menghapus data');
+            set_message('toastr_type', 'warning');
         }
 
         return redirect()->to(base_url('master-kelas-besar'));

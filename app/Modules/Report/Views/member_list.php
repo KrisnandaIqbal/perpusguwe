@@ -2,7 +2,7 @@
 $request = service('request'); ?>
 
 <?php $core = config('Core');
-$layout = (!empty($core->layout_backend)) ? $core->layout_backend : 'hamkamannan\adminigniter\Views\layout\backend\main'; ?>
+$layout = (!empty($core->layout_backend)) ? $core->layout_backend : 'App\Views\layout\main'; ?>
 <?= $this->extend($layout); ?>
 <?= $this->section('style'); ?>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">

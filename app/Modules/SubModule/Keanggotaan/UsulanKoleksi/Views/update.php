@@ -1,7 +1,7 @@
 <?php
 $request = service('request'); ?>
 
-<?= $this->extend('hamkamannan\adminigniter\layout\backend\main'); ?>
+<?= $this->extend('App\Views\layout\main'); ?>
 <?= $this->section('style'); ?>
 <?= $this->endSection('style'); ?>
 

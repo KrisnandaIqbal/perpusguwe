@@ -19,7 +19,7 @@ if(!function_exists('get_member_type')){
 if (!function_exists('get_MemberNo')) {
     function get_MemberNo()
     {
-        $baseModel = new \hamkamannan\adminigniter\Models\BaseModel();
+        $baseModel = new \Base\Models\BaseModel();
         $baseModel->setTable('t_anggota');
         $kode = $baseModel
 			->select ('RIGHT(MemberNo,4) as MemberNo', false)

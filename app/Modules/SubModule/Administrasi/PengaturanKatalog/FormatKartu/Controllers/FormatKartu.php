@@ -52,11 +52,6 @@ class FormatKartu extends \Base\Controllers\BaseController
         }
     }
 
-    public function set_access($status)
-    {
-        set_formatkartu('layout_param', $status);
-    }
-
     public function json()
     {
         return DataTables::use('c_formatkartus')->make(true);

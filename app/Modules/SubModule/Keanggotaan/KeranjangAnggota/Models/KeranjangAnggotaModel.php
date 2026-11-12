@@ -2,7 +2,7 @@
 
 namespace KeranjangAnggota\Models;
 
-class KeranjangAnggotaModel extends \hamkamannan\adminigniter\Models\BaseModel
+class KeranjangAnggotaModel extends \Base\Models\BaseModel
 {
     protected $table      = 't_keranjanganggota';
     protected $primaryKey = 'id';

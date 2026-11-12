@@ -4,7 +4,7 @@ namespace UsulanKoleksi\Controllers;
 
 use \CodeIgniter\Files\File;
 
-class UsulanKoleksi extends \hamkamannan\adminigniter\Controllers\BaseController
+class UsulanKoleksi extends \Base\Controllers\BaseController
 {
     public $auth;
     public $authorize;

@@ -4,7 +4,7 @@ namespace PemesananKoleksi\Controllers;
 
 use \CodeIgniter\Files\File;
 
-class PemesananKoleksi extends \hamkamannan\adminigniter\Controllers\BaseController
+class PemesananKoleksi extends \Base\Controllers\BaseController
 {
     public $auth;
     public $authorize;

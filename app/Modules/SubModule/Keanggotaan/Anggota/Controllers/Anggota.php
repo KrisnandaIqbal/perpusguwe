@@ -1,7 +1,6 @@
 <?php
 
 namespace Anggota\Controllers;
-// namespace hamkamannan\adminigniter\Modules\Core\Parameter\Controllers;
 
 use Base\Models\BaseModel;
 use Base\Models\DataModel;

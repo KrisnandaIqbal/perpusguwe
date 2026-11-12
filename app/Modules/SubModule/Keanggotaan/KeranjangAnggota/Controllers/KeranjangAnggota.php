@@ -4,7 +4,7 @@ namespace KeranjangAnggota\Controllers;
 
 use \CodeIgniter\Files\File;
 
-class KeranjangAnggota extends \hamkamannan\adminigniter\Controllers\BaseController
+class KeranjangAnggota extends \Base\Controllers\BaseController
 {
     public $auth;
     public $authorize;
@@ -48,7 +48,7 @@ class KeranjangAnggota extends \hamkamannan\adminigniter\Controllers\BaseControl
     public function create()
     {
 
-        $baseModel = new \hamkamannan\adminigniter\Models\BaseModel();
+        $baseModel = new \Base\Models\BaseModel();
         $baseModel->setTable('t_anggota');
         $anggota = $baseModel
             ->select('t_anggota.*')

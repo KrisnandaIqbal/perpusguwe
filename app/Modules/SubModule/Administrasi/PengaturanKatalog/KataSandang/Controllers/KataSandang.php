@@ -118,11 +118,6 @@ class KataSandang extends \Base\Controllers\BaseController
         }
     }
 
-    public function set_access($status)
-    {
-        set_katasandang('layout_param', $status);
-    }
-
     public function json()
     {
         return DataTables::use('c_katasandangs')->make(true);
