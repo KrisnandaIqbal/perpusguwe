@@ -314,7 +314,7 @@ if (!function_exists('renderModernBookCard')) {
         ob_start();
         ?>
         <div class="<?= esc($colClass) ?>">
-            <div class="opac-modern-card h-100 d-flex flex-column" data-book-meta="<?= $modalJsonAttr ?>">
+            <div class="opac-modern-card h-100 d-flex flex-column" data-catalog-id="<?= (int) $id ?>" data-book-meta="<?= $modalJsonAttr ?>">
                 <!-- Area Sampul Buku -->
                 <a href="<?= $detailUrl ?>" class="opac-cover-stage text-decoration-none js-open-book-modal">
                     <div class="opac-book-3d" style="background: <?= $palette['bg'] ?>;">

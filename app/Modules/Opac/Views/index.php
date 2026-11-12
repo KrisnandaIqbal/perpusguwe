@@ -609,5 +609,23 @@
             searchInput.focus();
         }
     });
+
+    // Catat klik judul/sampul di hasil pencarian ke opac_click_log (capture agar tetap jalan walau modal mencegah navigasi).
+    (function () {
+        const searchLogId = <?= (int) ($search_log_id ?? 0) ?>;
+        const clickUrl = <?= json_encode(base_url('api/Opac/click')) ?>;
+        document.addEventListener('click', function (e) {
+            const link = e.target.closest('.opac-modern-card a.js-open-book-modal');
+            if (!link) return;
+            const card = link.closest('.opac-modern-card');
+            const cards = Array.from(document.querySelectorAll('.opac-modern-card'));
+            const body = new FormData();
+            body.append('target', 'katalog');
+            body.append('catalog_id', card.dataset.catalogId || '');
+            body.append('position', cards.indexOf(card) + 1);
+            if (searchLogId) body.append('search_log_id', searchLogId);
+            navigator.sendBeacon(clickUrl, body);
+        }, true);
+    })();
 </script>
 <?= $this->endSection() ?>

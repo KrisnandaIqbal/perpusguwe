@@ -32,6 +32,7 @@ $routes->group('api/Opac', ['namespace' => 'Opac\Controllers\Api'], function ($s
 	$subroutes->add('index', 'Opac::index');
 
 	//custom
+	$subroutes->add('click', 'Opac::click');
 	$subroutes->add('visitor_datatable', 'Opac::visitor_datatable');
 	$subroutes->add('visitor_datatable/(:any)/(:any)', 'Opac::visitor_datatable/$1/$2');
 	$subroutes->add('member_datatable', 'Opac::member_datatable');
