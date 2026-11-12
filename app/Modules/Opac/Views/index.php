@@ -502,9 +502,7 @@
                 ?>
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-2 border-bottom">
                     <h4 class="mb-0 fw-bold text-dark">
-                        <?php if (!empty($member_no)): ?>
-                            <i class="fas fa-star text-warning me-2"></i>Rekomendasi Untuk Anda
-                        <?php elseif ($activeSubject !== ''): ?>
+                        <?php if ($activeSubject !== ''): ?>
                             <i class="fas fa-tags text-primary me-2"></i>Subjek: <span class="text-primary"><?= esc($activeSubject) ?></span>
                         <?php elseif (!empty($search)): ?>
                             <i class="fas fa-search text-primary me-2"></i>Hasil Pencarian: <span class="text-primary"><?= esc($search) ?></span>
@@ -529,10 +527,7 @@
 
                 <div class="row g-4">
                     <?php
-                    $displayCatalogs = (!empty($member_no) && isset($recommendations)) ? $recommendations : ($catalogs ?? []);
-                    if (!empty($member_no) && !empty($displayCatalogs)) {
-                        $displayCatalogs = enrichCatalogsWithCirculation($displayCatalogs);
-                    }
+                    $displayCatalogs = $catalogs ?? [];
                     ?>
 
                     <?php if (!empty($displayCatalogs)): ?>
@@ -546,18 +541,14 @@
                                     <i class="fas fa-search-minus fa-4x text-muted opacity-50"></i>
                                 </div>
                                 <h4 class="text-dark fw-bold">
-                                    <?php if (!empty($member_no)): ?>
-                                        Tidak ada rekomendasi untuk anggota ini
-                                    <?php elseif ($hasActiveQuery): ?>
+                                    <?php if ($hasActiveQuery): ?>
                                         Koleksi tidak ditemukan
                                     <?php else: ?>
                                         Mulai temukan koleksi
                                     <?php endif; ?>
                                 </h4>
                                 <p class="text-muted mb-4 px-3">
-                                    <?php if (!empty($member_no)): ?>
-                                        Anggota mungkin belum memiliki riwayat peminjaman yang cukup untuk menampilkan rekomendasi personal.
-                                    <?php elseif ($hasActiveQuery): ?>
+                                    <?php if ($hasActiveQuery): ?>
                                         Coba gunakan kata kunci yang lebih umum atau periksa ejaan Anda.
                                     <?php endif; ?>
                                 </p>
@@ -573,7 +564,7 @@
 
         <div class="row mt-5">
             <div class="col-12 d-flex flex-column align-items-center">
-                <?php if (empty($member_no) && !empty($pager)): ?>
+                <?php if (!empty($pager)): ?>
                     <div class="custom-pagination">
                         <?php
                         // ✅ Tangani dua kemungkinan: objek (non-cache) atau string HTML (cache hit)
