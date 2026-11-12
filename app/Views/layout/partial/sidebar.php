@@ -1,6 +1,5 @@
 <?php
-$db=db_connect();
-$logo = $db->table('settingparameters')->where('Name', 'Logo')->get()->getRow()->Value;
+$logo = $logo ?? '';
 use Dompdf\Css\Style;
 
 $request = service('request');
@@ -325,8 +324,8 @@ $group = isset($user->category) ? $user->category : 'admin';
     <div class="sidebar-footer">
         <img src="<?= base_url('themes/uigniter/images/avatars/2.jpg') ?>" width="35" alt="User Avatar">
         <div>
-            <strong><?= user()->username ?></strong>
-            <a href="<?= base_url('logout') ?>" class="text-danger">Logout</a>
+            <strong><?= esc($user->username ?? 'Tamu') ?></strong>
+            <?php if ($user) : ?><a href="<?= base_url('logout') ?>" class="text-danger">Logout</a><?php else : ?><a href="<?= base_url('login') ?>">Login</a><?php endif; ?>
         </div>
     </div>
 </aside>

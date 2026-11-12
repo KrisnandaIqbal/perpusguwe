@@ -2,16 +2,14 @@
 
 $header_title = "";
 $header_sub_title = "";
-$db = db_connect();
- $logo=$db->table('settingparameters')->where('Name', 'Logo')->get()->getRow()->Value?:"Perpustakaan Mitra";
+$logo = $logo ?? 'Perpustakaan Mitra';
 
 $header_logo =base_url('uploads/branch/') . $logo?? base_url('perpusnas.png');
 $branch_title = "INLISLite Backoffice";
 
-$db=db_connect();
-$nama_perpustakaan=$db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value?:"Perpustakaan Mitra";
-$npp_perpustakaan=$db->table('settingparameters')->where('Name', 'NPPPerpustakaan')->get()->getRow()->Value?:"NPP Perpustakaan Mitra";
-$alamat_perpustakaan=$db->table('settingparameters')->where('Name', 'NamaLokasiPerpustakaan')->get()->getRow()->Value?:"Alamat Perpustakaan Mitra";
+$nama_perpustakaan = $nama_perpustakaan ?? 'Perpustakaan Mitra';
+$npp_perpustakaan = $npp_perpustakaan ?? 'NPP Perpustakaan Mitra';
+$alamat_perpustakaan = $alamat_perpustakaan ?? 'Alamat Perpustakaan Mitra';
 ?>
 
 <div class="app-header <?= get_parameter('header-cs-class'); ?>">

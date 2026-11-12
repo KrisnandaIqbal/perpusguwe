@@ -10,10 +10,9 @@ if ($request->getVar('fullscreen') == 1) {
     $container_header_class .= ' closed-sidebar';
 }
 
-$db = db_connect();
-$logo = $db->table('settingparameters')->where('Name', 'Logo')->get()->getRow()->Value;
-$nama_perpustakaan = $db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value ?: "Perpustakaan";
-$npp_perpustakaan=$db->table('settingparameters')->where('Name', 'NPPPerpustakaan')->get()->getRow()->Value?:"NPP Perpustakaan Mitra";
+$logo = $logo ?? '';
+$nama_perpustakaan = $nama_perpustakaan ?? 'Perpustakaan';
+$npp_perpustakaan = $npp_perpustakaan ?? 'NPP Perpustakaan Mitra';
 
 // Get breadcrumb info
 $segment1 = $request->getUri()->getSegment(1) ?? 'dashboard';

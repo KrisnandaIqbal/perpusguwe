@@ -25,6 +25,7 @@ use GroceryCrud\Core\GroceryCrud;
  */
 abstract class BaseController extends Controller
 {
+    protected $data = [];
     /**
      * Instance of the main Request object.
      *
@@ -55,6 +56,14 @@ abstract class BaseController extends Controller
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
 
+        $rows = db_connect('data')->table('settingparameters')->select('Name, Value')->get()->getResultArray();
+        $settings = array_column($rows, 'Value', 'Name');
+        $this->data = array_merge($this->data, [
+            'nama_perpustakaan' => ($settings['NamaPerpustakaan'] ?? '') ?: 'Perpustakaan',
+            'logo' => $settings['Logo'] ?? '',
+            'npp_perpustakaan' => ($settings['NPPPerpustakaan'] ?? '') ?: 'NPP Perpustakaan Mitra',
+            'alamat_perpustakaan' => ($settings['NamaLokasiPerpustakaan'] ?? '') ?: 'Alamat Perpustakaan Mitra',
+        ]);
 
         // Preload any models, libraries, etc, here.
 

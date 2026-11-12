@@ -2,7 +2,7 @@
 // Footer publik: tentang perpustakaan, kontak, jam layanan, media sosial, dan tautan. Dipakai beranda dan layout OPAC.
 // Isi tetapnya ada di landing_footer(). CSS: assets/home/footer.css.
 helper('landing');
-['alamat' => $alamat, 'surel' => $surel, 'jam' => $jamLayanan, 'sosial' => $sosial, 'direktori' => $direktori] = landing_footer();
+['alamat' => $alamat, 'surel' => $surel, 'telepon' => $telepon, 'tentang' => $tentang, 'jam' => $jamLayanan, 'sosial' => $sosial, 'direktori' => $direktori] = landing_footer();
 $services = landing_services();
 $opacUrl  = base_url('opac');
 $_depan   = in_array(trim(current_url(true)->getPath(), '/'), ['', 'home', 'index.php'], true);
@@ -14,15 +14,16 @@ $_depan   = in_array(trim(current_url(true)->getPath(), '/'), ['', 'home', 'inde
             <a href="<?= $_depan ? '#beranda' : base_url('home') ?>" class="footer-brand">
                 <img src="<?= landing_asset('logo-kemnaker-white.png') ?>" alt="" width="40" height="40">
                 <span>
-                    <strong>Perpustakaan Kemnaker</strong>
+                    <strong><?= esc($nama_perpustakaan) ?></strong>
                     <small>Kementerian Ketenagakerjaan Republik Indonesia</small>
                 </span>
             </a>
-            <p class="footer-description">Perpustakaan Kementerian Ketenagakerjaan Republik Indonesia berkomitmen menyediakan layanan perpustakaan yang berkualitas bagi seluruh pegawai dan masyarakat. Kami menghimpun koleksi buku, regulasi, laporan riset, dan publikasi ketenagakerjaan untuk mendukung perumusan kebijakan serta peningkatan literasi insan ketenagakerjaan Indonesia.</p>
+            <p class="footer-description"><?= esc($tentang) ?></p>
 
             <ul class="footer-contact">
                 <li><?= landing_icon('pin') ?><span><?= esc($alamat) ?></span></li>
                 <li><?= landing_icon('mail') ?><a href="mailto:<?= esc($surel) ?>"><?= esc($surel) ?></a></li>
+                <?php if ($telepon !== '') : ?><li><?= landing_icon('phone') ?><a href="tel:<?= esc($telepon) ?>"><?= esc($telepon) ?></a></li><?php endif; ?>
                 <li>
                     <?= landing_icon('clock') ?>
                     <span>
@@ -35,7 +36,7 @@ $_depan   = in_array(trim(current_url(true)->getPath(), '/'), ['', 'home', 'inde
 
             <div class="footer-socials">
                 <?php foreach ($sosial as $id => [$nama, $url]) : ?>
-                    <a href="<?= esc($url) ?>" target="_blank" rel="noreferrer" aria-label="<?= esc($nama) ?> Kemnaker"><?= landing_icon_filled($id) ?></a>
+                    <a href="<?= esc($url) ?>" target="_blank" rel="noreferrer" aria-label="<?= esc($nama) ?>"><?= landing_icon_filled($id) ?></a>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -71,7 +72,7 @@ $_depan   = in_array(trim(current_url(true)->getPath(), '/'), ['', 'home', 'inde
     </div>
 
     <div class="footer-bottom">
-        <span>© <?= date('Y') ?> <?= $nama_perpustakaan ?>. Seluruh hak cipta dilindungi.</span>
+        <span>© <?= date('Y') ?> <?= esc($nama_perpustakaan) ?>. Seluruh hak cipta dilindungi.</span>
         <span class="footer-mark">Kementerian Ketenagakerjaan · Republik Indonesia</span>
     </div>
 </footer>

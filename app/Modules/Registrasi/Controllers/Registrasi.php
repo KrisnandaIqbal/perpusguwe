@@ -55,7 +55,7 @@ class Registrasi extends BaseController
                                            ->orderBy('ID', 'ASC')
                                            ->get()->getResult();
 
-        return view('Registrasi\Views\index', $data);
+        return view('Registrasi\Views\index', array_merge($this->data, $data));
     }
 
     public function sub_units($unitId = null)
@@ -353,7 +353,7 @@ class Registrasi extends BaseController
     public function success()
     {
         $data['title'] = 'Pendaftaran Berhasil';
-        return view('Registrasi\Views\success', $data);
+        return view('Registrasi\Views\success', array_merge($this->data, $data));
     }
 }
 

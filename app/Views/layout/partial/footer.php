@@ -1,5 +1,5 @@
 <?php
-$nama_perpustakaan = $this->_getPerpustakaanName();
+$nama_perpustakaan = $nama_perpustakaan ?? 'Perpustakaan Mitra';
 $year = date('Y');
 ?>
 <div class="app-wrapper-footer">

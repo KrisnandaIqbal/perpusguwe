@@ -1,11 +1,10 @@
 <?php
-$db = db_connect();
-$nama_perpustakaan = $db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow()->Value ?: "Perpustakaan Mitra";
-$alamat = $db->table('settingparameters')->where('Name', 'NamaLokasiPerpustakaan')->get()->getRow()->Value ?: "Jl.Perpustakaan Mitra";
-$tentang_kami = $db->table('settingparameters')->where('Name', 'TentangKami')->get()->getRow()->Value ?: "Perpustakaan Mitra";
-$logo = $db->table('settingparameters')->where('Name', 'Logo')->get()->getRow()->Value;
-$phone = $db->table('settingparameters')->where('Name', 'Phone')->get()->getRow()->Value;
-$email = $db->table('settingparameters')->where('Name', 'EmailPerpustakaan')->get()->getRow()->Value;
+$nama_perpustakaan = $nama_perpustakaan ?? 'Perpustakaan Mitra';
+$alamat = $alamat_perpustakaan ?? 'Jl.Perpustakaan Mitra';
+$tentang_kami = $tentang_kami ?? 'Perpustakaan Mitra';
+$logo = $logo ?? '';
+$phone = $phone ?? '';
+$email = $email ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="id">

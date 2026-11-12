@@ -63,6 +63,7 @@ if (! function_exists('landing_icon_paths')) {
             'baca'     => '<path d="M3 10.5h18M5 10.5V20M19 10.5V20M8 10.5V7.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3"/><path d="M9.5 4h5"/>',
             'isbn'     => '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M7 8v6M9.5 8v6M12 8v6M15.5 8v6M17.5 8v6M7 16.5h10.5"/>',
             'pin'      => '<path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/>',
+            'phone'    => '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2Z"/>',
             'mail'     => '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4.5 7 7.5 6 7.5-6"/>',
             'clock'    => '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
             'external' => '<path d="M7 17 17 7M9 7h8v8"/>',
@@ -129,19 +130,38 @@ if (! function_exists('landing_shortcuts')) {
 }
 
 if (! function_exists('landing_footer')) {
-    /** Isi tetap footer. Alamat dan surel tidak diambil dari pengaturan supaya footer selalu menampilkan data Kemnaker RI. */
+    /**
+     * Isi footer. Alamat, surel, telepon, deskripsi, dan media sosial diambil dari pengaturan (halaman Nama Perpustakaan);
+     * alamat, surel, dan deskripsi memakai teks Kemnaker RI bila kosong. Media sosial yang kosong tidak ditampilkan.
+     * Jam layanan dan direktori tidak punya kolom yang bisa dipakai di pengaturan, jadi tetap di sini.
+     */
     function landing_footer(): array
     {
+        $rows = db_connect()->table('settingparameters')
+            ->whereIn('Name', ['NamaLokasiPerpustakaan', 'EmailPerpustakaan', 'Phone', 'TentangKami', 'Instagram', 'Facebook', 'Youtube'])
+            ->get()->getResultArray();
+        $db = array_column($rows, 'Value', 'Name');
+
+        // Isian bisa berupa tautan penuh atau hanya nama akun ("@akun"), jadi tautan disusun dari nama akunnya.
+        $akun = static fn (string $nilai, string $dasar): string => preg_match('#^https?://#i', $nilai) ? $nilai : $dasar . ltrim($nilai, '@/');
+        $sosial = [];
+        foreach ([
+            'instagram' => ['Instagram', 'Instagram', 'https://www.instagram.com/'],
+            'facebook'  => ['Facebook', 'Facebook', 'https://www.facebook.com/'],
+            'youtube'   => ['YouTube', 'Youtube', 'https://www.youtube.com/@'],
+        ] as $id => [$label, $kunci, $dasar]) {
+            if (($nilai = trim($db[$kunci] ?? '')) !== '') {
+                $sosial[$id] = [$label, $akun($nilai, $dasar)];
+            }
+        }
+
         return [
-            'alamat'    => 'Jl. Jenderal Gatot Subroto Kav. 51, RT.5/RW.4, Kuningan Timur, Setiabudi, Jakarta Selatan 12950 · Gedung B',
-            'surel'     => 'perpustakaan@kemnaker.go.id',
+            'alamat'    => trim($db['NamaLokasiPerpustakaan'] ?? '') ?: 'Jl. Jenderal Gatot Subroto Kav. 51, RT.5/RW.4, Kuningan Timur, Setiabudi, Jakarta Selatan 12950 · Gedung B',
+            'surel'     => trim($db['EmailPerpustakaan'] ?? '') ?: 'perpustakaan@kemnaker.go.id',
+            'telepon'   => trim($db['Phone'] ?? ''),
+            'tentang'   => trim($db['TentangKami'] ?? '') ?: 'Perpustakaan Kementerian Ketenagakerjaan Republik Indonesia berkomitmen menyediakan layanan perpustakaan yang berkualitas bagi seluruh pegawai dan masyarakat. Kami menghimpun koleksi buku, regulasi, laporan riset, dan publikasi ketenagakerjaan untuk mendukung perumusan kebijakan serta peningkatan literasi insan ketenagakerjaan Indonesia.',
             'jam'       => [['Senin – Kamis', '07.30 – 16.00 WIB'], ['Jumat', '07.30 – 16.30 WIB']],
-            'sosial'    => [
-                'instagram' => ['Instagram', 'https://www.instagram.com/kemnaker/'],
-                'facebook'  => ['Facebook', 'https://www.facebook.com/KemnakerRI'],
-                'x'         => ['X', 'https://x.com/KemnakerRI'],
-                'youtube'   => ['YouTube', 'https://www.youtube.com/@KemnakerRI'],
-            ],
+            'sosial'    => $sosial,
             'direktori' => [
                 ['Kementerian Ketenagakerjaan', 'https://kemnaker.go.id'],
                 ['Perpustakaan Nasional RI', 'https://www.perpusnas.go.id'],

@@ -25,7 +25,7 @@ class News extends \App\Controllers\BaseController
             ->findAll();
 
         $data['title'] = 'Berita Terbaru';
-        return view('News\Views\index', $data);
+        return view('News\Views\index', array_merge($this->data, $data));
     }
 
    public function detail($id, $slug)
@@ -39,6 +39,6 @@ class News extends \App\Controllers\BaseController
     }
     $data['news'] = $news;
     $data['title'] = $news->title; 
-    return view('News\Views\detail', $data);
+    return view('News\Views\detail', array_merge($this->data, $data));
 }
 }

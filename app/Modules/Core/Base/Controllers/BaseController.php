@@ -45,7 +45,7 @@ class BaseController extends Controller
 		// Do Not Edit This Line
 		parent::initController($request, $response, $logger);
 
-		$this->data['nama_perpustakaan'] = $this->_getPerpustakaanName();
+		$this->data = array_merge($this->data, $this->_getLibrarySettings());
 
 		// Preload any models, libraries, etc, here.
 		helper(['url', 'text', 'form', 'html', 'file', 'cookie', 'auth', 'app', 'common']);
@@ -66,14 +66,27 @@ class BaseController extends Controller
 
 	protected function _getPerpustakaanName(): string
 	{
-		$value = db_connect('data')
-			->table('settingparameters')
-			->select('Value')
-			->where('Name', 'NamaPerpustakaan')
-			->get()
-			->getRow('Value');
+		return $this->_getLibrarySettings()['nama_perpustakaan'];
+	}
 
-		return $value ?: 'Perpustakaan Mitra';
+	protected function _getLibrarySettings(): array
+	{
+		$rows = db_connect('data')
+			->table('settingparameters')
+			->select('Name, Value')
+			->get()
+			->getResultArray();
+		$settings = array_column($rows, 'Value', 'Name');
+
+		return [
+			'nama_perpustakaan' => ($settings['NamaPerpustakaan'] ?? '') ?: 'Perpustakaan Mitra',
+			'logo' => $settings['Logo'] ?? '',
+			'npp_perpustakaan' => ($settings['NPPPerpustakaan'] ?? '') ?: 'NPP Perpustakaan Mitra',
+			'alamat_perpustakaan' => ($settings['NamaLokasiPerpustakaan'] ?? '') ?: 'Alamat Perpustakaan Mitra',
+			'tentang_kami' => ($settings['TentangKami'] ?? '') ?: 'Perpustakaan Mitra',
+			'phone' => $settings['Phone'] ?? '',
+			'email' => $settings['EmailPerpustakaan'] ?? '',
+		];
 	}
 
 	public function do_upload()
