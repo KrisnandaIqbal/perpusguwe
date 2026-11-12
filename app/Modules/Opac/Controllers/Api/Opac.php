@@ -24,12 +24,20 @@ class Opac extends \Base\Controllers\BaseResourceController
 		$position    = (int) $this->request->getPost('position');
 
 		try {
-			\Config\Database::connect('data')->table('opac_click_log')->insert([
+			$db = \Config\Database::connect('data');
+			$db->table('opac_click_log')->insert([
 				'search_log_id' => $searchLogId > 0 ? $searchLogId : null,
 				'catalog_id'    => $catalogId > 0 ? $catalogId : null,
 				'target'        => $target,
 				'position'      => $position > 0 ? $position : null,
 			]);
+
+			if ($target === 'onesearch' && $searchLogId > 0) {
+				$log = $db->table('opac_search_log')->select('query')->where('id', $searchLogId)->get()->getRow();
+				if ($log) {
+					(new \UsulanKoleksi\Models\UsulanKoleksiModel())->catatPencarian($log->query, 'onesearch');
+				}
+			}
 		} catch (\Throwable $e) {
 			log_message('error', 'opac_click_log gagal: ' . $e->getMessage());
 			return $this->fail('gagal mencatat', 500);

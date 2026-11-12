@@ -101,6 +101,10 @@ private function loadRujukanTanpaHasil(): void
         return;
     }
 
+    if ($total === 0) {
+        (new \UsulanKoleksi\Models\UsulanKoleksiModel())->catatPencarian($query, 'pencarian');
+    }
+
     $this->data['onesearch_url'] = \Rekomendasi\Libraries\OneSearch::url($query, (string) ($this->request->getVar('search_by') ?? ''));
     if ($total === 0) {
         try {
