@@ -33,7 +33,7 @@ class Ranker
      * @param array $dipinjam      id judul yang sudah pernah dipinjam anggota
      * @param bool  $sumberMajalah true kalau judul sumbernya majalah (DDC 05x)
      */
-    public static function baris(array $kandidat, array $bobot, array $dipinjam = [], bool $sumberMajalah = false, int $batas = 12): array
+    public static function baris(array $kandidat, array $bobot, array $dipinjam = [], bool $sumberMajalah = false, int $batas = 20): array
     {
         $kandidat = array_filter($kandidat, fn ($k) => ($k['IsOPAC'] ?? 1) && !in_array($k['id'], $dipinjam));
         usort($kandidat, fn ($a, $b) => self::skor($b, $bobot) <=> self::skor($a, $bobot));
