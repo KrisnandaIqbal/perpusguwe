@@ -394,3 +394,11 @@ Ukuran: **S** = setengah hari, **M** = 1–2 hari, **L** = 3+ hari (perkiraan ka
 - Format `Author` di data lokal kadang berantakan (ada yang isinya hanya `;`). Skor pengarang memakai bobot kecil (0.15),
   jadi dampaknya terbatas.
 - Angka bobot dan ambang (3 pencarian, 2 klik, 4 judul per baris) masih tebakan awal dan perlu disetel setelah ada data.
+
+---
+
+## Catatan T6: waktu respons Kolab
+
+- Kolab dihitung di `Opac::kolab()` per judul, di-cache 24 jam lewat `cache()` CI4 (kunci `rekomendasi_kolab_<id>`, handler `file`). Waktu hitung saat cache kosong dicatat di `writable/logs` dengan awalan `[rekomendasi] kolab katalog`.
+- Diukur di data lokal (4 pinjaman, belum ada pasangan c ≥ 2), judul 39110: hitung Kolab 2.9 ms saat cache kosong. Respons halaman `opac/detail` 1.18 dtk (cache kosong) dan 1.05 dtk (cache terisi), hampir semuanya waktu halaman biasa. Cache terisi sesudah panggilan pertama; panggilan kedua tidak menulis log lagi.
+- **Belum diukur: data produksi.** Untuk mentor: buka `opac/detail/<id>` judul yang banyak dipinjam, saat cache kosong, lalu baca baris log itu. Kalau > ± 1 detik, buat `php spark rekomendasi:build` (lihat 3f). Query memakai `collectionloanitems` yang sudah punya indeks di `member_id` dan `Collection_id`.

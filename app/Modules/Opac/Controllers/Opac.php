@@ -454,6 +454,43 @@ private function loadTopSidebarFacets(): void
         return view('Opac\Views\detail', $this->data);
     }
 
+    /** Kolab judul $id ke judul lain, di-cache 24 jam. Cache kosong: dua query ke collectionloanitems, waktunya dicatat di log. */
+    private function kolab(int $id): array
+    {
+        $key  = 'rekomendasi_kolab_' . $id;
+        $ada  = cache($key);
+        if (is_array($ada)) {
+            return $ada;
+        }
+
+        $t0 = microtime(true);
+        $pinjaman = $this->db->query(
+            'SELECT DISTINCT li.member_id, c.catalog_id
+             FROM collectionloanitems li JOIN collections c ON c.ID = li.Collection_id
+             WHERE li.member_id IN (
+                 SELECT li2.member_id FROM collectionloanitems li2
+                 JOIN collections c2 ON c2.ID = li2.Collection_id WHERE c2.catalog_id = ?)',
+            [$id]
+        )->getResultArray();
+
+        $tetangga = \Rekomendasi\Libraries\Kolab::tetangga($pinjaman, $id);
+        $nY = [];
+        if ($tetangga['c']) {
+            $rows = $this->db->table('collectionloanitems li')
+                ->select('c.catalog_id, COUNT(DISTINCT li.member_id) AS n', false)
+                ->join('collections c', 'c.ID = li.Collection_id')
+                ->whereIn('c.catalog_id', array_keys($tetangga['c']))
+                ->groupBy('c.catalog_id')
+                ->get()->getResultArray();
+            $nY = array_column($rows, 'n', 'catalog_id');
+        }
+
+        $hasil = \Rekomendasi\Libraries\Kolab::hitung($tetangga, $nY);
+        cache()->save($key, $hasil, 86400);
+        log_message('info', sprintf('[rekomendasi] kolab katalog %d: cache kosong, %.1f ms, %d pasangan', $id, (microtime(true) - $t0) * 1000, count($hasil)));
+        return $hasil;
+    }
+
     /** Baris "Buku terkait" untuk satu judul; kosong kalau kurang dari Ranker::MIN_PER_BARIS. */
     private function bukuTerkait(array $catalog): array
     {
@@ -462,7 +499,6 @@ private function loadTopSidebarFacets(): void
             return [];
         }
 
-        // shortcut: kandidat hanya DDC 3 digit sama, belum subjek sama; tambah di T6 bersama co-borrow
         $kandidat = $this->katalogModel->asArray()
             ->where('IsOPAC', 1)
             ->where('ID !=', $catalog['ID'])
@@ -470,15 +506,25 @@ private function loadTopSidebarFacets(): void
             ->limit(200)
             ->findAll();
 
+        // tambah judul yang ikut dipinjam peminjam judul ini, walau DDC-nya beda
+        $kolab = $this->kolab((int) $catalog['ID']);
+        $ada   = array_column($kandidat, 'ID');
+        $baru  = array_diff(array_keys($kolab), $ada);
+        if ($baru) {
+            $kandidat = array_merge($kandidat, $this->katalogModel->asArray()->where('IsOPAC', 1)->whereIn('ID', $baru)->findAll());
+        }
+
         foreach ($kandidat as &$k) {
             $k['id']      = $k['ID'];
-            $k['content'] = \Rekomendasi\Libraries\ContentScore::score($catalog, $k);
+            $k['content']   = \Rekomendasi\Libraries\ContentScore::score($catalog, $k);
+            $k['kolab']     = $kolab[$k['ID']]['kolab'] ?? 0;
+            $k['keyakinan'] = $kolab[$k['ID']]['keyakinan'] ?? 0;
         }
         unset($k);
 
         $baris = \Rekomendasi\Libraries\Ranker::baris(
             $kandidat,
-            \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL_CONTENT,
+            \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL,
             [],
             \Rekomendasi\Libraries\Ranker::majalah($catalog),
             8
