@@ -23,6 +23,41 @@ class KatalogModel extends \Base\Models\DataModel
         parent::__construct();
     }
 
+	/**
+	 * Kandidat baris "Paling banyak dipinjam": peminjam berbeda 365 hari terakhir,
+	 * 'populer' dinormalisasi ke nilai tertinggi (rencana 2a poin 3).
+	 */
+	function kandidatPopuler(int $limit = 60): array
+	{
+		$rows = $this->db->table('catalogs')
+			->select('catalogs.*, catalogs.ID AS id, COUNT(DISTINCT cli.member_id) AS peminjam', false)
+			->join('collections col', 'col.Catalog_id = catalogs.ID')
+			->join('collectionloanitems cli', 'cli.Collection_id = col.ID')
+			->where('catalogs.IsOPAC', 1)
+			->where('cli.LoanDate >=', date('Y-m-d H:i:s', strtotime('-365 days')))
+			->groupBy('catalogs.ID')
+			->orderBy('peminjam', 'DESC')
+			->limit($limit)
+			->get()->getResultArray();
+
+		$maks = max(array_column($rows, 'peminjam') ?: [0]);
+		foreach ($rows as &$r) {
+			$r['populer'] = $maks > 0 ? $r['peminjam'] / $maks : 0;
+		}
+		return $rows;
+	}
+
+	/** Kandidat baris "Koleksi baru": CreateDate terbaru. Tanpa skor, urutan dijaga Ranker (sort stabil). */
+	function kandidatBaru(int $limit = 60): array
+	{
+		return $this->db->table('catalogs')
+			->select('catalogs.*, catalogs.ID AS id')
+			->where('IsOPAC', 1)
+			->orderBy('CreateDate', 'DESC')
+			->limit($limit)
+			->get()->getResultArray();
+	}
+
 	// get all
     function get_null_quarantine()
     {
