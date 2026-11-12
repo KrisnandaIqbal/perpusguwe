@@ -2,6 +2,7 @@
 
 use CodeIgniter\Test\CIUnitTestCase;
 use Rekomendasi\Libraries\ContentScore;
+use Rekomendasi\Libraries\Kolab;
 use Rekomendasi\Libraries\Ranker;
 
 /** @internal */
@@ -94,5 +95,28 @@ final class RekomendasiTest extends CIUnitTestCase
         ]);
         $this->assertSame(['a', 'b'], array_keys($hasil));
         $this->assertSame([6, 7, 8, 9], array_column($hasil['b'], 'id'));
+    }
+
+    public function testKolabDanKeyakinan()
+    {
+        $this->assertEqualsWithDelta(0.5, Kolab::kolab(2, 4, 4), 0.0001);
+        $this->assertSame(0.0, Kolab::kolab(2, 0, 4));
+        $this->assertEqualsWithDelta(2 / 3, Kolab::keyakinan(2), 0.0001);
+        $this->assertSame(1.0, Kolab::keyakinan(5));
+    }
+
+    public function testTetanggaMengabaikanCKurangDariDua()
+    {
+        $p = [];
+        foreach ([[1, 10], [2, 10], [3, 10], [1, 20], [2, 20], [3, 30], [1, 20]] as [$m, $c]) {
+            $p[] = ['member_id' => $m, 'catalog_id' => $c];
+        }
+        $t = Kolab::tetangga($p, 10);
+        $this->assertSame(3, $t['nX']);
+        $this->assertSame([20 => 2], $t['c']); // 30 hanya c = 1; pinjaman ganda anggota 1 tidak dihitung dua kali
+
+        $h = Kolab::hitung($t, [20 => 8]);
+        $this->assertEqualsWithDelta(2 / sqrt(24), $h[20]['kolab'], 0.0001);
+        $this->assertEqualsWithDelta(2 / 3, $h[20]['keyakinan'], 0.0001);
     }
 }
