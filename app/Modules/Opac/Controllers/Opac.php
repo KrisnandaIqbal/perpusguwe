@@ -53,9 +53,39 @@ class Opac extends \Base\Controllers\BaseController
     }
 
     $this->data['opac_banners'] = $this->getOpacBanners();
+    $this->data['search_log_id'] = $this->logSearch();
     $endTime = microtime(true);
     $this->data['execution_time'] = $endTime - $startTime;
     return view('Opac\Views\index', $this->data);
+}
+
+/**
+ * Satu pencarian = satu baris opac_search_log. Halaman 2 dan seterusnya tidak dicatat ulang.
+ * member_id terisi hanya kalau anggota login (session_member dari tiket L), selain itu NULL.
+ * Gagal mencatat tidak boleh merusak halaman.
+ */
+private function logSearch(): ?int
+{
+    $query = trim((string) ($this->request->getVar('search') ?? ''));
+    if ($query === '' || (int) ($this->request->getVar('page') ?? 1) > 1) {
+        return null;
+    }
+
+    $searchBy = (string) ($this->request->getVar('search_by') ?? '');
+    $allowed  = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
+
+    try {
+        $this->db->table('opac_search_log')->insert([
+            'member_id'    => session('session_member')['member_id'] ?? null,
+            'query'        => mb_substr($query, 0, 255),
+            'search_by'    => in_array($searchBy, $allowed, true) ? $searchBy : null,
+            'result_count' => (int) ($this->data['total_records'] ?? 0),
+        ]);
+        return (int) $this->db->insertID();
+    } catch (\Throwable $e) {
+        log_message('error', 'opac_search_log gagal: ' . $e->getMessage());
+        return null;
+    }
 }
 
 private function getOpacBanners()
