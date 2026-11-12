@@ -74,7 +74,7 @@ private function loadRegularCatalogs()
 
     $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
 
-    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN'];
+    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
     $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
     $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
 
@@ -85,7 +85,7 @@ private function loadRegularCatalogs()
         $this->applyFulltextSearch($builder, $search, $searchBy, $rawSearch);
     }
 
-    $additionalFilters = ['Publisher', 'Author', 'PublishLocation', 'Subject', 'PublishYear'];
+    $additionalFilters = ['Publisher', 'Author', 'PublishLocation', 'Subject', 'PublishYear', 'DeweyNo'];
     foreach ($additionalFilters as $filter) {
         $value = $this->request->getVar($filter);
         if (!empty($value)) {
@@ -109,6 +109,17 @@ private function loadRegularCatalogs()
                     continue;
                 }
                 $this->applyFulltextSearch($builder, sanitizeSearch((string) $value), 'Subject', (string) $value);
+            } elseif ($filter === 'DeweyNo') {
+                if ($searchBy === 'DeweyNo' && mb_strtolower(trim((string) $value)) === mb_strtolower(trim($rawSearch))) {
+                    continue;
+                }
+                $cleanDewey = sanitizeSearch((string) $value);
+                if (strlen($cleanDewey) === 3 && substr($cleanDewey, -1) === '0') {
+                    $prefix = substr($cleanDewey, 0, 2);
+                    $builder->where("(DeweyNo LIKE '{$cleanDewey}%' OR DeweyNo LIKE '{$prefix}%')", null, false);
+                } else {
+                    $builder->like('DeweyNo', $cleanDewey, 'after');
+                }
             } else {
                 $builder->like($filter, sanitizeSearch((string) $value));
             }
@@ -127,9 +138,13 @@ private function loadRegularCatalogs()
 
     // Jika diakses via ?Subject=... tanpa parameter search, sinkronkan ke tampilan pencarian Subjek
     $subjectParam = trim((string) ($this->request->getVar('Subject') ?? ''));
+    $deweyParam   = trim((string) ($this->request->getVar('DeweyNo') ?? ''));
     if ($rawSearch === '' && $subjectParam !== '') {
         $this->data['search']    = esc($subjectParam);
         $this->data['search_by'] = 'Subject';
+    } elseif ($rawSearch === '' && $deweyParam !== '') {
+        $this->data['search']    = esc($deweyParam);
+        $this->data['search_by'] = 'DeweyNo';
     } else {
         $this->data['search']    = esc($rawSearch);
         $this->data['search_by'] = $searchBy;
@@ -142,7 +157,7 @@ private function loadRegularCatalogscache()
     $perPage     = 12;
     $currentPage = $this->request->getVar('page') ?? 1;
 
-    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN'];
+    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
     $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
     $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
     $rawSearch       = (string) ($this->request->getVar('search') ?? '');
@@ -171,7 +186,7 @@ private function loadRegularCatalogscache()
             $this->applyFulltextSearch($builder, $search, $searchBy, $rawSearch);
         }
 
-        $additionalFilters = ['Publisher', 'Author', 'PublishLocation', 'Subject', 'PublishYear'];
+        $additionalFilters = ['Publisher', 'Author', 'PublishLocation', 'Subject', 'PublishYear', 'DeweyNo'];
         foreach ($additionalFilters as $filter) {
             $value = $this->request->getVar($filter);
             if (!empty($value)) {
@@ -194,6 +209,17 @@ private function loadRegularCatalogscache()
                         continue;
                     }
                     $this->applyFulltextSearch($builder, sanitizeSearch((string) $value), 'Subject', (string) $value);
+                } elseif ($filter === 'DeweyNo') {
+                    if ($searchBy === 'DeweyNo' && mb_strtolower(trim((string) $value)) === mb_strtolower(trim($rawSearch))) {
+                        continue;
+                    }
+                    $cleanDewey = sanitizeSearch((string) $value);
+                    if (strlen($cleanDewey) === 3 && substr($cleanDewey, -1) === '0') {
+                        $prefix = substr($cleanDewey, 0, 2);
+                        $builder->where("(DeweyNo LIKE '{$cleanDewey}%' OR DeweyNo LIKE '{$prefix}%')", null, false);
+                    } else {
+                        $builder->like('DeweyNo', $cleanDewey, 'after');
+                    }
                 } else {
                     $builder->like($filter, sanitizeSearch((string) $value));
                 }
@@ -222,9 +248,13 @@ private function loadRegularCatalogscache()
     $this->loadTopSidebarFacets();
 
     $subjectParam = trim((string) ($this->request->getVar('Subject') ?? ''));
+    $deweyParam   = trim((string) ($this->request->getVar('DeweyNo') ?? ''));
     if ($rawSearch === '' && $subjectParam !== '') {
         $this->data['search']    = esc($subjectParam);
         $this->data['search_by'] = 'Subject';
+    } elseif ($rawSearch === '' && $deweyParam !== '') {
+        $this->data['search']    = esc($deweyParam);
+        $this->data['search_by'] = 'DeweyNo';
     } else {
         $this->data['search']    = esc($rawSearch);
         $this->data['search_by'] = $searchBy;
@@ -494,27 +524,36 @@ private function loadTopSidebarFacets(): void
 
 public function browse()
 {
-    $this->data['title'] = 'Browse Katalog';
+    $allowedTypes = ['title', 'author', 'subject'];
+    $rawType      = $this->request->getVar('type') ?? 'title';
+    if ($rawType === 'ddc') {
+        $rawType = 'subject';
+    }
+    $browseType   = in_array($rawType, $allowedTypes) ? $rawType : 'title';
 
-    $allowedTypes = ['author', 'title', 'subject'];
-    $browseType   = $this->request->getVar('type') ?? 'author';
-    $browseType   = in_array($browseType, $allowedTypes) ? $browseType : 'author';
+    $typeTitles = [
+        'title'   => 'Browse Berdasarkan Judul',
+        'author'  => 'Browse Berdasarkan Pengarang',
+        'subject' => 'Browse Berdasarkan Subjek',
+    ];
+    $this->data['title'] = ($typeTitles[$browseType] ?? 'Browse Katalog') . ' - Perpustakaan Kemnaker RI';
 
-    $letter = $this->request->getVar('letter') ?? 'A';
+    $letter = trim((string) ($this->request->getVar('letter') ?? 'A'));
     $letter = preg_match('/^[A-Za-z0-9]$/', $letter) ? strtoupper($letter) : 'A';
 
-    // Statistik
+    $query = trim((string) (
+        (method_exists($this->request, 'getVar') ? $this->request->getVar('q') : null)
+        ?? (method_exists($this->request, 'getGet') ? $this->request->getGet('q') : null)
+        ?? ($_GET['q'] ?? '')
+    ));
+
+    // Statistik umum
     $this->data['total_authors'] = $this->katalogModel
         ->where('Author !=', '')
         ->countAllResults(false);
     $this->katalogModel->resetQuery();
 
     $this->data['total_titles'] = $this->katalogModel
-        ->countAllResults(false);
-    $this->katalogModel->resetQuery();
-
-    $this->data['total_subjects'] = $this->katalogModel
-        ->where('Subject !=', '')
         ->countAllResults(false);
     $this->katalogModel->resetQuery();
 
@@ -525,35 +564,562 @@ public function browse()
         ->countAllResults(false);
     $this->katalogModel->resetQuery();
 
-    // Pagination
-    $perPage     = 12;
-    $currentPage = (int) ($this->request->getVar('page_browse') ?? 1);
+    // Data DDC teragregasi sebagai mesin direktori Subjek (000 - 900)
+    $ddcDirectory = $this->getDdcDirectoryData($letter, $query);
+    $this->data['total_subjects'] = $ddcDirectory['total_ddc'] ?? 0;
+    $this->data['total_ddc']      = $this->data['total_subjects'];
 
-    // ✅ Perbaiki: hapus '%' manual, cukup pakai parameter 'after'
-    switch ($browseType) {
-        case 'author':
-            $this->katalogModel->like('Author', $letter, 'after')
-                               ->orderBy('Author', 'ASC');
-            break;
-        case 'title':
-            $this->katalogModel->like('Title', $letter, 'after')
-                               ->orderBy('Title', 'ASC');
-            break;
-        case 'subject':
-            $this->katalogModel->like('Subject', $letter, 'after')
-                               ->orderBy('Subject', 'ASC');
-            break;
+    $this->data['browse_type']  = $browseType;
+    $this->data['letter']       = $letter;
+    $this->data['search_query'] = $query;
+    $this->data['alphabet']     = range('A', 'Z');
+
+    if ($browseType === 'subject') {
+        foreach ($ddcDirectory as $k => $v) {
+            $this->data[$k] = $v;
+        }
+        $this->data['catalogs'] = [];
+        $this->data['pager']    = null;
+    } else {
+        // Sediakan subjek terpopuler sebagai pintasan topik pada tab judul
+        $this->data['top_subjects'] = $ddcDirectory['ddc_top_divisions'] ?? [];
+
+        // Pengarang terpopuler untuk tab pengarang (12 teratas dengan koleksi terbanyak)
+        $cacheKeyAuthors = 'opac_top_authors_v2';
+        $topAuthors      = cache($cacheKeyAuthors);
+        if (!$topAuthors) {
+            $topAuthors = $this->db->table('catalogs')
+                ->select('Author as name, COUNT(*) as count')
+                ->where('IsOPAC', 1)
+                ->where("Author IS NOT NULL AND Author != ''", null, false)
+                ->groupBy('Author')
+                ->orderBy('count', 'DESC')
+                ->limit(12)
+                ->get()
+                ->getResultArray();
+            cache()->save($cacheKeyAuthors, $topAuthors, 600);
+        }
+        $this->data['top_authors'] = $topAuthors;
+
+        // Pagination
+        $perPage     = 12;
+        $currentPage = (int) ($this->request->getVar('page_browse') ?? 1);
+
+        $this->katalogModel->where('IsOPAC', 1);
+
+        if ($query !== '') {
+            $words = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY);
+            $searchCol = ($browseType === 'author') ? 'Author' : 'Title';
+            if (!empty($words)) {
+                $this->katalogModel->groupStart();
+                foreach ($words as $w) {
+                    $this->katalogModel->like($searchCol, $w);
+                }
+                $this->katalogModel->groupEnd();
+            }
+            $this->katalogModel->orderBy($searchCol, 'ASC');
+        } else {
+            if ($browseType === 'author') {
+                $this->katalogModel->like('Author', $letter, 'after')
+                                   ->orderBy('Author', 'ASC');
+            } else {
+                $this->katalogModel->like('Title', $letter, 'after')
+                                   ->orderBy('Title', 'ASC');
+            }
+        }
+
+        $catalogs                  = $this->katalogModel->paginate($perPage, 'browse', $currentPage);
+        $this->data['catalogs']    = enrichCatalogsWithCirculation($catalogs);
+        $this->data['pager']       = $this->katalogModel->pager;
+        $this->data['perPage']     = $perPage;
+
+        // Tangani permintaan AJAX untuk pembaruan instan (live search)
+        if ($this->request->getVar('ajax') == 1 || $this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status'       => 'success',
+                'browse_type'  => $browseType,
+                'query'        => $query,
+                'letter'       => $letter,
+                'total'        => $this->data['pager'] ? $this->data['pager']->getTotal('browse') : count($catalogs),
+                'html'         => view('Opac\Views\browse_results', $this->data),
+            ]);
+        }
     }
 
-    $catalogs                  = $this->katalogModel->paginate($perPage, 'browse', $currentPage);
-    $this->data['catalogs']    = enrichCatalogsWithCirculation($catalogs);
-    $this->data['pager']       = $this->katalogModel->pager;
-    $this->data['perPage']     = $perPage;
-    $this->data['browse_type'] = esc($browseType);
-    $this->data['letter']      = esc($letter);
-    $this->data['alphabet']    = range('A', 'Z');
-
     return view('Opac\Views\browse', $this->data);
+}
+
+/**
+ * Helper untuk mengambil dan mencache direktori subjek secara teragregasi
+ */
+private function getSubjectDirectoryData($letter = '', $query = '')
+{
+    $cacheKey  = 'opac_subjects_directory_v2';
+    $cacheData = cache($cacheKey);
+
+    if (!$cacheData) {
+        $rows = $this->db->table('catalogs')
+            ->select('Subject')
+            ->where('IsOPAC', 1)
+            ->where("Subject IS NOT NULL AND Subject != ''", null, false)
+            ->get()
+            ->getResultArray();
+
+        $subjectMap = [];
+        $totalCatalogsWithSubject = count($rows);
+
+        foreach ($rows as $r) {
+            $parts = explode(';', $r['Subject']);
+            $seenInThisCatalog = [];
+
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p === '') continue;
+                $clean = trim($p, " \t\n\r\0\x0B.,;:-");
+                if ($clean === '') continue;
+
+                $lower = mb_strtolower($clean);
+                if (isset($seenInThisCatalog[$lower])) continue;
+                $seenInThisCatalog[$lower] = true;
+
+                if (!isset($subjectMap[$lower])) {
+                    $firstChar = mb_strtoupper(mb_substr($clean, 0, 1));
+                    if (!preg_match('/^[A-Z]$/', $firstChar)) {
+                        $firstChar = '#';
+                    }
+
+                    // Deteksi subdivisi sub-tajuk dengan pemisah '--'
+                    $subParts = explode('--', $clean);
+                    $mainTerm = trim($subParts[0]);
+                    $subTerm  = isset($subParts[1]) ? trim(implode(' -- ', array_slice($subParts, 1))) : null;
+
+                    $subjectMap[$lower] = [
+                        'name'      => $clean,
+                        'main_term' => $mainTerm,
+                        'sub_term'  => $subTerm,
+                        'count'     => 0,
+                        'letter'    => $firstChar,
+                    ];
+                }
+                $subjectMap[$lower]['count']++;
+            }
+        }
+
+        // Urutkan secara alfabetis berdasarkan nama subjek
+        uasort($subjectMap, static function ($a, $b) {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        // 12 Subjek terpopuler dengan jumlah koleksi terbanyak
+        $topList = $subjectMap;
+        uasort($topList, static function ($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+        $topSubjects = array_slice(array_values($topList), 0, 12);
+
+        // Pengelompokan berdasarkan huruf A-Z dan #
+        $grouped = [];
+        $letterCounts = [];
+        foreach (range('A', 'Z') as $char) {
+            $grouped[$char] = [];
+            $letterCounts[$char] = 0;
+        }
+        $grouped['#'] = [];
+        $letterCounts['#'] = 0;
+
+        foreach ($subjectMap as $item) {
+            $l = $item['letter'];
+            $grouped[$l][] = $item;
+            $letterCounts[$l]++;
+        }
+
+        $cacheData = [
+            'total_subjects'    => count($subjectMap),
+            'total_catalogs'    => $totalCatalogsWithSubject,
+            'top_subjects'      => $topSubjects,
+            'grouped_by_letter' => $grouped,
+            'letter_counts'     => $letterCounts,
+            'all_subjects'      => array_values($subjectMap),
+        ];
+
+        cache()->save($cacheKey, $cacheData, 600);
+    }
+
+    $allSubjects     = $cacheData['all_subjects'];
+    $groupedByLetter = $cacheData['grouped_by_letter'];
+    $letterCounts    = $cacheData['letter_counts'];
+    $topSubjects     = $cacheData['top_subjects'];
+    $totalSubjects   = $cacheData['total_subjects'];
+    $totalCatalogs   = $cacheData['total_catalogs'];
+
+    // Saring data jika ada query parameter pencarian (q) atau huruf (letter)
+    $filteredGrouped = $groupedByLetter;
+    $activeLetter    = '';
+    $searchQuery     = '';
+    $matchedCount    = $totalSubjects;
+
+    if ($query !== '') {
+        $searchQuery     = $query;
+        $filteredGrouped = [];
+        $queryLower      = mb_strtolower($query);
+        $matchedCount    = 0;
+
+        foreach ($groupedByLetter as $l => $items) {
+            $matchingItems = [];
+            foreach ($items as $it) {
+                if (mb_stripos($it['name'], $queryLower) !== false) {
+                    $matchingItems[] = $it;
+                    $matchedCount++;
+                }
+            }
+            if (!empty($matchingItems)) {
+                $filteredGrouped[$l] = $matchingItems;
+            }
+        }
+    } elseif ($letter !== '' && strtoupper($letter) !== 'ALL' && strtoupper($letter) !== 'SEMUA') {
+        $activeLetter = strtoupper($letter);
+        if (isset($groupedByLetter[$activeLetter])) {
+            $filteredGrouped = [
+                $activeLetter => $groupedByLetter[$activeLetter]
+            ];
+            $matchedCount = count($groupedByLetter[$activeLetter]);
+        } else {
+            $filteredGrouped = [];
+            $matchedCount    = 0;
+        }
+    }
+
+    return [
+        'total_subjects'    => $totalSubjects,
+        'total_catalogs'    => $totalCatalogs,
+        'top_subjects'      => $topSubjects,
+        'grouped_by_letter' => $filteredGrouped,
+        'letter_counts'     => $letterCounts,
+        'active_letter'     => $activeLetter,
+        'search_query'      => $searchQuery,
+        'matched_count'     => $matchedCount,
+    ];
+}
+
+/**
+ * Helper untuk mengambil dan mencache direktori klasifikasi DDC (Dewey Decimal Classification)
+ * Disusun secara hierarkis dan urut: 10 Kelas Utama (000-900) dan 100 Divisi (000, 010, 020, ... 990)
+ */
+private function getDdcDirectoryData($selectedClass = '', $query = '')
+{
+    $cacheKey  = 'opac_ddc_directory_v3';
+    $cacheData = cache($cacheKey);
+
+    if (!$cacheData) {
+        $ddcStructure = [
+            '000' => [
+                'name' => 'Karya Umum, Komputer & Informasi',
+                'icon' => 'fa-laptop-code',
+                'color' => '#023e9c',
+                'divisions' => [
+                    '000' => 'Ilmu Komputer, Informasi & Karya Umum',
+                    '010' => 'Bibliografi & Katalog Buku',
+                    '020' => 'Ilmu Perpustakaan & Informasi',
+                    '030' => 'Ensiklopedia & Buku Referensi Umum',
+                    '040' => 'Topik Khusus & Koleksi Terpilih',
+                    '050' => 'Majalah, Jurnal & Publikasi Serial',
+                    '060' => 'Organisasi, Asosiasi & Museum',
+                    '070' => 'Media Berita, Jurnalisme & Penerbitan',
+                    '080' => 'Kutipan & Koleksi Karya Umum',
+                    '090' => 'Manuskrip, Naskah & Buku Langka'
+                ]
+            ],
+            '100' => [
+                'name' => 'Filsafat & Psikologi',
+                'icon' => 'fa-brain',
+                'color' => '#d97706',
+                'divisions' => [
+                    '100' => 'Filsafat Umum & Teori Pemikiran',
+                    '110' => 'Metafisika & Hakikat Keberadaan',
+                    '120' => 'Epistemologi, Sebab-Akibat & Manusia',
+                    '130' => 'Parapsikologi, Okultisme & Fenomena Pikiran',
+                    '140' => 'Aliran & Pandangan Filsafat Khusus',
+                    '150' => 'Psikologi & Pengembangan Kepribadian',
+                    '160' => 'Logika & Seni Bernalar',
+                    '170' => 'Etika (Filsafat Moral)',
+                    '180' => 'Filsafat Kuno, Abad Pertengahan & Timur',
+                    '190' => 'Filsafat Modern Barat'
+                ]
+            ],
+            '200' => [
+                'name' => 'Agama & Spiritualitas',
+                'icon' => 'fa-hands-praying',
+                'color' => '#16a34a',
+                'divisions' => [
+                    '200' => 'Agama & Spiritualitas Umum',
+                    '210' => 'Filsafat Agama & Teologi Alami',
+                    '220' => 'Alkitab & Kajian Kitab Suci',
+                    '230' => 'Kekristenan & Teologi Kristen',
+                    '240' => 'Moral, Etika & Praktik Kehidupan Kristen',
+                    '250' => 'Tata Kelola Gereja & Pelayanan Rohani',
+                    '260' => 'Teologi Sosial Kristen & Eklesiologi',
+                    '270' => 'Sejarah Gereja & Tokoh Agama',
+                    '280' => 'Denominasi & Aliran Kristen',
+                    '290' => 'Agama Lain & Agama Perbandingan (Islam, Hindu, Buddha, dll)'
+                ]
+            ],
+            '300' => [
+                'name' => 'Ilmu-ilmu Sosial',
+                'icon' => 'fa-users',
+                'color' => '#7c3aed',
+                'divisions' => [
+                    '300' => 'Ilmu Sosial Umum, Sosiologi & Antropologi',
+                    '310' => 'Statistik Umum & Demografi Penduduk',
+                    '320' => 'Ilmu Politik, Pemerintahan & Hubungan Luar Negeri',
+                    '330' => 'Ekonomi, Ketenagakerjaan & Keuangan',
+                    '340' => 'Hukum & Peraturan Perundang-undangan',
+                    '350' => 'Administrasi Publik & Tata Kelola Negara',
+                    '360' => 'Masalah Sosial, Layanan Sosial & Jaminan Sosial',
+                    '370' => 'Pendidikan, Kurikulum & Pelatihan Kerja',
+                    '380' => 'Perdagangan, Komunikasi & Transportasi',
+                    '390' => 'Adat Istiadat, Tradisi Rakyat & Tata Krama'
+                ]
+            ],
+            '400' => [
+                'name' => 'Bahasa & Linguistik',
+                'icon' => 'fa-language',
+                'color' => '#db2777',
+                'divisions' => [
+                    '400' => 'Bahasa & Linguistik Umum',
+                    '410' => 'Linguistik Terapan & Tata Bahasa',
+                    '420' => 'Bahasa Inggris & Bahasa Britania',
+                    '430' => 'Bahasa Jerman & Kerabatnya',
+                    '440' => 'Bahasa Prancis & Roman',
+                    '450' => 'Bahasa Italia, Rumania & Dialek Terkait',
+                    '460' => 'Bahasa Spanyol & Portugis',
+                    '470' => 'Bahasa Latin & Bahasa Italik Klasik',
+                    '480' => 'Bahasa Yunani Klasik',
+                    '490' => 'Bahasa Lain (Bahasa Indonesia, Arab, Melayu, Daerah)'
+                ]
+            ],
+            '500' => [
+                'name' => 'Sains & Matematika',
+                'icon' => 'fa-atom',
+                'color' => '#0284c7',
+                'divisions' => [
+                    '500' => 'Sains & Ilmu Pengetahuan Alam',
+                    '510' => 'Matematika, Aljabar & Geometri',
+                    '520' => 'Astronomi & Eksplorasi Luar Angkasa',
+                    '530' => 'Fisika & Teori Material',
+                    '540' => 'Kimia, Mineralogi & Kristalografi',
+                    '550' => 'Ilmu Kebumian, Geologi & Cuaca',
+                    '560' => 'Paleontologi & Fosil Prasejarah',
+                    '570' => 'Biologi & Ilmu Kehidupan',
+                    '580' => 'Botani (Ilmu Tumbuh-tumbuhan)',
+                    '590' => 'Zoologi (Ilmu Hewan & Ekologi Hewan)'
+                ]
+            ],
+            '600' => [
+                'name' => 'Teknologi & Ilmu Terapan',
+                'icon' => 'fa-gears',
+                'color' => '#ea580c',
+                'divisions' => [
+                    '600' => 'Teknologi & Ilmu Terapan Umum',
+                    '610' => 'Kesehatan, Kedokteran & K3 (Keselamatan Kerja)',
+                    '620' => 'Rekayasa, Teknik Elektro & Mesin',
+                    '630' => 'Pertanian, Kehutanan & Perikanan',
+                    '640' => 'Tata Boga, Manajemen Rumah Tangga & Keluarga',
+                    '650' => 'Manajemen Bisnis, Organisasi & SDM',
+                    '660' => 'Teknik Kimia & Teknologi Industri Terkait',
+                    '670' => 'Manufaktur & Pabrikasi Industri',
+                    '680' => 'Produk Khusus & Kerajinan Industri',
+                    '690' => 'Teknik Konstruksi & Bangunan Gedung'
+                ]
+            ],
+            '700' => [
+                'name' => 'Kesenian & Rekreasi',
+                'icon' => 'fa-palette',
+                'color' => '#9333ea',
+                'divisions' => [
+                    '700' => 'Kesenian Umum & Desain Kreatif',
+                    '710' => 'Perencanaan Wilayah, Lanskap & Tata Kota',
+                    '720' => 'Arsitektur & Desain Bangunan',
+                    '730' => 'Seni Pahat, Seni Patung & Keramik',
+                    '740' => 'Menggambar, Desain Grafis & Seni Terapan',
+                    '750' => 'Seni Lukis & Lukisan Koleksi',
+                    '760' => 'Seni Cetak Grafis & Litografi',
+                    '770' => 'Fotografi, Sinematografi & Seni Visual Digital',
+                    '780' => 'Musik & Komposisi Musikal',
+                    '790' => 'Olahraga, Permainan & Seni Pertunjukan'
+                ]
+            ],
+            '800' => [
+                'name' => 'Kesusasteraan & Sastra',
+                'icon' => 'fa-feather-pointed',
+                'color' => '#65a30d',
+                'divisions' => [
+                    '800' => 'Sastra Umum, Teori Sastra & Retorika',
+                    '810' => 'Sastra Amerika',
+                    '820' => 'Sastra Inggris & Klasik Anglo-Saxon',
+                    '830' => 'Sastra Jerman & Negara Berbahasa Jerman',
+                    '840' => 'Sastra Prancis & Francophone',
+                    '850' => 'Sastra Italia',
+                    '860' => 'Sastra Spanyol & Portugis',
+                    '870' => 'Sastra Latin Klasik',
+                    '880' => 'Sastra Yunani Klasik',
+                    '890' => 'Sastra Indonesia, Sastra Nusantara & Sastra Dunia Lain'
+                ]
+            ],
+            '900' => [
+                'name' => 'Sejarah & Geografi',
+                'icon' => 'fa-earth-asia',
+                'color' => '#dc2626',
+                'divisions' => [
+                    '900' => 'Sejarah, Geografi & Perjalanan Dunia',
+                    '910' => 'Geografi, Ekspedisi & Wisata Penjelajahan',
+                    '920' => 'Biografi, Otobiografi & Genealogi Tokoh',
+                    '930' => 'Sejarah Dunia Kuno (Hingga ~499 M)',
+                    '940' => 'Sejarah Umum Eropa & Dunia Barat',
+                    '950' => 'Sejarah Umum Asia & Timur Tengah',
+                    '960' => 'Sejarah Umum Afrika',
+                    '970' => 'Sejarah Umum Amerika Utara',
+                    '980' => 'Sejarah Umum Amerika Selatan & Latin',
+                    '990' => 'Sejarah Kawasan Lain, Pasifik & Oseania'
+                ]
+            ]
+        ];
+
+        // Hitung statistik aktual dari tabel catalogs
+        $rows = $this->db->table('catalogs')
+            ->select("DeweyNo, COUNT(*) as cnt")
+            ->where('IsOPAC', 1)
+            ->where("DeweyNo IS NOT NULL AND DeweyNo != '' AND DeweyNo != 'NONE'", null, false)
+            ->groupBy('DeweyNo')
+            ->orderBy('cnt', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        $mainClassCounts  = array_fill_keys(array_keys($ddcStructure), 0);
+        $divisionCounts   = [];
+        $divisionSections = [];
+
+        foreach ($ddcStructure as $mKey => $mVal) {
+            foreach ($mVal['divisions'] as $dKey => $dName) {
+                $divisionCounts[$dKey]   = 0;
+                $divisionSections[$dKey] = [];
+            }
+        }
+
+        foreach ($rows as $r) {
+            $dewey = trim($r['DeweyNo']);
+            $count = (int)$r['cnt'];
+            if (!preg_match('/^[0-9]/', $dewey)) continue;
+
+            $firstDigit = substr($dewey, 0, 1);
+            $mainKey    = $firstDigit . '00';
+
+            if (isset($mainClassCounts[$mainKey])) {
+                $mainClassCounts[$mainKey] += $count;
+            }
+
+            if (preg_match('/^[0-9]{2}/', $dewey)) {
+                $twoDigits = substr($dewey, 0, 2);
+                $divKey    = $twoDigits . '0';
+
+                if (isset($divisionCounts[$divKey])) {
+                    $divisionCounts[$divKey] += $count;
+                    if (count($divisionSections[$divKey]) < 6) {
+                        $cleanSec = substr(explode(' ', explode('.', $dewey)[0])[0], 0, 3);
+                        if (!empty($cleanSec)) {
+                            if (!isset($divisionSections[$divKey][$cleanSec])) {
+                                $divisionSections[$divKey][$cleanSec] = $count;
+                            } else {
+                                $divisionSections[$divKey][$cleanSec] += $count;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Susun 10 divisi terpopuler
+        $sortedDivisions = [];
+        foreach ($ddcStructure as $mKey => $mVal) {
+            foreach ($mVal['divisions'] as $dKey => $dName) {
+                $cnt = $divisionCounts[$dKey] ?? 0;
+                if ($cnt > 0) {
+                    $sortedDivisions[] = [
+                        'code'  => $dKey,
+                        'name'  => $dName,
+                        'count' => $cnt,
+                        'class' => $mKey
+                    ];
+                }
+            }
+        }
+        usort($sortedDivisions, function ($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+        $topDivisions = array_slice($sortedDivisions, 0, 12);
+
+        // Susun struktur hierarki 000-900 urut
+        $hierarchy = [];
+        foreach ($ddcStructure as $mKey => $mVal) {
+            $divList = [];
+            foreach ($mVal['divisions'] as $dKey => $dName) {
+                $secPills = [];
+                if (!empty($divisionSections[$dKey])) {
+                    arsort($divisionSections[$dKey]);
+                    foreach (array_slice($divisionSections[$dKey], 0, 3, true) as $sCode => $sCnt) {
+                        $secPills[] = ['code' => $sCode, 'count' => $sCnt];
+                    }
+                }
+
+                $divList[] = [
+                    'code'     => $dKey,
+                    'name'     => $dName,
+                    'count'    => $divisionCounts[$dKey] ?? 0,
+                    'sections' => $secPills
+                ];
+            }
+
+            $hierarchy[$mKey] = [
+                'code'      => $mKey,
+                'name'      => $mVal['name'],
+                'icon'      => $mVal['icon'],
+                'color'     => $mVal['color'],
+                'count'     => $mainClassCounts[$mKey] ?? 0,
+                'divisions' => $divList
+            ];
+        }
+
+        $cacheData = [
+            'ddc_hierarchy'     => $hierarchy,
+            'ddc_top_divisions' => $topDivisions,
+            'ddc_class_counts'  => $mainClassCounts,
+            'total_ddc'         => array_sum($mainClassCounts)
+        ];
+
+        cache()->save($cacheKey, $cacheData, 600);
+    }
+
+    return $cacheData;
+}
+
+/**
+ * Halaman browse/jelajah DDC dialihkan ke direktori subjek berstandar DDC (type=subject)
+ */
+public function ddc()
+{
+    $queryString = $this->request->getUri()->getQuery();
+    $targetUrl   = base_url('opac/browse?type=subject' . ($queryString ? '&' . $queryString : ''));
+    return redirect()->to($targetUrl);
+}
+
+/**
+ * Halaman browse/jelajah subjek terintegrasi ke dalam browse katalog (type=subject)
+ * Mengalihkan secara otomatis ke direktori subjek dalam halaman Browse
+ */
+public function subjek()
+{
+    $queryString = $this->request->getUri()->getQuery();
+    $targetUrl   = base_url('opac/browse?type=subject' . ($queryString ? '&' . $queryString : ''));
+    return redirect()->to($targetUrl);
 }
 
     public function export()
@@ -1462,6 +2028,16 @@ public function browse()
 
             case 'ISBN':
                 $builder->like('ISBN', $search);
+                break;
+
+            case 'DeweyNo':
+                $cleanDewey = sanitizeSearch($rawSearch);
+                if (strlen($cleanDewey) === 3 && substr($cleanDewey, -1) === '0') {
+                    $prefix = substr($cleanDewey, 0, 2);
+                    $builder->where("(DeweyNo LIKE '{$cleanDewey}%' OR DeweyNo LIKE '{$prefix}%')", null, false);
+                } else {
+                    $builder->like('DeweyNo', $cleanDewey, 'after');
+                }
                 break;
 
             case 'Publisher':

@@ -18,63 +18,17 @@ public function login()
 
         $logo=$db->table('settingparameters')->where('Name', 'Logo')->get()->getRow()->Value?:"Perpustakaan Mitra";
         $data['logo']=$logo;
-        
-        // Tambahkan hCaptcha site key
-        $data['hcaptcha_site_key'] = getenv('HCAPTCHA_SITE_KEY');
 
 		$data['title'] = 'Login Form | Profiling';
 		echo view('Auth\Views\authlogin', $data);
 	}
 
-	/**
-	 * Verify hCaptcha
-	 */
-	private function verifyHcaptcha($hcaptchaResponse)
-	{
-		$secretKey = getenv('HCAPTCHA_SECRET_KEY');
-		
-		if (empty($hcaptchaResponse)) {
-			return false;
-		}
-		
-		$url = 'https://hcaptcha.com/siteverify';
-		$data = [
-			'secret' => $secretKey,
-			'response' => $hcaptchaResponse,
-			'remoteip' => $this->request->getIPAddress()
-		];
-		
-		$options = [
-			'http' => [
-				'method'  => 'POST',
-				'header'  => 'Content-Type: application/x-www-form-urlencoded',
-				'content' => http_build_query($data)
-			]
-		];
-		
-		$context = stream_context_create($options);
-		$result = file_get_contents($url, false, $context);
-		
-		if ($result === false) {
-			return false;
-		}
-		
-		$response = json_decode($result, true);
-		
-		return isset($response['success']) && $response['success'] === true;
-	}
 
 	public function attemptLogin()
 	{
 		try {
 			$username = $this->request->getPost('login');
 			$password = $this->request->getPost('password');
-			$hcaptchaResponse = $this->request->getPost('h-captcha-response');
-			
-			// Verifikasi hCaptcha terlebih dahulu
-			if (!$this->verifyHcaptcha($hcaptchaResponse)) {
-				return redirect()->back()->withInput()->with('error', 'Verifikasi hCaptcha gagal. Silakan coba lagi.');
-			}
 
 			// Gunakan service authentication yang sudah ada
 			if (!service('authentication')->attempt([

@@ -10,3 +10,5 @@ $routes->get('/', 'Home::index', ['namespace' => 'Home\Controllers']);
 $routes->post('/authlogin', 'Home::index', ['namespace' => 'App\Controllers']);
 $routes->add('/home/encrypt', 'Home::encrypt', ['namespace' => 'App\Controllers']);
 $routes->add('/home/decrypt', 'Home::decrypt', ['namespace' => 'App\Controllers']);
+$routes->add('subjek', 'Opac::subjek', ['namespace' => 'Opac\Controllers']);
+$routes->add('subjek/(:any)', 'Opac::subjek/$1', ['namespace' => 'Opac\Controllers']);

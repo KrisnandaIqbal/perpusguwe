@@ -434,24 +434,8 @@
                     </div>
                 </div>
 
-                <!-- hCaptcha -->
-                <div class="hcaptcha-container">
-                    <?php if (!empty($hcaptcha_site_key)): ?>
-                        <div class="h-captcha" 
-                             data-sitekey="<?= $hcaptcha_site_key ?>"
-                             data-callback="onHcaptchaSuccess"
-                             data-expired-callback="onHcaptchaExpired"
-                             data-error-callback="onHcaptchaError"></div>
-                    <?php else: ?>
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            hCaptcha belum dikonfigurasi. Hubungi administrator.
-                        </div>
-                    <?php endif; ?>
-                </div>
-
                 <!-- Login Button -->
-                <button type="submit" class="btn-login" id="loginBtn" disabled>
+                <button type="submit" class="btn-login" id="loginBtn">
                     <i class="fas fa-sign-in-alt me-2"></i>
                     Masuk ke Sistem
                 </button>
@@ -483,28 +467,7 @@
     </div>
 </div>
 
-<!-- hCaptcha Script -->
-<?php if (!empty($hcaptcha_site_key)): ?>
-<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
-<?php endif; ?>
-
 <script>
-// hCaptcha callback functions
-function onHcaptchaSuccess(token) {
-    console.log('hCaptcha verified successfully');
-    document.getElementById('loginBtn').disabled = false;
-}
-
-function onHcaptchaExpired() {
-    console.log('hCaptcha expired');
-    document.getElementById('loginBtn').disabled = true;
-}
-
-function onHcaptchaError(error) {
-    console.log('hCaptcha error:', error);
-    document.getElementById('loginBtn').disabled = true;
-}
-
 // Toggle password visibility
 function togglePassword() {
     const passwordInput = document.getElementById('password');
@@ -520,24 +483,7 @@ function togglePassword() {
 }
 
 // Form submission with loading state
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    <?php if (!empty($hcaptcha_site_key)): ?>
-    // Cek apakah hCaptcha sudah dimuat
-    if (typeof hcaptcha === 'undefined') {
-        e.preventDefault();
-        alert('hCaptcha belum dimuat. Silakan refresh halaman dan coba lagi.');
-        return false;
-    }
-    
-    const hcaptchaResponse = hcaptcha.getResponse();
-    
-    if (!hcaptchaResponse || hcaptchaResponse.length === 0) {
-        e.preventDefault();
-        alert('Harap selesaikan verifikasi hCaptcha terlebih dahulu.');
-        return false;
-    }
-    <?php endif; ?>
-    
+document.getElementById('loginForm').addEventListener('submit', function(e) {    
     const loginBtn = document.getElementById('loginBtn');
     loginBtn.classList.add('loading');
     loginBtn.innerHTML = 'Memproses...';
@@ -559,17 +505,7 @@ document.querySelectorAll('.form-control').forEach(input => {
 
 // Enhanced security: Clear form on page unload
 window.addEventListener('beforeunload', function() {
-    document.getElementById('password').value = '';
-    <?php if (!empty($hcaptcha_site_key)): ?>
-    if (typeof hcaptcha !== 'undefined') {
-        try {
-            hcaptcha.reset();
-        } catch (e) {
-            console.log('hCaptcha reset failed:', e);
-        }
-    }
-    <?php endif; ?>
-});
+    document.getElementById('password').value = '';});
 
 // Auto-focus on first empty field
 window.addEventListener('load', function() {
@@ -583,42 +519,6 @@ window.addEventListener('load', function() {
     }
 });
 
-// Reset hCaptcha on form reset
-document.getElementById('loginForm').addEventListener('reset', function() {
-    <?php if (!empty($hcaptcha_site_key)): ?>
-    if (typeof hcaptcha !== 'undefined') {
-        try {
-            hcaptcha.reset();
-        } catch (e) {
-            console.log('hCaptcha reset failed:', e);
-        }
-    }
-    document.getElementById('loginBtn').disabled = true;
-    <?php endif; ?>
-});
-
-// Debugging: Log hCaptcha status
-<?php if (!empty($hcaptcha_site_key)): ?>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('hCaptcha Site Key:', '<?= $hcaptcha_site_key ?>');
-    
-    // Tunggu hCaptcha dimuat
-    const checkHcaptcha = setInterval(function() {
-        if (typeof hcaptcha !== 'undefined') {
-            console.log('hCaptcha API loaded successfully');
-            clearInterval(checkHcaptcha);
-        }
-    }, 100);
-    
-    // Timeout setelah 10 detik
-    setTimeout(function() {
-        clearInterval(checkHcaptcha);
-        if (typeof hcaptcha === 'undefined') {
-            console.error('hCaptcha failed to load after 10 seconds');
-        }
-    }, 10000);
-});
-<?php endif; ?>
 </script>
 
 <?= $this->endSection('page'); ?>
