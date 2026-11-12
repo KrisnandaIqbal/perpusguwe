@@ -55,6 +55,7 @@ class Opac extends \Base\Controllers\BaseController
     $this->data['opac_banners'] = $this->getOpacBanners();
     $this->data['search_log_id'] = $this->logSearch();
     $this->loadRujukanTanpaHasil();
+    $this->data['baris_rekomendasi'] = $this->getBarisTamu();
     $endTime = microtime(true);
     $this->data['execution_time'] = $endTime - $startTime;
     return view('Opac\Views\index', $this->data);
@@ -160,6 +161,28 @@ private function koleksiMirip(string $query, int $batas = 8): array
 
     $baris = array_column($this->katalogModel->whereIn('ID', $urut)->findAll(), null, 'ID');
     return enrichCatalogsWithCirculation(array_values(array_filter(array_map(fn ($id) => $baris[$id] ?? null, $urut))));
+}
+
+// Baris rekomendasi hanya di beranda polos (tanpa pencarian, filter, atau halaman lain).
+private function getBarisTamu(): array
+{
+    $param = ['search', 'search_by', 'Author', 'Publisher', 'Subject', 'PublishYear', 'PublishLocation', 'DeweyNo', 'page'];
+    foreach ($param as $p) {
+        if (!empty($this->request->getVar($p))) {
+            return [];
+        }
+    }
+
+    return cache()->remember('opac_baris_tamu', 3600, function () {
+        $populer = \Rekomendasi\Libraries\Ranker::baris($this->katalogModel->kandidatPopuler(), \Rekomendasi\Libraries\Ranker::BOBOT_COLD_START);
+        $baru    = \Rekomendasi\Libraries\Ranker::baris($this->katalogModel->kandidatBaru(), \Rekomendasi\Libraries\Ranker::BOBOT_COLD_START);
+
+        $baris = \Rekomendasi\Libraries\Ranker::halaman(['Paling banyak dipinjam' => $populer, 'Koleksi baru' => $baru]);
+        foreach ($baris as &$b) {
+            $b = enrichCatalogsWithCirculation($b);
+        }
+        return $baris;
+    });
 }
 
 private function getOpacBanners()

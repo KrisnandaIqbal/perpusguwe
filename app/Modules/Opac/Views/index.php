@@ -491,6 +491,14 @@
             </div>
 
             <div class="col-lg-9 catalog-section">
+                <?php foreach ($baris_rekomendasi ?? [] as $judulBaris => $isiBaris): ?>
+                    <h4 class="mb-3 fw-bold text-dark"><?= esc($judulBaris) ?></h4>
+                    <div class="row g-4 flex-nowrap overflow-auto pb-3 mb-4">
+                        <?php foreach ($isiBaris as $catalog): ?>
+                            <?= renderModernBookCard($catalog, 'col-8 col-md-5 col-xl-4 flex-shrink-0') ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endforeach; ?>
                 <?php
                 $activeSubject  = (($search_by ?? '') === 'Subject' && !empty($search))
                     ? $search
