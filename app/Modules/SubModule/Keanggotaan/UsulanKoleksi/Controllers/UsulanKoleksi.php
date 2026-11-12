@@ -35,8 +35,23 @@ class UsulanKoleksi extends \Base\Controllers\BaseController
             ->join('users created', 'created.id = t_usulankoleksi.created_by', 'left')
             ->join('users updated', 'updated.id = t_usulankoleksi.updated_by', 'left');
 
+        // Usulan manual selalu tampil; usulan dari pencarian hanya setelah mencapai ambang (rencana 3e).
+        $query->groupStart()
+            ->where('t_usulankoleksi.source !=', 'pencarian')
+            ->orWhere('t_usulankoleksi.request_count >=', \Rekomendasi\Libraries\UsulanOtomatis::MIN_PENCARIAN)
+            ->orWhere('t_usulankoleksi.onesearch_click_count >=', \Rekomendasi\Libraries\UsulanOtomatis::MIN_ONESEARCH)
+            ->groupEnd();
+
+        $sumber = (string) $this->request->getGet('sumber');
+        if (in_array($sumber, ['manual', 'pencarian'], true)) {
+            $sumber === 'manual'
+                ? $query->where('t_usulankoleksi.source !=', 'pencarian')
+                : $query->where('t_usulankoleksi.source', 'pencarian');
+        }
+
         $usulankoleksis = $query->findAll();
 
+        $this->data['sumber'] = $sumber;
         $this->data['title'] = 'UsulanKoleksi';
         $this->data['usulankoleksis'] = $usulankoleksis;
         echo view('UsulanKoleksi\Views\list', $this->data);

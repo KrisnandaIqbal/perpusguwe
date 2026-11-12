@@ -69,6 +69,7 @@ class Filters extends BaseConfig
                 'opac/index',               // method: index
                 'opac/detail/*',            // method: detail
                 'opac/search',              // method: search
+                'api/Opac/click',           // log klik (sendBeacon)
                 'opac/browse',              // method: browse
                 'opac/subjek*',             // method: subjek
                 'subjek*',                  // route: subjek
@@ -117,6 +118,7 @@ class Filters extends BaseConfig
                 'opac/index',
                 'opac/detail/*',
                 'opac/search',
+                'api/Opac/click',
                 'opac/browse',
                 'opac/subjek*',
                 'subjek*',

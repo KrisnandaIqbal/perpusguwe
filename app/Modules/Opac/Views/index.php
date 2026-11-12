@@ -558,13 +558,34 @@
                                         Coba gunakan kata kunci yang lebih umum atau periksa ejaan Anda.
                                     <?php endif; ?>
                                 </p>
-                                <a href="<?= base_url('opac') ?>" class="btn btn-primary-custom text-white px-4">
+                                <?php if (!empty($onesearch_url)): ?>
+                                    <p class="text-dark fw-semibold mb-3">Buku ini belum ada di perpustakaan kami.</p>
+                                    <a href="<?= esc($onesearch_url, 'attr') ?>" target="_blank" rel="noopener noreferrer"
+                                       class="btn btn-primary-custom text-white px-4 mb-2 js-onesearch">
+                                        <i class="fas fa-external-link-alt me-2"></i>Cari di Indonesia OneSearch
+                                    </a><br>
+                                <?php endif; ?>
+                                <a href="<?= base_url('opac') ?>" class="btn btn-link text-muted">
                                     <i class="fas fa-sync-alt me-2"></i>Muat Ulang Katalog
                                 </a>
                             </div>
                         </div>
                     <?php endif; ?>
                 </div>
+
+                <?php if (!empty($catalogs_mirip)): ?>
+                    <h5 class="fw-bold text-dark mt-5 mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>Mungkin kamu tertarik</h5>
+                    <div class="row g-4">
+                        <?php foreach ($catalogs_mirip as $catalog): ?>
+                            <?= renderModernBookCard($catalog, 'col-xl-4 col-md-6') ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (!empty($onesearch_url) && !empty($displayCatalogs)): ?>
+                    <p class="text-muted small mt-4 mb-0">
+                        Hasilnya sedikit?
+                        <a href="<?= esc($onesearch_url, 'attr') ?>" target="_blank" rel="noopener noreferrer" class="js-onesearch">Cari juga di Indonesia OneSearch</a>
+                    </p>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -609,5 +630,31 @@
             searchInput.focus();
         }
     });
+
+    // Catat klik judul/sampul di hasil pencarian ke opac_click_log (capture agar tetap jalan walau modal mencegah navigasi).
+    (function () {
+        const searchLogId = <?= (int) ($search_log_id ?? 0) ?>;
+        const clickUrl = <?= json_encode(base_url('api/Opac/click')) ?>;
+        document.addEventListener('click', function (e) {
+            const os = e.target.closest('a.js-onesearch');
+            if (os) {
+                const b = new FormData();
+                b.append('target', 'onesearch');
+                if (searchLogId) b.append('search_log_id', searchLogId);
+                navigator.sendBeacon(clickUrl, b);
+                return;
+            }
+            const link = e.target.closest('.opac-modern-card a.js-open-book-modal');
+            if (!link) return;
+            const card = link.closest('.opac-modern-card');
+            const cards = Array.from(document.querySelectorAll('.opac-modern-card'));
+            const body = new FormData();
+            body.append('target', 'katalog');
+            body.append('catalog_id', card.dataset.catalogId || '');
+            body.append('position', cards.indexOf(card) + 1);
+            if (searchLogId) body.append('search_log_id', searchLogId);
+            navigator.sendBeacon(clickUrl, body);
+        }, true);
+    })();
 </script>
 <?= $this->endSection() ?>

@@ -53,9 +53,113 @@ class Opac extends \Base\Controllers\BaseController
     }
 
     $this->data['opac_banners'] = $this->getOpacBanners();
+    $this->data['search_log_id'] = $this->logSearch();
+    $this->loadRujukanTanpaHasil();
     $endTime = microtime(true);
     $this->data['execution_time'] = $endTime - $startTime;
     return view('Opac\Views\index', $this->data);
+}
+
+/**
+ * Satu pencarian = satu baris opac_search_log. Halaman 2 dan seterusnya tidak dicatat ulang.
+ * member_id terisi hanya kalau anggota login (session_member dari tiket L), selain itu NULL.
+ * Gagal mencatat tidak boleh merusak halaman.
+ */
+private function logSearch(): ?int
+{
+    $query = trim((string) ($this->request->getVar('search') ?? ''));
+    if ($query === '' || (int) ($this->request->getVar('page') ?? 1) > 1) {
+        return null;
+    }
+
+    $searchBy = (string) ($this->request->getVar('search_by') ?? '');
+    $allowed  = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
+
+    try {
+        $this->db->table('opac_search_log')->insert([
+            'member_id'    => session('session_member')['member_id'] ?? null,
+            'query'        => mb_substr($query, 0, 255),
+            'search_by'    => in_array($searchBy, $allowed, true) ? $searchBy : null,
+            'result_count' => (int) ($this->data['total_records'] ?? 0),
+        ]);
+        return (int) $this->db->insertID();
+    } catch (\Throwable $e) {
+        log_message('error', 'opac_search_log gagal: ' . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Pencarian kata kunci: URL OneSearch (hasil 0-4) dan koleksi lokal yang mirip (hasil 0).
+ * Filter sisi kiri (Subject=, DeweyNo=, dst.) tidak dihitung; hanya kolom search.
+ */
+private function loadRujukanTanpaHasil(): void
+{
+    $query = trim((string) ($this->request->getVar('search') ?? ''));
+    $total = (int) ($this->data['total_records'] ?? 0);
+    if ($query === '' || $total >= 5) {
+        return;
+    }
+
+    if ($total === 0) {
+        (new \UsulanKoleksi\Models\UsulanKoleksiModel())->catatPencarian($query, 'pencarian');
+    }
+
+    $this->data['onesearch_url'] = \Rekomendasi\Libraries\OneSearch::url($query, (string) ($this->request->getVar('search_by') ?? ''));
+    if ($total === 0) {
+        try {
+            $this->data['catalogs_mirip'] = $this->koleksiMirip($query);
+        } catch (\Throwable $e) {
+            log_message('error', 'koleksiMirip gagal: ' . $e->getMessage());
+        }
+    }
+}
+
+/**
+ * Judul lokal yang mirip kata kunci: FULLTEXT NATURAL LANGUAGE (lebih longgar dari pencarian utama),
+ * lalu diperluas ke judul sedang DDC 3 digit yang sama, diurutkan ContentScore terhadap hasil teratas.
+ */
+private function koleksiMirip(string $query, int $batas = 8): array
+{
+    $term = trim(preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $query));
+    if ($term === '') {
+        return [];
+    }
+
+    $kolom = 'ID AS id, IsOPAC, DeweyNo, Subject, Author';
+    $match = 'MATCH(Title, Author, Subject, Publisher) AGAINST (' . $this->db->escape($term) . ' IN NATURAL LANGUAGE MODE)';
+    $bibit = $this->db->table('catalogs')->select($kolom)->where('IsOPAC', 1)
+        ->where($match, null, false)->orderBy($match, 'DESC', false)->limit(5)->get()->getResultArray();
+    if (!$bibit) {
+        return [];
+    }
+
+    $kandidat = array_column($bibit, null, 'id');
+    $ddc = array_unique(array_filter(array_map(fn ($b) => substr(preg_replace('/[\s.]/', '', (string) $b['DeweyNo']), 0, 3), $bibit), fn ($d) => strlen($d) === 3));
+    if ($ddc) {
+        $q = $this->db->table('catalogs')->select($kolom)->where('IsOPAC', 1)->groupStart();
+        foreach ($ddc as $d) {
+            $q->orLike('DeweyNo', $d, 'after');
+        }
+        $q->groupEnd();
+        // shortcut: 200 judul pertama per DDC tanpa urutan relevansi, upgrade kalau koleksi besar membuat hasil kurang tajam.
+        foreach ($q->limit(200)->get()->getResultArray() as $k) {
+            $kandidat[$k['id']] ??= $k;
+        }
+    }
+
+    foreach ($kandidat as &$k) {
+        $k['content'] = max(array_map(fn ($b) => \Rekomendasi\Libraries\ContentScore::score($b, $k), $bibit));
+    }
+    unset($k);
+
+    $urut = array_column(\Rekomendasi\Libraries\Ranker::baris($kandidat, \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL, [], false, $batas), 'id');
+    if (!$urut) {
+        return [];
+    }
+
+    $baris = array_column($this->katalogModel->whereIn('ID', $urut)->findAll(), null, 'ID');
+    return enrichCatalogsWithCirculation(array_values(array_filter(array_map(fn ($id) => $baris[$id] ?? null, $urut))));
 }
 
 private function getOpacBanners()
