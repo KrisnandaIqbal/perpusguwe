@@ -2002,6 +2002,17 @@ if ($rawPhysDesc !== '' && stripos($rawPhysDesc, 'kertas') === false) {
             </div>
         </section>
 
+        <?php if (!empty($buku_terkait)): ?>
+        <section class="opac-sheet-section" id="section-buku-terkait" aria-label="Buku terkait">
+            <h2 class="h5 fw-bold mb-3">Buku terkait</h2>
+            <div class="row g-4">
+                <?php foreach ($buku_terkait as $terkait): ?>
+                    <?= renderModernBookCard($terkait, 'col-xl-3 col-lg-4 col-md-6') ?>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php endif; ?>
+
         <!-- ─── BAGIAN 4: PENCARIAN TERKAIT (FOOTER BAR) ─── -->
         <footer class="opac-related-footer" aria-label="Tautan pencarian terkait">
             <span class="opac-related-label">Pencarian Terkait:</span>

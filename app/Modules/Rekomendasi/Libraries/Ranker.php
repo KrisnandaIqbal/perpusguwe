@@ -11,6 +11,7 @@ class Ranker
 {
     // Titik awal (rencana 2b), disetel ulang setelah evaluasi. Urutan: [wc, wk, wp].
     public const BOBOT_DETAIL          = [0.7, 0.3, 0.0];
+    public const BOBOT_DETAIL_CONTENT  = [0.7, 0.0, 0.0];   // sampai co-borrow (T6) dipasang
     public const BOBOT_COLD_START      = [0.0, 0.0, 1.0];   // 0 pinjaman atau IzinPersonalisasi = 0
     public const BOBOT_DOMINAN_CONTENT = [0.6, 0.2, 0.2];   // 1-4 pinjaman
     public const BOBOT_DOMINAN_KOLAB   = [0.35, 0.45, 0.2]; // >= 5 pinjaman

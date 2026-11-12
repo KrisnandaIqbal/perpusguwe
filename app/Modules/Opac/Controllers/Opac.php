@@ -449,8 +449,41 @@ private function loadTopSidebarFacets(): void
         $this->data['roweksemplar']     = $roweksemplar;
         $this->data['roweksemplar_drm'] = $roweksemplar_drm;
         $this->data['member_active_loan_collections'] = $member_active_loan_collections;
+        $this->data['buku_terkait'] = $this->bukuTerkait($catalog);
 
         return view('Opac\Views\detail', $this->data);
+    }
+
+    /** Baris "Buku terkait" untuk satu judul; kosong kalau kurang dari Ranker::MIN_PER_BARIS. */
+    private function bukuTerkait(array $catalog): array
+    {
+        $ddc = preg_replace('/[\s.]/', '', (string) ($catalog['DeweyNo'] ?? ''));
+        if (strlen($ddc) < 3) {
+            return [];
+        }
+
+        // shortcut: kandidat hanya DDC 3 digit sama, belum subjek sama; tambah di T6 bersama co-borrow
+        $kandidat = $this->katalogModel->asArray()
+            ->where('IsOPAC', 1)
+            ->where('ID !=', $catalog['ID'])
+            ->like('DeweyNo', substr($ddc, 0, 3), 'after')
+            ->limit(200)
+            ->findAll();
+
+        foreach ($kandidat as &$k) {
+            $k['id']      = $k['ID'];
+            $k['content'] = \Rekomendasi\Libraries\ContentScore::score($catalog, $k);
+        }
+        unset($k);
+
+        $baris = \Rekomendasi\Libraries\Ranker::baris(
+            $kandidat,
+            \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL_CONTENT,
+            [],
+            \Rekomendasi\Libraries\Ranker::majalah($catalog),
+            8
+        );
+        return \Rekomendasi\Libraries\Ranker::halaman(['terkait' => $baris])['terkait'] ?? [];
     }
 
     public function search()
