@@ -10,6 +10,10 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Home extends \Base\Controllers\BaseController
 {
+    // Kartu melayang di hero hanya tampil bila ada pembaruan dalam rentang ini (hari).
+    private const KOLEKSI_BARU_HARI = 30;
+    private const ANGGOTA_BARU_HARI = 14;
+
     public $auth;
     public $authorize;
     public $katalogModel;
@@ -29,13 +33,14 @@ class Home extends \Base\Controllers\BaseController
         $this->settingModel = new \PenomoranKoleksi\Models\PenomoranKoleksiModel();
         $this->beritaModel = new \Berita\Models\BeritaModel();
         $this->db = \Config\Database::connect('data');
-        helper('reference');
+        helper(['reference', 'landing', 'opac']);
     }
 
     public function index()
     {
         $this->data['title'] = 'Beranda - Perpustakaan Digital';
         $this->data['loader_splash'] = true;
+        $this->data['library_name'] = landing_setting('NamaPerpustakaan', 'Perpustakaan Kemnaker RI');
 
         $useCache = env('is_home_cache') == 1;
         $cacheKey = 'home_index_data';
@@ -49,6 +54,9 @@ class Home extends \Base\Controllers\BaseController
                 'total_catalogs' => $this->getTotalCatalogs(),
                 'subjects'       => $this->getTopSubjects(),
                 'statistics'     => $this->getLibraryStatistics(),
+                'new_members'    => $this->getNewMembers(),
+                'new_members_days' => self::ANGGOTA_BARU_HARI,
+                'new_catalog_since' => date('Y-m-d H:i:s', strtotime('-' . self::KOLEKSI_BARU_HARI . ' days')),
                 'news'           => $this->getNews(),
                 'banners'        => $this->getBannersData(),
                 'modules'        => $this->getLibraryModules(),
@@ -70,11 +78,13 @@ class Home extends \Base\Controllers\BaseController
     private function getFeaturedBooks()
     {
         try {
-            return $this->db->table('catalogs')
+            $books = $this->db->table('catalogs')
+                ->where('IsOPAC', 1)
                 ->orderBy('CreateDate', 'DESC')
                 ->limit(8)
                 ->get()
                 ->getResult();
+            return enrichCatalogsWithCirculation($books);
         } catch (\Exception $e) {
             return [];
         }
@@ -168,6 +178,21 @@ class Home extends \Base\Controllers\BaseController
             return 1250; // Dummy data
         } catch (\Exception $e) {
             return 1250; // Dummy data
+        }
+    }
+
+    /**
+     * Jumlah anggota yang mendaftar dalam ANGGOTA_BARU_HARI hari terakhir. Dipakai kartu "anggota baru" di hero:
+     * kartu hanya tampil bila ada pembaruan. Gagal membaca berarti 0 (kartu tidak tampil), bukan angka karangan.
+     */
+    private function getNewMembers(): int
+    {
+        try {
+            return (int) $this->db->table('members')
+                ->where('CreateDate >=', date('Y-m-d H:i:s', strtotime('-' . self::ANGGOTA_BARU_HARI . ' days')))
+                ->countAllResults();
+        } catch (Exception $e) {
+            return 0;
         }
     }
 

@@ -92,6 +92,26 @@ function hitungKontras(page, daftar) {
   }, daftar);
 }
 
+const DAFTAR_KONTRAS = [
+  ['.hero h1', 'Judul bagian utama'],
+  ['.hero-copy > p', 'Paragraf bagian utama'],
+  ['.eyebrow', 'Label kecil biru di bagian utama'],
+  ['.omni-suggestions span', 'Tulisan "Populer:"'],
+  ['.shortcuts-head h2', 'Judul "Akses cepat layanan" (putih di atas biru)'],
+  ['.shortcut-card small', 'Keterangan kartu layanan'],
+  ['.section-kicker', 'Label kecil biru di bagian buku'],
+  ['.showcase .section-head h2', 'Judul bagian buku'],
+  ['.showcase-meta', 'Keterangan kecil di kartu buku'],
+  ['.showcase-info h3', 'Judul buku'],
+  ['.showcase-info p', 'Nama penulis buku'],
+  ['.catalog-cta-copy p', 'Paragraf bagian katalog'],
+  ['.subject-list small', 'Jumlah judul pada daftar subjek'],
+  ['.footer-description', 'Deskripsi di bagian bawah halaman'],
+  ['.footer-col a', 'Tautan di bagian bawah halaman'],
+  ['.footer-contact li', 'Informasi kontak di bagian bawah halaman'],
+  ['.footer-bottom span', 'Hak cipta di bagian bawah halaman'],
+];
+
 test.describe('Halaman depan (beranda)', () => {
   test('T01 Halaman terbuka tanpa kesalahan', async ({ page }) => {
     const galatConsole = [];
@@ -139,21 +159,21 @@ test.describe('Halaman depan (beranda)', () => {
     expect(foto.alt.length, 'teks alternatif foto').toBeGreaterThan(10);
     note(`Foto utama selebar ${foto.lebar} px. Teks pengganti gambar: "${foto.alt}".`);
 
-    // Garis akhir: tepi bawah posisi diam kartu sejajar dengan baris "Populer".
-    const selisih = await page.evaluate(async () => {
-      const kartu = document.querySelector('.card-bottom');
-      kartu.style.animation = 'none';
-      await new Promise((r) => setTimeout(r, 250));
-      const s = Math.round(kartu.getBoundingClientRect().bottom - document.querySelector('.omni-suggestions').getBoundingClientRect().bottom);
-      kartu.style.animation = '';
-      return s;
+    // Teks di kiri berada di dalam rentang tinggi foto dan kira-kira di tengahnya (selisih atas dan bawah tidak jauh).
+    const jarak = await page.evaluate(() => {
+      const foto = document.querySelector('.hero-image-wrap').getBoundingClientRect();
+      const atas = document.querySelector('.hero-copy .eyebrow').getBoundingClientRect().top;
+      const bawah = document.querySelector('.omni-suggestions').getBoundingClientRect().bottom;
+      return { atas: Math.round(atas - foto.top), bawah: Math.round(foto.bottom - bawah) };
     });
-    note(`Selisih tepi bawah kartu "Anggota terdaftar" dengan baris "Populer": ${selisih} px (0 berarti sejajar).`);
-    expect(Math.abs(selisih)).toBeLessThanOrEqual(2);
-    await shot(page, 'T02', 'hero', 'Bagian utama: judul, kolom pencarian, saran Populer, foto ruang baca, dan kartu jumlah anggota.', { clip: { x: 0, y: 0, width: 1366, height: 700 } });
+    note(`Jarak teks kiri ke tepi atas foto ${jarak.atas} px dan ke tepi bawah foto ${jarak.bawah} px (bila seimbang, teks berada di tengah foto).`);
+    expect(jarak.atas, 'teks tidak lebih tinggi dari foto').toBeGreaterThanOrEqual(0);
+    expect(jarak.bawah, 'teks tidak lebih rendah dari foto').toBeGreaterThanOrEqual(0);
+    expect(Math.abs(jarak.atas - jarak.bawah), 'teks tidak jauh dari tengah foto').toBeLessThanOrEqual(80);
+    await shot(page, 'T02', 'hero', 'Bagian utama: judul, kolom pencarian, saran Populer, dan foto ruang baca.', { clip: { x: 0, y: 0, width: 1366, height: 700 } });
   });
 
-  test('T03 Huruf: semua teks memakai Plus Jakarta Sans', async ({ page }) => {
+  test('T03 Huruf: teks memakai Plus Jakarta Sans, judul konten memakai Source Serif 4', async ({ page }) => {
     await bukaBeranda(page);
     const hasil = await page.evaluate(() => {
       const bukan = [];
@@ -163,7 +183,7 @@ test.describe('Halaman depan (beranda)', () => {
         if (!punyaTeks) return;
         total++;
         const f = getComputedStyle(el).fontFamily.split(',')[0].replace(/["']/g, '').trim();
-        if (f !== 'Plus Jakarta Sans') bukan.push(`${el.tagName}.${el.className} -> ${f}`);
+        if (f !== 'Plus Jakarta Sans' && !(f === 'Source Serif 4' && el.closest('h1, h2, h3'))) bukan.push(`${el.tagName}.${el.className} -> ${f}`);
       });
       const kontrol = [...document.querySelectorAll('.page-shell input, .page-shell button, .page-shell select')]
         .filter((e) => !getComputedStyle(e).fontFamily.includes('Plus Jakarta Sans')).length;
@@ -174,51 +194,51 @@ test.describe('Halaman depan (beranda)', () => {
     expect(hasil.bukan).toEqual([]);
     expect(hasil.kontrol).toBe(0);
     expect(hasil.dimuat.some((f) => f.startsWith('Plus Jakarta Sans'))).toBe(true);
-    expect(hasil.dimuat.some((f) => f.startsWith('Lora'))).toBe(false);
+    expect(hasil.dimuat.some((f) => f.startsWith('Source Serif 4'))).toBe(true);
   });
 
-  test('T04 Bilah menu atas: pilihan menu dan menu turun Layanan', async ({ page }) => {
+  test('T04 Bilah menu atas: pilihan menu, tombol Masuk, dan menu turun', async ({ page }) => {
     await bukaBeranda(page);
-    const menu = page.locator('.main-nav');
-    for (const teks of ['Beranda', 'Cari Koleksi', 'Buku Tamu', 'Layanan']) {
+    const menu = page.locator('.gn-bar');
+    for (const teks of ['Beranda', 'OPAC', 'Browse', 'Buku Tamu', 'Layanan', 'Statistik', 'Masuk']) {
       await expect(menu).toContainText(teks);
     }
-    await expect(page.locator('.brand-copy strong')).toHaveText('Perpustakaan');
-    await expect(page.locator('.brand-copy span')).toHaveText('Kementerian Ketenagakerjaan RI');
-    await expect(page.locator('.main-nav a.active')).toHaveText(/Beranda/);
+    await expect(page.locator('.gn-brand-copy strong')).toHaveText('Perpustakaan');
+    await expect(page.locator('.gn-brand-copy span')).toHaveText('Kementerian Ketenagakerjaan RI');
+    await expect(page.locator('.gn-nav a.active')).toHaveText(/Beranda/);
 
-    await page.locator('.dropdown-trigger').click();
-    await expect(page.locator('#nav-dropdown')).toHaveClass(/is-open/);
-    await expect(page.locator('.dropdown-trigger')).toHaveAttribute('aria-expanded', 'true');
-    const butir = await page.locator('.dropdown-item').count();
+    const tombol = page.locator('.gn-drop-btn').first();
+    await tombol.click();
+    await expect(tombol).toHaveAttribute('aria-expanded', 'true');
+    const butir = await page.locator('.gn-drop.is-open .gn-item').count();
     note(`Menu turun Layanan berisi ${butir} pilihan.`);
-    expect(butir).toBeGreaterThanOrEqual(3);
+    expect(butir).toBeGreaterThanOrEqual(2);
     await shot(page, 'T04', 'dropdown', 'Menu turun Layanan terbuka dari bilah menu di atas.', { clip: { x: 0, y: 0, width: 1366, height: 460 } });
 
     await page.keyboard.press('Escape');
-    await expect(page.locator('#nav-dropdown')).not.toHaveClass(/is-open/);
-    await page.locator('.dropdown-trigger').click();
+    await expect(tombol).toHaveAttribute('aria-expanded', 'false');
+    await tombol.click();
     await page.mouse.click(300, 600);
-    await expect(page.locator('#nav-dropdown')).not.toHaveClass(/is-open/);
+    await expect(tombol).toHaveAttribute('aria-expanded', 'false');
     note('Menu turun tertutup dengan tombol Esc dan dengan klik di luar menu.');
   });
 
   test('T05 Bilah menu mengambang (efek kaca) saat halaman digulir', async ({ page }) => {
     await bukaBeranda(page);
-    const header = page.locator('.site-header');
+    const header = page.locator('.gn-bar');
     await expect(header).not.toHaveClass(/is-stuck/);
     await gulirKe(page, '.showcase', -140);
     await expect(header).toHaveClass(/is-stuck/);
     const info = await page.evaluate(() => {
-      const h = document.querySelector('.site-header');
-      const cs = getComputedStyle(h);
+      const h = document.querySelector('.gn-bar');
       const kaca = getComputedStyle(h, '::before');
-      return { posisi: cs.position, atas: Math.round(h.getBoundingClientRect().top), blur: kaca.backdropFilter, opasitas: kaca.opacity, framOverflow: getComputedStyle(document.querySelector('.site-frame')).overflow };
+      return { posisi: getComputedStyle(h).position, atas: Math.round(h.getBoundingClientRect().top), tinggi: Math.round(h.getBoundingClientRect().height), ruang: Math.round(parseFloat(getComputedStyle(document.querySelector('.page-shell')).paddingTop)), blur: kaca.backdropFilter, framOverflow: getComputedStyle(document.querySelector('.site-frame')).overflow };
     });
-    note(`Bilah menu menempel di tepi atas layar (jaraknya ${info.atas} px) dan memakai efek kaca buram (${info.blur}). Pengaturan pembungkus halaman: ${info.framOverflow} (harus "visible" agar efek kaca bekerja).`);
-    expect(info.posisi).toBe('sticky');
+    note(`Bilah menu menempel di tepi atas layar (jaraknya ${info.atas} px), tingginya ${info.tinggi} px dan ruang di atas halaman ${info.ruang} px. Efek kaca: ${info.blur}. Pengaturan pembungkus halaman: ${info.framOverflow} (harus "visible" agar efek kaca bekerja).`);
+    expect(info.posisi).toBe('fixed');
     expect(info.atas).toBe(0);
-    expect(info.blur).toContain('blur');
+    expect(info.tinggi, 'ruang di atas halaman (.page-shell padding-top) harus cukup untuk navbar').toBeLessThanOrEqual(info.ruang);
+    expect(info.blur).toMatch(/blur|lens-filter/);
     expect(info.framOverflow, 'overflow pembungkus harus visible agar blur kaca bekerja').toBe('visible');
     await shot(page, 'T05', 'navbar-kaca', 'Bilah menu menempel di atas dan berubah menjadi kotak kaca saat halaman digulir.', { clip: { x: 0, y: 0, width: 1366, height: 330 } });
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
@@ -288,15 +308,15 @@ test.describe('Halaman depan (beranda)', () => {
     await shot(page, 'T07', 'layanan-hover', 'Kartu layanan pertama saat kursor diarahkan: latar putih, teks gelap, ikon biru.', { clip: { x: 0, y: 0, width: 1366, height: 520 } });
   });
 
-  test('T08 Buku: pilihan Unggulan/Populer, sampul, dan gerak saat kursor diarahkan', async ({ page }) => {
+  test('T08 Buku: pilihan Terbaru/Populer, sampul, dan gerak saat kursor diarahkan', async ({ page }) => {
     await bukaBeranda(page);
     await gulirKe(page, '.showcase', -110);
     const terbaru = page.locator('[data-panel="terbaru"] .showcase-card');
     await expect(terbaru).toHaveCount(4);
     const gen = await page.locator('[data-panel="terbaru"] .book-cover').count();
     const img = await page.locator('[data-panel="terbaru"] .showcase-cover img').count();
-    note(`Pilihan Unggulan: 4 kartu buku (${gen} sampul otomatis, ${img} sampul dari gambar asli).`);
-    await shot(page, 'T08', 'buku-unggulan', 'Bagian buku, pilihan Unggulan. Sampul otomatis dipakai untuk buku yang belum punya gambar sampul.', { clip: { x: 0, y: 0, width: 1366, height: 768 } });
+    note(`Pilihan Terbaru: 4 kartu buku (${gen} sampul otomatis, ${img} sampul dari gambar asli).`);
+    await shot(page, 'T08', 'buku-terbaru', 'Bagian buku, pilihan Terbaru. Sampul otomatis dipakai untuk buku yang belum punya gambar sampul.', { clip: { x: 0, y: 0, width: 1366, height: 768 } });
 
     await page.getByRole('tab', { name: 'Populer' }).click();
     await expect(page.locator('[data-panel="populer"]')).toBeVisible();
@@ -305,7 +325,7 @@ test.describe('Halaman depan (beranda)', () => {
     const populer = await page.locator('[data-panel="populer"] .showcase-card').count();
     note(`Pilihan Populer menampilkan ${populer} buku (hanya buku yang pernah dipinjam).`);
     await shot(page, 'T08', 'buku-populer', 'Pilihan Populer: buku yang paling sering dipinjam.', { clip: { x: 0, y: 0, width: 1366, height: 768 } });
-    await page.getByRole('tab', { name: 'Unggulan' }).click();
+    await page.getByRole('tab', { name: 'Terbaru' }).click();
 
     const sampul = page.locator('[data-panel="terbaru"] .showcase-card').first().locator('.book-cover-md, .showcase-cover img').first();
     const diam = await sampul.evaluate((e) => getComputedStyle(e).transform);
@@ -434,7 +454,7 @@ test.describe('Halaman depan (beranda)', () => {
         sw: document.documentElement.scrollWidth,
         cw: document.documentElement.clientWidth,
         zoom: getComputedStyle(document.querySelector('.site-frame')).zoom,
-        menu: getComputedStyle(document.querySelector('.main-nav')).display,
+        menu: getComputedStyle(document.querySelector('#gn-nav')).display,
       }));
       baris.push(`Lebar ${lebar} px: lebar halaman ${ukur.sw} dari ${ukur.cw} px, perbesaran ${Number(ukur.zoom).toFixed(2)} kali, menu ${ukur.menu === 'none' ? 'berupa tombol' : 'tampil lengkap'}`);
       expect(ukur.sw, `halaman bergeser ke samping pada lebar ${lebar} px`).toBeLessThanOrEqual(ukur.cw);
@@ -446,17 +466,38 @@ test.describe('Halaman depan (beranda)', () => {
   test('T15 Ponsel: tombol menu dan tampilan halaman penuh', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await bukaBeranda(page);
-    await expect(page.locator('.menu-button')).toBeVisible();
-    await expect(page.locator('.main-nav')).toBeHidden();
-    await page.locator('.menu-button').click();
-    await expect(page.locator('.main-nav')).toHaveClass(/is-open/);
-    await expect(page.locator('.menu-button')).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('.main-nav')).toBeVisible();
+    await expect(page.locator('.gn-burger')).toBeVisible();
+    await expect(page.locator('.gn-nav')).toBeHidden();
+    await page.locator('.gn-burger').click();
+    await expect(page.locator('.gn-nav')).toHaveClass(/is-open/);
+    await expect(page.locator('.gn-burger')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('.gn-nav')).toBeVisible();
     await shot(page, 'T15', 'ponsel-menu', 'Menu terbuka di ponsel (lebar 375 px).');
-    await page.locator('.menu-button').click();
-    await expect(page.locator('.main-nav')).toBeHidden();
+    await page.locator('.gn-burger').click();
+    await expect(page.locator('.gn-nav')).toBeHidden();
     await shot(page, 'T15', 'ponsel-halaman-penuh', 'Seluruh halaman di ponsel (lebar 375 px).', { fullPage: true });
     note('Teks kecil "Kementerian Ketenagakerjaan RI" di bawah nama perpustakaan sengaja disembunyikan di ponsel agar muat (sesuai desain).');
+  });
+
+  test('T19 Tombol Masuk', async ({ page }) => {
+    await bukaBeranda(page);
+    const masuk = page.locator('.gn-actions .gn-login');
+    await expect(masuk).toBeVisible();
+    await expect(masuk).toHaveText('Masuk');
+    await expect(masuk).toHaveAttribute('href', /\/login$/);
+    const tinggi = (await masuk.boundingBox()).height;
+    note(`Tombol "Masuk" terlihat di bilah menu, mengarah ke /login, tingginya ${Math.round(tinggi)} px.`);
+    expect(tinggi).toBeGreaterThanOrEqual(44);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await bukaBeranda(page);
+    const kotak = await page.evaluate(() => {
+      const r = (q) => document.querySelector(q).getBoundingClientRect();
+      const m = r('.gn-login'), b = r('.gn-burger'), l = r('.gn-brand');
+      return { masukKanan: m.right, burgerKiri: b.left, brandKanan: l.right, masukKiri: m.left, lebar: document.documentElement.clientWidth };
+    });
+    note(`Di ponsel (375 px): logo berakhir di ${Math.round(kotak.brandKanan)} px, tombol Masuk ${Math.round(kotak.masukKiri)}-${Math.round(kotak.masukKanan)} px, tombol menu mulai ${Math.round(kotak.burgerKiri)} px.`);
+    expect(kotak.brandKanan, 'logo dan Masuk tidak bertumpuk').toBeLessThanOrEqual(kotak.masukKiri);
+    expect(kotak.masukKanan, 'Masuk dan tombol menu tidak bertumpuk').toBeLessThanOrEqual(kotak.burgerKiri + 1);
   });
 
   test('T16 Kemudahan akses: penanda posisi saat memakai keyboard', async ({ page }) => {
@@ -512,25 +553,7 @@ test.describe('Halaman depan (beranda)', () => {
       for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 80)); }
       window.scrollTo(0, 0);
     });
-    const daftar = [
-      ['.hero h1', 'Judul bagian utama'],
-      ['.hero-copy > p', 'Paragraf bagian utama'],
-      ['.eyebrow', 'Label kecil biru di bagian utama'],
-      ['.omni-suggestions span', 'Tulisan "Populer:"'],
-      ['.shortcuts-head h2', 'Judul "Akses cepat layanan" (putih di atas biru)'],
-      ['.shortcut-card small', 'Keterangan kartu layanan'],
-      ['.section-kicker', 'Label kecil biru di bagian buku'],
-      ['.showcase .section-head h2', 'Judul bagian buku'],
-      ['.showcase-meta', 'Keterangan kecil di kartu buku'],
-      ['.showcase-info h3', 'Judul buku'],
-      ['.showcase-info p', 'Nama penulis buku'],
-      ['.catalog-cta-copy p', 'Paragraf bagian katalog'],
-      ['.subject-list small', 'Jumlah judul pada daftar subjek'],
-      ['.footer-description', 'Deskripsi di bagian bawah halaman'],
-      ['.footer-col a', 'Tautan di bagian bawah halaman'],
-      ['.footer-contact li', 'Informasi kontak di bagian bawah halaman'],
-      ['.footer-bottom span', 'Hak cipta di bagian bawah halaman'],
-    ];
+    const daftar = DAFTAR_KONTRAS;
     const hasil = await hitungKontras(page, daftar);
     const gagal = hasil.filter((h) => h.ada && h.rasio < h.batas);
     data({ kontras: hasil.filter((h) => h.ada) });
@@ -550,5 +573,123 @@ test.describe('Halaman depan (beranda)', () => {
     const tinggi = await page.evaluate(() => document.documentElement.scrollHeight);
     note(`Tinggi seluruh halaman ${tinggi} px pada lebar 1366 px.`);
     await shot(page, 'T18', 'halaman-penuh', 'Seluruh beranda dari bagian utama sampai bagian bawah (lebar 1366 px).', { fullPage: true });
+  });
+
+  test('T22 Klik satu per satu tanpa pesan galat', async ({ page }) => {
+    const galat = [];
+    page.on('console', (m) => { if (m.type() === 'error') galat.push(m.text()); });
+    page.on('pageerror', (e) => galat.push(String(e)));
+    const catatan = [];
+    {
+      const nama = 'beranda';
+      await bukaBeranda(page);
+
+      await page.locator('.gn-drop-btn').first().click();
+      await expect(page.locator('.gn-drop-btn').first()).toHaveAttribute('aria-expanded', 'true');
+      await page.keyboard.press('Escape');
+      await expect(page.locator('.gn-drop-btn').first()).toHaveAttribute('aria-expanded', 'false');
+      catatan.push(`${nama}: menu turun Layanan membuka dan menutup (Esc)`);
+
+      await page.locator('[data-suggest="K3"]').click();
+      await expect(page.locator('#omnisearch-input')).toHaveValue('K3');
+      await expect(page.locator('#omni-results .omni-option').last()).toContainText('di katalog OPAC', { timeout: 10000 });
+      await page.keyboard.press('Escape');
+      await expect(page.locator('#omni-results')).toBeHidden();
+      await page.locator('#omnisearch-input').fill('');
+      catatan.push(`${nama}: saran "K3" mengisi kolom dan hasil muncul lalu menutup (Esc)`);
+
+      await page.getByRole('tab', { name: 'Populer' }).click();
+      await expect(page.locator('[data-panel="populer"]')).toBeVisible();
+      await page.getByRole('tab', { name: 'Terbaru' }).click();
+      await expect(page.locator('[data-panel="terbaru"]')).toBeVisible();
+      catatan.push(`${nama}: pilihan Populer lalu Terbaru berganti`);
+
+      const kartu = page.locator('.shortcut-card').first();
+      await kartu.scrollIntoViewIfNeeded();
+      await kartu.hover();
+      await page.waitForTimeout(400);
+      const warnaTeks = await kartu.evaluate((e) => getComputedStyle(e.querySelector('strong')).color);
+      expect(warnaTeks, 'teks kartu layanan terbaca saat kursor diarahkan').not.toBe('rgb(255, 255, 255)');
+      catatan.push(`${nama}: kartu layanan saat kursor diarahkan memakai teks gelap (${warnaTeks})`);
+
+      await page.locator('[data-rules]').first().click();
+      await expect(page.locator('#rules-modal .rules-chapter').first()).toBeVisible({ timeout: 10000 });
+      await page.keyboard.press('Escape');
+      await expect(page.locator('#rules-modal')).toHaveCount(0);
+      catatan.push(`${nama}: jendela Tata Tertib membuka dan menutup (Esc)`);
+
+      await page.locator('.gn-login').hover();
+      await expect(page.locator('.gn-login')).toBeVisible();
+      catatan.push(`${nama}: tombol "Masuk" terlihat dan dapat disorot`);
+      await page.context().clearCookies();
+    }
+    note('Urutan klik: ' + catatan.join('; ') + '.');
+    note(`Pesan galat di konsol peramban selama seluruh klik: ${galat.length}.`);
+    expect(galat, 'pesan galat di konsol').toEqual([]);
+  });
+
+  test('T24 Efek kaca dibatasi: bilah menu, dua kartu melayang, dan latar jendela', async ({ page }) => {
+    await bukaBeranda(page);
+    const hitung = () => page.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => { const v = getComputedStyle(e).backdropFilter; return v && v !== 'none'; }).map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}`));
+    const awal = await hitung();
+    await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'instant' }));
+    const header = await page.evaluate(() => getComputedStyle(document.querySelector('.gn-bar'), '::before').backdropFilter);
+    await page.locator('[data-rules]').first().click();
+    await expect(page.locator('#rules-modal')).toBeVisible();
+    const saatJendela = await hitung();
+    note(`Elemen dengan efek kaca saat halaman biasa: ${awal.length} (ditambah lapisan kaca bilah menu: ${header}). Saat jendela Tata Tertib terbuka: ${saatJendela.join(', ') || 'tidak ada'}.`);
+    expect(awal.length, 'hanya dua kartu melayang yang berkaca di halaman biasa').toBeLessThanOrEqual(2);
+    expect(header).toMatch(/blur|lens-filter/);
+    expect(saatJendela.length, 'jendela menambah paling banyak satu elemen berkaca (dua kartu sudah termasuk)').toBeLessThanOrEqual(3);
+  });
+
+  test('T26 Target sentuh: tombol dan tautan minimal 44 px di desktop dan ponsel', async ({ page }) => {
+    for (const [lebar, tinggi] of [[1366, 768], [375, 812]]) {
+      await page.setViewportSize({ width: lebar, height: tinggi });
+      await bukaBeranda(page);
+      const kecil = await page.evaluate(() => [...document.querySelectorAll('.page-shell a, .page-shell button, .page-shell input')]
+        .filter((e) => !e.matches('.hero-dot') && !e.closest('[hidden]') && getComputedStyle(e).visibility !== 'hidden')
+        .map((e) => ({ nama: `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} "${(e.getAttribute('aria-label') || e.textContent).trim().slice(0, 20)}"`, r: e.getBoundingClientRect() }))
+        .filter(({ r }) => r.width && r.height && (r.width < 44 || r.height < 44))
+        .map(({ nama, r }) => `${nama} ${Math.round(r.width)}x${Math.round(r.height)}`));
+      note(`Lebar ${lebar} px: ${kecil.length} target di bawah 44 px${kecil.length ? ': ' + kecil.join('; ') : ''}. Titik carousel foto (44 x 30) dikecualikan: fotonya juga bisa digeser dan dipilih dengan tombol panah.`);
+      expect(kecil, `target sentuh kurang dari 44 px pada lebar ${lebar} px`).toEqual([]);
+    }
+  });
+
+  test('T27 Pencarian: keadaan "mencari" dan pesan gagal saat server tidak menjawab', async ({ page }) => {
+    await page.route('**/home/search-books*', (route) => route.abort());
+    await bukaBeranda(page);
+    await page.locator('#omnisearch-input').fill('k3');
+    await expect(page.locator('.omni-status')).toContainText('Buku tidak dapat dimuat', { timeout: 5000 });
+    await expect(page.locator('#omni-results .omni-option').last()).toContainText('di katalog OPAC');
+    note('Saat permintaan buku gagal, baris "Buku tidak dapat dimuat" muncul dan tautan ke katalog OPAC tetap ada.');
+  });
+
+  test('T25 Tulisan putih di atas foto terbaca di titik terterang', async ({ page }) => {
+    await bukaBeranda(page);
+    await page.evaluate(() => {
+      document.querySelectorAll('.floating-card').forEach((e) => { e.style.animation = 'none'; e.style.visibility = 'hidden'; });
+      document.querySelectorAll('.image-caption strong, .image-caption span').forEach((e) => { e.style.visibility = 'hidden'; });
+    });
+    const bagian = await page.evaluate(() => [...document.querySelectorAll('.image-caption strong, .image-caption span')].filter((e) => getComputedStyle(e).display !== 'none').map((e) => { const r = e.getBoundingClientRect(); return { nama: e.tagName === 'SPAN' ? 'label "01 / Ruang Baca"' : 'kalimat "Tempat ide bertemu dan bertumbuh."', x: r.left, y: r.top, width: Math.max(r.width, 2), height: Math.max(r.height, 2) }; }));
+    const q = await page.context().newPage();
+    const hasil = [];
+    for (const g of bagian) {
+      const buf = await page.screenshot({ clip: { x: g.x, y: g.y, width: g.width, height: g.height } });
+      const rasio = await q.evaluate(async (b64) => {
+        const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+        const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const gg = c.getContext('2d'); gg.drawImage(img, 0, 0);
+        const d = gg.getImageData(0, 0, c.width, c.height).data; const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+        let maks = 0; for (let i = 0; i < d.length; i += 4) { maks = Math.max(maks, 0.2126 * f(d[i]) + 0.7152 * f(d[i + 1]) + 0.0722 * f(d[i + 2])); }
+        return Math.round((1.05 / (maks + 0.05)) * 100) / 100;
+      }, buf.toString('base64'));
+      hasil.push({ nama: g.nama, rasio });
+    }
+    await q.close();
+
+
+    note('Kontras tulisan putih terhadap titik terterang di area tulisan pada foto: ' + hasil.map((h) => `${h.nama} ${String(h.rasio).replace('.', ',')} banding 1`).join('; ') + '. Batas 4,5 banding 1.');
+    for (const h of hasil) expect(h.rasio, `kontras ${h.nama}`).toBeGreaterThanOrEqual(4.5);
   });
 });

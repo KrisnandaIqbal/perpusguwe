@@ -18,7 +18,7 @@ Laragon harus sudah jalan sebelum tes dijalankan.
 
 ## Pengujian halaman depan dan laporan PDF
 
-Berkas `landing.spec.js` menguji halaman depan (18 pengujian). Gambar layar tersimpan di `docs/laporan-uji-landing/img`.
+Berkas `landing.spec.js` menguji halaman depan (24 pengujian). Gambar layar tersimpan di `docs/laporan-uji-landing/img`.
 Jalankan dengan satu proses uji agar urutan dan gambar stabil, lalu buat laporan PDF:
 
 ```bash

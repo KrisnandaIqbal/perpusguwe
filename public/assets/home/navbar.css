@@ -1,0 +1,86 @@
+/* Navbar publik "liquid glass" dari desain Figma (partial layout/partial/navbar_publik.php, JS: navbar.js).
+   Semua kelas berawalan gn- supaya tidak bentrok dengan Bootstrap di halaman OPAC. */
+.gn-bar {
+    --blue: #0f3fb4; --ink: #151922; --muted: #5b6272;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1030;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 98px; padding: 0 clamp(24px, 5vw, 76px);
+    font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink);
+}
+.gn-bar *, .gn-bar *::before, .gn-bar *::after { box-sizing: border-box; }
+.gn-bar a { text-decoration: none; }
+
+/* Kaca: hampir bening, membiaskan latar di tepinya (filter #lens-filter dibuat navbar.js, hanya Chromium).
+   Jangan menambah ::after atau mix-blend-mode di bar ini: keduanya mematikan blur di belakang kaca. */
+.gn-bar::before {
+    content: ""; position: absolute; z-index: -1; pointer-events: none;
+    inset: 10px max(8px, calc(clamp(24px, 5vw, 76px) - 28px)); border-radius: 22px;
+    opacity: 0; transform: translateY(-6px); transition: opacity .25s, transform .25s;
+    background: linear-gradient(160deg, #ffffff66 0%, #ffffff33 100%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+    box-shadow: inset 1.5px 1.5px 1px -0.5px #fff, inset -1.5px -1.5px 1px -0.5px #ffffffb3, inset 0 0 12px 1px #ffffff59, inset 0 0 0 1px #ffffff80, 0 10px 28px #1621331f, 0 2px 6px #1621330f;
+}
+.gn-bar.is-stuck::before { opacity: 1; transform: none; }
+.lens-ok .gn-bar::before {
+    background: linear-gradient(160deg, #ffffff8c 0%, #ffffff66 100%);
+    -webkit-backdrop-filter: url(#lens-filter) saturate(150%); backdrop-filter: url(#lens-filter) saturate(150%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .gn-bar::before { background: #fffffff0; } }
+
+.gn-brand { display: flex; align-items: center; gap: 11px; min-height: 44px; color: inherit; flex: none; }
+.gn-brand-mark { width: 40px; height: 40px; object-fit: contain; }
+.gn-brand-copy { display: flex; flex-direction: column; gap: 4px; font-size: 10px; line-height: 1.3; letter-spacing: .08em; text-transform: uppercase; }
+.gn-brand-copy strong { font-size: 19px; line-height: 1.15; letter-spacing: -.02em; text-transform: none; }
+
+.gn-nav { display: flex; align-items: center; gap: clamp(10px, 1.3vw, 24px); margin-left: auto; font-size: 14px; font-weight: 600; }
+.gn-link { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 13px 0; color: inherit; font: inherit; white-space: nowrap; cursor: pointer; background: none; border: 0; transition: color .18s; }
+.gn-link:hover, .gn-link.active, .gn-drop.is-open .gn-drop-btn { color: var(--blue); }
+.gn-nav > a.active::after { content: ""; position: absolute; bottom: 4px; left: 26px; right: 0; height: 2px; border-radius: 2px; background: var(--blue); }
+.gn-icon { width: 18px; height: 18px; color: var(--blue); flex: none; }
+.gn-chev { width: 15px; height: 15px; flex: none; transition: transform .2s; }
+.gn-drop { position: relative; }
+.gn-drop.is-open .gn-chev { transform: rotate(180deg); }
+.gn-panel {
+    position: absolute; top: calc(100% + 12px); right: 0; width: 300px; padding: 14px;
+    visibility: hidden; opacity: 0; transform: translateY(-6px); transition: opacity .18s, transform .18s, visibility .18s;
+    background: #fff; border: 1px solid #e8ebf0; border-radius: 18px; box-shadow: 0 24px 45px #16213326;
+}
+.gn-drop.is-open .gn-panel { visibility: visible; opacity: 1; transform: none; }
+.gn-panel-title { display: block; padding: 4px 10px 8px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.gn-item { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 12px; color: var(--ink); font-size: 13px; font-weight: 700; transition: background .16s; }
+.gn-item:hover, .gn-item:focus-visible { background: #f1f4fb; }
+.gn-item-icon svg { width: 20px; height: 20px; }
+.gn-item-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 10px; color: var(--blue); background: #0f3fb414; transition: color .16s, background .16s; }
+.gn-item:hover .gn-item-icon { color: #fff; background: var(--blue); }
+
+.gn-actions { display: flex; align-items: center; gap: 10px; margin-left: clamp(14px, 1.6vw, 28px); }
+.gn-login { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; transition: background .18s, transform .18s; }
+.gn-login:hover { background: var(--ink); color: #fff; transform: translateY(-1px); }
+.gn-login:focus-visible, .gn-link:focus-visible, .gn-burger:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.gn-burger { display: none; width: 44px; height: 44px; padding: 10px; color: inherit; background: none; border: 0; }
+.gn-burger svg { display: block; width: 24px; height: 24px; }
+
+/* Layar sedang: ikon menu disembunyikan agar delapan butir menu muat. */
+@media (max-width: 1280px) { .gn-icon { display: none; } .gn-nav > a.active::after { left: 0; } }
+
+/* Ponsel dan tablet: menu jadi kartu putih yang dibuka tombol. */
+@media (max-width: 1100px) {
+    .gn-burger { display: block; margin-right: -8px; }
+    .gn-actions { margin-left: auto; gap: 8px; }
+    .gn-nav { display: none; position: absolute; top: 86px; left: 18px; right: 18px; margin: 0; padding: 10px 20px 16px; flex-direction: column; align-items: stretch; gap: 0; background: #fff; border-radius: 18px; box-shadow: 0 24px 45px #16213326; font-size: 15px; max-height: calc(100vh - 110px); overflow-y: auto; }
+    .gn-nav.is-open { display: flex; }
+    .gn-link { width: 100%; padding: 14px 0; border-bottom: 1px solid #eef0f4; }
+    .gn-icon { display: inline-block; }
+    .gn-nav > a.active::after { display: none; }
+    .gn-chev { margin-left: auto; }
+    .gn-drop.is-open .gn-drop-btn { border-bottom-color: transparent; }
+    .gn-panel { position: static; display: none; width: auto; padding: 8px 0 0; visibility: visible; opacity: 1; transform: none; border: 0; box-shadow: none; }
+    .gn-drop.is-open .gn-panel { display: block; }
+    .gn-panel-title { display: none; }
+}
+@media (max-width: 800px) { .gn-bar { height: 82px; } .gn-nav { top: 74px; } }
+@media (max-width: 560px) { .gn-bar { padding: 0 20px; } .gn-bar::before { inset: 8px; border-radius: 16px; } .gn-brand-copy span { display: none; } .gn-brand-copy strong { font-size: 18px; } .gn-login { padding: 0 16px; } }
+@media (max-width: 420px) { .gn-brand { gap: 8px; } .gn-brand-mark { width: 34px; height: 34px; } .gn-actions { gap: 4px; } .gn-login { padding: 0 14px; } }
+@media (max-width: 380px) { .gn-brand-copy strong { font-size: 16px; } }
+@media (max-width: 359px) { .gn-bar { padding: 0 16px; } .gn-brand { gap: 6px; } .gn-brand-mark { width: 28px; height: 28px; } .gn-brand-copy strong { font-size: 14px; } .gn-login { padding: 0 12px; font-size: 13px; } }
+@media (prefers-reduced-motion: reduce) { .gn-bar::before, .gn-link, .gn-chev, .gn-panel, .gn-login, .gn-item, .gn-item-icon { transition: none; } .gn-login:hover { transform: none; } }
