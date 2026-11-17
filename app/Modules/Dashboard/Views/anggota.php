@@ -1,165 +1,67 @@
-<?= $this->extend('App\Views\layout\main');
+<?php helper('menu'); ?>
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Anggota</title>
+    <link rel="icon" href="<?= base_url('assets/img/logo-inlislite-icon.png') ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= base_url('assets/dashboard-app/app.css') . '?v=' . filemtime(FCPATH . 'assets/dashboard-app/app.css') ?>">
+    <style>
+        .admin-fab { position: fixed; left: 16px; bottom: 16px; z-index: 60; display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0284c7; color: #fff; font: 700 13px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }
+        .admin-fab:hover { background: #0369a1; }
+        .admin-scrim { position: fixed; inset: 0; z-index: 70; background: rgba(15, 23, 42, .45); display: none; }
+        .admin-drawer { position: fixed; top: 0; left: 0; bottom: 0; z-index: 80; width: 300px; max-width: 88vw; background: #fff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform .2s ease; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body.admin-open .admin-drawer { transform: none; }
+        body.admin-open .admin-scrim { display: block; }
+        .admin-drawer header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #0f172a; }
+        .admin-drawer header button { border: 0; background: none; font-size: 18px; cursor: pointer; color: #475569; }
+        .admin-drawer nav { flex: 1; overflow-y: auto; padding: 10px; }
+        .admin-drawer ul { list-style: none; margin: 0; padding: 0; }
+        .admin-drawer .submenu-argon { display: none; padding-left: 14px; }
+        .admin-drawer .has-submenu.open > .submenu-argon { display: block; }
+        .admin-drawer li a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 600; text-decoration: none; }
+        .admin-drawer li a:hover { background: #f1f5f9; }
+        .admin-drawer li a.active { background: #f0f9ff; color: #0369a1; }
+        .admin-drawer li a .caret { margin-left: auto; font-size: 11px; }
+        .admin-drawer li a i:not(.fas):not(.fa):not(.caret) { display: none; }
+        .admin-drawer .nav-label-argon { margin: 14px 12px 4px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
+        .admin-drawer footer { display: grid; gap: 8px; padding: 12px; border-top: 1px solid #e2e8f0; }
+        .admin-drawer footer a, .admin-drawer footer button { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #0f172a; font: 700 13px 'Plus Jakarta Sans', sans-serif; text-decoration: none; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased selection:bg-sky-600 selection:text-white">
+    <div id="root"></div>
 
-?>
-<?= $this->section('style') ?>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link rel="stylesheet" href="<?= base_url('assets'); ?>/css/dashboard.css">
-<?= $this->endSection('style') ?>
+    <button type="button" class="admin-fab" id="adminMenuOpen"><i class="fas fa-bars"></i> Menu</button>
+    <div class="admin-scrim" id="adminMenuScrim"></div>
+    <aside class="admin-drawer" aria-label="Menu">
+        <header>
+            <span>Menu</span>
+            <button type="button" id="adminMenuClose" aria-label="Tutup menu"><i class="fas fa-times"></i></button>
+        </header>
+        <nav><?= display_menu_backend(0, 1, isset(user()->category) ? user()->category : 'admin'); ?></nav>
+        <footer>
+            <a href="<?= base_url('logout') ?>"><i class="fas fa-sign-out-alt"></i> Keluar</a>
+        </footer>
+    </aside>
 
-<?= $this->section('page') ?>
-<div class="app-main__inner">
-    <div class="dashboard-container">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="page-title" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div class="page-icon">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                    <div>
-                        <h1>Dashboard</h1>
-                        <div class="page-subtitle">Sistem Manajemen Perpustakaan Digital</div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card info">
-                <div class="stat-header">
-                    <div class="stat-content">
-                        <h3>Jumlah Peminjaman</h3>
-                        <div class="stat-number" data-target="<?= $total_peminjaman ?? 0 ?>">0</div>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card primary">
-                <div class="stat-header">
-                    <div class="stat-content">
-                        <h3>Jumlah Pelanggaran</h3>
-                        <div class="stat-number" data-target="<?= $total_pelanggaran ?? 0 ?>">0</div>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                </div>
-            </div>
-
-
-        </div>
-    </div>
-</div>
-    <?= $this->endSection('page') ?>
-
-    <?= $this->section('script') ?>
+    <script type="module" src="<?= base_url('assets/dashboard-app/app.js') . '?v=' . filemtime(FCPATH . 'assets/dashboard-app/app.js') ?>"></script>
     <script>
-        // Number counter animation
-        function animateNumbers() {
-            const counters = document.querySelectorAll('.stat-number, .chart-value');
-
-            const animateCounter = (counter) => {
-                const target = parseInt(counter.getAttribute('data-target'));
-                if (target === 0) {
-                    counter.textContent = '0';
-                    return;
-                }
-
-                const increment = target / 100;
-                let current = 0;
-
-                const timer = setInterval(() => {
-                    current += increment;
-                    if (current >= target) {
-                        current = target;
-                        clearInterval(timer);
-                    }
-                    counter.textContent = Math.floor(current).toLocaleString();
-                }, 20);
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        animateCounter(entry.target);
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, {
-                threshold: 0.5
-            });
-
-            counters.forEach(counter => {
-                observer.observe(counter);
-            });
-        }
-
-        // Card hover effects
-        function initCardEffects() {
-            const cards = document.querySelectorAll('.stat-card, .chart-card');
-
-            cards.forEach(card => {
-                card.addEventListener('mouseenter', () => {
-                    card.style.transform = 'translateY(-10px) scale(1.02)';
-                });
-
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'translateY(0) scale(1)';
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggle = function (open) { document.body.classList.toggle('admin-open', open); };
+            document.getElementById('adminMenuOpen').addEventListener('click', function () { toggle(true); });
+            document.getElementById('adminMenuClose').addEventListener('click', function () { toggle(false); });
+            document.getElementById('adminMenuScrim').addEventListener('click', function () { toggle(false); });
+            document.querySelectorAll('.admin-drawer .submenu-toggle').forEach(function (t) {
+                t.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    this.closest('.has-submenu').classList.toggle('open');
                 });
             });
-        }
-
-        // Click ripple effect
-        function initClickEffects() {
-            document.querySelectorAll('.stat-card, .chart-card').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    const ripple = document.createElement('div');
-                    const rect = card.getBoundingClientRect();
-                    const size = 20;
-
-                    ripple.style.position = 'absolute';
-                    ripple.style.borderRadius = '50%';
-                    ripple.style.background = 'rgba(102, 126, 234, 0.3)';
-                    ripple.style.transform = 'scale(0)';
-                    ripple.style.animation = 'ripple 0.6s linear';
-                    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-                    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-                    ripple.style.width = ripple.style.height = size + 'px';
-                    ripple.style.pointerEvents = 'none';
-
-                    card.appendChild(ripple);
-
-                    setTimeout(() => {
-                        ripple.remove();
-                    }, 600);
-                });
-            });
-        }
-
-        // Initialize animations
-        document.addEventListener('DOMContentLoaded', () => {
-            animateNumbers();
-            initCardEffects();
-            initClickEffects();
         });
-
-        // Add ripple animation CSS
-        const style = document.createElement('style');
-        style.textContent = `
-       @keyframes ripple {
-           to {
-               transform: scale(4);
-               opacity: 0;
-           }
-       }
-   `;
-        document.head.appendChild(style);
     </script>
-
-    <?= $this->endSection('script') ?>
+</body>
+</html>
