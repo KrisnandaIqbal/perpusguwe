@@ -95,7 +95,6 @@ function hitungKontras(page, daftar) {
 const DAFTAR_KONTRAS = [
   ['.hero h1', 'Judul bagian utama'],
   ['.hero-copy > p', 'Paragraf bagian utama'],
-  ['.eyebrow', 'Label kecil biru di bagian utama'],
   ['.omni-suggestions span', 'Tulisan "Populer:"'],
   ['.shortcuts-head h2', 'Judul "Akses cepat layanan" (putih di atas biru)'],
   ['.shortcut-card small', 'Keterangan kartu layanan'],
@@ -140,8 +139,8 @@ test.describe('Halaman depan (beranda)', () => {
 
   test('T02 Bagian utama: judul, kolom pencarian langsung terlihat, foto tampil', async ({ page }) => {
     await bukaBeranda(page);
-    await expect(page.locator('.hero h1')).toContainText('Pengetahuan Untuk');
-    await expect(page.locator('.hero h1')).toContainText('Kemajuan Pekerja');
+    await expect(page.locator('.hero h1')).toContainText('Cari regulasi, buku');
+    await expect(page.locator('.hero h1')).toContainText('riset ketenagakerjaan');
     const batas = await page.evaluate(() => ({
       search: document.querySelector('.catalog-search').getBoundingClientRect().bottom,
       chips: document.querySelector('.omni-suggestions').getBoundingClientRect().bottom,
@@ -161,7 +160,7 @@ test.describe('Halaman depan (beranda)', () => {
     // Teks di kiri berada di dalam rentang tinggi foto dan kira-kira di tengahnya (selisih atas dan bawah tidak jauh).
     const jarak = await page.evaluate(() => {
       const foto = document.querySelector('.hero-image-wrap').getBoundingClientRect();
-      const atas = document.querySelector('.hero-copy .eyebrow').getBoundingClientRect().top;
+      const atas = document.querySelector('.hero-copy h1').getBoundingClientRect().top;
       const bawah = document.querySelector('.omni-suggestions').getBoundingClientRect().bottom;
       return { atas: Math.round(atas - foto.top), bawah: Math.round(foto.bottom - bawah) };
     });
@@ -199,7 +198,7 @@ test.describe('Halaman depan (beranda)', () => {
   test('T04 Bilah menu atas: pilihan menu, tombol Masuk, dan menu turun', async ({ page }) => {
     await bukaBeranda(page);
     const menu = page.locator('.gn-bar');
-    for (const teks of ['Beranda', 'OPAC', 'Browse', 'Buku Tamu', 'Layanan', 'Statistik', 'Masuk']) {
+    for (const teks of ['Beranda', 'OPAC', 'Buku Tamu', 'Layanan', 'Statistik', 'Masuk']) {
       await expect(menu).toContainText(teks);
     }
     await expect(page.locator('.gn-brand-copy strong')).toHaveText('Perpustakaan');

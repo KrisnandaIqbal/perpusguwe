@@ -3,8 +3,8 @@
 
 /* Layar penuh tanpa bingkai kartu. Atasnya diberi ruang setinggi navbar publik yang fixed-top (--nav-h diisi navbar.js);
    latarnya sama dengan .site-frame supaya ruang itu tidak abu-abu. */
-.page-shell { min-height: 100vh; padding: var(--nav-h, 98px) 0 0; background: #f9fbfc; }
-html { scroll-padding-top: var(--nav-h, 98px); } /* loncat ke #anchor tidak tertutup navbar */
+.page-shell { min-height: 100vh; padding: var(--nav-h, 88px) 0 0; background: #f9fbfc; }
+html { scroll-padding-top: var(--nav-h, 88px); } /* loncat ke #anchor tidak tertutup navbar */
 /* Jendela Tata Tertib harus di atas navbar (z-index 1030). */
 .modal-backdrop { z-index: 1100; }
 
@@ -37,19 +37,18 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
     /* Kolom teks dimulai dari atas; jarak judul, paragraf, dan kolom pencarian masing-masing 30px. Foto tetap: atasnya sejajar label
        "Pusat Literasi" (top: 24px) dan tingginya mengikuti baris hero (bukan kolom teks). */
     /* top: 32px menurunkan teks tanpa mengubah tata letak, jadi foto tidak ikut bergeser; teks kira-kira di tengah tinggi foto. */
-    .hero .hero-copy { align-self: start; position: relative; top: 32px; padding-top: 24px; padding-bottom: 0; }
+    /* Dipusatkan secara vertikal terhadap foto; padding-top 24px menggeser isi 12px ke bawah, sama dengan foto (top: 24px). */
+    .hero .hero-copy { align-self: center; padding-top: 24px; padding-bottom: 0; }
     .hero .hero-copy > p { margin-top: 30px; margin-bottom: 0; }
     .hero .hero-copy > .omnisearch { margin-top: 30px; }
     /* Judul: satuan vw tidak ikut diperkecil oleh zoom di js/layout.js, jadi di layar lebar judul melar jadi 4 baris.
        Batas 71px = nilai desain di lebar 1420 px (5vw); zoom lalu membesarkannya sebanding dengan halaman. */
-    .hero h1 { font-size: clamp(48px, min(5vw, 71px), 82px); }
-    /* Baris hero setinggi isinya; ruang ekstra dari --hero-min dibagi rata di atas dan bawah (align-content), bukan
+    .hero h1 { font-size: clamp(48px, min(5vw, 71px), 82px); }    /* Baris hero setinggi isinya; ruang ekstra dari --hero-min dibagi rata di atas dan bawah (align-content), bukan
        dipakai melarkan foto. Foto setinggi kolom teks: tepi bawahnya sejajar dengan bawah baris "Populer", tepi atasnya
        sejajar label di atas judul, dan tidak naik ke area navbar. */
     .hero { align-content: stretch; }
     .hero .hero-visual { align-self: stretch; min-height: 0; }
     .hero .hero-image-wrap { top: 24px; bottom: 0; height: auto; }
-    .hero .image-caption { bottom: 36px; }
     .hero .floating-card.card-bottom { bottom: 0; }
     .hero .floating-card.card-top { top: 42px; }
 }
@@ -60,13 +59,11 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
        Kartu kanan dibatasi min(50%, ruang di tepi kanan - 14px) agar tidak terpotong di tepi layar; ruang itu ikut lebar layar (5vw). */
     .hero { --foto-kanan: 0px; --foto-lebar: min(43vw, 610px); }
     .hero .hero-image-wrap { right: var(--foto-kanan); width: var(--foto-lebar); }
-    /* --lengkung-kartu / --lengkung-orbit dihitung js/hero.js (tepi foto menjorok karena sudut atas bundar). */
+    /* --lengkung-kartu dihitung js/hero.js (tepi foto menjorok karena sudut atas bundar). */
     .hero .hero-visual { --foto-kiri: calc(100% - var(--foto-kanan) - var(--foto-lebar)); }
     .hero .floating-card.card-top { left: calc(var(--foto-kiri) + var(--lengkung-kartu, 0px)); translate: -50% 0; }
     .hero .floating-card.card-bottom { right: var(--foto-kanan); translate: min(50%, calc(clamp(24px, 5vw, 76px) - 8px)) 0; }
     /* Lingkaran hias di belakang foto: yang kecil separuh tertutup foto; yang besar dicerminkan ke kanan bawah (ujungnya keluar 70px dari tepi foto, tidak melewati ruang di tepi layar). */
-    .hero .orbit-one { left: calc(var(--foto-kiri) + var(--lengkung-orbit, 0px) - 89px); }
-    .hero .orbit-two { left: auto; right: calc(var(--foto-kanan) - 70px); transform: rotate(-20deg); }
 }
 @media (max-width: 800px) {
     .hero-visual { min-height: 580px; }
@@ -113,8 +110,6 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .catalog-search:focus-within { outline: 2px solid #0f3fb4; outline-offset: 3px; }
 
 /* Perbaikan kontras kecil */
-.shortcut-number { opacity: .85; }
-.reader-avatars span:nth-child(3) { background: #4d6bd0; }
 .floating-card small { color: #5b6272; }
 
 
@@ -165,7 +160,7 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .hero h1, .section-head h2, .catalog-cta h2, .showcase-info h3, .news h3 { font-family: var(--font-serif); font-weight: 600; letter-spacing: -.01em; }
 .showcase-info h3 { font-size: 16px; letter-spacing: 0; }
 /* Di ukuran besar, opsz otomatis memilih potongan "display" yang tipis; kunci ke potongan teks supaya lebih tebal. */
-.hero h1 { font-variation-settings: "opsz" 24; }
+.hero h1 { font-variation-settings: "opsz" 24; text-wrap: balance; }
 
 /* Target sentuh minimal 44 px (antislop R-03). Tampilan hampir sama; yang membesar adalah area tekan.
    Pengecualian yang diterima: titik carousel foto (44 x 30, jaraknya dikunci JS; foto juga bisa dipilih dengan geser dan tombol panah). */
@@ -177,7 +172,9 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .catalog-search input { min-height: 44px; }
 
 /* Baris keadaan di bawah hasil pencarian: "Mencari buku…" atau pesan gagal (antislop R-27). */
-.omni-status { padding: 9px 10px; color: var(--muted); font-size: 12px; }
+.omni-status { padding: 9px 10px; color: var(--muted); font-size: 14px; }
+.omni-empty { padding: 12px 14px 8px; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 1.4; }
+.omni-empty small { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; font-weight: 400; line-height: 1.5; }
 
 /* Berita & pengumuman: satu berita utama besar, tiga berita berikutnya sebagai daftar. */
 .news { padding: 96px clamp(24px, 5vw, 76px) 90px; background: #fff; }
@@ -196,6 +193,7 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .news-list { display: flex; flex-direction: column; }
 .news-item { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 18px; align-items: center; padding: 18px 0; border-top: 1px solid #e8ebf0; }
 .news-item:first-child { padding-top: 0; border-top: 0; }
+.news-item.tanpa-gambar { grid-template-columns: 1fr; }
 .news-item-img { aspect-ratio: 4 / 3; background: #eef1f6; border-radius: 12px; overflow: hidden; }
 .news-item h3 { font-size: 16px; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .news-main:hover h3, .news-item:hover h3 { color: var(--blue); }
@@ -206,3 +204,19 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
   .news-item { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
   .news-item h3 { font-size: 14px; }
 }
+
+/* Lewati ke konten: terlihat hanya saat difokus keyboard */
+.skip-link { position: absolute; left: 12px; top: -64px; z-index: 100; padding: 12px 18px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 14px; font-weight: 700; text-decoration: none; }
+.skip-link:focus-visible { top: 12px; outline: 3px solid var(--blue); outline-offset: 2px; }
+
+
+/* Ponsel: foto tidak lagi memisahkan pencarian dari layanan, dan kartu buku satu kolom */
+@media (max-width: 560px) {
+  .hero h1 { font-size: clamp(34px, 9.5vw, 42px); }
+  .hero-visual { min-height: 360px; }
+  .hero-image-wrap { height: 340px; }
+  .showcase-grid { grid-template-columns: 1fr; }
+  .showcase-info h3 { font-size: 15px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+}
+.hero-copy > p a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.hero-copy > p a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; border-radius: 4px; }

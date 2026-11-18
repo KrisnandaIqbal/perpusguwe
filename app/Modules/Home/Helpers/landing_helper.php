@@ -100,8 +100,8 @@ if (! function_exists('landing_services')) {
 
         $services = [
             'registrasi' => ['title' => 'Pendaftaran Anggota', 'short' => 'Daftar anggota secara mandiri', 'url' => base_url('home/pendaftaran_online'), 'keywords' => 'daftar registrasi anggota member kartu', 'enabled' => $keanggotaanOnline],
-            'pinjam'     => ['title' => 'Peminjaman', 'short' => 'Pindai barcode, langsung pinjam', 'url' => base_url('peminjaman-mandiri'), 'keywords' => 'pinjam peminjaman sirkulasi scan barcode', 'enabled' => true],
-            'kembali'    => ['title' => 'Pengembalian', 'short' => 'Kembalikan buku lewat drop-box', 'url' => base_url('pengembalian-mandiri'), 'keywords' => 'kembali pengembalian sirkulasi drop box', 'enabled' => true],
+            'pinjam'     => ['title' => 'Peminjaman', 'short' => 'Umum dan ASN: 1 buku per orang. Pindai barcode di perpustakaan', 'url' => base_url('peminjaman-mandiri'), 'keywords' => 'pinjam peminjaman sirkulasi scan barcode', 'enabled' => true],
+            'kembali'    => ['title' => 'Pengembalian', 'short' => 'Kembalikan lewat drop-box di perpustakaan', 'url' => base_url('pengembalian-mandiri'), 'keywords' => 'kembali pengembalian sirkulasi drop box', 'enabled' => true],
             'baca'       => ['title' => 'Baca di Tempat', 'short' => 'Reservasi meja di ruang baca', 'url' => base_url('baca-ditempat'), 'keywords' => 'baca tempat ruang meja reservasi', 'enabled' => true],
             'isbn'       => ['title' => 'Layanan ISBN', 'short' => 'Ajukan ISBN publikasi Anda', 'url' => base_url('home/layanan-isbn'), 'keywords' => 'isbn perpusnas terbit publikasi penerbit', 'enabled' => true],
             'tamu'       => ['title' => 'Buku Tamu', 'short' => 'Catat kunjungan Anda', 'url' => base_url('buku-tamu'), 'keywords' => 'tamu kunjungan pengunjung', 'enabled' => true],
@@ -167,7 +167,7 @@ if (! function_exists('landing_footer')) {
                 ['Perpustakaan Nasional RI', 'https://www.perpusnas.go.id'],
                 ['Satu Data Ketenagakerjaan', 'https://satudata.kemnaker.go.id'],
                 ['SIAPkerja', 'https://siapkerja.kemnaker.go.id'],
-                ['JDIH Kemnaker', 'https://jdih.kemnaker.go.id'],
+                ['JDIH Kemnaker', landing_jdih_url()],
             ],
         ];
     }
@@ -215,12 +215,30 @@ if (! function_exists('landing_cover_style')) {
 
 if (! function_exists('landing_hero_photos')) {
     /**
-     * Foto carousel hero: semua gambar di public/assets/home/hero/, urut menurut nama berkas (paling banyak 8).
+     * Foto carousel hero: banner aktif dari admin bila ada; bila tidak, semua gambar di public/assets/home/hero/, urut menurut nama berkas (paling banyak 8).
      * Nama berkas jadi label foto: "02-ruang-baca-anak.jpg" tampil sebagai "02 / Ruang Baca Anak" (nomor dihitung ulang).
      * Folder kosong: dipakai library-hero.jpg.
      */
-    function landing_hero_photos(): array
+    function landing_hero_photos(array $banners = []): array
     {
+        // Banner kategori Beranda yang aktif (diatur admin di CMS > Banner) menggantikan foto bawaan.
+        $dariAdmin = [];
+        foreach ($banners as $banner) {
+            $berkas = (string) ($banner->file_cover ?? '');
+            if ($berkas === '' || ! is_file(FCPATH . 'uploads/banner/' . $berkas)) {
+                continue;
+            }
+            $judul = trim((string) ($banner->title ?? '')) ?: 'Perpustakaan';
+            $dariAdmin[] = [
+                'src'   => base_url('uploads/banner/' . rawurlencode($berkas)),
+                'label' => $judul,
+                'alt'   => trim((string) ($banner->description ?? '')) ?: $judul,
+            ];
+        }
+        if ($dariAdmin) {
+            return array_slice($dariAdmin, 0, 8);
+        }
+
         $berkas = glob(FCPATH . 'assets/home/hero/*.{jpg,jpeg,png,webp,avif}', GLOB_BRACE) ?: [];
         natcasesort($berkas);
 
@@ -240,5 +258,47 @@ if (! function_exists('landing_hero_photos')) {
             'label' => 'Ruang Baca',
             'alt'   => 'Ruang baca perpustakaan dengan rak buku kayu, bangku, dan meja baca',
         ]];
+    }
+}
+
+if (! function_exists('landing_jdih_url')) {
+    /** Pintu ke regulasi resmi; dipakai footer dan saran saat pencarian tidak menemukan apa pun. */
+    function landing_jdih_url(): string
+    {
+        return 'https://jdih.kemnaker.go.id';
+    }
+}
+
+if (! function_exists('landing_query_expand')) {
+    /**
+     * Singkatan regulasi (uu, perpres, permenaker, ...) dibuka ke bentuk yang dipakai judul katalog,
+     * dan "13 2003" atau "13/2003" menjadi "nomor 13 tahun 2003". Null bila tidak ada singkatan.
+     * shortcut: "pp" tidak dimasukkan karena juga cocok dengan "PPh"; tambah bila nanti ada aturan yang aman.
+     */
+    function landing_query_expand(string $query): ?string
+    {
+        static $singkatan = [
+            'uu'              => 'undang-undang',
+            'perpres'         => 'peraturan presiden',
+            'permenaker'      => 'peraturan menteri tenaga kerja',
+            'permenakertrans' => 'peraturan menteri tenaga kerja dan transmigrasi',
+            'kepmenaker'      => 'keputusan menteri tenaga kerja',
+            'kepmenakertrans' => 'keputusan menteri tenaga kerja dan transmigrasi',
+        ];
+        $kata  = preg_split('/\s+/u', mb_strtolower(trim($query)), -1, PREG_SPLIT_NO_EMPTY);
+        $dikenal = false;
+        foreach ($kata as &$k) {
+            $k = rtrim($k, '.');
+            if (isset($singkatan[$k])) {
+                $k       = $singkatan[$k];
+                $dikenal = true;
+            }
+        }
+        unset($k);
+        if (! $dikenal) {
+            return null;
+        }
+
+        return preg_replace('~(?<!\d)(\d{1,3})\s*[/\s]\s*(\d{4})(?!\d)~u', 'nomor $1 tahun $2', implode(' ', $kata));
     }
 }

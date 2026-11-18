@@ -13,6 +13,8 @@ class Home extends \Base\Controllers\BaseController
     // Kartu melayang di hero hanya tampil bila ada pembaruan dalam rentang ini (hari).
     private const KOLEKSI_BARU_HARI = 30;
     private const ANGGOTA_BARU_HARI = 14;
+    // Calon saran pencarian di hero; yang tidak punya hasil di katalog tidak ditampilkan (lihat getSearchChips).
+    private const SARAN_PENCARIAN = ['K3', 'Hukum ketenagakerjaan', 'Statistik', 'Pelatihan kerja', 'Upah'];
 
     public $auth;
     public $authorize;
@@ -38,7 +40,7 @@ class Home extends \Base\Controllers\BaseController
 
     public function index()
     {
-        $this->data['title'] = 'Beranda - Perpustakaan Digital';
+        $this->data['title'] = 'Beranda';
         $this->data['loader_splash'] = true;
         $this->data['library_name'] = landing_setting('NamaPerpustakaan', 'Perpustakaan Kemnaker RI');
 
@@ -53,6 +55,7 @@ class Home extends \Base\Controllers\BaseController
                 'popular_books'  => $this->getPopularBooks(),
                 'total_catalogs' => $this->getTotalCatalogs(),
                 'subjects'       => $this->getTopSubjects(),
+                'search_chips'   => $this->getSearchChips(),
                 'statistics'     => $this->getLibraryStatistics(),
                 'new_members'    => $this->getNewMembers(),
                 'new_members_days' => self::ANGGOTA_BARU_HARI,
@@ -327,6 +330,48 @@ class Home extends \Base\Controllers\BaseController
     }
 
     /**
+     * Syarat pencarian beranda: kata kunci di judul, pengarang, atau penerbit; singkatan regulasi
+     * (uu, permenaker, "13 2003") juga dicocokkan lewat kata-kata judul.
+     */
+    private function filterBooks(string $keyword): void
+    {
+        $this->katalogModel->where('IsOPAC', 1)
+            ->groupStart()
+            ->like('Title', $keyword)
+            ->orLike('Author', $keyword)
+            ->orLike('Publisher', $keyword);
+
+        if (($diperluas = landing_query_expand($keyword)) !== null) {
+            $this->katalogModel->orGroupStart();
+            foreach (explode(' ', $diperluas) as $kata) {
+                $this->katalogModel->like('Title', $kata);
+            }
+            $this->katalogModel->groupEnd();
+        }
+
+        $this->katalogModel->groupEnd();
+    }
+
+    /** Topik saran di bawah kolom pencarian; hanya yang punya hasil, supaya saran tidak berujung "0 hasil". */
+    private function getSearchChips(): array
+    {
+        $chips = [];
+        foreach (self::SARAN_PENCARIAN as $topik) {
+            try {
+                $this->filterBooks($topik);
+                if ($this->katalogModel->countAllResults() > 0) {
+                    $chips[] = $topik;
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'getSearchChips gagal: ' . $e->getMessage());
+                return [];
+            }
+        }
+
+        return $chips;
+    }
+
+    /**
      * Search books (for AJAX)
      */
     public function searchBooks()
@@ -341,27 +386,17 @@ class Home extends \Base\Controllers\BaseController
         }
 
         try {
+            $this->filterBooks($keyword);
             $books = $this->katalogModel
                 ->select('ID, Title, Author, Publisher, ControlNumber, PublishYear')
-                ->where('IsOPAC', 1)
-                ->groupStart()
-                ->like('Title', $keyword)
-                ->orLike('Author', $keyword)
-                ->orLike('Publisher', $keyword)
-                ->groupEnd()
                 ->limit(4)
                 ->findAll();
 
+            $this->filterBooks($keyword);
+
             return $this->response->setJSON([
                 'status' => 'success',
-                'total' => $this->katalogModel
-                    ->where('IsOPAC', 1)
-                    ->groupStart()
-                    ->like('Title', $keyword)
-                    ->orLike('Author', $keyword)
-                    ->orLike('Publisher', $keyword)
-                    ->groupEnd()
-                    ->countAllResults(),
+                'total' => $this->katalogModel->countAllResults(),
                 'data' => $books
             ]);
         } catch (\Exception $e) {

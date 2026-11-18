@@ -242,6 +242,25 @@
         z-index: 10;
         box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
     }
+    /* Jelajahi koleksi (bekas halaman Browse) */
+    .jelajah { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 32px; }
+    .jelajah-judul { font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 16px 0 8px; }
+    .jelajah-judul:first-of-type { margin-top: 0; }
+    .jelajah-huruf { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+    .jelajah-huruf .label { font-size: 0.85rem; font-weight: 600; color: #334155; width: 76px; }
+    .jelajah-huruf a { min-width: 28px; padding: 3px 0; text-align: center; font-size: 0.82rem; color: #334155; border: 1px solid #e2e8f0; border-radius: 6px; text-decoration: none; }
+    .jelajah-huruf a:hover { background: #2a5298; border-color: #2a5298; color: #fff; }
+    .ddc-kelas { border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+    .ddc-kelas summary { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; font-size: 0.9rem; color: #1e293b; }
+    .ddc-kelas .kode { font-family: monospace; font-weight: 700; color: #2a5298; }
+    .ddc-kelas .jumlah { margin-left: auto; font-size: 0.78rem; color: #64748b; }
+    .ddc-kelas ul { list-style: none; margin: 0; padding: 4px 12px 10px 44px; }
+    .ddc-kelas li a { display: flex; gap: 8px; padding: 3px 0; font-size: 0.85rem; color: #475569; text-decoration: none; }
+    .ddc-kelas li a:hover { color: #2a5298; }
+    .ddc-kelas li .jumlah { color: #94a3b8; }
+    .pengarang-chip { display: inline-flex; gap: 6px; padding: 4px 10px; font-size: 0.82rem; color: #334155; border: 1px solid #e2e8f0; border-radius: 6px; text-decoration: none; }
+    .pengarang-chip:hover { border-color: #2a5298; color: #2a5298; }
+    .pengarang-chip span { color: #94a3b8; }
 </style>
 <?= $this->endSection() ?>
 
@@ -491,6 +510,12 @@
             </div>
 
             <div class="col-lg-9 catalog-section">
+                <?php if (session()->getFlashdata('notif_izin')): ?>
+                    <div class="alert alert-info mb-4" role="status">
+                        Kami memakai riwayat pinjammu untuk menyarankan buku. Hanya kamu yang bisa melihatnya.
+                        Kamu bisa mematikannya di <a href="<?= base_url('opac/profil') ?>" class="alert-link">Profil</a>.
+                    </div>
+                <?php endif; ?>
                 <?php foreach ($baris_rekomendasi ?? [] as $judulBaris => $isiBaris): ?>
                     <h4 class="mb-3 fw-bold text-dark"><?= esc($judulBaris) ?></h4>
                     <div class="row g-4 flex-nowrap overflow-auto pb-3 mb-4">
@@ -510,7 +535,8 @@
                 $activePub      = (string) (request()->getVar('Publisher') ?? '');
                 $activeYear     = (string) (request()->getVar('PublishYear') ?? '');
                 $activeLocation = (string) (request()->getVar('PublishLocation') ?? '');
-                $hasActiveQuery = !empty($search) || $activeSubject !== '' || $activeDewey !== '' || $activeAuthor !== '' || $activePub !== '' || $activeYear !== '' || $activeLocation !== '';
+                $activeLetter   = preg_match('/^[A-Za-z0-9]$/', (string) request()->getVar('letter')) ? strtoupper((string) request()->getVar('letter')) : '';
+                $hasActiveQuery = $activeLetter !== '' || !empty($search) || $activeSubject !== '' || $activeDewey !== '' || $activeAuthor !== '' || $activePub !== '' || $activeYear !== '' || $activeLocation !== '';
                 ?>
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-2 border-bottom">
                     <h4 class="mb-0 fw-bold text-dark">
@@ -520,6 +546,8 @@
                             <i class="fas fa-shapes text-primary me-2"></i>Klasifikasi DDC: <span class="text-primary"><?= esc($activeDewey) ?></span>
                         <?php elseif (!empty($search)): ?>
                             <i class="fas fa-search text-primary me-2"></i>Hasil Pencarian: <span class="text-primary"><?= esc($search) ?></span>
+                        <?php elseif ($activeLetter !== ''): ?>
+                            <i class="fas fa-font text-primary me-2"></i><?= ($search_by ?? '') === 'Author' ? 'Pengarang' : 'Judul' ?> berawalan <span class="text-primary"><?= esc($activeLetter) ?></span>
                         <?php elseif ($activeAuthor !== ''): ?>
                             <i class="fas fa-user-edit text-primary me-2"></i>Pengarang: <span class="text-primary"><?= esc($activeAuthor) ?></span>
                         <?php elseif ($activePub !== ''): ?>
@@ -536,8 +564,68 @@
                         <a href="<?= base_url('opac') ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
                             <i class="fas fa-times me-1"></i>Tampilkan Semua Koleksi
                         </a>
+                    <?php elseif (!empty($jelajah)): ?>
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-toggle="collapse" data-bs-target="#jelajah" aria-expanded="false" aria-controls="jelajah">
+                            <i class="fas fa-filter me-1"></i>Filters
+                        </button>
                     <?php endif; ?>
                 </div>
+
+                <?php if (!empty($jelajah)): ?>
+                    <section class="jelajah collapse" id="jelajah" aria-labelledby="jelajah-h">
+                        <h4 class="fw-bold text-dark mb-3 fs-6" id="jelajah-h">Jelajahi koleksi</h4>
+
+                        <p class="jelajah-judul">Menurut abjad</p>
+                        <?php foreach (['Title' => 'Judul', 'Author' => 'Pengarang'] as $kriteria => $nama): ?>
+                            <div class="jelajah-huruf mb-2">
+                                <span class="label"><?= $nama ?></span>
+                                <?php foreach (array_merge(range('A', 'Z'), range(0, 9)) as $h): ?>
+                                    <a href="<?= base_url('opac?' . http_build_query(['search_by' => $kriteria, 'letter' => $h])) ?>"><?= $h ?></a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <p class="jelajah-judul">Menurut subjek (klasifikasi DDC)</p>
+                        <div class="row g-2">
+                            <?php foreach ($jelajah['ddc'] as $kode => $kelas): ?>
+                                <div class="col-md-6">
+                                    <details class="ddc-kelas">
+                                        <summary>
+                                            <span class="kode"><?= esc($kode) ?></span>
+                                            <?= esc($kelas['name']) ?>
+                                            <span class="jumlah"><?= number_format($kelas['count']) ?></span>
+                                        </summary>
+                                        <ul>
+                                            <li><a href="<?= base_url('opac?DeweyNo=' . substr($kode, 0, 1)) ?>">Semua kelas <?= esc($kode) ?></a></li>
+                                            <?php foreach ($kelas['divisions'] as $div): ?>
+                                                <?php if ($div['count'] > 0): ?>
+                                                    <li>
+                                                        <a href="<?= base_url('opac?DeweyNo=' . $div['code']) ?>">
+                                                            <span class="kode"><?= esc($div['code']) ?></span>
+                                                            <?= esc($div['name']) ?>
+                                                            <span class="jumlah"><?= number_format($div['count']) ?></span>
+                                                        </a>
+                                                    </li>
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </details>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <?php if (!empty($jelajah['pengarang'])): ?>
+                            <p class="jelajah-judul">Pengarang dengan koleksi terbanyak</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                <?php foreach ($jelajah['pengarang'] as $p): ?>
+                                    <a class="pengarang-chip" href="<?= base_url('opac?' . http_build_query(['search' => $p['name'], 'search_by' => 'Author'])) ?>">
+                                        <?= esc($p['name']) ?> <span><?= number_format($p['count']) ?></span>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
 
                 <div class="row g-4">
                     <?php
@@ -633,6 +721,11 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const jelajah = document.getElementById('jelajah');
+        if (jelajah && location.hash === '#jelajah') {
+            bootstrap.Collapse.getOrCreateInstance(jelajah).show();
+        }
+
         const searchInput = document.querySelector('input[name="search"]');
         if (searchInput && !searchInput.value) {
             searchInput.focus();

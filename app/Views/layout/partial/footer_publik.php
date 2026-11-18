@@ -23,7 +23,7 @@ $_depan   = in_array(trim(current_url(true)->getPath(), '/'), ['', 'home', 'inde
             <ul class="footer-contact">
                 <li><?= landing_icon('pin') ?><span><?= esc($alamat) ?></span></li>
                 <li><?= landing_icon('mail') ?><a href="mailto:<?= esc($surel) ?>"><?= esc($surel) ?></a></li>
-                <?php if ($telepon !== '') : ?><li><?= landing_icon('phone') ?><a href="tel:<?= esc($telepon) ?>"><?= esc($telepon) ?></a></li><?php endif; ?>
+                <?php if (preg_match('/\d/', $telepon)) : ?><li><?= landing_icon('phone') ?><a href="tel:<?= esc($telepon) ?>"><?= esc($telepon) ?></a></li><?php endif; ?>
                 <li>
                     <?= landing_icon('clock') ?>
                     <span>

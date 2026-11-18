@@ -7,15 +7,14 @@ $shortcuts = landing_shortcuts();
         <h2 id="shortcut-title">Akses cepat layanan</h2>
     </div>
     <div class="shortcut-grid">
-        <?php foreach ($shortcuts as $index => $s) : ?>
+        <?php foreach ($shortcuts as $s) : ?>
             <a href="<?= $s['url'] ?>" class="shortcut-card">
                 <span class="shortcut-top">
                     <span class="shortcut-icon"><?= $s['icon'] ?></span>
-                    <span class="shortcut-number"><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></span>
                 </span>
                 <strong><?= esc($s['title']) ?></strong>
                 <small><?= esc($s['short']) ?></small>
-                <span class="shortcut-go">Buka <?= landing_icon('right') ?></span>
+                <span class="shortcut-go" aria-hidden="true"><?= landing_icon('right') ?></span>
             </a>
         <?php endforeach; ?>
     </div>

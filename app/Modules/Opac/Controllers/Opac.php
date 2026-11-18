@@ -55,7 +55,8 @@ class Opac extends \Base\Controllers\BaseController
     $this->data['opac_banners'] = $this->getOpacBanners();
     $this->data['search_log_id'] = $this->logSearch();
     $this->loadRujukanTanpaHasil();
-    $this->data['baris_rekomendasi'] = $this->getBarisTamu();
+    $this->data['baris_rekomendasi'] = $this->getBarisBeranda();
+    $this->data['jelajah'] = $this->getJelajah();
     $endTime = microtime(true);
     $this->data['execution_time'] = $endTime - $startTime;
     return view('Opac\Views\index', $this->data);
@@ -163,21 +164,135 @@ private function koleksiMirip(string $query, int $batas = 8): array
     return enrichCatalogsWithCirculation(array_values(array_filter(array_map(fn ($id) => $baris[$id] ?? null, $urut))));
 }
 
-// Baris rekomendasi hanya di beranda polos (tanpa pencarian, filter, atau halaman lain).
-private function getBarisTamu(): array
+// Beranda polos: tanpa pencarian, filter, huruf, atau halaman lain. Hanya di sini baris rekomendasi anggota dan blok Jelajahi tampil.
+private function berandaPolos(): bool
 {
-    $param = ['search', 'search_by', 'Author', 'Publisher', 'Subject', 'PublishYear', 'PublishLocation', 'DeweyNo', 'page'];
-    foreach ($param as $p) {
+    foreach (['search', 'search_by', 'letter', 'Author', 'Publisher', 'Subject', 'PublishYear', 'PublishLocation', 'DeweyNo', 'page'] as $p) {
         if (!empty($this->request->getVar($p))) {
-            return [];
+            return false;
         }
     }
+    return true;
+}
 
-    return cache()->remember('opac_baris_tamu', 3600, function () {
-        $populer = \Rekomendasi\Libraries\Ranker::baris($this->katalogModel->kandidatPopuler(), \Rekomendasi\Libraries\Ranker::BOBOT_COLD_START);
-        $baru    = \Rekomendasi\Libraries\Ranker::baris($this->katalogModel->kandidatBaru(), \Rekomendasi\Libraries\Ranker::BOBOT_COLD_START);
+private function getBarisBeranda(): array
+{
+    if (!$this->berandaPolos()) {
+        return [];
+    }
 
-        $baris = \Rekomendasi\Libraries\Ranker::halaman(['Paling banyak dipinjam' => $populer, 'Koleksi baru' => $baru]);
+    // Baris umum "Paling banyak dipinjam" dan "Koleksi baru" cukup di landing page; OPAC hanya baris yang dipersonalisasi.
+    $anggota = session('session_member');
+    return $anggota ? array_diff_key($this->getBarisAnggota($anggota), ['Paling banyak dipinjam' => 1, 'Koleksi baru' => 1]) : [];
+}
+
+/**
+ * Blok "Jelajahi koleksi" (bekas halaman Browse): direktori DDC 000-900 dan pengarang terbanyak.
+ * Abjad A-Z hanya tautan ke ?letter=, tanpa data.
+ */
+private function getJelajah(): array
+{
+    if (!$this->berandaPolos()) {
+        return [];
+    }
+
+    $pengarang = cache('opac_top_authors_v2');
+    if (!$pengarang) {
+        $pengarang = $this->db->table('catalogs')
+            ->select('Author as name, COUNT(*) as count')
+            ->where('IsOPAC', 1)
+            ->where("Author IS NOT NULL AND Author != ''", null, false)
+            ->groupBy('Author')
+            ->orderBy('count', 'DESC')
+            ->limit(12)
+            ->get()
+            ->getResultArray();
+        cache()->save('opac_top_authors_v2', $pengarang, 600);
+    }
+
+    return ['ddc' => $this->getDdcDirectoryData()['ddc_hierarchy'] ?? [], 'pengarang' => $pengarang];
+}
+
+/**
+ * ?letter=A mempersempit ke judul (atau pengarang bila search_by=Author) berawalan huruf itu, urut abjad.
+ * Tanpa letter: koleksi terbaru dulu.
+ */
+private function urutkanHasil($builder): void
+{
+    $letter = (string) ($this->request->getVar('letter') ?? '');
+    if (!preg_match('/^[A-Za-z0-9]$/', $letter)) {
+        $builder->orderBy('ID', 'DESC');
+        return;
+    }
+
+    $kolom = $this->request->getVar('search_by') === 'Author' ? 'Author' : 'Title';
+    $builder->like($kolom, $letter, 'after')->orderBy($kolom, 'ASC');
+}
+
+/**
+ * Beranda anggota (rencana 2d): "Karena kamu meminjam ...", populer di unit kerja, subjek favorit, koleksi baru di kelas favorit.
+ * Tanpa izin personalisasi atau tanpa riwayat: hanya populer di unit kerja dan koleksi baru.
+ * Di-cache per anggota 1 jam; Anggota::simpanIzin() menghapusnya supaya perubahan izin langsung berlaku.
+ */
+private function getBarisAnggota(array $anggota): array
+{
+    $id = (int) $anggota['member_id'];
+    return cache()->remember('rekomendasi_beranda_' . $id, 3600, function () use ($id, $anggota) {
+        $R    = \Rekomendasi\Libraries\Ranker::class;
+        $unit = (int) $anggota['unit_kerja_id'] ?: null;
+        $izin = (int) ($this->db->table('members')->select('IzinPersonalisasi')->where('ID', $id)->get()->getRow()->IzinPersonalisasi ?? 1);
+
+        $riwayat  = $izin ? $this->katalogModel->riwayatAnggota($id) : [];
+        $dipinjam = array_column($riwayat, 'id');
+        $bobot    = \Rekomendasi\Libraries\Beranda::bobot(count($riwayat), (bool) $izin);
+
+        $populerUnit = $this->katalogModel->kandidatPopuler(60, $unit);
+        $namaUnit    = $unit ? $this->db->table('master_unit')->select('nama_unit')->where('id', $unit)->get()->getRow()->nama_unit ?? null : null;
+        $petaPopuler = array_column($populerUnit, 'populer', 'id');
+
+        $baris = [];
+        if ($riwayat) {
+            $terakhir = $riwayat[0] + ['ID' => $riwayat[0]['id']];
+            $baris['Karena kamu meminjam "' . mb_strimwidth($terakhir['Title'], 0, 60, '...') . '"'] = $this->barisSerupa($terakhir, $bobot, $dipinjam, 20, $petaPopuler);
+        }
+
+        $baris[$namaUnit && $this->katalogModel->unitCukupPinjaman($unit) ? 'Populer di ' . $namaUnit : 'Paling banyak dipinjam'] = $R::baris($populerUnit, $R::BOBOT_COLD_START, $dipinjam);
+
+        $subjek = \Rekomendasi\Libraries\Beranda::subjekFavorit($riwayat);
+        if ($subjek) {
+            $sumber = ['DeweyNo' => '', 'Subject' => $subjek, 'Author' => ''];
+            $kandidat = $this->katalogModel->kandidatSubjek($subjek);
+            foreach ($kandidat as &$k) {
+                $k['content'] = \Rekomendasi\Libraries\ContentScore::score($sumber, $k);
+                $k['populer'] = $petaPopuler[$k['id']] ?? 0;
+            }
+            unset($k);
+            $baris['Subjek favoritmu: ' . mb_convert_case($subjek, MB_CASE_TITLE)] = $R::baris($kandidat, $bobot, $dipinjam);
+        }
+
+        // DDC 3 digit favorit dulu; kalau judul barunya kurang dari MIN_PER_BARIS, naik ke ratusan (mis. 331 -> 3xx).
+        $kelas = \Rekomendasi\Libraries\Beranda::kelasFavorit($riwayat);
+        $judulBaru = 'Koleksi baru';
+        $baru = [];
+        foreach ($kelas ? [$kelas, $kelas[0]] : [null] as $awalan) {
+            $baru = $R::baris($this->katalogModel->kandidatBaru(60, $awalan), $R::BOBOT_COLD_START, $dipinjam);
+            if ($awalan && count($baru) >= $R::MIN_PER_BARIS) {
+                $tigaDigit = strlen($awalan) === 3;
+                $nama = $this->db->table('master_kelas_besar')->select('namakelas')->where('kdKelas', $tigaDigit ? $awalan : $awalan . '00')->get()->getRow()->namakelas ?? null;
+                $nama = $nama ? trim(preg_replace('/^\d+\s*-\s*/', '', $nama)) : null;
+                $judulBaru = $tigaDigit
+                    ? 'Koleksi baru di ' . ($nama ? 'bidang ' . $nama . ' (DDC ' . $awalan . ')' : 'DDC ' . $awalan)
+                    : 'Koleksi baru di bidang ' . $nama;
+                break;
+            }
+        }
+        if (count($baru) < $R::MIN_PER_BARIS) {
+            $judulBaru = 'Koleksi baru';
+            $baru = $R::baris($this->katalogModel->kandidatBaru(), $R::BOBOT_COLD_START, $dipinjam);
+        }
+        $baris[$judulBaru] = $baru;
+
+        $baris = $R::halaman($baris);
         foreach ($baris as &$b) {
             $b = enrichCatalogsWithCirculation($b);
         }
@@ -199,7 +314,7 @@ private function loadRegularCatalogs()
     $perPage     = 12;
     $currentPage = $this->request->getVar('page') ?? 1;
 
-    $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
+    $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1);
 
     $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
     $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
@@ -253,6 +368,7 @@ private function loadRegularCatalogs()
         }
     }
 
+    $this->urutkanHasil($builder);
     $catalogs = $builder->paginate($perPage, 'default', $currentPage);
     $catalogs = enrichCatalogsWithCirculation($catalogs);
     $pager    = $this->katalogModel->pager;
@@ -305,7 +421,7 @@ private function loadRegularCatalogscache()
 
     } else {
         // ========== CACHE MISS ==========
-        $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
+        $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1);
 
         $search = sanitizeSearch($rawSearch);
 
@@ -353,6 +469,7 @@ private function loadRegularCatalogscache()
             }
         }
 
+        $this->urutkanHasil($builder);
         $catalogs     = $builder->paginate($perPage, 'default', $currentPage);
         $catalogs     = enrichCatalogsWithCirculation($catalogs);
         $pager        = $this->katalogModel->pager;
@@ -621,6 +738,18 @@ private function loadTopSidebarFacets(): void
     /** Baris "Buku terkait" untuk satu judul; kosong kalau kurang dari Ranker::MIN_PER_BARIS. */
     private function bukuTerkait(array $catalog): array
     {
+        $baris = $this->barisSerupa($catalog, \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL);
+        return \Rekomendasi\Libraries\Ranker::halaman(['terkait' => $baris])['terkait'] ?? [];
+    }
+
+    /**
+     * Judul serupa dengan $catalog (content + kolab), sudah diurutkan Ranker.
+     *
+     * @param array $dipinjam  id judul yang tidak boleh muncul (riwayat anggota)
+     * @param array $populer   [id judul => 0-1], dipakai kalau bobot wp > 0
+     */
+    private function barisSerupa(array $catalog, array $bobot, array $dipinjam = [], int $batas = 8, array $populer = []): array
+    {
         $ddc = preg_replace('/[\s.]/', '', (string) ($catalog['DeweyNo'] ?? ''));
         if (strlen($ddc) < 3) {
             return [];
@@ -642,21 +771,15 @@ private function loadTopSidebarFacets(): void
         }
 
         foreach ($kandidat as &$k) {
-            $k['id']      = $k['ID'];
+            $k['id']        = $k['ID'];
             $k['content']   = \Rekomendasi\Libraries\ContentScore::score($catalog, $k);
             $k['kolab']     = $kolab[$k['ID']]['kolab'] ?? 0;
             $k['keyakinan'] = $kolab[$k['ID']]['keyakinan'] ?? 0;
+            $k['populer']   = $populer[$k['ID']] ?? 0;
         }
         unset($k);
 
-        $baris = \Rekomendasi\Libraries\Ranker::baris(
-            $kandidat,
-            \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL,
-            [],
-            \Rekomendasi\Libraries\Ranker::majalah($catalog),
-            8
-        );
-        return \Rekomendasi\Libraries\Ranker::halaman(['terkait' => $baris])['terkait'] ?? [];
+        return \Rekomendasi\Libraries\Ranker::baris($kandidat, $bobot, $dipinjam, \Rekomendasi\Libraries\Ranker::majalah($catalog), $batas);
     }
 
     public function search()
@@ -728,131 +851,29 @@ private function loadTopSidebarFacets(): void
         return view('Opac\Views\search', $this->data);
     }
 
+/**
+ * Halaman Browse sudah digabung ke OPAC. Tautan lama tetap hidup lewat redirect:
+ * judul/pengarang jadi ?search_by=&letter= (atau &search= bila ada q), subjek jadi blok Jelajahi di beranda OPAC.
+ */
 public function browse()
 {
-    $allowedTypes = ['title', 'author', 'subject'];
-    $rawType      = $this->request->getVar('type') ?? 'title';
-    if ($rawType === 'ddc') {
-        $rawType = 'subject';
-    }
-    $browseType   = in_array($rawType, $allowedTypes) ? $rawType : 'title';
+    $type   = (string) ($this->request->getVar('type') ?? '');
+    $q      = trim((string) ($this->request->getVar('q') ?? ''));
+    $letter = strtoupper(trim((string) ($this->request->getVar('letter') ?? '')));
 
-    $typeTitles = [
-        'title'   => 'Browse Berdasarkan Judul',
-        'author'  => 'Browse Berdasarkan Pengarang',
-        'subject' => 'Browse Berdasarkan Subjek',
-    ];
-    $this->data['title'] = ($typeTitles[$browseType] ?? 'Browse Katalog') . ' - Perpustakaan Kemnaker RI';
-
-    $letter = trim((string) ($this->request->getVar('letter') ?? 'A'));
-    $letter = preg_match('/^[A-Za-z0-9]$/', $letter) ? strtoupper($letter) : 'A';
-
-    $query = trim((string) (
-        (method_exists($this->request, 'getVar') ? $this->request->getVar('q') : null)
-        ?? (method_exists($this->request, 'getGet') ? $this->request->getGet('q') : null)
-        ?? ($_GET['q'] ?? '')
-    ));
-
-    // Statistik umum
-    $this->data['total_authors'] = $this->katalogModel
-        ->where('Author !=', '')
-        ->countAllResults(false);
-    $this->katalogModel->resetQuery();
-
-    $this->data['total_titles'] = $this->katalogModel
-        ->countAllResults(false);
-    $this->katalogModel->resetQuery();
-
-    $this->data['total_languages'] = $this->katalogModel
-        ->select('Languages')
-        ->where('Languages !=', '')
-        ->groupBy('Languages')
-        ->countAllResults(false);
-    $this->katalogModel->resetQuery();
-
-    // Data DDC teragregasi sebagai mesin direktori Subjek (000 - 900)
-    $ddcDirectory = $this->getDdcDirectoryData($letter, $query);
-    $this->data['total_subjects'] = $ddcDirectory['total_ddc'] ?? 0;
-    $this->data['total_ddc']      = $this->data['total_subjects'];
-
-    $this->data['browse_type']  = $browseType;
-    $this->data['letter']       = $letter;
-    $this->data['search_query'] = $query;
-    $this->data['alphabet']     = range('A', 'Z');
-
-    if ($browseType === 'subject') {
-        foreach ($ddcDirectory as $k => $v) {
-            $this->data[$k] = $v;
-        }
-        $this->data['catalogs'] = [];
-        $this->data['pager']    = null;
-    } else {
-        // Sediakan subjek terpopuler sebagai pintasan topik pada tab judul
-        $this->data['top_subjects'] = $ddcDirectory['ddc_top_divisions'] ?? [];
-
-        // Pengarang terpopuler untuk tab pengarang (12 teratas dengan koleksi terbanyak)
-        $cacheKeyAuthors = 'opac_top_authors_v2';
-        $topAuthors      = cache($cacheKeyAuthors);
-        if (!$topAuthors) {
-            $topAuthors = $this->db->table('catalogs')
-                ->select('Author as name, COUNT(*) as count')
-                ->where('IsOPAC', 1)
-                ->where("Author IS NOT NULL AND Author != ''", null, false)
-                ->groupBy('Author')
-                ->orderBy('count', 'DESC')
-                ->limit(12)
-                ->get()
-                ->getResultArray();
-            cache()->save($cacheKeyAuthors, $topAuthors, 600);
-        }
-        $this->data['top_authors'] = $topAuthors;
-
-        // Pagination
-        $perPage     = 12;
-        $currentPage = (int) ($this->request->getVar('page_browse') ?? 1);
-
-        $this->katalogModel->where('IsOPAC', 1);
-
-        if ($query !== '') {
-            $words = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY);
-            $searchCol = ($browseType === 'author') ? 'Author' : 'Title';
-            if (!empty($words)) {
-                $this->katalogModel->groupStart();
-                foreach ($words as $w) {
-                    $this->katalogModel->like($searchCol, $w);
-                }
-                $this->katalogModel->groupEnd();
-            }
-            $this->katalogModel->orderBy($searchCol, 'ASC');
-        } else {
-            if ($browseType === 'author') {
-                $this->katalogModel->like('Author', $letter, 'after')
-                                   ->orderBy('Author', 'ASC');
-            } else {
-                $this->katalogModel->like('Title', $letter, 'after')
-                                   ->orderBy('Title', 'ASC');
-            }
-        }
-
-        $catalogs                  = $this->katalogModel->paginate($perPage, 'browse', $currentPage);
-        $this->data['catalogs']    = enrichCatalogsWithCirculation($catalogs);
-        $this->data['pager']       = $this->katalogModel->pager;
-        $this->data['perPage']     = $perPage;
-
-        // Tangani permintaan AJAX untuk pembaruan instan (live search)
-        if ($this->request->getVar('ajax') == 1 || $this->request->isAJAX()) {
-            return $this->response->setJSON([
-                'status'       => 'success',
-                'browse_type'  => $browseType,
-                'query'        => $query,
-                'letter'       => $letter,
-                'total'        => $this->data['pager'] ? $this->data['pager']->getTotal('browse') : count($catalogs),
-                'html'         => view('Opac\Views\browse_results', $this->data),
-            ]);
-        }
+    if ($type === 'title' || $type === 'author') {
+        $by = $type === 'author' ? 'Author' : 'Title';
+        $to = $q !== ''
+            ? ['search' => $q, 'search_by' => $by]
+            : ['search_by' => $by, 'letter' => preg_match('/^[A-Z0-9]$/', $letter) ? $letter : 'A'];
+        return redirect()->to(base_url('opac?' . http_build_query($to)));
     }
 
-    return view('Opac\Views\browse', $this->data);
+    if ($q !== '') {
+        return redirect()->to(base_url('opac?' . http_build_query(['search' => $q, 'search_by' => ctype_digit($q) ? 'DeweyNo' : 'Subject'])));
+    }
+
+    return redirect()->to(base_url('opac') . '#jelajah');
 }
 
 /**

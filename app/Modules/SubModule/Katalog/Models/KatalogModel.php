@@ -23,22 +23,31 @@ class KatalogModel extends \Base\Models\DataModel
         parent::__construct();
     }
 
+	/** Minimal pinjaman setahun di satu unit kerja supaya angka populernya dipakai; kurang dari ini dipakai populer umum. */
+	const MIN_PINJAMAN_UNIT = 10;
+
 	/**
 	 * Kandidat baris "Paling banyak dipinjam": peminjam berbeda 365 hari terakhir,
 	 * 'populer' dinormalisasi ke nilai tertinggi (rencana 2a poin 3).
+	 * Dengan $unitKerjaId: hanya pinjaman anggota unit itu; kalau pinjamannya kurang dari MIN_PINJAMAN_UNIT, populer umum.
 	 */
-	function kandidatPopuler(int $limit = 60): array
+	function kandidatPopuler(int $limit = 60, ?int $unitKerjaId = null): array
 	{
-		$rows = $this->db->table('catalogs')
+		$sejak = date('Y-m-d H:i:s', strtotime('-365 days'));
+		if ($unitKerjaId && !$this->unitCukupPinjaman($unitKerjaId)) {
+			$unitKerjaId = null;
+		}
+
+		$q = $this->db->table('catalogs')
 			->select('catalogs.*, catalogs.ID AS id, COUNT(DISTINCT cli.member_id) AS peminjam', false)
 			->join('collections col', 'col.Catalog_id = catalogs.ID')
 			->join('collectionloanitems cli', 'cli.Collection_id = col.ID')
 			->where('catalogs.IsOPAC', 1)
-			->where('cli.LoanDate >=', date('Y-m-d H:i:s', strtotime('-365 days')))
-			->groupBy('catalogs.ID')
-			->orderBy('peminjam', 'DESC')
-			->limit($limit)
-			->get()->getResultArray();
+			->where('cli.LoanDate >=', $sejak);
+		if ($unitKerjaId) {
+			$q->join('members m', 'm.ID = cli.member_id')->where('m.UnitKerja_id', $unitKerjaId);
+		}
+		$rows = $q->groupBy('catalogs.ID')->orderBy('peminjam', 'DESC')->limit($limit)->get()->getResultArray();
 
 		$maks = max(array_column($rows, 'peminjam') ?: [0]);
 		foreach ($rows as &$r) {
@@ -47,13 +56,48 @@ class KatalogModel extends \Base\Models\DataModel
 		return $rows;
 	}
 
-	/** Kandidat baris "Koleksi baru": CreateDate terbaru. Tanpa skor, urutan dijaga Ranker (sort stabil). */
-	function kandidatBaru(int $limit = 60): array
+	/** true kalau anggota unit ini punya cukup pinjaman setahun terakhir (MIN_PINJAMAN_UNIT) untuk angka populer per unit. */
+	function unitCukupPinjaman(int $unitKerjaId): bool
+	{
+		return $this->db->table('collectionloanitems cli')
+			->join('members m', 'm.ID = cli.member_id')
+			->where('m.UnitKerja_id', $unitKerjaId)
+			->where('cli.LoanDate >=', date('Y-m-d H:i:s', strtotime('-365 days')))
+			->countAllResults() >= self::MIN_PINJAMAN_UNIT;
+	}
+
+	/** Kandidat baris "Koleksi baru": CreateDate terbaru, opsional hanya awalan DDC (mis. '331' atau '3'). Tanpa skor, urutan dijaga Ranker (sort stabil). */
+	function kandidatBaru(int $limit = 60, ?string $kelasDdc = null): array
+	{
+		$q = $this->db->table('catalogs')
+			->select('catalogs.*, catalogs.ID AS id')
+			->where('IsOPAC', 1);
+		if ($kelasDdc) {
+			$q->like('DeweyNo', $kelasDdc, 'after');
+		}
+		return $q->orderBy('CreateDate', 'DESC')->limit($limit)->get()->getResultArray();
+	}
+
+	/** Judul berbeda yang pernah dipinjam anggota, terbaru di atas. */
+	function riwayatAnggota(int $memberId): array
+	{
+		return $this->db->table('collectionloanitems cli')
+			->select('c.ID AS id, c.Title, c.Author, c.Subject, c.DeweyNo, MAX(cli.LoanDate) AS terakhir', false)
+			->join('collections col', 'col.ID = cli.Collection_id')
+			->join('catalogs c', 'c.ID = col.Catalog_id')
+			->where('cli.member_id', $memberId)
+			->groupBy('c.ID')
+			->orderBy('terakhir', 'DESC')
+			->get()->getResultArray();
+	}
+
+	/** Kandidat satu subjek, dibatasi $limit. */
+	function kandidatSubjek(string $subjek, int $limit = 200): array
 	{
 		return $this->db->table('catalogs')
 			->select('catalogs.*, catalogs.ID AS id')
 			->where('IsOPAC', 1)
-			->orderBy('CreateDate', 'DESC')
+			->like('Subject', $subjek)
 			->limit($limit)
 			->get()->getResultArray();
 	}

@@ -131,7 +131,8 @@ $request = service('request');
 
                             <div class="mt-2">
                                 <label><small>Ganti Banner (Biarkan kosong jika tidak ingin mengubah):</small></label>
-                                <input type="file" class="form-control-file" name="file_cover" id="file_cover" accept=".jpg,.jpeg,.png" onchange="previewFile(this, 'preview_cover_container')">
+                                <input type="file" class="form-control-file" name="file_cover" id="file_cover" accept=".jpg,.jpeg,.png">
+                                <small class="form-text text-muted">Banner berkategori Beranda yang aktif tampil sebagai foto di bagian utama beranda (paling banyak 8, urut sesuai Urutan). Foto dipotong otomatis ke bingkai hero; atur bagian yang dipakai di pratinjau setelah memilih file. Bila tidak ada yang aktif, beranda memakai foto bawaan.</small>
                                 <small class="text-muted">Format (JPG|PNG). Max 2MB.</small>
                             </div>
 
@@ -186,4 +187,5 @@ $request = service('request');
         }
     }
 </script>
+<?= view('Banner\Views\_potong') ?>
 <?= $this->endSection('script'); ?>

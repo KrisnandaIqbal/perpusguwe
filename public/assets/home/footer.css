@@ -230,7 +230,11 @@
     padding-right: 20px;
   }
   .footer-main {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 20px;
+  }
+  .footer-about {
+    grid-column: 1 / -1;
   }
   .footer-bottom {
     flex-direction: column;

@@ -11,7 +11,7 @@ $_aktif = static function (bool $cocok): string {
 $_ikon = static fn(string $nama): string => landing_icon($nama, 'gn-icon');
 $_panah = landing_icon('chevron', 'gn-chev');
 ?>
-<link rel="stylesheet" href="<?= $_aset ?>/navbar.css?v=5">
+<link rel="stylesheet" href="<?= $_aset ?>/navbar.css?v=11">
 
 <header class="gn-bar">
     <a href="<?= base_url('home') ?>" class="gn-brand" aria-label="Perpustakaan Kementerian Ketenagakerjaan RI - Beranda">
@@ -25,11 +25,7 @@ $_panah = landing_icon('chevron', 'gn-chev');
     <nav class="gn-nav" id="gn-nav" aria-label="Navigasi utama">
         <a href="<?= base_url('home') ?>" class="gn-link<?= $_aktif($_depan) ?>"><?= $_ikon('home') ?>Beranda</a>
         <a href="<?= base_url('opac') ?>" class="gn-link<?= $_aktif($_path === 'opac') ?>"><?= $_ikon('search') ?>OPAC</a>
-        <a href="<?= base_url('opac/browse') ?>" class="gn-link<?= $_aktif($_path === 'opac/browse') ?>"><?= $_ikon('browse') ?>Browse</a>
         <a href="<?= base_url('buku-tamu') ?>" class="gn-link<?= $_aktif(str_starts_with($_path, 'buku-tamu')) ?>"><?= $_ikon('tamu') ?>Buku Tamu</a>
-        <?php if (env('Is_keanggotaan_online') == 1) : ?>
-            <a href="<?= base_url('home/pendaftaran-online') ?>" class="gn-link"><?= $_ikon('registrasi') ?>Pendaftaran Anggota</a>
-        <?php endif; ?>
 
         <div class="gn-drop">
             <button type="button" class="gn-link gn-drop-btn" aria-expanded="false">
@@ -39,26 +35,21 @@ $_panah = landing_icon('chevron', 'gn-chev');
                 <span class="gn-panel-title">Layanan perpustakaan</span>
                 <a class="gn-item" href="<?= base_url('home/layanan-isbn') ?>"><span class="gn-item-icon"><?= landing_icon('isbn') ?></span>ISBN</a>
                 <a class="gn-item" href="<?= base_url('home/tata-cara-sirkulasi') ?>"><span class="gn-item-icon"><?= landing_icon('sirkulasi') ?></span>Tata Cara Sirkulasi</a>
+                <?php if (env('Is_keanggotaan_online') == 1) : ?>
+                    <a class="gn-item" href="<?= base_url('home/pendaftaran-online') ?>"><span class="gn-item-icon"><?= landing_icon('registrasi') ?></span>Pendaftaran Anggota</a>
+                <?php endif; ?>
             </div>
         </div>
-
-        <div class="gn-drop">
-            <button type="button" class="gn-link gn-drop-btn" aria-expanded="false">
-                <?= $_ikon('statistik') ?>Statistik<?= $_panah ?>
-            </button>
-            <div class="gn-panel">
-                <span class="gn-panel-title">Statistik</span>
-                <a class="gn-item" href="<?= base_url('opac/statistics') ?>"><span class="gn-item-icon"><?= landing_icon('katalog') ?></span>Statistik Katalog</a>
-                <a class="gn-item" href="<?= base_url('opac/statistics_anggota') ?>"><span class="gn-item-icon"><?= landing_icon('anggota') ?></span>Statistik Anggota</a>
-            </div>
-        </div>
+        <?php /* Statistik disembunyikan sementara (halaman opac/statistics dan opac/statistics_anggota tetap ada). */ ?>
     </nav>
 
     <div class="gn-actions">
         <?php if (session()->get('logged_in')) : ?>
             <a class="gn-login" href="<?= base_url('dashboard') ?>">Dashboard</a>
+        <?php elseif (session()->get('session_member')) : ?>
+            <a class="gn-login" href="<?= base_url('opac/profil') ?>">Profil</a>
         <?php else : ?>
-            <a class="gn-login" href="<?= base_url('login') ?>">Masuk</a>
+            <a class="gn-login" href="<?= base_url('opac/masuk') ?>">Masuk</a>
         <?php endif; ?>
         <button class="gn-burger" id="gn-burger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="gn-nav">
             <span data-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>

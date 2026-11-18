@@ -53,6 +53,19 @@ class Banner extends \Base\Controllers\BaseController
         echo view('Banner\Views\view', $this->data);
     }
 
+    /** Banner Beranda tampil di bingkai foto hero (610 x 540); potong dari tengah ke rasio itu bila belum pas. */
+    private function potongBingkaiHero(string $path): void
+    {
+        if ($this->request->getPost('category') !== 'Beranda') {
+            return;
+        }
+        try {
+            \Config\Services::image()->withFile($path)->fit(1220, 1080, 'center')->save($path, 90);
+        } catch (\Throwable $e) {
+            log_message('error', 'Potong banner gagal: ' . $e->getMessage());
+        }
+    }
+
     public function create()
     {
         $this->data['title'] = 'Tambah Banner';
@@ -103,6 +116,7 @@ class Banner extends \Base\Controllers\BaseController
 
                     // Pindahkan file ke folder tujuan
                     $file->move($this->modulePath, $newFileName);
+                    $this->potongBingkaiHero($this->modulePath . $newFileName);
 
                     // Konversi ke WebP
                     if (is_webp_supported()) {
@@ -264,6 +278,8 @@ class Banner extends \Base\Controllers\BaseController
                         $newFileName = date('Ymd') . '_' . $file->getRandomName();
 
                         $file->move($this->modulePath, $newFileName);
+
+                        $this->potongBingkaiHero($this->modulePath . $newFileName);
 
                         // Konversi ke WebP
                         if (is_webp_supported()) {

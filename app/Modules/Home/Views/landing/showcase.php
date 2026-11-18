@@ -3,7 +3,6 @@
 $terbaru       = array_slice($featured_books ?? [], 0, 4);
 $populer      = $popular_books ?? [];
 $defaultCover = base_url('assets/img/default-cover.webp');
-$bintang      = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z"/></svg>';
 ?>
 <section class="showcase" id="buku">
     <div class="section-head">
@@ -26,7 +25,7 @@ $bintang      = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="current
             <?php foreach ($list as $index => $book) : ?>
                 <article class="showcase-card">
                     <div class="showcase-cover">
-                        <span class="showcase-rank">#<?= $index + 1 ?></span>
+                        <?php if ($key === 'populer') : ?><span class="showcase-rank">#<?= $index + 1 ?></span><?php endif; ?>
                         <?php if (landing_has_cover($book)) : ?>
                             <img src="<?= get_catalog_thumb_url($book->CoverURL, 300, 450) ?>" alt="" loading="lazy" onerror="this.onerror=null;this.src='<?= $defaultCover ?>'">
                         <?php else :
@@ -46,7 +45,7 @@ $bintang      = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="current
                     <div class="showcase-info">
                         <span class="showcase-meta">
                             <?php if ($key === 'populer') : ?>
-                                <?= $bintang ?> <span><?= (int) $book->Loans ?> kali dipinjam</span>
+                                <?= landing_icon('katalog') ?> <span><?= (int) $book->Loans ?> kali dipinjam</span>
                             <?php else : ?>
                                 <span><?= esc($book->PublishYear ?: 'Koleksi baru') ?></span>
                             <?php endif; ?>

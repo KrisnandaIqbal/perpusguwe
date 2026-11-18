@@ -70,7 +70,10 @@ class Filters extends BaseConfig
                 'opac/detail/*',            // method: detail
                 'opac/search',              // method: search
                 'api/Opac/click',           // log klik (sendBeacon)
-                'opac/browse',              // method: browse
+                'opac/masuk',               // login anggota (session_member, bukan session admin)
+                'opac/keluar',
+                'opac/profil*',
+                // 'opac/browse',              // dihapus: halaman Browse digabung ke OPAC
                 'opac/subjek*',             // method: subjek
                 'subjek*',                  // route: subjek
                 'opac/ddc*',                // method: ddc redirect
@@ -119,7 +122,10 @@ class Filters extends BaseConfig
                 'opac/detail/*',
                 'opac/search',
                 'api/Opac/click',
-                'opac/browse',
+                'opac/masuk',
+                'opac/keluar',
+                'opac/profil*',
+                // 'opac/browse',
                 'opac/subjek*',
                 'subjek*',
                 'opac/ddc*',
