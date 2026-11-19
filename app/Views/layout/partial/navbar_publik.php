@@ -45,12 +45,11 @@ $_panah = landing_icon('chevron', 'gn-chev');
 
     <div class="gn-actions">
         <?php if (session()->get('logged_in')) : ?>
-            <?php $_anggota = function_exists('is_member') && (is_member('anggota') || is_member('keanggotaan')); ?>
-            <a class="gn-login" href="<?= base_url($_anggota ? 'portal' : 'dashboard') ?>"><?= $_anggota ? 'Portal Anggota' : 'Dashboard' ?></a>
+            <a class="gn-login" href="<?= base_url('dashboard') ?>">Dashboard</a>
         <?php elseif (session()->get('session_member')) : ?>
             <a class="gn-login" href="<?= base_url('opac/profil/dashboard') ?>">Dashboard</a>
         <?php else : ?>
-            <a class="gn-login" href="<?= base_url('login') ?>">Masuk</a>
+            <a class="gn-login" href="<?= base_url('opac/masuk') ?>">Masuk</a>
         <?php endif; ?>
         <button class="gn-burger" id="gn-burger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="gn-nav">
             <span data-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>

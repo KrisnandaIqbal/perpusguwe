@@ -2,8 +2,11 @@
 	$routes = \Config\Services::routes(true);
 }
 
-$routes->get('login', 'Auth::login', ['namespace' => 'Auth\Controllers', 'as' => 'login']);
-$routes->post('login', 'Auth::attemptLogin', ['namespace' => 'Auth\Controllers']);
+// Login petugas sengaja di /rahasia (tidak ditautkan dari mana pun). /login (nama rute 'login', dipakai filter Myth Auth)
+// mengarah ke login anggota, supaya URL petugas tidak bocor lewat redirect halaman admin.
+$routes->get('rahasia', 'Auth::login', ['namespace' => 'Auth\Controllers', 'as' => 'login-petugas']);
+$routes->post('rahasia', 'Auth::attemptLogin', ['namespace' => 'Auth\Controllers']);
+$routes->get('login', 'Auth::masukAnggota', ['namespace' => 'Auth\Controllers', 'as' => 'login']);
 $routes->get('logout', 'Auth::logout', ['namespace' => 'Auth\Controllers', 'as' => 'logout']);
 
 $routes->group('/auth', ['namespace' => 'Auth\Controllers\Api'], function ($subroutes) {

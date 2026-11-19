@@ -571,7 +571,7 @@
       <p class="mb-0">
         <i class="fas fa-info-circle me-2"></i>
         Sudah memiliki Nomor Anggota?
-        <a href="<?= base_url('login') ?>" class="text-decoration-none fw-bold">Login Anggota</a>
+        <a href="<?= base_url('opac/masuk') ?>" class="text-decoration-none fw-bold">Login Anggota</a>
       </p>
     </div>
   </div>

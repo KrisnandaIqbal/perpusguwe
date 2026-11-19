@@ -373,7 +373,7 @@
     
     <div class="d-flex align-items-center justify-content-center min-vh-100 position-relative" style="z-index: 1;">
         <div class="login-card">
-            <form action="<?= route_to('login') ?>" method="post" id="loginForm">
+            <form action="<?= base_url('rahasia') ?>" method="post" id="loginForm">
                 <?= csrf_field() ?>
                 
                 <!-- Logo and Title -->
@@ -393,39 +393,28 @@
                     </div>
                 </div>
 
-                <!-- Role Selection Tabs -->
-                <div class="d-flex p-1 mb-4 rounded-3" style="background: #f1f5f9; gap: 4px;">
-                    <button type="button" id="tabAnggota" class="btn btn-sm flex-fill fw-bold rounded-2 py-2" style="background: #0343A7; color: #fff; transition: all 0.2s;" onclick="setRole('anggota')">
-                        <i class="fas fa-id-card me-1"></i> Anggota
-                    </button>
-                    <button type="button" id="tabAdmin" class="btn btn-sm flex-fill fw-semibold rounded-2 py-2" style="background: transparent; color: #64748b; transition: all 0.2s;" onclick="setRole('admin')">
-                        <i class="fas fa-user-shield me-1"></i> Admin / Petugas
-                    </button>
-                </div>
-                <input type="hidden" name="role_type" id="roleType" value="anggota">
-
                 <!-- Messages -->
                 <div id="infoMessage">
                     <?= view('Myth\Auth\Views\_message_block') ?>
                 </div>
 
                 <!-- Username Field -->
-                <div class="form-group mb-3">
-                    <label class="form-label" for="login" id="labelLogin">Nomor Anggota / NIK</label>
+                <div class="form-group">
+                    <label class="form-label" for="login">Username</label>
                     <div class="position-relative">
                         <input type="text" 
                                class="form-control" 
                                name="login" 
                                id="login"
-                               placeholder="Masukkan nomor anggota / NIK Anda"
+                               placeholder="Masukkan username Anda"
                                required
                                autocomplete="username">
-                        <i class="fas fa-id-card input-icon" id="iconLogin"></i>
+                        <i class="fas fa-user input-icon"></i>
                     </div>
                 </div>
 
                 <!-- Password Field -->
-                <div class="form-group mb-3" id="passwordGroup" style="display: none;">
+                <div class="form-group">
                     <label class="form-label" for="password">Password</label>
                     <div class="position-relative">
                         <input type="password" 
@@ -433,6 +422,7 @@
                                name="password" 
                                id="password"
                                placeholder="Masukkan password Anda"
+                               required
                                autocomplete="current-password">
                         <i class="fas fa-lock input-icon"></i>
                         <button type="button" 
@@ -447,7 +437,7 @@
                 <!-- Login Button -->
                 <button type="submit" class="btn-login" id="loginBtn">
                     <i class="fas fa-sign-in-alt me-2"></i>
-                    Masuk ke Dashboard Anggota
+                    Masuk ke Sistem
                 </button>
 
                 <!-- Additional Features -->
@@ -478,50 +468,6 @@
 </div>
 
 <script>
-// Switch antara Anggota dan Admin
-function setRole(role) {
-    const tabAnggota = document.getElementById('tabAnggota');
-    const tabAdmin = document.getElementById('tabAdmin');
-    const roleType = document.getElementById('roleType');
-    const passwordGroup = document.getElementById('passwordGroup');
-    const passwordInput = document.getElementById('password');
-    const labelLogin = document.getElementById('labelLogin');
-    const inputLogin = document.getElementById('login');
-    const iconLogin = document.getElementById('iconLogin');
-    const loginBtn = document.getElementById('loginBtn');
-
-    roleType.value = role;
-
-    if (role === 'anggota') {
-        tabAnggota.style.background = '#0343A7';
-        tabAnggota.style.color = '#fff';
-        tabAdmin.style.background = 'transparent';
-        tabAdmin.style.color = '#64748b';
-
-        passwordGroup.style.display = 'none';
-        passwordInput.removeAttribute('required');
-        passwordInput.value = '';
-
-        labelLogin.innerText = 'Nomor Anggota / NIK';
-        inputLogin.placeholder = 'Masukkan nomor anggota (misal: 26102700002)';
-        iconLogin.className = 'fas fa-id-card input-icon';
-        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i> Masuk ke Dashboard Anggota';
-    } else {
-        tabAdmin.style.background = '#0343A7';
-        tabAdmin.style.color = '#fff';
-        tabAnggota.style.background = 'transparent';
-        tabAnggota.style.color = '#64748b';
-
-        passwordGroup.style.display = 'block';
-        passwordInput.setAttribute('required', 'required');
-
-        labelLogin.innerText = 'Username Petugas';
-        inputLogin.placeholder = 'Masukkan username admin';
-        iconLogin.className = 'fas fa-user-shield input-icon';
-        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i> Masuk ke Dashboard Admin';
-    }
-}
-
 // Toggle password visibility
 function togglePassword() {
     const passwordInput = document.getElementById('password');

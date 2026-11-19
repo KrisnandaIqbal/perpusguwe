@@ -55,8 +55,5 @@
         <button type="submit" class="btn btn-brand w-100">Masuk</button>
     </form>
 
-    <p class="mt-4 mb-0 text-secondary small">
-        Petugas perpustakaan? <a class="opac-staff-link" href="<?= base_url('login') ?>">Masuk ke dasbor</a>.
-    </p>
 </div>
 <?= $this->endSection() ?>
