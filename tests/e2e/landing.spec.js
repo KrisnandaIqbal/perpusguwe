@@ -198,7 +198,7 @@ test.describe('Halaman depan (beranda)', () => {
   test('T04 Bilah menu atas: pilihan menu, tombol Masuk, dan menu turun', async ({ page }) => {
     await bukaBeranda(page);
     const menu = page.locator('.gn-bar');
-    for (const teks of ['Beranda', 'OPAC', 'Buku Tamu', 'Layanan', 'Masuk']) {
+    for (const teks of ['Beranda', 'OPAC', 'Buku Tamu', 'Layanan', 'Statistik', 'Masuk']) {
       await expect(menu).toContainText(teks);
     }
     await expect(page.locator('.gn-brand-copy strong')).toHaveText('Perpustakaan');
@@ -260,7 +260,7 @@ test.describe('Halaman depan (beranda)', () => {
     await expect(page.locator('.catalog-search')).toHaveClass(/has-results/);
     await expect(input).toHaveAttribute('aria-expanded', 'true');
     const jumlah = await hasil.count();
-    const adaBuku = await page.locator('#omni-results .omni-option .omni-tag').count();
+    const adaBuku = await page.locator('#omni-results .omni-tag.is-free').count();
     note(`Pencarian "hukum" menampilkan ${jumlah} pilihan hasil (${adaBuku} buku dari katalog) dan satu tautan untuk melihat semua hasil di katalog OPAC.`);
     expect(jumlah).toBeGreaterThanOrEqual(2);
     await shot(page, 'T06', 'hasil-pencarian', 'Kolom pencarian menampilkan buku dari katalog dan tautan "Lihat hasil di katalog OPAC".', { clip: { x: 0, y: 0, width: 1366, height: 760 } });
@@ -461,17 +461,20 @@ test.describe('Halaman depan (beranda)', () => {
     note(baris.join('. ') + '.');
   });
 
-  test('T15 Ponsel: navigasi atas hanya logo Kemnaker dan navigasi bawah floating liquid glass', async ({ page }) => {
+  test('T15 Ponsel: tombol menu dan tampilan halaman penuh', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await bukaBeranda(page);
-    await expect(page.locator('.gn-brand-mark')).toBeVisible();
-    await expect(page.locator('.gn-brand-copy')).toBeHidden();
-    await expect(page.locator('.gn-burger')).toBeHidden();
+    await expect(page.locator('.gn-burger')).toBeVisible();
     await expect(page.locator('.gn-nav')).toBeHidden();
-    await expect(page.locator('.gn-bottom-nav')).toBeVisible();
-    await shot(page, 'T15', 'ponsel-floating-nav', 'Navigasi bawah floating liquid glass di ponsel (lebar 375 px).');
+    await page.locator('.gn-burger').click();
+    await expect(page.locator('.gn-nav')).toHaveClass(/is-open/);
+    await expect(page.locator('.gn-burger')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('.gn-nav')).toBeVisible();
+    await shot(page, 'T15', 'ponsel-menu', 'Menu terbuka di ponsel (lebar 375 px).');
+    await page.locator('.gn-burger').click();
+    await expect(page.locator('.gn-nav')).toBeHidden();
     await shot(page, 'T15', 'ponsel-halaman-penuh', 'Seluruh halaman di ponsel (lebar 375 px).', { fullPage: true });
-    note('Pada ponsel, navigasi atas disederhanakan hanya menampilkan logo Kemnaker, dan navigasi utama menggunakan floating liquid glass dock di bawah.');
+    note('Teks kecil "Kementerian Ketenagakerjaan RI" di bawah nama perpustakaan sengaja disembunyikan di ponsel agar muat (sesuai desain).');
   });
 
   test('T19 Tombol Masuk', async ({ page }) => {
