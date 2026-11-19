@@ -33,5 +33,12 @@ $routes->group(
         $subroutes->add('resend_email', 'Member::resend_email');
         $subroutes->add('reset_email', 'Member::reset_email');
         $subroutes->add('check', 'Member::check');
+
+        // Portal Anggota (Dashboard Mandiri)
+        $subroutes->get('portal/profile', 'MemberPortal::profile');
+        $subroutes->get('portal/loans', 'MemberPortal::loans');
+        $subroutes->get('portal/history', 'MemberPortal::history');
+        $subroutes->get('portal/catalogs', 'MemberPortal::catalogs');
+        $subroutes->post('portal/extend', 'MemberPortal::extend');
     }
 );

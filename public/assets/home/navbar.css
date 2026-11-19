@@ -27,17 +27,6 @@
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .gn-bar::before { background: #fffffff0; } }
 
-/* ALTERNATIF: navbar putih solid (tetap sticky, tanpa kaca). Untuk memakainya, hapus tanda komentar blok di bawah ini
-   (hapus baris pembuka komentar dan penutupnya). Dua selektor dibutuhkan karena .lens-ok .gn-bar::before lebih spesifik.
-   Tidak ada JS yang perlu diubah: kelas .lens-ok tetap terpasang tapi tidak berpengaruh lagi. */
-/*
-.gn-bar::before, .lens-ok .gn-bar::before {
-    background: #fff;
-    -webkit-backdrop-filter: none; backdrop-filter: none;
-    box-shadow: 0 1px 0 #e8ebf0, 0 8px 24px #1621331a;
-}
-*/
-
 .gn-brand { display: flex; align-items: center; gap: 11px; min-height: 44px; color: inherit; flex: none; }
 .gn-brand-mark { width: 40px; height: 40px; object-fit: contain; }
 .gn-brand-copy { display: flex; flex-direction: column; gap: 4px; font-size: 10px; line-height: 1.3; letter-spacing: .08em; text-transform: uppercase; }
@@ -71,7 +60,7 @@
 .gn-item-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 10px; color: var(--blue); background: #0f3fb414; transition: color .16s, background .16s; }
 .gn-item:hover .gn-item-icon { color: #fff; background: var(--blue); }
 
-.gn-actions { display: flex; align-items: center; gap: 10px; margin-left: clamp(14px, 1.6vw, 28px); }
+.gn-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 .gn-login { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; transition: background .18s, transform .18s; }
 .gn-login:hover { background: var(--ink); color: #fff; transform: translateY(-1px); }
 .gn-login:focus-visible, .gn-link:focus-visible, .gn-burger:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
@@ -103,9 +92,229 @@
     .gn-drop.is-open .gn-panel { display: block; }
     .gn-panel-title { display: none; }
 }
-@media (max-width: 800px) { .gn-bar { height: 82px; } .gn-nav { top: 74px; } }
-@media (max-width: 560px) { .gn-bar { padding: 0 20px; } .gn-bar::before { inset: 8px; border-radius: 16px; } .gn-brand-copy span { display: none; } .gn-brand-copy strong { font-size: 18px; } .gn-login { padding: 0 16px; } }
-@media (max-width: 420px) { .gn-brand { gap: 8px; } .gn-brand-mark { width: 34px; height: 34px; } .gn-actions { gap: 4px; } .gn-login { padding: 0 14px; } }
-@media (max-width: 380px) { .gn-brand-copy strong { font-size: 16px; } }
-@media (max-width: 359px) { .gn-bar { padding: 0 16px; } .gn-brand { gap: 6px; } .gn-brand-mark { width: 28px; height: 28px; } .gn-brand-copy strong { font-size: 14px; } .gn-login { padding: 0 12px; font-size: 13px; } }
+@media (max-width: 800px) { .gn-bar { height: 62px; } .gn-nav { top: 62px; } }
+@media (max-width: 560px) { .gn-bar { height: 58px; padding: 0 14px; } .gn-bar::before { inset: 5px; border-radius: 12px; } .gn-brand-copy span { display: none; } .gn-brand-copy strong { font-size: 15px; } .gn-actions { gap: 8px; } .gn-login { padding: 0 14px; min-height: 40px; font-size: 13px; } .gn-nav { top: 58px; } }
+.gn-login-short { display: none; }
+@media (max-width: 480px) {
+    .gn-login-full { display: none; }
+    .gn-login-short { display: inline; }
+}
+
+@media (max-width: 420px) { .gn-brand { gap: 6px; } .gn-brand-mark { width: 28px; height: 28px; } .gn-actions { gap: 6px; } .gn-login { padding: 0 12px; min-height: 40px; } }
+@media (max-width: 380px) { .gn-brand-copy strong { font-size: 14.5px; } }
+@media (max-width: 359px) { .gn-bar { padding: 0 10px; } .gn-brand { gap: 5px; } .gn-brand-mark { width: 26px; height: 26px; } .gn-brand-copy strong { font-size: 14px; } .gn-login { padding: 0 10px; font-size: 12.5px; min-height: 40px; } }
 @media (prefers-reduced-motion: reduce) { .gn-bar::before, .gn-link, .gn-chev, .gn-panel, .gn-login, .gn-item, .gn-item-icon { transition: none; } .gn-login:hover { transform: none; } }
+
+/* Mobile bottom navigation bar: floating liquid glass dock (tema iOS / Instagram) */
+.gn-bottom-nav {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    html {
+        scroll-padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+    }
+    body {
+        padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Navbar atas mobile: disembunyikan (navigasi fokus ke dock bawah mobile) */
+    .gn-bar {
+        display: none !important;
+    }
+
+    /* Floating liquid glass bottom navigation (warna & efek kaca disamakan dengan .gn-bar::before) */
+    .gn-bottom-nav {
+        --blue: #0f3fb4; --ink: #151922; --muted: #5b6272;
+        position: fixed;
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        left: 16px;
+        right: 16px;
+        margin: 0 auto;
+        max-width: 440px;
+        width: calc(100% - 32px);
+        height: 64px;
+        z-index: 1040;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 8px;
+        border-radius: 999px;
+        box-sizing: border-box;
+        font-family: "Plus Jakarta Sans", sans-serif;
+
+        background: linear-gradient(160deg, #ffffff99 0%, #ffffff80 100%);
+        -webkit-backdrop-filter: blur(14px) saturate(160%);
+        backdrop-filter: blur(14px) saturate(160%);
+        border: 0;
+        box-shadow:
+            inset 1.5px 1.5px 1px -0.5px #fff,
+            inset -1.5px -1.5px 1px -0.5px #ffffffb3,
+            inset 0 0 12px 1px #ffffff59,
+            inset 0 0 0 1px #ffffff80,
+            0 10px 28px #1621331f,
+            0 2px 6px #1621330f;
+        transform: translateZ(0);
+    }
+
+    .lens-ok .gn-bottom-nav {
+        background: linear-gradient(160deg, #ffffffb3 0%, #ffffff99 100%);
+        -webkit-backdrop-filter: var(--lensa-bnav, blur(14px)) saturate(150%);
+        backdrop-filter: var(--lensa-bnav, blur(14px)) saturate(150%);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .gn-bottom-nav {
+            background: #fffffff0;
+        }
+    }
+
+    .gn-bnav-item {
+        position: relative;
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: var(--muted, #5b6272);
+        background: none;
+        border: 0;
+        font-family: inherit;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        padding: 6px 2px;
+        border-radius: 999px;
+        transition: color 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.18s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .gn-bnav-item.is-open {
+        color: var(--blue, #0f3fb4);
+        background: rgba(15, 63, 180, 0.08);
+    }
+    .gn-bnav-item.is-open .gn-icon {
+        color: var(--blue, #0f3fb4);
+    }
+
+    .gn-bnav-sheet {
+        --blue: #0f3fb4; --ink: #151922; --muted: #5b6272;
+        position: fixed;
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+        left: 16px;
+        right: 16px;
+        margin: 0 auto;
+        max-width: 440px;
+        width: calc(100% - 32px);
+        padding: 14px;
+        z-index: 1045;
+        border-radius: 18px;
+        box-sizing: border-box;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background: linear-gradient(160deg, #ffffff99 0%, #ffffff80 100%);
+        -webkit-backdrop-filter: blur(14px) saturate(160%);
+        backdrop-filter: blur(14px) saturate(160%);
+        border: 0;
+        box-shadow:
+            inset 1.5px 1.5px 1px -0.5px #fff,
+            inset -1.5px -1.5px 1px -0.5px #ffffffb3,
+            inset 0 0 12px 1px #ffffff59,
+            inset 0 0 0 1px #ffffff80,
+            0 10px 28px #1621331f,
+            0 2px 6px #1621330f;
+    }
+    .lens-ok .gn-bnav-sheet {
+        background: linear-gradient(160deg, #ffffffb3 0%, #ffffff99 100%);
+        -webkit-backdrop-filter: var(--lensa-bnav-sheet, blur(14px)) saturate(150%);
+        backdrop-filter: var(--lensa-bnav-sheet, blur(14px)) saturate(150%);
+    }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .gn-bnav-sheet {
+            background: #fffffff0;
+        }
+    }
+    .gn-bnav-sheet[hidden] {
+        display: none;
+    }
+    .gn-bnav-sheet .gn-panel-title {
+        display: block;
+        padding: 4px 10px 8px;
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--muted, #5b6272);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+    .gn-bnav-sheet .gn-item {
+        min-height: 44px;
+        text-decoration: none;
+    }
+
+    .gn-bnav-item span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        line-height: 1.2;
+    }
+
+    .gn-bnav-item .gn-icon {
+        display: block !important;
+        width: 22px;
+        height: 22px;
+        color: var(--muted, #5b6272);
+        transition: color 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+        flex: none;
+    }
+
+    .gn-bnav-item:hover,
+    .gn-bnav-item:focus-visible {
+        color: var(--blue, #0f3fb4);
+    }
+
+    .gn-bnav-item:hover .gn-icon,
+    .gn-bnav-item:focus-visible .gn-icon {
+        color: var(--blue, #0f3fb4);
+    }
+
+    .gn-bnav-item:active {
+        transform: scale(0.92);
+    }
+
+    .gn-bnav-item:focus-visible {
+        outline: 2px solid var(--blue, #0f3fb4);
+        outline-offset: 2px;
+    }
+
+    .gn-bnav-item.active,
+    .gn-bnav-item[aria-current="page"] {
+        color: var(--blue, #0f3fb4);
+        font-weight: 700;
+        background: rgba(15, 63, 180, 0.08);
+    }
+
+    .gn-bnav-item.active .gn-icon,
+    .gn-bnav-item[aria-current="page"] .gn-icon {
+        color: var(--blue, #0f3fb4);
+        transform: translateY(-1px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gn-bnav-item,
+    .gn-bnav-item .gn-icon {
+        transition: none;
+    }
+    .gn-bnav-item:active,
+    .gn-bnav-item.active .gn-icon,
+    .gn-bnav-item[aria-current="page"] .gn-icon {
+        transform: none;
+    }
+}
+
+

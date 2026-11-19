@@ -15,7 +15,7 @@ $jumlahJudul = (int) ($total_catalogs ?? 0);
             <form class="catalog-search" action="<?= $opacUrl ?>" method="get" role="search">
                 <?= landing_icon('search', 'search-icon') ?>
                 <label class="sr-only" for="omnisearch-input">Cari buku, penulis, topik, atau layanan</label>
-                <input id="omnisearch-input" name="search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="omni-results" placeholder="Cari buku, regulasi, layanan">
+                <input id="omnisearch-input" name="search" type="search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="omni-results" placeholder="Cari buku, regulasi, layanan">
                 <button type="submit" aria-label="Cari di katalog"><?= landing_icon('up-right') ?></button>
             </form>
             <ul class="omni-results" id="omni-results" role="listbox" hidden></ul>

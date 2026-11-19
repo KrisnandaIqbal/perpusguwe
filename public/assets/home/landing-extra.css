@@ -34,16 +34,14 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 @media (min-width: 801px) {
     /* Tinggi minimum dari js/layout.js (--hero-min), dibatasi 1000px supaya layar yang sangat tinggi tidak membuat celah kosong. */
     .hero { align-items: stretch; min-height: min(var(--hero-min, 0px), 1000px); padding-top: 12px; padding-bottom: 24px; }
-    /* Kolom teks dimulai dari atas; jarak judul, paragraf, dan kolom pencarian masing-masing 30px. Foto tetap: atasnya sejajar label
-       "Pusat Literasi" (top: 24px) dan tingginya mengikuti baris hero (bukan kolom teks). */
-    /* top: 32px menurunkan teks tanpa mengubah tata letak, jadi foto tidak ikut bergeser; teks kira-kira di tengah tinggi foto. */
     /* Dipusatkan secara vertikal terhadap foto; padding-top 24px menggeser isi 12px ke bawah, sama dengan foto (top: 24px). */
     .hero .hero-copy { align-self: center; padding-top: 24px; padding-bottom: 0; }
     .hero .hero-copy > p { margin-top: 30px; margin-bottom: 0; }
     .hero .hero-copy > .omnisearch { margin-top: 30px; }
     /* Judul: satuan vw tidak ikut diperkecil oleh zoom di js/layout.js, jadi di layar lebar judul melar jadi 4 baris.
        Batas 71px = nilai desain di lebar 1420 px (5vw); zoom lalu membesarkannya sebanding dengan halaman. */
-    .hero h1 { font-size: clamp(48px, min(5vw, 71px), 82px); }    /* Baris hero setinggi isinya; ruang ekstra dari --hero-min dibagi rata di atas dan bawah (align-content), bukan
+    .hero h1 { font-size: clamp(48px, min(5vw, 71px), 82px); }
+    /* Baris hero setinggi isinya; ruang ekstra dari --hero-min dibagi rata di atas dan bawah (align-content), bukan
        dipakai melarkan foto. Foto setinggi kolom teks: tepi bawahnya sejajar dengan bawah baris "Populer", tepi atasnya
        sejajar label di atas judul, dan tidak naik ke area navbar. */
     .hero { align-content: stretch; }
@@ -59,20 +57,12 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
        Kartu kanan dibatasi min(50%, ruang di tepi kanan - 14px) agar tidak terpotong di tepi layar; ruang itu ikut lebar layar (5vw). */
     .hero { --foto-kanan: 0px; --foto-lebar: min(43vw, 610px); }
     .hero .hero-image-wrap { right: var(--foto-kanan); width: var(--foto-lebar); }
-    /* --lengkung-kartu dihitung js/hero.js (tepi foto menjorok karena sudut atas bundar). */
+    /* --lengkung-kartu / --lengkung-orbit dihitung js/hero.js (tepi foto menjorok karena sudut atas bundar). */
     .hero .hero-visual { --foto-kiri: calc(100% - var(--foto-kanan) - var(--foto-lebar)); }
     .hero .floating-card.card-top { left: calc(var(--foto-kiri) + var(--lengkung-kartu, 0px)); translate: -50% 0; }
     .hero .floating-card.card-bottom { right: var(--foto-kanan); translate: min(50%, calc(clamp(24px, 5vw, 76px) - 8px)) 0; }
-    /* Lingkaran hias di belakang foto: yang kecil separuh tertutup foto; yang besar dicerminkan ke kanan bawah (ujungnya keluar 70px dari tepi foto, tidak melewati ruang di tepi layar). */
 }
-@media (max-width: 800px) {
-    .hero-visual { min-height: 580px; }
-    .hero-image-wrap { height: 560px; }
-}
-@media (max-width: 560px) {
-    .hero-visual { min-height: 500px; }
-    .hero-image-wrap { height: 480px; }
-}
+/* Pengaturan hero visual responsive dikelola dalam sistem mobile-first di bawah */
 /* Kartu pembaca menggantung di bawah foto supaya tidak menutupi tulisan */
 /* Berlaku di semua lebar: di ponsel (320 sampai 414 px) kartu sebelumnya menutupi kalimat di foto.
    Nilai -30px: kartu menggantung di bawah foto tanpa menyentuh kalimat (jarak 10 px) dan tanpa menempel ke bagian biru di bawah hero (jarak 16 px). */
@@ -110,6 +100,8 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .catalog-search:focus-within { outline: 2px solid #0f3fb4; outline-offset: 3px; }
 
 /* Perbaikan kontras kecil */
+.shortcut-number { opacity: .85; }
+.reader-avatars span:nth-child(3) { background: #4d6bd0; }
 .floating-card small { color: #5b6272; }
 
 
@@ -160,7 +152,7 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .hero h1, .section-head h2, .catalog-cta h2, .showcase-info h3, .news h3 { font-family: var(--font-serif); font-weight: 600; letter-spacing: -.01em; }
 .showcase-info h3 { font-size: 16px; letter-spacing: 0; }
 /* Di ukuran besar, opsz otomatis memilih potongan "display" yang tipis; kunci ke potongan teks supaya lebih tebal. */
-.hero h1 { font-variation-settings: "opsz" 24; text-wrap: balance; }
+.hero h1 { font-variation-settings: "opsz" 24; }
 
 /* Target sentuh minimal 44 px (antislop R-03). Tampilan hampir sama; yang membesar adalah area tekan.
    Pengecualian yang diterima: titik carousel foto (44 x 30, jaraknya dikunci JS; foto juga bisa dipilih dengan geser dan tombol panah). */
@@ -173,7 +165,7 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 
 /* Baris keadaan di bawah hasil pencarian: "Mencari buku…" atau pesan gagal (antislop R-27). */
 .omni-status { padding: 9px 10px; color: var(--muted); font-size: 14px; }
-.omni-empty { padding: 12px 14px 8px; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 1.4; }
+.omni-empty { margin: 4px 6px 6px; padding: 10px 12px; border-radius: 10px; background: #f6f8fc; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
 .omni-empty small { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; font-weight: 400; line-height: 1.5; }
 
 /* Berita & pengumuman: satu berita utama besar, tiga berita berikutnya sebagai daftar. */
@@ -193,30 +185,572 @@ a.btn-small { display: inline-flex; align-items: center; justify-content: center
 .news-list { display: flex; flex-direction: column; }
 .news-item { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 18px; align-items: center; padding: 18px 0; border-top: 1px solid #e8ebf0; }
 .news-item:first-child { padding-top: 0; border-top: 0; }
-.news-item.tanpa-gambar { grid-template-columns: 1fr; }
 .news-item-img { aspect-ratio: 4 / 3; background: #eef1f6; border-radius: 12px; overflow: hidden; }
 .news-item h3 { font-size: 16px; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .news-main:hover h3, .news-item:hover h3 { color: var(--blue); }
 .news a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; border-radius: 8px; }
-@media (max-width: 1080px) { .news-layout { grid-template-columns: 1fr; gap: 28px; } }
-@media (max-width: 560px) {
-  .news { padding: 70px 20px; }
-  .news-item { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
-  .news-item h3 { font-size: 14px; }
+
+/* ==========================================================================
+   SISTEM RESPONSIVE MOBILE-FIRST (Beranda Perpustakaan)
+   Breakpoint: 640px (phablet), 768px (tablet), 1024px (desktop)
+   - Pendekatan: Mobile-First (min-width)
+   - Layout: CSS Grid & Flexbox tanpa lebar tetap dalam piksel
+   - Touch target: Minimal 44x44px, spacing kelipatan 8px (8, 16, 24, 32px)
+   - Font: Minimal 16px (1rem) di HP untuk mencegah iOS auto-zoom
+   - Zero horizontal scroll di viewport 375px
+   ========================================================================== */
+
+/* ─── 1. Gaya Dasar Mobile (< 640px) ─── */
+
+/* Pencegahan horizontal scroll di layar sempit */
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+.page-shell, .site-frame {
+    max-width: 100%;
+    overflow-x: clip;
 }
 
-/* Lewati ke konten: terlihat hanya saat difokus keyboard */
+/* Padding tepi mobile 16px (kelipatan 8px) */
+.hero,
+.shortcuts,
+.showcase,
+.catalog-cta,
+.news {
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
+}
+
+/* Hero Section (Mobile: 1 kolom) */
+.hero {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding-top: 20px;
+    padding-bottom: 48px;
+    overflow-x: clip;
+}
+.hero .hero-copy {
+    position: static;
+    top: auto;
+    padding: 0;
+    width: 100%;
+}
+.hero h1 {
+    font-size: clamp(2rem, 7.5vw, 2.6rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 12px 0 16px;
+}
+.hero .hero-copy > p {
+    font-size: 1rem; /* 16px */
+    line-height: 1.5;
+    margin: 0 0 24px;
+    color: var(--muted);
+}
+
+/* Search Bar (Mobile: full-width, tinggi min 48px, touch target ramah jempol) */
+.catalog-search {
+    width: 100%;
+    height: 52px;
+    min-height: 48px;
+    padding: 4px 6px 4px 16px;
+    border-radius: 999px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+}
+.catalog-search input {
+    height: 100%;
+    min-height: 44px;
+    font-size: 1rem; /* 16px mencegah iOS auto-zoom */
+    flex: 1;
+    min-width: 0;
+}
+.catalog-search button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    flex: none;
+    display: grid;
+    place-items: center;
+}
+
+/* Rekomendasi Populer (Mobile: touch target min 44x44px) */
+.omni-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+.omni-suggestions span {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+.omni-suggestions button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 14px;
+    font-size: 0.875rem;
+    border-radius: 999px;
+    box-sizing: border-box;
+}
+
+/* Visual Hero & Carousel Foto (Mobile & Tablet: terpusat, tanpa offset yang meluber) */
+@media (max-width: 1023.98px) {
+    .hero-visual {
+        width: 100%;
+        max-width: 100%;
+        min-height: 380px;
+        position: relative;
+        margin: 0 auto;
+    }
+    .hero-image-wrap {
+        position: relative;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100%;
+        max-width: 340px;
+        height: 360px;
+        margin: 0 auto;
+        border-radius: 36% 36% 16px 16px;
+        overflow: hidden;
+    }
+    .visual-orbit {
+        display: none; /* Sembunyikan orbit dekoratif di layar HP agar tidak memicu overflow */
+    }
+
+    /* Floating cards hero di HP */
+    .hero-visual .floating-card {
+        position: absolute;
+        max-width: calc(100% - 24px);
+        box-sizing: border-box;
+    }
+    .hero-visual .floating-card.card-top {
+        top: 16px;
+        left: 12px;
+    }
+    .hero-visual .floating-card.card-bottom {
+        bottom: -16px;
+        right: 12px;
+        left: auto;
+    }
+}
+
+/* Shortcuts / Akses Cepat (Mobile: grid 2 kolom HP) */
+.shortcuts {
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+.shortcuts-head {
+    margin-bottom: 24px;
+}
+.shortcuts-head h2 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+}
+.shortcut-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.shortcut-card {
+    min-height: 130px;
+    padding: 14px 12px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.shortcut-card strong {
+    font-size: 0.9375rem;
+    line-height: 1.3;
+}
+.shortcut-card small {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.shortcut-go {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+/* Showcase / Katalog Buku (Mobile: grid 2 kolom HP) */
+.showcase {
+    padding-top: 48px;
+    padding-bottom: 48px;
+}
+.section-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.section-head h2 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+}
+.tab-switch {
+    display: inline-flex;
+    gap: 8px;
+    background: #eef1f6;
+    padding: 4px;
+    border-radius: 999px;
+}
+.tab-switch button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 20px;
+    font-size: 0.9375rem;
+    border-radius: 999px;
+}
+.showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+.showcase-card {
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.showcase-cover {
+    padding: 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+/* Rasio Cover Buku Konsisten 2/3 */
+.showcase-cover img,
+.book-cover.book-cover-md {
+    aspect-ratio: 2 / 3 !important;
+    width: 100% !important;
+    max-width: 120px !important;
+    height: auto !important;
+    object-fit: cover;
+    margin: 0 auto;
+}
+.book-cover.book-cover-md {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px 10px;
+    border-radius: 3px 8px 8px 3px;
+    box-sizing: border-box;
+}
+.book-cover-title {
+    font-size: 0.75rem !important;
+    line-height: 1.25;
+}
+.showcase-info {
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+}
+.showcase-info h3 {
+    font-size: 1rem !important; /* Standar minimal 16px di HP */
+    line-height: 1.4 !important;
+    margin: 6px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.showcase-info p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin: 0 0 12px;
+}
+.showcase-actions .btn-small {
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.9375rem;
+    border-radius: 999px;
+}
+
+/* Catalog CTA / Subjek (Mobile: 1 kolom) */
+.catalog-cta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 48px;
+    padding-bottom: 48px;
+}
+.catalog-cta-copy h2 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    margin-bottom: 12px;
+}
+.catalog-cta-copy p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+.cta-button {
+    width: 100%;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+.subject-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.subject-list li a {
+    min-height: 44px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+/* Berita & Pengumuman (Mobile: 1 kolom) */
+.news {
+    padding-top: 48px;
+    padding-bottom: 48px;
+}
+.news-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+.news-main h3 {
+    font-size: 1.25rem;
+    margin: 8px 0;
+}
+.news-main p {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+.news-item {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    min-height: 44px;
+    padding: 12px 0;
+}
+.news-item-img {
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.news-item h3 {
+    font-size: 1rem !important; /* Standar 16px */
+    line-height: 1.35;
+    margin: 4px 0 0;
+}
+
+/* Footer (Mobile: 1 kolom bertumpuk) */
+.site-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+.footer-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-bottom: 40px;
+}
+.footer-col a,
+.footer-col button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9375rem;
+}
+.footer-socials a {
+    width: 44px;
+    height: 44px;
+}
+
+/* Modal Tata Tertib (Mobile: Bottom Sheet Ergonomis) */
+.modal-backdrop {
+    display: flex;
+    align-items: flex-end;
+    padding: 0;
+}
+.modal-panel {
+    border-radius: 24px 24px 0 0;
+    max-height: 90vh;
+    width: 100%;
+}
+.modal-header {
+    padding: 20px;
+}
+.modal-close,
+.modal-header button {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+/* Navigasi Mobile Menu Bar */
+.gn-nav .gn-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+.gn-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+/* ─── 2. Breakpoint Phablet (min-width: 640px) ─── */
+@media (min-width: 640px) {
+    .hero,
+    .shortcuts,
+    .showcase,
+    .catalog-cta,
+    .news,
+    .site-footer {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+    .hero-image-wrap {
+        max-width: 420px;
+        height: 440px;
+    }
+    .visual-orbit {
+        display: block; /* Tampilkan kembali orbit dekoratif */
+    }
+    .shortcut-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .showcase-cover img,
+    .book-cover.book-cover-md {
+        max-width: 140px !important;
+    }
+    .subject-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+    .footer-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 36px;
+    }
+    .footer-about {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ─── 3. Breakpoint Tablet (min-width: 768px) ─── */
+@media (min-width: 768px) {
+    .hero {
+        padding-top: 36px;
+        padding-bottom: 60px;
+    }
+    .section-head {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+    /* Katalog Buku: 3 kolom di tablet sesuai standar Tahap 3 */
+    .showcase-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+    }
+    .catalog-cta {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        gap: 36px;
+    }
+    .cta-button {
+        width: auto;
+    }
+    .footer-main {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* ─── 4. Breakpoint Desktop (min-width: 1024px) ─── */
+@media (min-width: 1024px) {
+    .hero {
+        display: grid;
+        grid-template-columns: 1.05fr .95fr;
+        align-items: center;
+        gap: 40px;
+        padding-top: 12px;
+        padding-bottom: 24px;
+        padding-left: clamp(24px, 5vw, 76px);
+        padding-right: clamp(24px, 5vw, 76px);
+    }
+    .hero .hero-copy {
+        position: relative;
+        top: 32px;
+    }
+    .hero-image-wrap {
+        max-width: none;
+        height: auto;
+    }
+    .shortcuts {
+        padding-left: clamp(24px, 5vw, 76px);
+        padding-right: clamp(24px, 5vw, 76px);
+    }
+    .shortcut-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .showcase {
+        padding-left: clamp(24px, 5vw, 76px);
+        padding-right: clamp(24px, 5vw, 76px);
+    }
+    /* Katalog Buku: 4 kolom di desktop sesuai standar Tahap 3 */
+    .showcase-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 22px;
+    }
+    .catalog-cta {
+        padding-left: clamp(24px, 5vw, 76px);
+        padding-right: clamp(24px, 5vw, 76px);
+    }
+    .news {
+        padding: 96px clamp(24px, 5vw, 76px) 90px;
+    }
+    .news-layout {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+        gap: 40px;
+    }
+    .site-footer {
+        padding-left: clamp(24px, 5vw, 76px);
+        padding-right: clamp(24px, 5vw, 76px);
+    }
+    .footer-main {
+        grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, .7fr));
+        gap: 48px;
+    }
+    .footer-about {
+        grid-column: auto;
+    }
+}
+
+
+/* Diselaraskan dari feat/beranda-banner-hero-dan-pencarian (tanpa mengubah grid mobile 2 kolom kita) */
+.news-item.tanpa-gambar { grid-template-columns: 1fr; }
 .skip-link { position: absolute; left: 12px; top: -64px; z-index: 100; padding: 12px 18px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 14px; font-weight: 700; text-decoration: none; }
 .skip-link:focus-visible { top: 12px; outline: 3px solid var(--blue); outline-offset: 2px; }
-
-
-/* Ponsel: foto tidak lagi memisahkan pencarian dari layanan, dan kartu buku satu kolom */
-@media (max-width: 560px) {
-  .hero h1 { font-size: clamp(34px, 9.5vw, 42px); }
-  .hero-visual { min-height: 360px; }
-  .hero-image-wrap { height: 340px; }
-  .showcase-grid { grid-template-columns: 1fr; }
-  .showcase-info h3 { font-size: 15px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-}
 .hero-copy > p a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .hero-copy > p a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; border-radius: 4px; }

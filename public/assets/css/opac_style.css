@@ -40,15 +40,40 @@
 }
 
 .sidebar-section {
-    padding-left: 15px;
-    padding-right: 25px;
+    padding-left: calc(var(--bs-gutter-x) * .5);
+    padding-right: calc(var(--bs-gutter-x) * .5);
 }
 
 /* Sidebar Styling */
-.sidebar-container {
-    position: sticky;
-    top: 20px;
-    width: 100%;
+@media (min-width: 992px) {
+    .sidebar-container {
+        position: sticky;
+        top: 84px;
+        width: 100%;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+        padding-right: 4px;
+    }
+
+    .sidebar-container::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .sidebar-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar-container::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 999px;
+    }
+
+    .sidebar-container::-webkit-scrollbar-thumb:hover {
+        background-color: #94a3b8;
+    }
 }
 
 .sidebar-card {
@@ -299,50 +324,347 @@
     background-color: #f8f9fa;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-    .main-container {
-        max-width: 100%;
-        padding: 0 15px;
-    }
+/* ==========================================================================
+   SISTEM RESPONSIVE MOBILE-FIRST OPAC / KATALOG
+   Breakpoint: 640px (phablet), 768px (tablet), 1024px (desktop)
+   - Pendekatan: Mobile-First
+   - Layout: Grid 2 kolom di HP, 3 kolom di tablet, 4 kolom di desktop
+   - Filter katalog: Bottom Sheet di HP/tablet, Sidebar asli di desktop
+   - Touch target: Minimal 44x44px, spacing kelipatan 8px
+   - Zero horizontal scroll di viewport 375px
+   ========================================================================== */
+
+/* ─── 1. Gaya Dasar Mobile (< 640px) ─── */
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
-@media (max-width: 991px) {
-    .sidebar-container {
-        position: static;
-        margin-top: 30px;
-    }
+.custom-input {
+    min-height: 48px;
+    font-size: 1rem !important; /* 16px mencegah auto-zoom iOS */
+}
 
-    .catalog-section,
+.btn-primary-custom {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+/* Touch targets pada item filter sidebar */
+.stat-list-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.stat-list-item a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+/* Bottom Sheet Filter Mobile (< 1024px) */
+@media (max-width: 991.98px) {
     .sidebar-section {
-        padding-left: 15px;
-        padding-right: 15px;
+        position: static !important;
+        z-index: 1060 !important;
+    }
+    .opac-sidebar-drawer {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        width: 100% !important;
+        max-height: 85vh !important;
+        background: #ffffff !important;
+        z-index: 1060 !important;
+        border-radius: 24px 24px 0 0 !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 0 16px 32px !important;
+        visibility: hidden;
+    }
+    .opac-sidebar-drawer.is-open {
+        transform: translateY(0) !important;
+        visibility: visible !important;
+    }
+    .opac-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 1050 !important;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .opac-drawer-backdrop.is-open {
+        opacity: 1;
+        visibility: visible;
+    }
+    .opac-drawer-close {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        position: relative;
+        z-index: 1070 !important;
+        cursor: pointer;
+    }
+    body.opac-sheet-open {
+        overflow: hidden !important;
     }
 }
 
-@media (max-width: 768px) {
-    .book-cover-container {
-        text-align: center;
-        margin-bottom: 15px;
+/* Desktop layout (>= 1024px): Kembalikan sidebar asli (lebih ramping) */
+@media (min-width: 992px) {
+    .opac-sidebar-drawer {
+        position: static !important;
+        transform: none !important;
+        visibility: visible !important;
+        max-height: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 8px !important;
+        overflow-y: visible !important;
+        z-index: auto !important;
+        display: block !important;
     }
-
-    .catalog-card .row {
-        flex-direction: column;
+    .opac-drawer-header,
+    .opac-drawer-backdrop {
+        display: none !important;
     }
+}
 
-    .catalog-card .col-4,
-    .catalog-card .col-8 {
-        flex: 0 0 100%;
-        max-width: 100%;
+/* ─── Grid Katalog Buku: Mobile HP 2 buku (diperkecil proporsional), Tablet 3 buku, Desktop 4 buku ─── */
+.opac-catalog-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+.opac-catalog-grid > .opac-col-book {
+    width: 50% !important; /* Mobile HP: 2 buku per baris (diperkecil rapi & elegan) */
+    max-width: 50% !important;
+    flex: 0 0 50% !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    margin-bottom: 10px;
+}
+@media (min-width: 576px) {
+    .opac-catalog-grid > .opac-col-book {
+        width: 33.333% !important; /* Tablet kecil: 3 buku */
+        max-width: 33.333% !important;
+        flex: 0 0 33.333% !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important;
     }
-
-    .book-cover {
-        max-width: 120px !important;
-        max-height: 180px !important;
+}
+@media (min-width: 992px) {
+    .opac-catalog-grid > .opac-col-book {
+        width: 25% !important; /* Desktop: 4 buku per baris sesuai screenshot */
+        max-width: 25% !important;
+        flex: 0 0 25% !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        margin-bottom: 16px;
     }
+}
 
-    .stat-list {
-        max-height: 150px;
+/* ─── Shelf Horizontal Scroll (Rekomendasi / Koleksi Baru) ─── */
+.opac-shelf-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    padding-bottom: 6px;
+}
+.opac-shelf-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+.opac-shelf-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.opac-shelf-item {
+    width: 78px !important;
+    min-width: 78px !important;
+    max-width: 78px !important;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+}
+@media (min-width: 576px) {
+    .opac-shelf-item {
+        width: 110px !important;
+        min-width: 110px !important;
+        max-width: 110px !important;
+    }
+}
+@media (min-width: 768px) {
+    .opac-shelf-item {
+        width: 150px !important;
+        min-width: 150px !important;
+        max-width: 150px !important;
+    }
+}
+
+/* ─── Modern Book Card Sesuai Desain Screenshot ─── */
+.opac-modern-card,
+.opac-warm-card {
+    background-color: #f6f5f1;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 12px;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+    box-shadow: none;
+}
+.opac-modern-card:hover,
+.opac-warm-card:hover {
+    transform: translateY(-3px);
+    background-color: #f0efe8;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
+}
+.opac-cover-stage {
+    padding: 0;
+    display: block;
+    width: 100%;
+}
+.opac-book-3d {
+    aspect-ratio: 2 / 3 !important;
+    max-width: 100%;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+.opac-book-heading {
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.35;
+    min-height: 2.45rem;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.opac-book-heading a {
+    color: #1e293b;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.opac-book-heading a:hover {
+    color: #0f3fb4;
+}
+.opac-book-author {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+.opac-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+.opac-status-badge.badge-available {
+    background-color: #e6f4ea;
+    color: #137333;
+}
+.opac-status-badge.badge-borrowed {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+/* ─── Mode HP (Mobile: diperkecil proporsional) ─── */
+@media (max-width: 767.98px) {
+    .opac-warm-card,
+    .opac-modern-card {
+        padding: 7px 6px 8px !important;
+        border-radius: 10px !important;
+        background-color: #f6f5f1 !important;
+    }
+    .opac-book-3d {
+        border-radius: 6px !important;
+    }
+    .opac-book-kicker {
+        font-size: 0.58rem !important;
+        letter-spacing: 0.04em !important;
+        margin-bottom: 2px !important;
+    }
+    .opac-book-heading {
+        font-size: 0.74rem !important;
+        line-height: 1.22 !important;
+        min-height: 1.82rem !important;
+        margin-bottom: 2px !important;
+    }
+    .opac-book-author {
+        font-size: 0.65rem !important;
+        margin-bottom: 4px !important;
+    }
+    .opac-status-badge {
+        font-size: 0.62rem !important;
+        padding: 2px 6px !important;
+    }
+}
+
+/* Layar Desktop (>= 1024px) */
+@media (min-width: 992px) {
+    .opac-modern-card {
+        padding: 10px 10px 8px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+    .opac-book-heading {
+        font-size: 0.84rem !important;
+        min-height: 2.15rem;
+    }
+    .opac-book-author {
+        font-size: 0.72rem;
+    }
+}
+
+/* Modal Pop-up di HP: Hampir full-screen dengan tombol tutup besar */
+@media (max-width: 576px) {
+    .opac-meta-modal .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    .opac-meta-modal .modal-content {
+        padding: 20px 16px;
+        border-radius: 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .opac-modal-close-btn {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    .opac-modal-btn-pinjam {
+        min-height: 48px;
+        width: 100%;
+    }
+    .opac-modal-input {
+        min-height: 48px;
+        font-size: 1rem;
     }
 }
 
@@ -375,5 +697,242 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+
+/* ============================================================
+   Penyelarasan Fitur OPAC (Shelves, notif_izin, #jelajah)
+   Tetap menjaga .opac-catalog-grid 2-kolom & .opac-shelf-item <= 85px di mobile
+   ============================================================ */
+.opac-shelf-section {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.opac-shelf-heading {
+    font-size: 1.05rem;
+    line-height: 1.3;
+    color: var(--opac-text-primary, #1e293b);
+}
+
+@media (max-width: 575.98px) {
+    .opac-shelf-item .opac-warm-card {
+        overflow: hidden;
+    }
+    .opac-shelf-item .opac-status-badge {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.56rem !important;
+        padding: 2px 5px !important;
+    }
+}
+
+.opac-notif-izin {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    border-radius: 12px;
+}
+
+.opac-jelajah-toggle-btn {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.jelajah {
+    background: #ffffff;
+    border: 1px solid var(--opac-border-subtle, #e2e8f0);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 28px;
+}
+
+.jelajah-judul {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--opac-text-secondary, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 18px 0 10px;
+}
+
+.jelajah-judul:first-of-type {
+    margin-top: 0;
+}
+
+.jelajah-huruf,
+.abjad-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.jelajah-huruf .label,
+.abjad-row .label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    width: 82px;
+    flex-shrink: 0;
+}
+
+.jelajah-huruf a,
+.abjad-chip {
+    min-width: 34px;
+    min-height: 36px;
+    padding: 4px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.jelajah-huruf a:hover,
+.abjad-chip:hover {
+    background: var(--opac-primary, #0f3fb4);
+    border-color: var(--opac-primary, #0f3fb4);
+    color: #ffffff;
+}
+
+.ddc-kelas {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.ddc-kelas summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.ddc-kelas .kode {
+    font-family: monospace;
+    font-weight: 700;
+    color: var(--opac-primary, #0f3fb4);
+}
+
+.ddc-kelas .jumlah {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.ddc-kelas ul {
+    list-style: none;
+    margin: 0;
+    padding: 4px 12px 10px 44px;
+}
+
+.ddc-kelas li a {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.85rem;
+    color: #475569;
+    text-decoration: none;
+}
+
+.ddc-kelas li a:hover {
+    color: var(--opac-primary, #0f3fb4);
+}
+
+.ddc-kelas li .jumlah {
+    color: #94a3b8;
+    margin-left: auto;
+}
+
+.pengarang-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    transition: all 0.15s ease;
+}
+
+.pengarang-chip:hover {
+    border-color: var(--opac-primary, #0f3fb4);
+    color: var(--opac-primary, #0f3fb4);
+    background: #eff6ff;
+}
+
+.pengarang-chip span {
+    color: #94a3b8;
+    font-size: 0.76rem;
+}
+
+@media (max-width: 767.98px) {
+    .opac-search-input-wrap input[name="search"],
+    .opac-year-input,
+    .opac-sort-select {
+        font-size: 1rem !important;
+    }
+
+    .jelajah {
+        padding: 14px 12px;
+    }
+
+    .jelajah-huruf .label,
+    .abjad-row .label {
+        width: 100%;
+        margin-bottom: 2px;
+    }
+
+    .jelajah-huruf a,
+    .abjad-chip {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+
+    .pengarang-chip {
+        min-height: 44px;
+        padding: 8px 12px;
+    }
+
+    .ddc-kelas summary {
+        min-height: 44px;
+        flex-wrap: wrap;
+    }
+
+    .ddc-kelas ul {
+        padding: 4px 12px 10px 16px;
+    }
+
+    .ddc-kelas li a {
+        min-height: 44px;
+        padding: 8px 0;
+        align-items: center;
+    }
+
+    .opac-jelajah-toggle-btn {
+        min-height: 44px;
     }
 }

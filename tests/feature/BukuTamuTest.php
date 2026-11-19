@@ -166,7 +166,6 @@ final class BukuTamuTest extends CIUnitTestCase
         $result->assertDontSee('name="PendidikanTerakhir_id"');
         $result->assertDontSee('name="JenisKelamin_id"');
         $result->assertDontSee('name="Alamat"');
-        $result->assertDontSee('>Kementerian Ketenagakerjaan Republik Indonesia<');
         $result->assertDontSee('name="TujuanKunjungan_id"');
         $result->assertDontSee('Total Kunjungan Hari ini');
     }

@@ -13,6 +13,7 @@ $routes->group('opac', ['namespace' => 'Opac\Controllers'], function ($subroutes
 	$subroutes->add('subjek', 'Opac::subjek');
 	$subroutes->add('subjek/(:any)', 'Opac::subjek/$1');
 	$subroutes->add('detail/(:any)', 'Opac::detail/$1');
+	$subroutes->add('acak', 'Opac::acak');
 	$subroutes->add('baca-digital/(:num)', 'Opac::bacaDigital/$1');
 	$subroutes->add('visitor_export', 'Opac::visitor_export');
 	$subroutes->add('member', 'Opac::member');

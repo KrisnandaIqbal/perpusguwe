@@ -1,0 +1,6 @@
+{
+  "name": "BiblioVerse — Dashboard Anggota & OPAC Perpustakaan",
+  "description": "Dashboard terpadu anggota perpustakaan modern yang memadukan analitik progres baca, katalog OPAC interaktif, manajemen sirkulasi peminjaman, data keanggotaan digital, dan riwayat transaksi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

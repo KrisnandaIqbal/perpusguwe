@@ -39,7 +39,7 @@ class KatalogModel extends \Base\Models\DataModel
 		}
 
 		$q = $this->db->table('catalogs')
-			->select('catalogs.*, catalogs.ID AS id, COUNT(DISTINCT cli.member_id) AS peminjam', false)
+			->select('catalogs.*, catalogs.ID AS id, COUNT(DISTINCT cli.member_id) AS peminjam, COUNT(cli.ID) AS total_dipinjam', false)
 			->join('collections col', 'col.Catalog_id = catalogs.ID')
 			->join('collectionloanitems cli', 'cli.Collection_id = col.ID')
 			->where('catalogs.IsOPAC', 1)
@@ -52,7 +52,9 @@ class KatalogModel extends \Base\Models\DataModel
 		$maks = max(array_column($rows, 'peminjam') ?: [0]);
 		foreach ($rows as &$r) {
 			$r['populer'] = $maks > 0 ? $r['peminjam'] / $maks : 0;
+			$r['is_populer'] = true;
 		}
+		unset($r);
 		return $rows;
 	}
 
@@ -75,7 +77,13 @@ class KatalogModel extends \Base\Models\DataModel
 		if ($kelasDdc) {
 			$q->like('DeweyNo', $kelasDdc, 'after');
 		}
-		return $q->orderBy('CreateDate', 'DESC')->limit($limit)->get()->getResultArray();
+		$rows = $q->orderBy('CreateDate', 'DESC')->limit($limit)->get()->getResultArray();
+
+		foreach ($rows as &$r) {
+			$r['is_baru'] = true;
+		}
+		unset($r);
+		return $rows;
 	}
 
 	/** Judul berbeda yang pernah dipinjam anggota, terbaru di atas. */

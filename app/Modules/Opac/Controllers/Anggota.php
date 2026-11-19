@@ -54,7 +54,7 @@ class Anggota extends \Base\Controllers\BaseController
             'member_id'     => (int) $member->ID,
             'member_no'     => $member->MemberNo,
             'nama'          => $member->Fullname,
-            'unit_kerja_id' => (int) $member->UnitKerja_id,
+            'unit_kerja_id' => $member->UnitKerja_id !== null ? (int) $member->UnitKerja_id : null,
         ]);
 
         if (!(int) $member->IzinPersonalisasiDiumumkan) {
