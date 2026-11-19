@@ -5,7 +5,7 @@ $bulan  = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'O
 $tanggal = static fn ($t) => date('j', strtotime($t)) . ' ' . $bulan[(int) date('n', strtotime($t))] . ' ' . date('Y', strtotime($t));
 $ringkas = static fn ($html, $n) => mb_strimwidth(trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string) $html)))), 0, $n, '…');
 $url     = static fn ($b) => base_url('news/detail/' . $b['id'] . '/' . $b['slug']);
-$cover   = static fn ($b) => !empty($b['file_cover']) ? base_url('uploads/berita/' . $b['file_cover']) : '';
+$cover   = static fn ($b) => (!empty($b['file_cover']) && is_file(FCPATH . 'uploads/berita/' . $b['file_cover'])) ? base_url('uploads/berita/' . $b['file_cover']) : '';
 ?>
 <section class="news" id="berita">
     <div class="section-head">
@@ -20,11 +20,11 @@ $cover   = static fn ($b) => !empty($b['file_cover']) ? base_url('uploads/berita
     <?php else : $utama = $berita[0]; ?>
         <div class="news-layout">
             <a class="news-main" href="<?= $url($utama) ?>">
-                <span class="news-main-img">
-                    <?php if ($cover($utama)) : ?>
+                <?php if ($cover($utama)) : ?>
+                    <span class="news-main-img">
                         <img src="<?= $cover($utama) ?>" alt="" loading="lazy" onerror="this.remove()">
-                    <?php endif; ?>
-                </span>
+                    </span>
+                <?php endif; ?>
                 <time datetime="<?= esc(date('Y-m-d', strtotime($utama['created_at']))) ?>"><?= $tanggal($utama['created_at']) ?></time>
                 <h3><?= esc($utama['title']) ?></h3>
                 <p><?= esc($ringkas($utama['content'], 170)) ?></p>
@@ -32,12 +32,12 @@ $cover   = static fn ($b) => !empty($b['file_cover']) ? base_url('uploads/berita
 
             <div class="news-list">
                 <?php foreach (array_slice($berita, 1, 3) as $b) : ?>
-                    <a class="news-item" href="<?= $url($b) ?>">
-                        <span class="news-item-img">
-                            <?php if ($cover($b)) : ?>
+                    <a class="news-item<?= $cover($b) ? '' : ' tanpa-gambar' ?>" href="<?= $url($b) ?>">
+                        <?php if ($cover($b)) : ?>
+                            <span class="news-item-img">
                                 <img src="<?= $cover($b) ?>" alt="" loading="lazy" onerror="this.remove()">
-                            <?php endif; ?>
-                        </span>
+                            </span>
+                        <?php endif; ?>
                         <span class="news-item-text">
                             <time datetime="<?= esc(date('Y-m-d', strtotime($b['created_at']))) ?>"><?= $tanggal($b['created_at']) ?></time>
                             <h3><?= esc($b['title']) ?></h3>

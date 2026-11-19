@@ -7,7 +7,7 @@ $subjects      = $subjects ?? [];
 <section class="catalog-cta" id="katalog">
     <div class="catalog-cta-copy">
         <h2>Jelajahi <?= $totalCatalogs ? number_format($totalCatalogs, 0, ',', '.') . ' judul' : 'seluruh' ?> koleksi berdasarkan subjek.</h2>
-        <p>Cari berdasarkan judul, penulis, atau kode buku, lalu cek nomor panggil dan ketersediaan eksemplar.</p>
+        <p>Telusuri subjek, lalu cek nomor panggil dan ketersediaan eksemplar.</p>
         <a class="cta-button" href="<?= $opacUrl ?>">Buka katalog lengkap <?= landing_icon('right') ?></a>
     </div>
     <?php if (!empty($subjects)) : ?>

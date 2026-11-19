@@ -13,6 +13,7 @@ $berkasJs = ['util', 'layout', 'hero', 'hero-carousel', 'showcase', 'omnisearch'
         searchUrl: <?= json_encode(base_url('home/search-books')) ?>,
         rulesUrl: <?= json_encode(landing_asset('tata-tertib.json')) ?>,
         detailUrl: <?= json_encode(base_url('opac/detail')) ?>,
+        jdihUrl: <?= json_encode(landing_jdih_url()) ?>,
         services: <?= json_encode($layanan, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
         arrow: <?= json_encode(landing_icon('up-right', 'omni-all-icon')) ?>
     };

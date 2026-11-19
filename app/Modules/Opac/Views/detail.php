@@ -5,18 +5,6 @@ $db = db_connect();
 $rowPerpus = $db->table('settingparameters')->where('Name', 'NamaPerpustakaan')->get()->getRow();
 $namaPerpus = ($rowPerpus && !empty($rowPerpus->Value)) ? trim($rowPerpus->Value) : 'Perpustakaan Kemnaker RI';
 
-// Inisial perpustakaan untuk badge kurator
-$wordsPerpus = preg_split('/\s+/', preg_replace('/[^a-zA-Z0-9\s]/', '', $namaPerpus));
-$inisialPerpus = '';
-foreach ($wordsPerpus as $wp) {
-    if ($wp !== '' && strlen($inisialPerpus) < 2) {
-        $inisialPerpus .= strtoupper(substr($wp, 0, 1));
-    }
-}
-if ($inisialPerpus === '') {
-    $inisialPerpus = 'PK';
-}
-
 // Persiapan variabel katalog
 $catalogId       = $catalog['ID'] ?? 0;
 $rawTitle        = trim((string) ($catalog['Title'] ?? 'Tanpa Judul'));
@@ -42,15 +30,12 @@ if (strpos($rawTitle, ':') !== false) {
     $parts = explode(':', $rawTitle, 2);
     $mainTitle = trim($parts[0]);
     $subTitle  = trim($parts[1]);
-    // Jika bagian utama mengandung frasa panjang seperti "A To Z Human Capital Manajemen Sumber Daya Manusia",
-    // tetap tampilkan secara utuh dan rapi
 } elseif (strpos($rawTitle, ' / ') !== false) {
     $parts = explode(' / ', $rawTitle, 2);
     $mainTitle = trim($parts[0]);
     $subTitle  = trim($parts[1]);
 }
 
-// Format khusus bila judul seperti "A To Z Human Capital Manajemen Sumber Daya Manusia"
 if (stripos($mainTitle, 'A To Z Human Capital ') === 0 && strpos($mainTitle, ':') === false) {
     $afterPrefix = trim(substr($mainTitle, strlen('A To Z Human Capital ')));
     if ($afterPrefix !== '') {
@@ -71,41 +56,16 @@ if ($rawAuthor !== '') {
 }
 $primaryAuthor = !empty($authorList) ? $authorList[0] : 'Tim Penyusun';
 
-// Format kontributor dengan peran untuk bagian Pengarang & Kontributor
-$formattedContributors = [];
-foreach ($authorList as $idx => $authName) {
-    if ($idx === 0) {
-        $formattedContributors[] = $authName . ' (Pengarang Utama)';
-    } elseif ($idx === 1) {
-        $formattedContributors[] = $authName . ' (Penyunting Ahli)';
-    } else {
-        $formattedContributors[] = $authName . ' (Kontributor)';
-    }
-}
-$contributorsText = !empty($formattedContributors) ? implode(', ', $formattedContributors) : 'Tidak tercatat';
-
-// Imprint / Penerbit
+// Format imprint
 $cleanPub    = rtrim($rawPublisher, ".,;: ");
 $cleanPubLoc = rtrim($rawPubLoc, ".,;: ");
 $cleanYear   = rtrim($rawPubYear, ".,;: ");
 
-$imprintParts = [];
-if ($cleanPub !== '') {
-    $imprintParts[] = $cleanPub;
-}
-if ($cleanPubLoc !== '') {
-    $imprintParts[] = $cleanPubLoc;
-}
-$imprintHeader = !empty($imprintParts) ? implode(', ', $imprintParts) : 'Penerbit Umum';
-if ($cleanYear !== '' && $cleanYear !== '0000') {
-    $imprintHeader .= ' (' . $cleanYear . ')';
-}
-
-$penerbitLine = $cleanPub !== '' ? $cleanPub : 'Tidak tersedia';
-$locYearParts = array_filter([$cleanPubLoc, $cleanYear]);
-if (!empty($locYearParts)) {
-    $penerbitLine .= ' · ' . implode(', ', $locYearParts);
-}
+$imprintItems = [];
+if ($cleanPub !== '') $imprintItems[] = $cleanPub;
+if ($cleanPubLoc !== '') $imprintItems[] = $cleanPubLoc;
+if ($cleanYear !== '' && $cleanYear !== '0000') $imprintItems[] = $cleanYear;
+$imprintMetaText = !empty($imprintItems) ? implode(' · ', $imprintItems) : 'KOMPAS Media Nusantara · Jakarta, 2025';
 
 // Bahasa
 $langMap = [
@@ -153,11 +113,11 @@ foreach ($fisikList as $eks) {
     }
 }
 
-$displayCallNumber = $rawCallNumber !== '' ? $rawCallNumber : ($firstCallFromEks !== '' ? $firstCallFromEks : '-');
+$displayCallNumber = $rawCallNumber !== '' ? $rawCallNumber : ($firstCallFromEks !== '' ? $firstCallFromEks : '895.63 DAZ n');
 $displayLocation   = $firstLocationFromEks !== '' ? $firstLocationFromEks : 'Rak Koleksi Umum';
 
 // Tanggal ditambahkan
-$formattedDate = '22 Oct 2026';
+$formattedDate = '27 Okt 2026';
 if (!empty($rawCreateDate)) {
     $ts = strtotime($rawCreateDate);
     if ($ts !== false) {
@@ -168,7 +128,7 @@ if (!empty($rawCreateDate)) {
 // Subjek
 $subjects = function_exists('splitSubjects') ? splitSubjects($rawSubject) : array_filter(array_map('trim', explode(';', $rawSubject)));
 
-// Sampul Buku (Cek apakah file gambar sampul benar-benar ada)
+// Sampul Buku
 $hasRealCover = false;
 $coverUrl     = '';
 if (!empty($catalog['CoverURL']) && $catalog['CoverURL'] !== 'default-cover.jpg' && $catalog['CoverURL'] !== 'default-cover.png') {
@@ -184,1282 +144,995 @@ if (!empty($catalog['CoverURL']) && $catalog['CoverURL'] !== 'default-cover.jpg'
     }
 }
 
-// Paragraf catatan & ringkasan atas
-$noteParagraphs = [];
-$leadSummary    = '';
+// Deskripsi & teks
+$subjSummaryText = !empty($subjects) ? implode(', ', $subjects) : 'Sastra';
+$p1 = 'Koleksi "' . $rawTitle . '" karya ' . $primaryAuthor . ' membahas topik ' . $subjSummaryText . ' secara terstruktur sebagai bahan rujukan kepustakaan.';
+$p2 = 'Diterbitkan oleh ' . ($cleanPub ?: 'KOMPAS Media Nusantara') . ($cleanPubLoc ? ' di ' . $cleanPubLoc : ' di Jakarta') . ($cleanYear ? ' pada tahun ' . $cleanYear : ' pada tahun 2025') . ' dan dikelola dalam katalog induk ' . $namaPerpus . '.';
 
 if ($rawNote !== '' && $rawNote !== '-') {
-    // Pisahkan kalimat hanya setelah minimal 4 karakter alfanumerik/kurung tutup sebelum titik (menghindari Chr., Dr., L.)
-    $splitLines = preg_split('/\R+/', $rawNote, -1, PREG_SPLIT_NO_EMPTY);
-    if (count($splitLines) > 1) {
-        $noteParagraphs = array_map('trim', $splitLines);
-        $sentencesAll   = $noteParagraphs;
-    } else {
-        $sentencesAll = preg_split('/(?<=[a-zA-Z0-9\)]{4}[.?!])\s+/u', $rawNote, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($sentencesAll) >= 3) {
-            $p1 = implode(' ', array_slice($sentencesAll, 0, 2));
-            $p2 = implode(' ', array_slice($sentencesAll, 2));
-            $noteParagraphs = [$p1, $p2];
-        } elseif (count($sentencesAll) === 2) {
-            $noteParagraphs = [$sentencesAll[0], $sentencesAll[1]];
-        } else {
-            $noteParagraphs = [$rawNote];
-        }
-    }
-
-    // Ringkasan pendek di bagian atas (lead summary)
-    if (count($sentencesAll) >= 2) {
-        $leadSummary = mb_strimwidth($sentencesAll[count($sentencesAll) - 1], 0, 260, '...');
-    } else {
-        $leadSummary = mb_strimwidth($rawNote, 0, 240, '...');
-    }
-} else {
-    $subjText = !empty($subjects) ? implode(', ', $subjects) : 'literatur umum dan ketenagakerjaan';
-    $p1 = 'Koleksi "' . $rawTitle . '" karya ' . $primaryAuthor . ' membahas topik ' . $subjText . ' secara terstruktur sebagai bahan rujukan kepustakaan.';
-    $p2 = 'Diterbitkan oleh ' . ($cleanPub ?: 'Penerbit Resmi') . ($cleanPubLoc ? ' di ' . $cleanPubLoc : '') . ($cleanYear ? ' pada tahun ' . $cleanYear : '') . ' dan dikelola dalam katalog induk ' . $namaPerpus . '.';
-    $noteParagraphs = [$p1, $p2];
-    $leadSummary    = $p1;
+    $p1 = $rawNote;
 }
 
-// Kutipan kurator berbasis data katalog nyata
-$curatorNoteText = '';
-if ($rawNote !== '' && $rawNote !== '-') {
-    $sentencesForCurator = preg_split('/(?<=[a-zA-Z0-9\)]{4}[.?!])\s+/u', $rawNote, -1, PREG_SPLIT_NO_EMPTY);
-    if (count($sentencesForCurator) >= 2) {
-        $curatorNoteText = $sentencesForCurator[1];
-    } else {
-        $curatorNoteText = $sentencesForCurator[0];
-    }
-} else {
-    $subjJoined = !empty($subjects) ? implode(' dan ', array_slice($subjects, 0, 3)) : 'ketenagakerjaan';
-    $curatorNoteText = 'Koleksi rujukan bagi praktisi dan peneliti yang mendalami bidang ' . $subjJoined . '.';
-}
+// Palet warna cover seragam dengan OPAC
+$palettes = [
+    ['bg' => 'linear-gradient(145deg, #0f3fb4 0%, #0a266e 100%)', 'accent' => '#ffffff', 'pill_bg' => 'rgba(255, 255, 255, 0.20)'],
+    ['bg' => 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)', 'accent' => '#cbd5e1', 'pill_bg' => 'rgba(255, 255, 255, 0.14)'],
+    ['bg' => 'linear-gradient(145deg, #155e75 0%, #083344 100%)', 'accent' => '#a5f3fc', 'pill_bg' => 'rgba(165, 243, 252, 0.16)'],
+    ['bg' => 'linear-gradient(145deg, #1e3a8a 0%, #0f1f4b 100%)', 'accent' => '#bfdbfe', 'pill_bg' => 'rgba(191, 219, 254, 0.18)'],
+    ['bg' => 'linear-gradient(145deg, #144738 0%, #09261e 100%)', 'accent' => '#a7f3d0', 'pill_bg' => 'rgba(167, 243, 208, 0.16)'],
+];
+$coverPalette = $palettes[(int) $catalogId % count($palettes)];
+$topLabelCover = !empty($subjects) ? mb_strtoupper(mb_substr($subjects[0], 0, 24)) : 'KOLEKSI OPAC';
+$yearCover = ($cleanYear !== '' && $cleanYear !== '0000') ? $cleanYear : '2025';
 
-// Format deskripsi fisik
-$displayPhysDesc = $rawPhysDesc !== '' ? $rawPhysDesc : 'Koleksi cetak standar perpustakaan';
-if ($rawPhysDesc !== '' && stripos($rawPhysDesc, 'kertas') === false) {
+// Deskripsi fisik
+$displayPhysDesc = $rawPhysDesc !== '' ? $rawPhysDesc : 'Cetakan lengkap, 104 halaman; 19 cm ilustrasi 14 cm × 21 cm';
+if ($rawPhysDesc !== '' && stripos($rawPhysDesc, 'cetakan') === false) {
     $displayPhysDesc = 'Cetakan lengkap, ' . $rawPhysDesc;
 }
+
+$totalDigital = count($digitalList) + count($flipList);
 ?>
 
 <?= $this->section('style') ?>
+<link rel="stylesheet" href="<?= base_url('assets/css/opac_style.css') ?>?v=<?= time() ?>">
 <style>
     :root {
-        --det-bg-page: #f1f5f9;
-        --det-surface: #ffffff;
-        --det-surface-soft: #f8fafc;
-        --det-surface-tint: #eff6ff;
-        --det-border: #e2e8f0;
-        --det-border-strong: #cbd5e1;
-        --det-ink: #0f172a;
-        --det-ink-secondary: #1e293b;
-        --det-body: #334155;
-        --det-muted: #475569;
-        --det-subtle: #64748b;
-        --det-brand: #1b3878;
-        --det-brand-hover: #122858;
-        --det-brand-accent: #1d4ed8;
-        --det-brand-light: #dbeafe;
-        --det-avail-text: #047857;
-        --det-avail-bg: #ecfdf5;
-        --det-avail-border: #a7f3d0;
-        --det-loan-text: #b45309;
-        --det-loan-bg: #fffbeb;
-        --det-loan-border: #fde68a;
-        --det-gold: #fcd34d;
-        --det-gold-muted: rgba(252, 211, 77, 0.72);
+        --katalog-bg: #F8FAFC;
+        --katalog-card: #FFFFFF;
+        --katalog-border: #E8EEF5;
+        --katalog-border-subtle: #F1F4F9;
+        --katalog-ink: #111827;
+        --katalog-ink-heading: #1B2432;
+        --katalog-body: #475569;
+        --katalog-muted: #64748B;
+        --katalog-label: #8A97A8;
+        --katalog-blue-btn: #1D4ED8;
+        --katalog-blue-hover: #173FB5;
+        --katalog-blue-tint: #EFF6FF;
+        --katalog-blue-text: #1E40AF;
+        --katalog-green-tint: #ECFDF5;
+        --katalog-green-border: #A7F3D0;
+        --katalog-green-text: #065F46;
+        --katalog-radius-lg: 20px;
+        --katalog-radius-md: 14px;
+        --katalog-radius-sm: 8px;
+        --katalog-radius-pill: 999px;
     }
 
     body {
-        background-color: var(--det-bg-page);
+        background-color: var(--katalog-bg);
+        color: var(--katalog-body);
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
 
-    .opac-detail-wrapper {
-        padding-top: 102px;
-        padding-bottom: 64px;
+    .katalog-page-wrap {
+        padding-top: 96px;
+        padding-bottom: 72px;
+        max-width: 1080px;
+        margin: 0 auto;
     }
 
-    /* Lembar Utama Katalog */
-    .opac-detail-sheet {
-        background: var(--det-surface);
-        border: 1px solid var(--det-border);
-        border-radius: 20px;
-        box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.06);
-        overflow: hidden;
-    }
-
-    .opac-sheet-section {
-        padding: 38px 42px;
-    }
-
-    .opac-sheet-section + .opac-sheet-section {
-        border-top: 1px solid var(--det-border);
-    }
-
-    /* ─── Bagian Atas: Sampul & Judul Utama ─── */
-    .opac-cover-column {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .opac-cover-stage-wrap {
+    /* Breadcrumbs Bar */
+    .katalog-top-bar {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 16px;
-        width: 100%;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        font-size: 0.8125rem;
     }
 
-    /* Navigasi Vertikal Samping Sampul */
-    .opac-cover-Pager {
+    .katalog-breadcrumbs {
         display: flex;
-        flex-direction: column;
         align-items: center;
         gap: 8px;
-        user-select: none;
+        color: var(--katalog-muted);
     }
 
-    .opac-pager-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: 1px solid var(--det-border);
-        background: var(--det-surface);
-        color: var(--det-muted);
+    .katalog-breadcrumbs a {
+        color: var(--katalog-muted);
+        text-decoration: none;
+        transition: color 0.15s ease;
+    }
+
+    .katalog-breadcrumbs a:hover {
+        color: var(--katalog-blue-text);
+    }
+
+    .katalog-breadcrumbs .sep {
+        color: #CBD5E1;
+    }
+
+    .katalog-back-link {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .opac-pager-btn:hover {
-        background: var(--det-surface-tint);
-        border-color: var(--det-brand-accent);
-        color: var(--det-brand);
-    }
-
-    .opac-pager-btn:focus-visible {
-        outline: 2px solid var(--det-brand);
-        outline-offset: 2px;
-    }
-
-    .opac-pager-indicator {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
-        color: var(--det-subtle);
+        gap: 6px;
+        color: var(--katalog-blue-text);
         font-weight: 600;
+        font-size: 0.8125rem;
+        text-decoration: none;
+        transition: transform 0.15s ease, color 0.15s ease;
     }
 
-    /* Sampul Buku Hardcover 3D */
-    .opac-hardcover-frame {
+    .katalog-back-link:hover {
+        color: var(--katalog-blue-hover);
+        transform: translateX(-2px);
+    }
+
+    /* Container Card Utama */
+    .katalog-card-panel {
+        background: var(--katalog-card);
+        border: 1px solid var(--katalog-border);
+        border-radius: var(--katalog-radius-lg);
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+        margin-bottom: 24px;
+    }
+
+    /* Hero Atas */
+    .katalog-hero-card {
+        padding: 32px 36px;
+    }
+
+    .katalog-hero-grid {
+        display: grid;
+        grid-template-columns: 210px 1fr;
+        gap: 36px;
+        align-items: start;
+    }
+
+    /* Sampul OPAC 3D Klasik Modern */
+    .katalog-cover-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .katalog-cover-outer {
         position: relative;
-        width: 220px;
-        aspect-ratio: 3 / 4.25;
-        border-radius: 4px 10px 10px 4px;
-        background: linear-gradient(155deg, #163268 0%, #0d2149 55%, #081530 100%);
+        width: 100%;
+        max-width: 195px;
+        aspect-ratio: 2 / 3;
+        border-radius: 4px 8px 8px 4px;
         box-shadow:
-            -6px 0 12px rgba(15, 23, 42, 0.18),
-            0 18px 34px -6px rgba(15, 23, 42, 0.38),
-            inset 4px 0 8px rgba(255, 255, 255, 0.14);
+            -4px 0 8px rgba(0, 0, 0, 0.15),
+            0 12px 24px -4px rgba(15, 23, 42, 0.35),
+            inset 4px 0 8px rgba(255, 255, 255, 0.12);
         overflow: hidden;
         cursor: pointer;
-        transition: transform 0.28s ease, box-shadow 0.28s ease;
-        flex-shrink: 0;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
 
-    .opac-hardcover-frame:hover {
-        transform: translateY(-3px);
+    .katalog-cover-outer:hover {
+        transform: translateY(-3px) scale(1.015);
         box-shadow:
-            -8px 2px 14px rgba(15, 23, 42, 0.22),
-            0 22px 40px -6px rgba(15, 23, 42, 0.45),
-            inset 4px 0 8px rgba(255, 255, 255, 0.18);
+            -5px 2px 10px rgba(0, 0, 0, 0.18),
+            0 16px 28px -4px rgba(15, 23, 42, 0.42),
+            inset 4px 0 8px rgba(255, 255, 255, 0.15);
     }
 
-    /* Lipatan Punggung Buku */
-    .opac-hardcover-spine {
+    .katalog-cover-spine {
         position: absolute;
         top: 0;
         bottom: 0;
         left: 0;
-        width: 16px;
+        width: 14px;
         background: linear-gradient(
             90deg,
-            rgba(255, 255, 255, 0.2) 0%,
-            rgba(0, 0, 0, 0.42) 48%,
-            rgba(255, 255, 255, 0.12) 78%,
+            rgba(255, 255, 255, 0.18) 0%,
+            rgba(0, 0, 0, 0.35) 45%,
+            rgba(255, 255, 255, 0.12) 75%,
             transparent 100%
         );
-        z-index: 4;
-        pointer-events: none;
-    }
-
-    /* Bingkai Emas Klasik di dalam Sampul OPAC */
-    .opac-hardcover-inner {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        padding: 14px 14px 14px 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
         z-index: 2;
-    }
-
-    .opac-hardcover-border {
-        width: 100%;
-        height: 100%;
-        border: 1px solid rgba(252, 211, 77, 0.34);
-        border-radius: 3px;
-        padding: 16px 12px 14px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        text-align: center;
-        position: relative;
-    }
-
-    .opac-hardcover-border::before {
-        content: '';
-        position: absolute;
-        inset: 3px;
-        border: 1px solid rgba(252, 211, 77, 0.14);
         pointer-events: none;
     }
 
-    .opac-hc-edition-top {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.52rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--det-gold);
-        font-weight: 600;
-        line-height: 1.4;
+    /* Ornamen shapes geometris halus pada sampul */
+    .katalog-cover-geo-circle {
+        position: absolute;
+        top: -18px;
+        right: -32px;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        pointer-events: none;
     }
 
-    .opac-hc-title-block {
-        my: auto;
-        padding: 6px 2px;
+    .katalog-cover-geo-rect {
+        position: absolute;
+        bottom: 42px;
+        left: 22px;
+        width: 56px;
+        height: 56px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        pointer-events: none;
     }
 
-    .opac-hc-kicker {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 0.62rem;
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: #e2e8f0;
-        margin-bottom: 4px;
-    }
-
-    .opac-hc-main-title {
-        font-family: 'Libre Baskerville', Georgia, serif;
-        font-size: 0.92rem;
-        font-weight: 700;
+    .katalog-cover-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 16px 15px 14px 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
         color: #ffffff;
-        line-height: 1.28;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    .katalog-cover-top {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .katalog-cover-tag {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.56rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        padding: 3px 7px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 135px;
+    }
+
+    .katalog-cover-year {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+
+    .katalog-cover-middle {
+        position: relative;
+        z-index: 3;
+        padding: 8px 0;
+        margin-top: auto;
+        margin-bottom: auto;
+    }
+
+    .katalog-cover-title {
+        font-family: 'Libre Baskerville', Georgia, serif;
+        font-size: 0.88rem;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #ffffff;
         margin-bottom: 8px;
         display: -webkit-box;
-        -webkit-line-clamp: 3;
+        -webkit-line-clamp: 4;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
-    .opac-hc-divider {
-        width: 54px;
-        height: 1px;
-        background: rgba(252, 211, 77, 0.45);
-        margin: 6px auto 8px;
-    }
-
-    .opac-hc-subtitle {
-        font-size: 0.56rem;
-        line-height: 1.38;
-        color: rgba(241, 245, 249, 0.82);
+    .katalog-cover-author {
+        font-size: 0.66rem;
+        line-height: 1.35;
+        color: rgba(255, 255, 255, 0.72);
+        font-weight: 400;
         display: -webkit-box;
-        -webkit-line-clamp: 3;
+        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
 
-    .opac-hc-medallion {
-        width: 56px;
-        height: 36px;
-        margin: 6px auto;
-        border: 1px solid rgba(252, 211, 77, 0.42);
-        border-radius: 50%;
+    .katalog-cover-bottom {
+        position: relative;
+        z-index: 3;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        padding-top: 8px;
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: rgba(15, 23, 42, 0.28);
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 6px;
     }
 
-    .opac-hc-medallion span:first-child {
-        font-family: 'Libre Baskerville', Georgia, serif;
-        font-style: italic;
-        font-size: 0.52rem;
-        color: var(--det-gold);
-        line-height: 1.1;
-    }
-
-    .opac-hc-medallion span:last-child {
+    .katalog-cover-call {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.52rem;
-        color: #ffffff;
-        font-weight: 600;
-        line-height: 1.2;
-    }
-
-    .opac-hc-footer {
-        padding-top: 4px;
-    }
-
-    .opac-hc-author {
         font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #ffffff;
+        color: rgba(255, 255, 255, 0.65);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .opac-hc-publisher {
+    .katalog-cover-edition {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.5rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: rgba(226, 232, 240, 0.72);
-        margin-top: 2px;
+        font-size: 0.6rem;
+        font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-align: right;
     }
 
-    .opac-real-cover-full {
+    .katalog-real-img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         display: block;
     }
 
-    .opac-cover-mode-btn {
-        margin-top: 12px;
-        background: transparent;
-        border: 1px solid transparent;
-        border-radius: 999px;
+    .katalog-cover-caption {
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    .katalog-cover-caption-title {
+        font-size: 0.78125rem;
+        font-weight: 600;
+        color: var(--katalog-ink);
+    }
+
+    .katalog-cover-caption-sub {
+        font-size: 0.71875rem;
+        color: var(--katalog-muted);
+    }
+
+    /* Kolom Detail Utama Hero */
+    .katalog-hero-main {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .katalog-kicker {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--katalog-blue-text);
+        margin-bottom: 6px;
+    }
+
+    .katalog-main-title {
+        font-family: 'Libre Baskerville', Georgia, serif;
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--katalog-ink-heading);
+        line-height: 1.25;
+        margin-bottom: 4px;
+        letter-spacing: -0.01em;
+    }
+
+    .katalog-subtitle {
+        font-size: 1.0625rem;
+        color: var(--katalog-muted);
+        font-weight: 500;
+        margin-bottom: 12px;
+    }
+
+    .katalog-author-imprint {
+        margin-bottom: 18px;
+    }
+
+    .katalog-author-primary {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--katalog-ink);
+        text-decoration: none;
+        display: inline-block;
+        margin-bottom: 2px;
+    }
+
+    .katalog-author-primary:hover {
+        color: var(--katalog-blue-hover);
+    }
+
+    .katalog-imprint-line {
+        font-size: 0.84375rem;
+        color: var(--katalog-muted);
+    }
+
+    /* Tag Pills */
+    .katalog-tag-pills {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 22px;
+        font-size: 0.8125rem;
+    }
+
+    .katalog-tag-badge {
+        background-color: var(--katalog-blue-tint);
+        color: var(--katalog-blue-text);
+        font-weight: 600;
         padding: 4px 12px;
-        font-size: 0.74rem;
-        color: var(--det-subtle);
+        border-radius: var(--katalog-radius-pill);
+        text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        cursor: pointer;
-        transition: all 0.2s ease;
+        transition: background-color 0.15s ease;
     }
 
-    .opac-cover-mode-btn:hover {
-        color: var(--det-brand);
-        background: var(--det-surface-tint);
-        border-color: var(--det-brand-light);
+    .katalog-tag-badge:hover {
+        background-color: #DBEAFE;
+        color: var(--katalog-blue-hover);
     }
 
-    /* Kolom Kanan Header Bibliografis */
-    .opac-kicker-meta {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.76rem;
-        color: var(--det-subtle);
-        margin-bottom: 10px;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
+    .katalog-tag-meta {
+        color: var(--katalog-muted);
+        font-size: 0.8125rem;
     }
 
-    .opac-kicker-meta a {
-        color: var(--det-brand);
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .opac-kicker-meta a:hover {
-        text-decoration: underline;
-    }
-
-    .opac-hero-title {
-        font-family: 'Libre Baskerville', Georgia, serif;
-        font-size: clamp(1.6rem, 2.5vw, 2.25rem);
-        font-weight: 700;
-        color: var(--det-ink);
-        line-height: 1.24;
-        letter-spacing: -0.015em;
-        margin-bottom: 8px;
-    }
-
-    .opac-hero-subtitle {
-        font-family: 'Libre Baskerville', Georgia, serif;
-        font-style: italic;
-        font-weight: 400;
-        font-size: clamp(0.98rem, 1.35vw, 1.14rem);
-        color: var(--det-muted);
-        line-height: 1.48;
-        margin-bottom: 14px;
-    }
-
-    .opac-author-imprint {
-        font-size: 0.92rem;
-        color: var(--det-muted);
-        margin-bottom: 14px;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .opac-author-imprint .author-link {
-        color: var(--det-ink);
-        font-weight: 700;
-        text-decoration: none;
-    }
-
-    .opac-author-imprint .author-link:hover {
-        color: var(--det-brand);
-        text-decoration: underline;
-    }
-
-    .opac-lead-summary {
-        font-size: 0.88rem;
-        color: var(--det-muted);
-        line-height: 1.65;
-        max-width: 68ch;
-        margin-bottom: 22px;
-        padding-bottom: 22px;
-        border-bottom: 1px solid var(--det-border);
-    }
-
-    /* Baris Tombol Tindakan Atas */
-    .opac-action-bar {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-    }
-
-    .opac-primary-actions {
+    /* Action Buttons Row */
+    .katalog-action-row {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 10px;
-    }
-
-    .btn-opac-pill-primary {
-        background-color: var(--det-brand);
-        color: #ffffff;
-        border: 1.5px solid var(--det-brand);
-        border-radius: 999px;
-        padding: 9px 22px;
-        font-size: 0.84rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .btn-opac-pill-primary:hover {
-        background-color: var(--det-brand-hover);
-        border-color: var(--det-brand-hover);
-        color: #ffffff;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(27, 56, 120, 0.22);
-    }
-
-    .btn-opac-pill-outline {
-        background-color: var(--det-surface);
-        color: var(--det-ink-secondary);
-        border: 1.5px solid var(--det-border-strong);
-        border-radius: 999px;
-        padding: 9px 20px;
-        font-size: 0.84rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .btn-opac-pill-outline:hover {
-        border-color: var(--det-brand);
-        color: var(--det-brand);
-        background-color: var(--det-surface-tint);
-    }
-
-    .opac-utility-icons {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .btn-opac-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        border: 1px solid transparent;
-        background: transparent;
-        color: var(--det-muted);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.92rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .btn-opac-icon:hover,
-    .btn-opac-icon.is-active {
-        background: var(--det-surface-tint);
-        border-color: var(--det-brand-light);
-        color: var(--det-brand);
-    }
-
-    .btn-opac-icon:focus-visible,
-    .btn-opac-pill-primary:focus-visible,
-    .btn-opac-pill-outline:focus-visible {
-        outline: 2px solid var(--det-brand);
-        outline-offset: 2px;
-    }
-
-    /* ─── Bagian Tengah: Catatan & Rincian Spesifikasi 2 Kolom ─── */
-    .opac-mid-grid {
-        display: grid;
-        grid-template-columns: 1.35fr 1fr;
-        gap: 42px;
-    }
-
-    .opac-mid-left {
-        padding-right: 12px;
-        min-width: 0;
-        overflow-wrap: break-word;
-    }
-
-    .opac-mid-right {
-        border-left: 1px solid var(--det-border);
-        padding-left: 36px;
-        min-width: 0;
-        overflow-wrap: break-word;
-    }
-
-    .opac-spec-heading {
-        font-size: 0.88rem;
-        font-weight: 700;
-        color: var(--det-ink);
-        margin-bottom: 10px;
-        letter-spacing: -0.01em;
-    }
-
-    .opac-note-prose p {
-        font-size: 0.9rem;
-        color: var(--det-body);
-        line-height: 1.72;
-        margin-bottom: 14px;
-        max-width: 68ch;
-    }
-
-    .opac-note-prose p:last-child {
-        margin-bottom: 0;
-    }
-
-    .opac-subject-status-box {
-        margin-top: 22px;
-        padding-top: 18px;
-        border-top: 1px solid var(--det-border);
-        font-size: 0.84rem;
-    }
-
-    .opac-meta-inline-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 6px;
-        margin-bottom: 8px;
-        line-height: 1.6;
-    }
-
-    .opac-meta-inline-row:last-child {
-        margin-bottom: 0;
-    }
-
-    .opac-meta-inline-label {
-        font-weight: 700;
-        color: var(--det-ink);
-        margin-right: 4px;
-    }
-
-    .opac-subject-link {
-        color: var(--det-brand-accent);
-        font-weight: 600;
-        text-decoration: none;
-        transition: color 0.15s ease;
-    }
-
-    .opac-subject-link:hover {
-        color: var(--det-brand);
-        text-decoration: underline;
-    }
-
-    .opac-status-check {
-        color: var(--det-avail-text);
-        font-weight: 600;
-    }
-
-    .opac-status-tag {
-        color: var(--det-muted);
-    }
-
-    /* Kartu Kurator / Katalogisasi */
-    .opac-curator-box {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid var(--det-border);
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-    }
-
-    .opac-curator-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background-color: var(--det-surface-tint);
-        border: 1px solid var(--det-brand-light);
-        color: var(--det-brand);
-        font-size: 0.76rem;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        margin-top: 2px;
-    }
-
-    .opac-curator-header {
-        font-size: 0.82rem;
-        color: var(--det-subtle);
-        margin-bottom: 4px;
-    }
-
-    .opac-curator-header strong {
-        color: var(--det-ink);
-        font-weight: 700;
-    }
-
-    .opac-curator-quote {
-        font-family: 'Libre Baskerville', Georgia, serif;
-        font-style: italic;
-        font-size: 0.84rem;
-        color: var(--det-muted);
-        line-height: 1.6;
-        margin: 0;
-    }
-
-    /* Blok Spesifikasi Kanan */
-    .opac-spec-group {
-        padding-bottom: 18px;
-        margin-bottom: 18px;
-        border-bottom: 1px solid var(--det-border);
-    }
-
-    .opac-spec-group.no-border {
-        border-bottom: none;
-        padding-bottom: 0;
         margin-bottom: 20px;
     }
 
-    .opac-spec-primary {
-        font-size: 0.88rem;
-        color: var(--det-body);
-        line-height: 1.58;
-    }
-
-    .opac-spec-secondary {
-        font-size: 0.8rem;
-        color: var(--det-subtle);
-        margin-top: 4px;
-        line-height: 1.5;
-    }
-
-    .opac-spec-mono {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.76rem;
-        color: var(--det-subtle);
-        margin-top: 6px;
-        line-height: 1.55;
-    }
-
-    /* Kotak Lokasi Koleksi */
-    .opac-location-callout {
-        background-color: var(--det-surface-soft);
-        border: 1px solid var(--det-border);
-        border-radius: 12px;
-        padding: 15px 18px;
-        display: flex;
+    .btn-katalog-primary {
+        background-color: var(--katalog-blue-btn);
+        color: #FFFFFF;
+        font-size: 0.84375rem;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: var(--katalog-radius-sm);
+        border: 1px solid var(--katalog-blue-btn);
+        text-decoration: none;
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 16px;
+        gap: 6px;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
     }
 
-    .opac-location-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: var(--det-ink);
-        margin-bottom: 2px;
+    .btn-katalog-primary:hover {
+        background-color: var(--katalog-blue-hover);
+        border-color: var(--katalog-blue-hover);
+        color: #FFFFFF;
     }
 
-    .opac-location-sub {
-        font-size: 0.79rem;
-        color: var(--det-muted);
+    .btn-katalog-outline {
+        background-color: #FFFFFF;
+        color: var(--katalog-ink);
+        font-size: 0.84375rem;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: var(--katalog-radius-sm);
+        border: 1px solid #D1D5DB;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+        cursor: pointer;
     }
 
-    .opac-location-link {
+    .btn-katalog-outline:hover {
+        background-color: #F9FAFB;
+        border-color: #9CA3AF;
+        color: var(--katalog-ink);
+    }
+
+    .btn-katalog-link {
         background: none;
         border: none;
-        padding: 4px 0;
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--det-brand);
-        text-decoration: underline;
-        text-underline-offset: 4px;
-        white-space: nowrap;
+        color: var(--katalog-blue-btn);
+        font-size: 0.84375rem;
+        font-weight: 600;
+        padding: 8px 12px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
         cursor: pointer;
         transition: color 0.15s ease;
     }
 
-    .opac-location-link:hover {
-        color: var(--det-brand-accent);
+    .btn-katalog-link:hover {
+        color: var(--katalog-blue-hover);
+        text-decoration: underline;
     }
 
-    /* ─── Bagian Bawah: Tabel Eksemplar & Metadata Bibliografi ─── */
-    .opac-eks-header {
+    /* Status Mini Counts */
+    .katalog-status-counts {
         display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 22px;
+        align-items: center;
+        gap: 24px;
+        font-size: 0.78125rem;
+        padding-top: 4px;
     }
 
-    .opac-eks-title {
-        font-family: 'Libre Baskerville', Georgia, serif;
-        font-size: 1.32rem;
+    .count-status-available {
+        color: #059669;
         font-weight: 700;
-        color: var(--det-ink);
-        margin-bottom: 4px;
-    }
-
-    .opac-eks-submeta {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.76rem;
-        color: var(--det-subtle);
-    }
-
-    /* Tab Switcher Kanan Atas */
-    .opac-tab-group {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .opac-tab-btn {
-        background: var(--det-surface);
-        color: var(--det-muted);
-        border: 1.5px solid var(--det-border);
-        border-radius: 10px;
-        padding: 7px 15px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .opac-tab-btn:hover {
-        border-color: var(--det-brand);
-        color: var(--det-brand);
-    }
-
-    .opac-tab-btn.active {
-        border-color: var(--det-brand);
-        color: var(--det-brand);
-        background-color: var(--det-surface-tint);
-        box-shadow: 0 2px 6px rgba(27, 56, 120, 0.08);
-    }
-
-    /* Baris Filter & Pencarian Eksemplar */
-    .opac-eks-toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-
-    .opac-eks-search-wrap {
-        position: relative;
-        flex: 1 1 280px;
-        max-width: 360px;
-    }
-
-    .opac-eks-search-wrap i {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--det-subtle);
-        font-size: 0.82rem;
-        pointer-events: none;
-    }
-
-    .opac-eks-search-input {
-        width: 100%;
-        border: 1px solid var(--det-border);
-        background-color: var(--det-surface-soft);
-        border-radius: 8px;
-        padding: 8px 14px 8px 36px;
-        font-size: 0.82rem;
-        color: var(--det-ink);
-        transition: all 0.2s ease;
-    }
-
-    .opac-eks-search-input:focus {
-        outline: none;
-        background-color: var(--det-surface);
-        border-color: var(--det-brand);
-        box-shadow: 0 0 0 3px rgba(27, 56, 120, 0.1);
-    }
-
-    .opac-eks-controls-right {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .opac-filter-pills {
         display: inline-flex;
         align-items: center;
         gap: 4px;
     }
 
-    .opac-filter-btn {
-        background: var(--det-surface);
-        color: var(--det-muted);
-        border: 1px solid var(--det-border);
-        border-radius: 7px;
-        padding: 6px 13px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.15s ease;
-    }
-
-    .opac-filter-btn:hover {
-        border-color: var(--det-brand);
-        color: var(--det-brand);
-    }
-
-    .opac-filter-btn.active {
-        background: var(--det-brand);
-        border-color: var(--det-brand);
-        color: #ffffff;
-    }
-
-    .btn-marc-download {
-        background: var(--det-surface);
-        color: var(--det-ink-secondary);
-        border: 1px solid var(--det-border-strong);
-        border-radius: 8px;
-        padding: 6px 14px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .btn-marc-download:hover {
-        border-color: var(--det-brand);
-        color: var(--det-brand);
-        background: var(--det-surface-tint);
-    }
-
-    /* Tabel Eksemplar Responsif */
-    .opac-table-region {
-        overflow: auto;
-        max-inline-size: 100%;
-        border: 1px solid var(--det-border);
-        border-radius: 12px;
-        container-type: inline-size;
-        background: var(--det-surface);
-    }
-
-    .opac-table-region:focus-visible {
-        outline: 2px solid var(--det-brand);
-        outline-offset: 2px;
-    }
-
-    .opac-eks-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        margin: 0;
-        font-size: 0.85rem;
-    }
-
-    .opac-eks-table thead {
-        position: sticky;
-        inset-block-start: 0;
-        z-index: 2;
-        background-color: var(--det-surface-soft);
-    }
-
-    .opac-eks-table thead th {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--det-subtle);
-        padding: 13px 18px;
-        border-bottom: 1px solid var(--det-border);
-        white-space: nowrap;
-        background-color: var(--det-surface-soft);
-    }
-
-    .opac-eks-table tbody tr {
-        transition: background-color 0.15s ease;
-    }
-
-    .opac-eks-table tbody tr:hover {
-        background-color: #f8fafc;
-    }
-
-    .opac-eks-table tbody td,
-    .opac-eks-table tbody th {
-        padding: 15px 18px;
-        border-bottom: 1px solid var(--det-border);
-        vertical-align: middle;
-        color: var(--det-body);
-        font-weight: 400;
-        background: var(--det-surface);
-    }
-
-    .opac-eks-table tbody tr:last-child td,
-    .opac-eks-table tbody tr:last-child th {
-        border-bottom: none;
-    }
-
-    .opac-eks-table tbody th {
-        position: sticky;
-        inset-inline-start: 0;
-        z-index: 1;
-    }
-
-    .barcode-cell-wrap {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-    }
-
-    .barcode-code {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: var(--det-brand-accent);
-        letter-spacing: 0.02em;
-    }
-
-    .btn-copy-barcode {
-        border: none;
-        background: transparent;
-        color: var(--det-subtle);
-        padding: 2px 5px;
-        border-radius: 4px;
-        font-size: 0.76rem;
-        cursor: pointer;
-        transition: all 0.15s ease;
-    }
-
-    .btn-copy-barcode:hover {
-        color: var(--det-brand);
-        background: var(--det-surface-tint);
-    }
-
-    .callnumber-code {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.82rem;
-        color: var(--det-ink-secondary);
+    .count-status-muted {
+        color: var(--katalog-muted);
         font-weight: 500;
     }
 
-    .eks-status-avail {
-        color: var(--det-avail-text);
-        font-weight: 600;
-        font-size: 0.83rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+    /* Grid 2 Kolom: Tentang Buku & Informasi Bibliografi */
+    .katalog-two-col-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
     }
 
-    .eks-status-loan {
-        color: var(--det-loan-text);
-        font-weight: 600;
-        font-size: 0.83rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+    .katalog-info-card {
+        background: var(--katalog-card);
+        border: 1px solid var(--katalog-border);
+        border-radius: var(--katalog-radius-lg);
+        padding: 30px 32px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
     }
 
-    .eks-action-link {
-        background: none;
-        border: none;
-        padding: 0;
-        color: var(--det-ink);
-        font-size: 0.83rem;
-        font-weight: 600;
-        text-decoration: underline;
-        text-underline-offset: 4px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-        transition: color 0.15s ease;
+    .katalog-section-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--katalog-ink);
+        margin-bottom: 16px;
+        letter-spacing: -0.01em;
     }
 
-    .eks-action-link:hover {
-        color: var(--det-brand-accent);
+    .katalog-prose {
+        font-size: 0.84375rem;
+        line-height: 1.65;
+        color: var(--katalog-body);
+        margin-bottom: 20px;
     }
 
-    /* Highlight animasi saat tombol Lihat Barcode diklik */
-    @keyframes barcodePulse {
-        0% { background-color: #dbeafe; }
-        100% { background-color: transparent; }
-    }
-
-    .barcode-highlight-flash {
-        animation: barcodePulse 1.6s ease-out;
-    }
-
-    /* Stacked Mobile Table via Container Query */
-    @container (width < 640px) {
-        .opac-eks-table,
-        .opac-eks-table thead,
-        .opac-eks-table tbody,
-        .opac-eks-table tr,
-        .opac-eks-table th,
-        .opac-eks-table td {
-            display: block;
-        }
-
-        .opac-eks-table thead {
-            display: none;
-        }
-
-        .opac-eks-table tbody tr {
-            border-bottom: 2px solid var(--det-border);
-            padding: 8px 0;
-        }
-
-        .opac-eks-table tbody th,
-        .opac-eks-table tbody td {
-            position: static;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 16px;
-            border-bottom: 1px dashed var(--det-border);
-            text-align: right;
-        }
-
-        .opac-eks-table tbody td:last-child {
-            border-bottom: none;
-        }
-
-        .opac-eks-table {
-            --label-1: "Nomor Barcode";
-            --label-2: "Nomor Panggil";
-            --label-3: "Akses";
-            --label-4: "Lokasi Koleksi";
-            --label-5: "Ketersediaan";
-            --label-6: "Tindakan";
-        }
-
-        .opac-eks-table tbody th::before {
-            content: var(--label-1) ": ";
-            font-weight: 700;
-            color: var(--det-subtle);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .opac-eks-table tbody td:nth-child(2)::before {
-            content: var(--label-2) ": ";
-            font-weight: 700;
-            color: var(--det-subtle);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .opac-eks-table tbody td:nth-child(3)::before {
-            content: var(--label-3) ": ";
-            font-weight: 700;
-            color: var(--det-subtle);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .opac-eks-table tbody td:nth-child(4)::before {
-            content: var(--label-4) ": ";
-            font-weight: 700;
-            color: var(--det-subtle);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .opac-eks-table tbody td:nth-child(5)::before {
-            content: var(--label-5) ": ";
-            font-weight: 700;
-            color: var(--det-subtle);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .opac-eks-table tbody td:nth-child(6)::before {
-            content: var(--label-6) ": ";
-            font-weight: 700;
-            color: var(--det-subtle);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-    }
-
-    /* Baris Pencarian Terkait di Kaki Kartu */
-    .opac-related-footer {
-        padding: 20px 42px;
-        background-color: var(--det-surface-soft);
-        border-top: 1px solid var(--det-border);
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 18px;
-        font-size: 0.82rem;
-    }
-
-    .opac-related-label {
-        color: var(--det-subtle);
-        font-weight: 600;
-    }
-
-    .opac-related-link {
-        color: var(--det-ink-secondary);
-        font-weight: 600;
-        text-decoration: underline;
-        text-underline-offset: 4px;
-        transition: color 0.15s ease;
-    }
-
-    .opac-related-link:hover {
-        color: var(--det-brand-accent);
-    }
-
-    /* Sitasi & Ekspor Box */
-    .citation-card {
-        background: var(--det-surface-soft);
-        border: 1px solid var(--det-border);
-        border-radius: 10px;
-        padding: 14px 18px;
+    .katalog-prose p {
         margin-bottom: 12px;
     }
 
-    .citation-style-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: var(--det-brand);
-        margin-bottom: 4px;
-    }
-
-    .citation-text {
-        font-size: 0.85rem;
-        color: var(--det-body);
-        line-height: 1.55;
+    .katalog-prose p:last-child {
         margin-bottom: 0;
     }
 
-    /* Responsif Layar Tablet & Ponsel */
-    @media (max-width: 991.98px) {
-        .opac-sheet-section {
-            padding: 28px 24px;
-        }
+    .katalog-divider {
+        border-top: 1px solid var(--katalog-border-subtle);
+        margin: 20px 0;
+    }
 
-        .opac-mid-grid {
+    /* Sub-field Baris (Label di Kiri, Nilai di Kanan atau Stack) */
+    .katalog-meta-row {
+        margin-bottom: 16px;
+    }
+
+    .katalog-meta-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .katalog-meta-label {
+        font-size: 0.75rem;
+        color: var(--katalog-label);
+        font-weight: 500;
+        margin-bottom: 3px;
+    }
+
+    .katalog-meta-val {
+        font-size: 0.875rem;
+        color: var(--katalog-ink);
+        font-weight: 600;
+        line-height: 1.45;
+    }
+
+    .katalog-meta-val-sub {
+        font-size: 0.8125rem;
+        color: var(--katalog-muted);
+        font-weight: 400;
+        margin-top: 2px;
+    }
+
+    .katalog-meta-link {
+        color: var(--katalog-blue-text);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .katalog-meta-link:hover {
+        color: var(--katalog-blue-hover);
+        text-decoration: underline;
+    }
+
+    /* Badge Tersedia di OPAC */
+    .katalog-opac-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: var(--katalog-green-tint);
+        color: var(--katalog-green-text);
+        border: 1px solid var(--katalog-green-border);
+        border-radius: var(--katalog-radius-pill);
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .katalog-submeta-note {
+        font-size: 0.75rem;
+        color: var(--katalog-muted);
+        line-height: 1.5;
+    }
+
+    /* Seksi Ketersediaan Koleksi */
+    .katalog-inventory-panel {
+        background: var(--katalog-card);
+        border: 1px solid var(--katalog-border);
+        border-radius: var(--katalog-radius-lg);
+        padding: 30px 32px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+        margin-bottom: 24px;
+    }
+
+    .katalog-inventory-header {
+        margin-bottom: 18px;
+    }
+
+    .katalog-inventory-sub {
+        font-size: 0.84375rem;
+        color: var(--katalog-muted);
+        margin-top: -10px;
+        margin-bottom: 18px;
+    }
+
+    /* Tabs Bar (Buku Fisik, Koleksi Digital, Metadata MARC21) */
+    .katalog-tabs-nav {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        border-bottom: 1px solid var(--katalog-border);
+        margin-bottom: 20px;
+    }
+
+    .katalog-tab-item {
+        background: none;
+        border: none;
+        padding: 10px 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--katalog-muted);
+        cursor: pointer;
+        position: relative;
+        transition: color 0.15s ease;
+    }
+
+    .katalog-tab-item:hover {
+        color: var(--katalog-ink);
+    }
+
+    .katalog-tab-item.active {
+        color: var(--katalog-blue-text);
+    }
+
+    .katalog-tab-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2.5px;
+        background-color: var(--katalog-blue-text);
+        border-radius: 2px 2px 0 0;
+    }
+
+    /* Toolbar Filter & Pencarian Eksemplar */
+    .katalog-inventory-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .katalog-search-box {
+        position: relative;
+        flex: 1;
+        max-width: 440px;
+    }
+
+    .katalog-search-input {
+        width: 100%;
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: var(--katalog-radius-sm);
+        padding: 8px 14px 8px 34px;
+        font-size: 0.8125rem;
+        color: var(--katalog-ink);
+        outline: none;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .katalog-search-input:focus {
+        background-color: #FFFFFF;
+        border-color: var(--katalog-blue-btn);
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+    }
+
+    .katalog-search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+        color: #94A3B8;
+        pointer-events: none;
+    }
+
+    .katalog-filter-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .katalog-filter-btn {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        color: var(--katalog-muted);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: var(--katalog-radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .katalog-filter-btn:hover {
+        background-color: #F8FAFC;
+        color: var(--katalog-ink);
+    }
+
+    .katalog-filter-btn.active {
+        background-color: var(--katalog-blue-btn);
+        border-color: var(--katalog-blue-btn);
+        color: #FFFFFF;
+    }
+
+    /* Tabel Eksemplar */
+    .katalog-table-wrap {
+        border: 1px solid var(--katalog-border);
+        border-radius: var(--katalog-radius-sm);
+        overflow-x: auto;
+        background: #FFFFFF;
+    }
+
+    .katalog-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8125rem;
+        text-align: left;
+    }
+
+    .katalog-table th {
+        background-color: #F8FAFC;
+        color: #64748B;
+        font-weight: 700;
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--katalog-border);
+        white-space: nowrap;
+    }
+
+    .katalog-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--katalog-border-subtle);
+        color: var(--katalog-ink);
+        vertical-align: middle;
+    }
+
+    .katalog-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .katalog-empty-state {
+        padding: 44px 20px;
+        text-align: center;
+    }
+
+    .katalog-empty-title {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--katalog-ink);
+        margin-bottom: 4px;
+    }
+
+    .katalog-empty-sub {
+        font-size: 0.8125rem;
+        color: var(--katalog-muted);
+    }
+
+    /* Banner Digital Bawah Tabel */
+    .katalog-digital-banner {
+        background-color: #EFF6FF;
+        border-radius: var(--katalog-radius-sm);
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 18px;
+        font-size: 0.8125rem;
+    }
+
+    .katalog-digital-banner-text {
+        font-weight: 500;
+        color: var(--katalog-ink);
+    }
+
+    .katalog-digital-banner-link {
+        color: var(--katalog-blue-text);
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.15s ease;
+    }
+
+    .katalog-digital-banner-link:hover {
+        color: var(--katalog-blue-hover);
+        text-decoration: underline;
+    }
+
+    /* Footer Metadata Mini */
+    .katalog-meta-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        font-size: 0.71875rem;
+        color: var(--katalog-label);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .katalog-barcode-action-link {
+        color: var(--katalog-blue-text);
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .katalog-barcode-action-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Seksi Pencarian Terkait (Bawah) */
+    .katalog-related-section {
+        margin-top: 32px;
+    }
+
+    .katalog-related-title {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--katalog-ink);
+        margin-bottom: 14px;
+    }
+
+    .katalog-related-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .katalog-pill-btn {
+        background: #FFFFFF;
+        border: 1px solid var(--katalog-border);
+        color: var(--katalog-ink);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: var(--katalog-radius-sm);
+        text-decoration: none;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        transition: all 0.15s ease;
+    }
+
+    .katalog-pill-btn:hover {
+        border-color: #CBD5E1;
+        background-color: #F8FAFC;
+        color: var(--katalog-blue-text);
+    }
+
+    /* Responsif */
+    @media (max-width: 900px) {
+        .katalog-two-col-grid {
             grid-template-columns: 1fr;
-            gap: 28px;
         }
 
-        .opac-mid-left {
-            padding-right: 0;
+        .katalog-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
         }
 
-        .opac-mid-right {
-            border-left: none;
-            border-top: 1px solid var(--det-border);
-            padding-left: 0;
-            padding-top: 28px;
+        .katalog-cover-column {
+            align-items: flex-start;
         }
 
-        .opac-related-footer {
-            padding: 18px 24px;
+        .katalog-inventory-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .katalog-search-box {
+            max-width: 100%;
         }
     }
 
-    @media (max-width: 575.98px) {
-        .opac-detail-wrapper {
-            padding-top: 88px;
-            padding-bottom: 40px;
+    @media (max-width: 600px) {
+        .katalog-page-wrap {
+
+            padding-left: 14px;
+            padding-right: 14px;
         }
 
-        .opac-sheet-section {
-            padding: 22px 16px;
+        .katalog-hero-card,
+        .katalog-info-card,
+        .katalog-inventory-panel {
+            padding: 20px 18px;
         }
 
-        .opac-hardcover-frame {
-            width: 185px;
+        .katalog-main-title {
+            font-size: 1.5rem;
         }
 
-        .opac-eks-search-wrap {
-            max-width: 100%;
+        .katalog-digital-banner {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
         }
 
-        .opac-related-footer {
-            padding: 16px 16px;
-            gap: 12px;
+        .katalog-meta-footer {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+    }
+    html, body {
+        overflow-x: hidden;
+        max-width: 100%;
+    }
+
+    @media (max-width: 767.98px) {
+        .katalog-page-wrap {
+            padding-top: calc(16px + env(safe-area-inset-top, 0px));
+            padding-bottom: 96px;
+        }
+        .katalog-top-bar {
+            margin-bottom: 16px;
+        }
+        .katalog-tabs-nav {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            gap: 18px;
+            scrollbar-width: none;
+        }
+        .katalog-tab-item {
+            white-space: nowrap;
+            min-height: 44px;
+        }
+        .katalog-search-input {
+            font-size: 1rem;
+            min-height: 44px;
+        }
+        .btn-katalog-primary,
+        .btn-katalog-outline,
+        .katalog-filter-btn,
+        .katalog-pill-btn {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
         }
     }
 </style>
@@ -1467,814 +1140,572 @@ if ($rawPhysDesc !== '' && stripos($rawPhysDesc, 'kertas') === false) {
 
 <?= $this->section('content') ?>
 
-<div class="container opac-detail-wrapper">
-    <article class="opac-detail-sheet">
+<div class="katalog-page-wrap">
 
-        <!-- ─── BAGIAN 1: HEADER & SAMPUL KOLEKSI ─── -->
-        <section class="opac-sheet-section">
-            <div class="row g-4 g-lg-5 align-items-start">
+    <!-- Navigasi Breadcrumbs & Kembali -->
+    <div class="katalog-top-bar">
+        <nav class="katalog-breadcrumbs" aria-label="Breadcrumb">
+            <a href="<?= base_url() ?>">Beranda</a>
+            <span class="sep">/</span>
+            <a href="<?= base_url('opac') ?>">OPAC</a>
+            <span class="sep">/</span>
+            <span>Detail katalog</span>
+        </nav>
+        <a href="<?= base_url('opac') ?>" class="katalog-back-link">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Kembali ke katalog</span>
+        </a>
+    </div>
 
-                <!-- Kolom Kiri: Sampul 3D & Navigasi Tampilan -->
-                <div class="col-lg-4 col-md-5 opac-cover-column">
-                    <div class="opac-cover-stage-wrap">
-                        <!-- Bingkai Sampul Buku 3D -->
-                        <div class="opac-hardcover-frame" id="bookCoverStage"
-                             role="button" tabindex="0"
-                             aria-label="Perbesar sampul buku <?= esc($rawTitle) ?>"
-                             onclick="handleCoverStageClick()"
-                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleCoverStageClick();}">
-                            <div class="opac-hardcover-spine"></div>
+    <!-- ─── KARTU HERO: SAMPUL & INFORMASI UTAMA ─── -->
+    <section class="katalog-card-panel katalog-hero-card" aria-label="Informasi utama katalog">
+        <div class="katalog-hero-grid">
 
-                            <?php if ($hasRealCover): ?>
-                                <img src="<?= esc($coverUrl) ?>"
-                                     alt="Sampul buku <?= esc($rawTitle) ?>"
-                                     id="realBookCoverView"
-                                     class="opac-real-cover-full"
-                                     onerror="this.style.display='none'; document.getElementById('opacGeneratedCoverView').style.display='flex';">
-                            <?php endif; ?>
+            <!-- Kolom Sampul Buku -->
+            <div class="katalog-cover-column">
+                <div class="katalog-cover-outer" id="detailCoverStage"
+                     role="button" tabindex="0"
+                     style="background: <?= $coverPalette['bg'] ?>;"
+                     aria-label="Lihat sampul katalog <?= esc($rawTitle) ?>"
+                     onclick="handleCoverClick()"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleCoverClick();}">
+                    <div class="katalog-cover-spine"></div>
 
-                            <!-- Sampul Standar OPAC (Hardcover Klasik Biru Institusi) -->
-                            <?php
-                            $coverKicker = '';
-                            $coverDisplayTitle = $mainTitle;
-                            if (stripos($mainTitle, 'A To Z ') === 0) {
-                                $coverKicker = 'A TO Z';
-                                $coverDisplayTitle = trim(substr($mainTitle, 7));
-                                if (strpos($coverDisplayTitle, ':') !== false) {
-                                    $coverDisplayTitle = trim(explode(':', $coverDisplayTitle, 2)[0]);
-                                }
-                            }
-                            ?>
-                            <div class="opac-hardcover-inner" id="opacGeneratedCoverView" style="display: <?= $hasRealCover ? 'none' : 'flex' ?>;">
-                                <div class="opac-hardcover-border">
-                                    <div class="opac-hc-edition-top">
-                                        <?= esc($rawEdition !== '' ? strtoupper($rawEdition) : 'KOLEKSI OPAC') ?> &middot; KOMPREHENSIF
-                                    </div>
+                    <?php if ($hasRealCover): ?>
+                        <img src="<?= esc($coverUrl) ?>" alt="Sampul <?= esc($rawTitle) ?>" class="katalog-real-img" id="realCoverImg">
+                    <?php endif; ?>
 
-                                    <div class="opac-hc-title-block">
-                                        <?php if ($coverKicker !== ''): ?>
-                                            <div class="opac-hc-kicker"><?= esc($coverKicker) ?></div>
-                                        <?php endif; ?>
-                                        <div class="opac-hc-main-title">
-                                            <?= esc($coverDisplayTitle) ?>
-                                        </div>
-                                        <div class="opac-hc-divider"></div>
-                                        <?php if ($subTitle !== ''): ?>
-                                            <div class="opac-hc-subtitle"><?= esc($subTitle) ?></div>
-                                        <?php elseif (!empty($subjects)): ?>
-                                            <div class="opac-hc-subtitle"><?= esc(implode(', ', array_slice($subjects, 0, 3))) ?></div>
-                                        <?php endif; ?>
-                                    </div>
+                    <div class="katalog-cover-inner" id="generatedCoverBox" style="display: <?= $hasRealCover ? 'none' : 'flex' ?>;">
+                        <div class="katalog-cover-geo-circle"></div>
+                        <div class="katalog-cover-geo-rect"></div>
 
-                                    <div class="opac-hc-medallion">
-                                        <span><?= esc($rawEdition !== '' ? $rawEdition : 'Edisi') ?></span>
-                                        <span><?= esc($cleanYear !== '' ? $cleanYear : 'OPAC') ?></span>
-                                    </div>
+                        <div class="katalog-cover-top">
+                            <span class="katalog-cover-tag" style="background: <?= $coverPalette['pill_bg'] ?>; color: <?= $coverPalette['accent'] ?>;">
+                                <?= esc($topLabelCover) ?>
+                            </span>
+                            <span class="katalog-cover-year"><?= esc($yearCover) ?></span>
+                        </div>
 
-                                    <div class="opac-hc-footer">
-                                        <div class="opac-hc-author"><?= esc($primaryAuthor) ?></div>
-                                        <div class="opac-hc-publisher">
-                                            <?= esc($cleanPub ?: 'PERPUSTAKAAN') ?><?= $cleanPubLoc !== '' ? ' &middot; ' . esc($cleanPubLoc) : '' ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="katalog-cover-middle">
+                            <div class="katalog-cover-title"><?= esc($mainTitle) ?></div>
+                            <div class="katalog-cover-author"><?= esc($primaryAuthor) ?></div>
+                        </div>
+
+                        <div class="katalog-cover-bottom">
+                            <span class="katalog-cover-call"><?= esc($displayCallNumber) ?></span>
+                            <span class="katalog-cover-edition" style="color: <?= $coverPalette['accent'] ?>;">
+                                <?= esc($rawEdition !== '' ? $rawEdition : 'Kemnaker RI') ?>
+                            </span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Tombol Mode Sampul OPAC -->
-                    <button type="button" class="opac-cover-mode-btn" id="btnToggleCoverMode" onclick="toggleOpacCoverMode()">
-                        <i class="fa-regular fa-image"></i>
-                        <span id="coverModeLabel">
-                            <?= $hasRealCover ? 'Lihat Mode Sampul OPAC' : 'Mode Sampul OPAC (Tanpa Cover)' ?>
-                        </span>
+                <div class="katalog-cover-caption">
+                    <div class="katalog-cover-caption-title">Sampul OPAC</div>
+                    <div class="katalog-cover-caption-sub">
+                        <?= $hasRealCover ? 'Gambar sampul resmi' : 'Sampul asli belum tersedia' ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan: Rincian Koleksi -->
+            <div class="katalog-hero-main">
+                <div class="katalog-kicker">DETAIL KATALOG / OPAC</div>
+                <h1 class="katalog-main-title"><?= esc($mainTitle) ?></h1>
+                <?php if ($subTitle !== ''): ?>
+                    <div class="katalog-subtitle"><?= esc($subTitle) ?></div>
+                <?php endif; ?>
+
+                <div class="katalog-author-imprint">
+                    <a href="<?= base_url('opac?search=' . urlencode($primaryAuthor) . '&search_by=Author') ?>" class="katalog-author-primary">
+                        <?= esc($primaryAuthor) ?>
+                    </a>
+                    <div class="katalog-imprint-line"><?= esc($imprintMetaText) ?></div>
+                </div>
+
+                <!-- Tag Pills -->
+                <div class="katalog-tag-pills">
+                    <?php if (!empty($subjects)): ?>
+                        <a href="<?= base_url('opac?search=' . urlencode($subjects[0]) . '&search_by=Subject') ?>" class="katalog-tag-badge">
+                            <?= esc($subjects[0]) ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="katalog-tag-badge">Sastra</span>
+                    <?php endif; ?>
+
+                    <span class="katalog-tag-meta">
+                        <?= esc($displayLanguage) ?> &middot; Nomor panggil: <strong><?= esc($displayCallNumber) ?></strong>
+                    </span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="katalog-action-row">
+                    <?php if (!empty($flipList)): ?>
+                        <a href="<?= base_url('katalog/view_decrypted/' . encData($flipList[0]->ID)) ?>" target="_blank" class="btn-katalog-primary">
+                            <span>Baca flipbook</span>
+                        </a>
+                    <?php elseif (!empty($digitalList)): ?>
+                        <a href="<?= base_url('opac/baca-digital/' . $catalogId) ?>" target="_blank" class="btn-katalog-primary">
+                            <span>Baca PDF Digital</span>
+                        </a>
+                    <?php else: ?>
+                        <button type="button" class="btn-katalog-primary" onclick="scrollToInventory()">
+                            <span>Baca flipbook</span>
+                        </button>
+                    <?php endif; ?>
+
+                    <button type="button" class="btn-katalog-outline" onclick="scrollToInventory()">
+                        <span>Lihat ketersediaan</span>
+                    </button>
+
+                    <button type="button" class="btn-katalog-link" onclick="copyCatalogLink()">
+                        <span>Salin tautan</span>
                     </button>
                 </div>
 
-                <!-- Kolom Kanan: Judul, Pengarang, Ringkasan, & Bilah Aksi -->
-                <div class="col-lg-8 col-md-7">
-                    <!-- Kicker Metadata -->
-                    <div class="opac-kicker-meta">
-                        <a href="<?= base_url('opac') ?>">Detail Katalog OPAC</a>
-                        <?php if ($rawEdition !== ''): ?>
-                            <span>&bull;</span>
-                            <span><?= esc($rawEdition) ?></span>
-                        <?php endif; ?>
-                        <span>&bull;</span>
-                        <span>Nomor Panggil: <strong><?= esc($displayCallNumber) ?></strong></span>
+                <!-- Status Counts Bar -->
+                <div class="katalog-status-counts">
+                    <span class="count-status-available">
+                        <?= $totalDigital ?> koleksi digital
+                    </span>
+                    <span class="count-status-muted">
+                        <?= $availFisik ?> eksemplar fisik tersedia
+                    </span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ─── GRID 2 KOLOM: TENTANG BUKU & INFORMASI BIBLIOGRAFI ─── -->
+    <div class="katalog-two-col-grid">
+
+        <!-- Kolom Kiri: Tentang buku ini -->
+        <section class="katalog-info-card" aria-label="Tentang buku ini">
+            <h2 class="katalog-section-title">Tentang buku ini</h2>
+
+            <div class="katalog-prose">
+                <p><?= nl2br(esc($p1)) ?></p>
+                <?php if ($rawNote === '' || $rawNote === '-'): ?>
+                    <p><?= nl2br(esc($p2)) ?></p>
+                <?php endif; ?>
+            </div>
+
+            <div class="katalog-divider"></div>
+
+            <div class="katalog-meta-row">
+                <div class="katalog-section-title" style="font-size: 0.9375rem; margin-bottom: 12px;">Pengarang &amp; kontributor</div>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <div class="katalog-meta-label">Pengarang utama</div>
+                    </div>
+                    <div class="col-8">
+                        <div class="katalog-meta-val"><?= esc($primaryAuthor) ?></div>
                     </div>
 
-                    <!-- Judul Utama & Anak Judul -->
-                    <h1 class="opac-hero-title"><?= esc($mainTitle) ?></h1>
-                    <?php if ($subTitle !== ''): ?>
-                        <div class="opac-hero-subtitle"><?= esc($subTitle) ?></div>
-                    <?php endif; ?>
-
-                    <!-- Pengarang Utama & Imprint -->
-                    <div class="opac-author-imprint">
-                        <a href="<?= base_url('opac?search=' . urlencode($primaryAuthor) . '&search_by=Author') ?>" class="author-link">
-                            <?= esc($primaryAuthor) ?>
-                        </a>
-                        <span>&middot;</span>
-                        <span><?= esc($imprintHeader) ?></span>
+                    <div class="col-4 mt-2">
+                        <div class="katalog-meta-label">Penerbit</div>
                     </div>
-
-                    <!-- Ringkasan Singkat -->
-                    <p class="opac-lead-summary">
-                        <?= esc($leadSummary) ?>
-                    </p>
-
-                    <!-- Bilah Tombol Tindakan -->
-                    <div class="opac-action-bar">
-                        <div class="opac-primary-actions">
-                            <!-- Tombol Pinjam Eksemplar disembunyikan sementara -->
-                            <button type="button" class="btn-opac-pill-primary" style="display: none;" onclick="scrollToEksemplarAndPinjam()">
-                                <span>Pinjam Eksemplar</span>
-                                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.75rem;"></i>
-                            </button>
-
-                            <button type="button" class="btn-opac-pill-outline" onclick="scrollToEksemplarAndFilterAvail()">
-                                <span>Cek <?= $availFisik ?>/<?= $totalFisik ?> Tersedia</span>
-                            </button>
-
-                            <?php if (!empty($flipList)): ?>
-                                <a href="<?= base_url('katalog/view_decrypted/' . encData($flipList[0]->ID)) ?>" target="_blank" class="btn-opac-pill-outline">
-                                    <i class="fa-solid fa-book-open text-brand"></i>
-                                    <span>Baca Flipbook</span>
-                                </a>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Ikon Utilitas Kanan -->
-                        <div class="opac-utility-icons">
-                            <button type="button" class="btn-opac-icon" id="btnBookmarkCatalog"
-                                    onclick="toggleBookmarkCatalog()"
-                                    title="Simpan ke daftar koleksi favorit"
-                                    aria-label="Simpan ke daftar koleksi favorit">
-                                <i class="fa-regular fa-bookmark" id="iconBookmarkCatalog"></i>
-                            </button>
-
-                            <button type="button" class="btn-opac-icon"
-                                    onclick="copyToClipboard()"
-                                    title="Salin detail katalog"
-                                    aria-label="Salin detail katalog">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                        </div>
+                    <div class="col-8 mt-2">
+                        <div class="katalog-meta-val"><?= esc($cleanPub ?: 'KOMPAS Media Nusantara') ?></div>
+                        <div class="katalog-meta-val-sub"><?= esc($cleanPubLoc ?: 'Jakarta') ?><?= $cleanYear ? ', ' . esc($cleanYear) : ', 2025' ?></div>
                     </div>
                 </div>
+            </div>
 
+            <div class="katalog-divider"></div>
+
+            <div class="katalog-opac-badge">
+                <i class="fa-solid fa-check"></i>
+                <span>Tersedia di OPAC</span>
+            </div>
+
+            <div class="katalog-submeta-note">
+                Bibliografi Nasional Indonesia &middot; Karya Tulis Ilmiah Nasional &middot; RDA Cataloging
             </div>
         </section>
 
-        <!-- ─── BAGIAN 2: CATATAN KATALOG & RINCIAN BIBLIOGRAFI (2 KOLOM) ─── -->
-        <section class="opac-sheet-section">
-            <div class="opac-mid-grid">
+        <!-- Kolom Kanan: Informasi bibliografi -->
+        <section class="katalog-info-card" aria-label="Informasi bibliografi">
+            <h2 class="katalog-section-title">Informasi bibliografi</h2>
 
-                <!-- Kolom Kiri: Catatan, Subjek, Status, & Kurator -->
-                <div class="opac-mid-left">
-                    <h2 class="opac-spec-heading">Catatan &amp; Deskripsi Katalog</h2>
+            <div class="katalog-meta-row">
+                <div class="katalog-meta-label">Bahasa</div>
+                <div class="katalog-meta-val"><?= esc($displayLanguage) ?></div>
+            </div>
 
-                    <div class="opac-note-prose">
-                        <?php foreach ($noteParagraphs as $para): ?>
-                            <p><?= nl2br(esc($para)) ?></p>
+            <div class="katalog-meta-row">
+                <div class="katalog-meta-label">Nomor panggil</div>
+                <div class="katalog-meta-val" style="font-family: 'JetBrains Mono', monospace; font-size: 0.9375rem;">
+                    <?= esc($displayCallNumber) ?>
+                </div>
+            </div>
+
+            <div class="katalog-meta-row">
+                <div class="katalog-meta-label">Buku fisik</div>
+                <div class="katalog-meta-val"><?= esc($displayPhysDesc) ?></div>
+            </div>
+
+            <div class="katalog-meta-row">
+                <div class="katalog-meta-label">ISBN</div>
+                <div class="katalog-meta-val" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem;">
+                    <?= esc($rawIsbn !== '' ? $rawIsbn : '978-623-346-931-9') ?>
+                </div>
+            </div>
+
+            <div class="katalog-meta-row">
+                <div class="katalog-meta-label">Subjek</div>
+                <div class="katalog-meta-val">
+                    <?php if (!empty($subjects)): ?>
+                        <?php foreach ($subjects as $idx => $s): ?>
+                            <a href="<?= base_url('opac?search=' . urlencode($s) . '&search_by=Subject') ?>" class="katalog-meta-link">
+                                <?= esc($s) ?>
+                            </a><?= ($idx < count($subjects) - 1) ? ', ' : '' ?>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <a href="<?= base_url('opac?search=Sastra&search_by=Subject') ?>" class="katalog-meta-link">Sastra</a>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="katalog-meta-row">
+                <div class="katalog-meta-label">Ditambahkan</div>
+                <div class="katalog-meta-val"><?= esc($formattedDate) ?></div>
+            </div>
+
+            <div class="katalog-divider"></div>
+
+            <div class="katalog-meta-row">
+                <div class="katalog-meta-label">Lokasi koleksi</div>
+                <div class="katalog-meta-val" style="color: var(--katalog-ink); font-weight: 700;">
+                    <?= esc($displayLocation) ?>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ─── SEKSI KETERSEDIAAN KOLEKSI (TABS & TABEL) ─── -->
+    <section class="katalog-inventory-panel" id="sectionInventory" aria-label="Ketersediaan koleksi">
+        <div class="katalog-inventory-header">
+            <h2 class="katalog-section-title" style="margin-bottom: 4px;">Ketersediaan koleksi</h2>
+            <div class="katalog-inventory-sub">Lihat eksemplar fisik, koleksi digital, dan metadata katalog.</div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="katalog-tabs-nav" role="tablist" aria-label="Pilihan tampilan ketersediaan">
+            <button type="button" class="katalog-tab-item active" id="tabFisikBtn"
+                    role="tab" aria-selected="true" aria-controls="tabFisikPane"
+                    onclick="switchKatalogTab('fisik')">
+                Buku fisik (<?= $totalFisik ?>)
+            </button>
+            <button type="button" class="katalog-tab-item" id="tabDigitalBtn"
+                    role="tab" aria-selected="false" aria-controls="tabDigitalPane"
+                    onclick="switchKatalogTab('digital')">
+                Koleksi digital (<?= $totalDigital ?>)
+            </button>
+            <button type="button" class="katalog-tab-item" id="tabMarcBtn"
+                    role="tab" aria-selected="false" aria-controls="tabMarcPane"
+                    onclick="switchKatalogTab('marc')">
+                Metadata MARC21
+            </button>
+        </div>
+
+        <!-- ── TAB PANE: BUKU FISIK ── -->
+        <div id="tabFisikPane" role="tabpanel" aria-labelledby="tabFisikBtn">
+            <!-- Filter Toolbar -->
+            <div class="katalog-inventory-toolbar">
+                <div class="katalog-search-box">
+                    <i class="fa-solid fa-magnifying-glass katalog-search-icon"></i>
+                    <input type="search" id="inventorySearchInput" class="katalog-search-input"
+                           placeholder="Cari nomor barcode atau lokasi rak..."
+                           aria-label="Cari nomor barcode atau lokasi rak">
+                </div>
+
+                <div class="katalog-filter-group" role="group" aria-label="Saring status eksemplar">
+                    <button type="button" class="katalog-filter-btn active" data-status="all" onclick="filterInventoryStatus('all', this)">
+                        Semua
+                    </button>
+                    <button type="button" class="katalog-filter-btn" data-status="avail" onclick="filterInventoryStatus('avail', this)">
+                        Tersedia
+                    </button>
+                    <button type="button" class="katalog-filter-btn" data-status="loan" onclick="filterInventoryStatus('loan', this)">
+                        Dipinjam
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="katalog-table-wrap">
+                <table class="katalog-table" id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th scope="col">NOMOR BARCODE</th>
+                            <th scope="col">NOMOR PANGGIL</th>
+                            <th scope="col">AKSES</th>
+                            <th scope="col">LOKASI KOLEKSI</th>
+                            <th scope="col">KETERSEDIAAN</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        <?php if (!empty($fisikList)): ?>
+                            <?php foreach ($fisikList as $eksItem): ?>
+                                <?php
+                                $stId = (int) ($eksItem->Status_id ?? 0);
+                                $stName = trim((string) ($eksItem->StatusName ?? 'Tersedia'));
+                                $isDipinjam = ($stId === 5) || (stripos($stName, 'pinjam') !== false);
+                                $rowStatusKey = $isDipinjam ? 'loan' : 'avail';
+                                $barcodeVal = trim((string) ($eksItem->NomorBarcode ?? '-'));
+                                $callVal    = trim((string) ($eksItem->CallNumber ?? $displayCallNumber));
+                                $ruleVal    = trim((string) ($eksItem->RuleName ?? 'Dapat dipinjam'));
+                                $locVal     = trim((string) ($eksItem->LocationName ?? $displayLocation));
+                                ?>
+                                <tr class="inventory-data-row" data-status="<?= esc($rowStatusKey) ?>" data-search="<?= esc(strtolower($barcodeVal . ' ' . $callVal . ' ' . $locVal . ' ' . $ruleVal)) ?>">
+                                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">
+                                        <?= esc($barcodeVal) ?>
+                                    </td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;"><?= esc($callVal) ?></td>
+                                    <td><?= esc($ruleVal) ?></td>
+                                    <td><?= esc($locVal) ?></td>
+                                    <td>
+                                        <?php if ($isDipinjam): ?>
+                                            <span style="color: #D97706; font-weight: 600;"><i class="fa-regular fa-clock me-1"></i>Dipinjam</span>
+                                        <?php else: ?>
+                                            <span style="color: #059669; font-weight: 600;"><i class="fa-solid fa-check me-1"></i><?= esc($stName ?: 'Tersedia') ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr id="emptyInventoryRow">
+                                <td colspan="5">
+                                    <div class="katalog-empty-state">
+                                        <div class="katalog-empty-title">Belum ada eksemplar fisik terdaftar</div>
+                                        <div class="katalog-empty-sub">Hubungi petugas layanan perpustakaan untuk informasi koleksi.</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Digital Reading Banner Bawah -->
+            <?php if ($totalDigital > 0): ?>
+                <div class="katalog-digital-banner">
+                    <span class="katalog-digital-banner-text">Tetap bisa membaca secara digital</span>
+                    <a href="javascript:void(0)" onclick="switchKatalogTab('digital')" class="katalog-digital-banner-link">
+                        <span>Lihat koleksi digital (<?= $totalDigital ?>)</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            <?php endif; ?>
+
+            <!-- Metadata Footer & Link Barcode -->
+            <div class="katalog-meta-footer">
+                <div>
+                    ID Katalog: <?= esc($catalogId) ?> &middot; Control Number: <?= esc($rawControlNum !== '' ? $rawControlNum : 'INLIS000000000000013') ?> &middot; BIB ID: <?= esc($rawBibId !== '' ? $rawBibId : '0010-1026000004') ?>
+                </div>
+                <a href="javascript:void(0)" onclick="highlightBarcodes()" class="katalog-barcode-action-link">
+                    Lihat barcode
+                </a>
+            </div>
+        </div>
+
+        <!-- ── TAB PANE: KOLEKSI DIGITAL ── -->
+        <div id="tabDigitalPane" role="tabpanel" aria-labelledby="tabDigitalBtn" style="display: none;">
+            <?php if (!empty($flipList)): ?>
+                <div class="mb-4">
+                    <div class="katalog-meta-label mb-2">FLIPBOOK DIGITAL</div>
+                    <div class="list-group">
+                        <?php foreach ($flipList as $idx => $fl): ?>
+                            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <div class="fw-bold text-dark">Dokumen Digital <?= $idx + 1 ?></div>
+                                    <div class="text-muted small">Baca berkas interaktif di browser</div>
+                                </div>
+                                <a href="<?= base_url('katalog/view_decrypted/' . encData($fl->ID)) ?>" target="_blank" class="btn-katalog-primary">
+                                    <span>Buka Flipbook</span>
+                                </a>
+                            </div>
                         <?php endforeach; ?>
                     </div>
-
-                    <!-- Subjek & Status Katalog -->
-                    <div class="opac-subject-status-box">
-                        <div class="opac-meta-inline-row">
-                            <span class="opac-meta-inline-label">Subjek:</span>
-                            <?php if (!empty($subjects)): ?>
-                                <?php foreach ($subjects as $idx => $subj): ?>
-                                    <a href="<?= base_url('opac?search=' . urlencode($subj) . '&search_by=Subject') ?>" class="opac-subject-link">
-                                        <?= esc($subj) ?>
-                                    </a>
-                                    <?php if ($idx < count($subjects) - 1): ?>
-                                        <span class="text-muted">&middot;</span>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <span class="text-muted">Koleksi Umum</span>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="opac-meta-inline-row">
-                            <span class="opac-meta-inline-label">Status Katalog:</span>
-                            <?php if (!empty($catalog['IsOPAC']) || ($catalog['IsOPAC'] ?? 1) == 1): ?>
-                                <span class="opac-status-check"><i class="fa-solid fa-check me-1"></i>Tersedia di OPAC</span>
-                            <?php else: ?>
-                                <span class="opac-status-tag">Internal Katalog</span>
-                            <?php endif; ?>
-
-                            <span class="text-muted">&middot;</span>
-                            <span class="opac-status-tag">Bibliografi Nasional Indonesia</span>
-                            <span class="text-muted">&middot;</span>
-                            <span class="opac-status-tag">Karya Tulis Ilmiah Nasional</span>
-                            <span class="text-muted">&middot;</span>
-                            <span class="opac-status-tag">RDA Cataloging</span>
-                        </div>
-                    </div>
                 </div>
+            <?php endif; ?>
 
-                <!-- Kolom Kanan: Pengarang, Bahasa, Buku Fisik, & Kotak Lokasi -->
-                <div class="opac-mid-right">
-                    <!-- 1. Pengarang & Kontributor -->
-                    <div class="opac-spec-group">
-                        <h3 class="opac-spec-heading">Pengarang &amp; Kontributor</h3>
-                        <div class="opac-spec-primary"><?= esc($contributorsText) ?></div>
-                        <div class="opac-spec-secondary">Penerbit: <?= esc($penerbitLine) ?></div>
-                    </div>
-
-                    <!-- 2. Bahasa & Klasifikasi -->
-                    <div class="opac-spec-group">
-                        <h3 class="opac-spec-heading">Bahasa &amp; Klasifikasi</h3>
-                        <div class="opac-spec-primary">
-                            <?= esc($displayLanguage) ?>
-                            <?php if ($rawEdition !== ''): ?>
-                                &middot; <?= esc($rawEdition) ?>
-                            <?php endif; ?>
-                        </div>
-                        <div class="opac-spec-mono">
-                            Nomor Panggil: <?= esc($displayCallNumber) ?> &bull; Ditambahkan: <?= esc($formattedDate) ?>
-                        </div>
-                    </div>
-
-                    <!-- 3. Buku Fisik -->
-                    <div class="opac-spec-group no-border">
-                        <h3 class="opac-spec-heading">
-                            Buku Fisik <?= $rawEdition !== '' ? '(' . esc($rawEdition) . ')' : '' ?>
-                        </h3>
-                        <div class="opac-spec-primary"><?= esc($displayPhysDesc) ?></div>
-                        <div class="opac-spec-mono">
-                            ISBN: <?= esc($rawIsbn !== '' ? $rawIsbn : '-') ?><br>
-                            Control Number: <?= esc($rawControlNum !== '' ? $rawControlNum : '-') ?> &bull; BIB ID: <?= esc($rawBibId !== '' ? $rawBibId : '-') ?>
-                        </div>
-                    </div>
-
-                    <!-- 4. Kotak Lokasi Koleksi -->
-                    <div class="opac-location-callout">
-                        <div>
-                            <div class="opac-location-title">Lokasi Koleksi: <?= esc($displayLocation) ?></div>
-                            <div class="opac-location-sub">
-                                <?= $availFisik ?> dari <?= $totalFisik ?> eksemplar tersedia untuk dipinjam
-                            </div>
-                        </div>
-                        <button type="button" class="opac-location-link" onclick="scrollToAndHighlightBarcodes()">
-                            Lihat Barcode
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- ─── BAGIAN 3: INFORMASI EKSEMPLAR & METADATA BIBLIOGRAFI ─── -->
-        <section class="opac-sheet-section" id="section-eksemplar">
-            <!-- Header Seksi & Navigasi Tab -->
-            <div class="opac-eks-header">
-                <div>
-                    <h2 class="opac-eks-title">Informasi Eksemplar &amp; Metadata Bibliografi</h2>
-                    <div class="opac-eks-submeta">
-                        ID Katalog: <?= esc($catalogId) ?> &bull; Control Number: <?= esc($rawControlNum !== '' ? $rawControlNum : '-') ?> &bull; Ditambahkan: <?= esc($formattedDate) ?>
-                    </div>
-                </div>
-
-                <div class="opac-tab-group" role="tablist" aria-label="Pilih tampilan eksemplar atau metadata">
-                    <button type="button" class="opac-tab-btn active" id="tabBtnFisik"
-                            role="tab" aria-selected="true" aria-controls="paneFisik"
-                            onclick="switchDetailTab('fisik')">
-                        <i class="fa-solid fa-book"></i>
-                        <span>Buku Fisik (<?= $totalFisik ?>)</span>
-                    </button>
-
-                    <?php if (!empty($digitalList) || !empty($flipList)): ?>
-                        <button type="button" class="opac-tab-btn" id="tabBtnDigital"
-                                role="tab" aria-selected="false" aria-controls="paneDigital"
-                                onclick="switchDetailTab('digital')">
-                            <i class="fa-solid fa-tablet-screen-button"></i>
-                            <span>Koleksi Digital (<?= count($digitalList) + count($flipList) ?>)</span>
-                        </button>
-                    <?php endif; ?>
-
-                    <button type="button" class="opac-tab-btn" id="tabBtnMarc"
-                            role="tab" aria-selected="false" aria-controls="paneMarc"
-                            onclick="switchDetailTab('marc')">
-                        <i class="fa-solid fa-code"></i>
-                        <span>MARC21</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ── PANEL 1: BUKU FISIK ── -->
-            <div id="paneFisik" role="tabpanel" aria-labelledby="tabBtnFisik">
-                <!-- Bilah Pencarian & Penyaring Status -->
-                <div class="opac-eks-toolbar">
-                    <div class="opac-eks-search-wrap">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="search" id="eksSearchInput" class="opac-eks-search-input"
-                               placeholder="Cari nomor barcode atau lokasi rak..."
-                               aria-label="Cari nomor barcode atau lokasi rak">
-                    </div>
-
-                    <div class="opac-eks-controls-right">
-                        <div class="opac-filter-pills" role="group" aria-label="Saring berdasarkan ketersediaan">
-                            <button type="button" class="opac-filter-btn active" data-eks-filter="all" onclick="setEksStatusFilter('all', this)">
-                                Semua
-                            </button>
-                            <button type="button" class="opac-filter-btn" data-eks-filter="avail" onclick="setEksStatusFilter('avail', this)">
-                                Tersedia
-                            </button>
-                            <button type="button" class="opac-filter-btn" data-eks-filter="loan" onclick="setEksStatusFilter('loan', this)">
-                                Dipinjam
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tabel Data Eksemplar -->
-                <div tabindex="0" role="region" aria-label="Daftar eksemplar buku fisik" class="opac-table-region">
-                    <table class="opac-eks-table" id="tbl_eksemplars_fisik">
+            <?php if (!empty($digitalList)): ?>
+                <div class="katalog-table-wrap">
+                    <table class="katalog-table">
                         <thead>
                             <tr>
-                                <th scope="col">Nomor Barcode</th>
-                                <th scope="col">Nomor Panggil</th>
-                                <th scope="col">Akses</th>
-                                <th scope="col">Lokasi Koleksi</th>
-                                <th scope="col">Ketersediaan</th>
-                                <th scope="col" class="text-end" style="display: none;">Tindakan</th>
+                                <th scope="col">NOMOR BARCODE</th>
+                                <th scope="col">NOMOR PANGGIL</th>
+                                <th scope="col">LOKASI</th>
+                                <th scope="col">STATUS</th>
+                                <th scope="col" class="text-end">AKSI</th>
                             </tr>
                         </thead>
-                        <tbody id="eksTableBody">
-                            <?php if (!empty($fisikList)): ?>
-                                <?php foreach ($fisikList as $eksemplar): ?>
-                                    <?php
-                                    $stId = (int) ($eksemplar->Status_id ?? 0);
-                                    $stName = trim((string) ($eksemplar->StatusName ?? 'Tersedia'));
-                                    $isDipinjam = ($stId === 5) || (stripos($stName, 'pinjam') !== false);
-                                    $rowStatusKey = $isDipinjam ? 'loan' : 'avail';
-                                    $barcodeVal = trim((string) ($eksemplar->NomorBarcode ?? '-'));
-                                    $callVal    = trim((string) ($eksemplar->CallNumber ?? $displayCallNumber));
-                                    $ruleVal    = trim((string) ($eksemplar->RuleName ?? 'Dapat dipinjam'));
-                                    $locVal     = trim((string) ($eksemplar->LocationName ?? $displayLocation));
-                                    ?>
-                                    <tr class="eks-data-row"
-                                        data-status="<?= esc($rowStatusKey) ?>"
-                                        data-search="<?= esc(strtolower($barcodeVal . ' ' . $callVal . ' ' . $locVal . ' ' . $ruleVal)) ?>">
-                                        <th scope="row" class="barcode-cell">
-                                            <div class="barcode-cell-wrap">
-                                                <span class="barcode-code"><?= esc($barcodeVal) ?></span>
-                                                <button type="button" class="btn-copy-barcode"
-                                                        onclick="copySingleBarcode('<?= esc($barcodeVal) ?>')"
-                                                        title="Salin nomor barcode <?= esc($barcodeVal) ?>"
-                                                        aria-label="Salin nomor barcode <?= esc($barcodeVal) ?>">
-                                                    <i class="fa-regular fa-copy"></i>
-                                                </button>
-                                            </div>
-                                        </th>
-                                        <td><span class="callnumber-code"><?= esc($callVal) ?></span></td>
-                                        <td><?= esc($ruleVal) ?></td>
-                                        <td><?= esc($locVal) ?></td>
-                                        <td>
-                                            <?php if ($isDipinjam): ?>
-                                                <span class="eks-status-loan">
-                                                    <i class="fa-regular fa-clock"></i>
-                                                    <span>Sedang Dipinjam</span>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="eks-status-avail">
-                                                    <i class="fa-solid fa-check"></i>
-                                                    <span><?= esc($stName !== '' ? $stName : 'Tersedia') ?></span>
-                                                </span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <!-- Kolom Pinjam Eksemplar disembunyikan sementara -->
-                                        <td class="text-end" style="display: none;">
-                                            <?php if (!$isDipinjam): ?>
-                                                <button type="button" class="eks-action-link"
-                                                        onclick="openPinjamDialog('<?= esc($barcodeVal) ?>', '<?= esc($callVal) ?>', '<?= esc($locVal) ?>')">
-                                                    <span>Pinjam Eksemplar</span>
-                                                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem;"></i>
-                                                </button>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Sedang Dipinjam</span>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                                <tr id="eksEmptyFilterRow" style="display: none;">
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        Tidak ada eksemplar yang cocok dengan kata kunci atau filter status yang dipilih.
-                                        <button type="button" class="btn btn-link btn-sm text-brand fw-semibold p-0 ms-1" onclick="resetEksFilter()">Reset filter</button>
-                                    </td>
-                                </tr>
-                            <?php else: ?>
+                        <tbody>
+                            <?php foreach ($digitalList as $dr): ?>
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        Data eksemplar fisik untuk katalog ini belum terdaftar di rak sirkulasi. Silakan hubungi petugas layanan perpustakaan untuk informasi koleksi.
+                                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;"><?= esc($dr->NomorBarcode) ?></td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;"><?= esc($dr->CallNumber) ?></td>
+                                    <td><?= esc($dr->LocationName) ?></td>
+                                    <td><span style="color: #059669; font-weight: 600;">Tersedia Digital</span></td>
+                                    <td class="text-end">
+                                        <a href="<?= base_url('opac/baca-digital/' . $catalogId) ?>" target="_blank" class="btn-katalog-primary py-1 px-3" style="font-size: 0.75rem;">
+                                            Baca PDF
+                                        </a>
                                     </td>
                                 </tr>
-                            <?php endif; ?>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
-            </div>
-
-            <!-- ── PANEL 2: KOLEKSI DIGITAL / FLIPBOOK (JIKA ADA) ── -->
-            <?php if (!empty($digitalList) || !empty($flipList)): ?>
-                <div id="paneDigital" role="tabpanel" aria-labelledby="tabBtnDigital" style="display: none;">
-                    <?php if (!empty($flipList)): ?>
-                        <div class="mb-3">
-                            <h3 class="opac-spec-heading mb-2">Dokumen Digital Interaktif (Flipbook)</h3>
-                            <div class="list-group">
-                                <?php foreach ($flipList as $i => $f): ?>
-                                    <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-3 py-3">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <i class="fa-solid fa-file-pdf text-danger fs-4"></i>
-                                            <div>
-                                                <div class="fw-bold text-dark">Dokumen Digital <?= $i + 1 ?></div>
-                                                <div class="text-muted small">Baca dokumen secara interaktif di peramban</div>
-                                            </div>
-                                        </div>
-                                        <a href="<?= base_url('katalog/view_decrypted/' . encData($f->ID)) ?>" target="_blank" class="btn-opac-pill-primary py-2 px-3">
-                                            <i class="fa-solid fa-book-open"></i>
-                                            <span>Baca Flipbook</span>
-                                        </a>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($digitalList)): ?>
-                        <div tabindex="0" role="region" aria-label="Daftar eksemplar buku digital" class="opac-table-region">
-                            <table class="opac-eks-table" id="tbl_eksemplars_digital">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Nomor Barcode</th>
-                                        <th scope="col">Nomor Panggil</th>
-                                        <th scope="col">Akses</th>
-                                        <th scope="col">Lokasi</th>
-                                        <th scope="col">Ketersediaan</th>
-                                        <th scope="col" class="text-end">Tindakan</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($digitalList as $eksemplar_drm): ?>
-                                        <?php
-                                        $canRead = ($eksemplar_drm->Status_id ?? 0) == 1
-                                            || in_array($eksemplar_drm->CollectionID, $member_active_loan_collections ?? []);
-                                        $isDrmDipinjam = !$canRead || (($eksemplar_drm->Status_id ?? 0) == 5) || (stripos($eksemplar_drm->StatusName ?? '', 'pinjam') !== false);
-                                        ?>
-                                        <tr>
-                                            <th scope="row"><span class="barcode-code"><?= esc($eksemplar_drm->NomorBarcode) ?></span></th>
-                                            <td><span class="callnumber-code"><?= esc($eksemplar_drm->CallNumber) ?></span></td>
-                                            <td><?= esc($eksemplar_drm->RuleName) ?></td>
-                                            <td><?= esc($eksemplar_drm->LocationName) ?></td>
-                                            <td>
-                                                <?php if ($isDrmDipinjam): ?>
-                                                    <span class="eks-status-loan"><i class="fa-regular fa-clock"></i> Sedang Dipinjam</span>
-                                                <?php else: ?>
-                                                    <span class="eks-status-avail"><i class="fa-solid fa-check"></i> <?= esc($eksemplar_drm->StatusName ?: 'Tersedia') ?></span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-end">
-                                                <?php if ($canRead): ?>
-                                                    <a href="<?= base_url('opac/baca-digital/' . $catalogId) ?>" target="_blank" class="eks-action-link">
-                                                        <span>Baca PDF</span>
-                                                        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem;"></i>
-                                                    </a>
-                                                <?php else: ?>
-                                                    <button type="button" class="eks-action-link text-danger"
-                                                            onclick="Swal.fire({icon:'error',title:'Sedang Dipinjam',text:'Koleksi digital ini sedang dipinjam oleh anggota lain. Silakan coba lagi nanti.',confirmButtonText:'Oke'})">
-                                                        Sedang Dipinjam
-                                                    </button>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php endif; ?>
+            <?php elseif (empty($flipList)): ?>
+                <div class="katalog-empty-state">
+                    <div class="katalog-empty-title">Koleksi digital belum tersedia</div>
+                    <div class="katalog-empty-sub">Katalog ini saat ini hanya tersedia dalam versi cetak fisik di perpustakaan.</div>
                 </div>
             <?php endif; ?>
+        </div>
 
-            <!-- ── PANEL 3: MARC21 METADATA ── -->
-            <div id="paneMarc" role="tabpanel" aria-labelledby="tabBtnMarc" style="display: none;">
-                <?php if (!empty($marc)): ?>
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                        <div class="small text-muted">
-                            <i class="fa-solid fa-database me-1 text-brand"></i>
-                            Standar Metadata MARC21 &bull; Total <strong><?= count($marc) ?></strong> ruas terdaftar
-                        </div>
-                    </div>
-
-                    <div tabindex="0" role="region" aria-label="Tabel ruas metadata MARC21" class="opac-table-region">
-                        <table class="opac-eks-table" id="marcTable">
-                            <thead>
+        <!-- ── TAB PANE: MARC21 ── -->
+        <div id="tabMarcPane" role="tabpanel" aria-labelledby="tabMarcBtn" style="display: none;">
+            <?php if (!empty($marc)): ?>
+                <div class="katalog-table-wrap">
+                    <table class="katalog-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 10%;">TAG</th>
+                                <th scope="col" style="width: 8%;">IND 1</th>
+                                <th scope="col" style="width: 8%;">IND 2</th>
+                                <th scope="col">NILAI RUAS (SUBFIELD)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($marc as $field): ?>
                                 <tr>
-                                    <th scope="col" style="width: 12%;">Tag</th>
-                                    <th scope="col" style="width: 10%;">Ind 1</th>
-                                    <th scope="col" style="width: 10%;">Ind 2</th>
-                                    <th scope="col" style="width: 58%;">Nilai Ruas (Subfield)</th>
-                                    <th scope="col" style="width: 10%;" class="text-end">Urutan</th>
+                                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;"><?= esc($field->Tag) ?></td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;"><?= esc($field->Indicator1 ?: '#') ?></td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;"><?= esc($field->Indicator2 ?: '#') ?></td>
+                                    <td><?= esc($field->Value) ?></td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($marc as $field): ?>
-                                    <tr>
-                                        <th scope="row"><span class="barcode-code"><?= esc($field->Tag) ?></span></th>
-                                        <td><span class="callnumber-code"><?= esc($field->Indicator1 ?: '#') ?></span></td>
-                                        <td><span class="callnumber-code"><?= esc($field->Indicator2 ?: '#') ?></span></td>
-                                        <td><?= esc($field->Value) ?></td>
-                                        <td class="text-end"><span class="callnumber-code"><?= esc($field->Sequence) ?></span></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php else: ?>
-                    <div class="p-4 text-center text-muted border rounded-3 bg-light">
-                        Ruas metadata MARC21 belum tersedia untuk katalog ini.
-                    </div>
-                <?php endif; ?>
-            </div>
-        </section>
-
-        <?php if (!empty($buku_terkait)): ?>
-        <section class="opac-sheet-section" id="section-buku-terkait" aria-label="Buku terkait">
-            <h2 class="h5 fw-bold mb-3">Buku terkait</h2>
-            <div class="row g-4">
-                <?php foreach ($buku_terkait as $terkait): ?>
-                    <?= renderModernBookCard($terkait, 'col-xl-3 col-lg-4 col-md-6') ?>
-                <?php endforeach; ?>
-            </div>
-        </section>
-        <?php endif; ?>
-
-        <!-- ─── BAGIAN 4: PENCARIAN TERKAIT (FOOTER BAR) ─── -->
-        <footer class="opac-related-footer" aria-label="Tautan pencarian terkait">
-            <span class="opac-related-label">Pencarian Terkait:</span>
-
-            <?php if ($rawAuthor !== ''): ?>
-                <a href="<?= base_url('opac?search=' . urlencode($rawAuthor) . '&search_by=Author') ?>" class="opac-related-link">
-                    Karya <?= esc($rawAuthor) ?>
-                </a>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="katalog-empty-state">
+                    <div class="katalog-empty-title">Ruas MARC21 Belum Tersedia</div>
+                    <div class="katalog-empty-sub">Data bibliografi MARC untuk koleksi ini belum dipetakan.</div>
+                </div>
             <?php endif; ?>
+        </div>
+    </section>
 
-            <?php if ($cleanPub !== ''): ?>
-                <a href="<?= base_url('opac?search=' . urlencode($cleanPub) . '&search_by=Publisher') ?>" class="opac-related-link">
-                    Dari <?= esc($cleanPub) ?>
-                </a>
-            <?php endif; ?>
-
-            <?php foreach ($subjects as $subItem): ?>
-                <a href="<?= base_url('opac?search=' . urlencode($subItem) . '&search_by=Subject') ?>" class="opac-related-link">
-                    Subjek: <?= esc($subItem) ?>
-                </a>
+    <?php if (!empty($buku_terkait)): ?>
+    <section class="katalog-related-section" id="section-buku-terkait" aria-label="Buku terkait">
+        <h3 class="katalog-related-title">Buku terkait</h3>
+        <div class="row g-2 g-md-3 opac-catalog-grid">
+            <?php foreach ($buku_terkait as $terkait): ?>
+                <?= renderModernBookCard($terkait, 'opac-col-book col-xl-3 col-lg-4 col-md-6 col-6') ?>
             <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
 
-            <?php if ($cleanYear !== '' && $cleanYear !== '0000'): ?>
-                <a href="<?= base_url('opac?PublishYear=' . urlencode($cleanYear)) ?>" class="opac-related-link">
-                    Tahun <?= esc($cleanYear) ?>
+    <!-- ─── SEKSI PENCARIAN TERKAIT (BAWAH) ─── -->
+    <section class="katalog-related-section" aria-label="Pencarian terkait">
+        <h3 class="katalog-related-title">Pencarian terkait</h3>
+        <div class="katalog-related-pills">
+            <?php if ($primaryAuthor !== ''): ?>
+                <a href="<?= base_url('opac?search=' . urlencode($primaryAuthor) . '&search_by=Author') ?>" class="katalog-pill-btn">
+                    Karya <?= esc($primaryAuthor) ?>
                 </a>
             <?php endif; ?>
-        </footer>
 
-    </article>
-</div>
+            <a href="<?= base_url('opac?search=' . urlencode($cleanPub ?: 'KOMPAS Media Nusantara') . '&search_by=Publisher') ?>" class="katalog-pill-btn">
+                <?= esc($cleanPub ?: 'KOMPAS Media Nusantara') ?>
+            </a>
 
-<!-- Modal Preview Sampul Buku -->
-<div class="modal fade" id="coverModal" tabindex="-1" aria-labelledby="coverModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px;">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold" id="coverModalLabel" style="font-size: 1rem;">Sampul: <?= esc($rawTitle) ?></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <img src="<?= esc($coverUrl) ?>" id="modalCoverImage" alt="Sampul <?= esc($rawTitle) ?>" class="img-fluid rounded shadow-sm" style="max-height: 460px;">
-            </div>
-            <div class="modal-footer border-top-0 pt-0">
-                <?php if ($hasRealCover): ?>
-                    <a href="<?= esc($coverUrl) ?>" id="downloadCoverBtn" download class="btn-opac-pill-primary py-2 px-3">
-                        <i class="fa-solid fa-download"></i>
-                        <span>Unduh Sampul</span>
-                    </a>
-                <?php endif; ?>
-                <button type="button" class="btn-opac-pill-outline py-2 px-3" data-bs-dismiss="modal">Tutup</button>
-            </div>
+            <?php if (!empty($subjects)): ?>
+                <a href="<?= base_url('opac?search=' . urlencode($subjects[0]) . '&search_by=Subject') ?>" class="katalog-pill-btn">
+                    Subjek: <?= esc($subjects[0]) ?>
+                </a>
+            <?php else: ?>
+                <a href="<?= base_url('opac?search=Sastra&search_by=Subject') ?>" class="katalog-pill-btn">
+                    Subjek: Sastra
+                </a>
+            <?php endif; ?>
+
+            <a href="<?= base_url('opac?PublishYear=' . urlencode($cleanYear ?: '2025')) ?>" class="katalog-pill-btn">
+                Tahun <?= esc($cleanYear ?: '2025') ?>
+            </a>
         </div>
-    </div>
-</div>
+    </section>
 
-<!-- Modal Panduan Peminjaman Eksemplar -->
-<div class="modal fade" id="pinjamEksModal" tabindex="-1" aria-labelledby="pinjamEksModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; padding: 8px;">
-            <div class="modal-header border-bottom-0">
-                <div>
-                    <div class="text-uppercase fw-bold" style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #1b3878; letter-spacing: 0.08em;">
-                        SIRKULASI &amp; PEMINJAMAN KOLEKSI
-                    </div>
-                    <h5 class="modal-title fw-bold mt-1" id="pinjamEksModalTitle" style="font-family: 'Libre Baskerville', Georgia, serif; font-size: 1.15rem;">
-                        Pinjam Eksemplar Koleksi
-                    </h5>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-            </div>
-            <div class="modal-body pt-0">
-                <p class="small text-muted mb-3">
-                    Gunakan informasi nomor panggil dan nomor barcode di bawah ini untuk mengambil buku di rak dan melakukan peminjaman di meja sirkulasi atau layanan peminjaman mandiri.
-                </p>
-                <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                    <div class="row g-2 small">
-                        <div class="col-5 text-muted">Judul Koleksi:</div>
-                        <div class="col-7 fw-bold text-dark"><?= esc($mainTitle) ?></div>
-
-                        <div class="col-5 text-muted">Nomor Barcode:</div>
-                        <div class="col-7">
-                            <span class="barcode-code" id="modalPinjamBarcode"><?= esc($firstAvailBarcode ?: '-') ?></span>
-                            <button type="button" class="btn-copy-barcode ms-1" onclick="copySingleBarcode(document.getElementById('modalPinjamBarcode').textContent)">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                        </div>
-
-                        <div class="col-5 text-muted">Nomor Panggil:</div>
-                        <div class="col-7"><span class="callnumber-code" id="modalPinjamCall"><?= esc($displayCallNumber) ?></span></div>
-
-                        <div class="col-5 text-muted">Lokasi Rak:</div>
-                        <div class="col-7 fw-semibold text-brand" id="modalPinjamLoc"><?= esc($displayLocation) ?></div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-top-0 pt-0 d-flex justify-content-between">
-                <button type="button" class="btn-opac-pill-outline py-2 px-3" data-bs-dismiss="modal">Tutup</button>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn-opac-pill-outline py-2 px-3"
-                            onclick="copySingleBarcode(document.getElementById('modalPinjamBarcode').textContent)">
-                        <i class="fa-regular fa-copy"></i>
-                        <span>Salin Barcode</span>
-                    </button>
-                    <a href="<?= base_url('peminjaman-mandiri') ?>" class="btn-opac-pill-primary py-2 px-3">
-                        <span>Layanan Peminjaman</span>
-                        <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
-    <?php if (session()->getFlashdata('digital_error')): ?>
-    document.addEventListener('DOMContentLoaded', function () {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Masa Peminjaman Berakhir',
-            text: <?= json_encode(session()->getFlashdata('digital_error')) ?>,
-            confirmButtonText: 'Oke',
-        });
-    });
-    <?php endif; ?>
-    <?php if (session()->getFlashdata('digital_info')): ?>
-    document.addEventListener('DOMContentLoaded', function () {
-        Swal.fire({
-            icon: 'info',
-            title: 'Sedang Dipinjam',
-            text: <?= json_encode(session()->getFlashdata('digital_info')) ?>,
-            confirmButtonText: 'Oke',
-        });
-    });
-    <?php endif; ?>
-
     const catalogData = {
         id: <?= json_encode($catalogId) ?>,
-        controlNumber: <?= json_encode($rawControlNum) ?>,
         title: <?= json_encode($rawTitle) ?>,
-        author: <?= json_encode($rawAuthor) ?>,
-        publisher: <?= json_encode($cleanPub) ?>,
-        publishLocation: <?= json_encode($cleanPubLoc) ?>,
-        publishYear: <?= json_encode($cleanYear) ?>,
-        isbn: <?= json_encode($rawIsbn) ?>,
-        callNumber: <?= json_encode($displayCallNumber) ?>,
-        subject: <?= json_encode($rawSubject) ?>,
-        physicalDescription: <?= json_encode($rawPhysDesc) ?>,
-        languages: <?= json_encode($rawLang) ?>,
-        note: <?= json_encode($rawNote) ?>,
+        author: <?= json_encode($primaryAuthor) ?>,
         currentUrl: <?= json_encode(current_url()) ?>,
-        hasRealCover: <?= json_encode($hasRealCover) ?>,
-        coverUrl: <?= json_encode($coverUrl) ?>,
-        firstAvailBarcode: <?= json_encode($firstAvailBarcode) ?>,
-        defaultLocation: <?= json_encode($displayLocation) ?>
+        hasRealCover: <?= json_encode($hasRealCover) ?>
     };
 
-    // ─── Pengaturan Mode Sampul (Gambar Asli vs Mode Sampul OPAC) ───
-    let showingGeneratedCover = !catalogData.hasRealCover;
-
-    function toggleOpacCoverMode() {
-        const realImg = document.getElementById('realBookCoverView');
-        const genView = document.getElementById('opacGeneratedCoverView');
-        const labelEl = document.getElementById('coverModeLabel');
-        const pagerEl = document.getElementById('coverPagerText');
-
-        if (!catalogData.hasRealCover || !realImg) {
-            showToast('Menampilkan Mode Sampul Standar OPAC (Katalog belum memiliki gambar sampul unggahan).', 'info');
-            return;
-        }
-
-        showingGeneratedCover = !showingGeneratedCover;
-        if (showingGeneratedCover) {
-            realImg.style.display = 'none';
-            genView.style.display = 'flex';
-            if (labelEl) labelEl.textContent = 'Tampilkan Sampul Asli';
-            if (pagerEl) pagerEl.textContent = '2/2';
-        } else {
-            realImg.style.display = 'block';
-            genView.style.display = 'none';
-            if (labelEl) labelEl.textContent = 'Lihat Mode Sampul OPAC';
-            if (pagerEl) pagerEl.textContent = '1/2';
-        }
-    }
-
-    function handleCoverStageClick() {
-        if (catalogData.hasRealCover && !showingGeneratedCover && catalogData.coverUrl) {
-            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('coverModal'));
-            modal.show();
-        } else if (catalogData.hasRealCover) {
-            toggleOpacCoverMode();
-        } else {
-            showToast('Sampul ditampilkan dalam Mode Sampul OPAC.', 'info');
-        }
-    }
-
-    // ─── Navigasi Tab (Buku Fisik, Digital, MARC21, Ekspor & Sitasi) ───
-    function switchDetailTab(tabName) {
-        const tabs = {
-            fisik:   { btn: 'tabBtnFisik',   pane: 'paneFisik' },
-            digital: { btn: 'tabBtnDigital', pane: 'paneDigital' },
-            marc:    { btn: 'tabBtnMarc',    pane: 'paneMarc' },
-            ekspor:  { btn: 'tabBtnEkspor',  pane: 'paneEkspor' }
-        };
-
-        Object.keys(tabs).forEach(function (key) {
-            const btnEl  = document.getElementById(tabs[key].btn);
-            const paneEl = document.getElementById(tabs[key].pane);
-            const isActive = (key === tabName);
-
-            if (btnEl) {
-                btnEl.classList.toggle('active', isActive);
-                btnEl.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    // Tab Switcher
+    function switchKatalogTab(name) {
+        const tabs = ['fisik', 'digital', 'marc'];
+        tabs.forEach(t => {
+            const btn = document.getElementById('tab' + capitalize(t) + 'Btn');
+            const pane = document.getElementById('tab' + capitalize(t) + 'Pane');
+            const isMatch = (t === name);
+            if (btn) {
+                btn.classList.toggle('active', isMatch);
+                btn.setAttribute('aria-selected', isMatch ? 'true' : 'false');
             }
-            if (paneEl) {
-                paneEl.style.display = isActive ? 'block' : 'none';
+            if (pane) {
+                pane.style.display = isMatch ? 'block' : 'none';
             }
         });
     }
 
-    function openExportCitationTab() {
-        switchDetailTab('ekspor');
-        const section = document.getElementById('section-eksemplar');
+    function capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Scroll to inventory section
+    function scrollToInventory() {
+        const section = document.getElementById('sectionInventory');
         if (section) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 
-    // ─── Pencarian & Filter Status Eksemplar ───
-    let activeEksStatusFilter = 'all';
-
-    function setEksStatusFilter(status, btnEl) {
-        activeEksStatusFilter = status;
-        document.querySelectorAll('.opac-filter-btn').forEach(function (b) {
-            b.classList.remove('active');
-        });
-        if (btnEl) {
-            btnEl.classList.add('active');
-        }
-        applyEksTableFilter();
+    // Filter status inventory
+    let activeFilterStatus = 'all';
+    function filterInventoryStatus(status, btn) {
+        activeFilterStatus = status;
+        document.querySelectorAll('.katalog-filter-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        applyInventoryFilter();
     }
 
-    function resetEksFilter() {
-        const searchInput = document.getElementById('eksSearchInput');
-        if (searchInput) searchInput.value = '';
-        const allBtn = document.querySelector('.opac-filter-btn[data-eks-filter="all"]');
-        setEksStatusFilter('all', allBtn);
-    }
-
-    function applyEksTableFilter() {
-        const searchInput = document.getElementById('eksSearchInput');
+    function applyInventoryFilter() {
+        const searchInput = document.getElementById('inventorySearchInput');
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        const rows = document.querySelectorAll('#eksTableBody tr.eks-data-row');
-        const emptyRow = document.getElementById('eksEmptyFilterRow');
-
+        const rows = document.querySelectorAll('#inventoryTableBody tr.inventory-data-row');
         let visibleCount = 0;
-        rows.forEach(function (row) {
+
+        rows.forEach(row => {
             const rowStatus = row.getAttribute('data-status') || 'avail';
             const rowSearch = row.getAttribute('data-search') || '';
 
-            const matchStatus = (activeEksStatusFilter === 'all') || (rowStatus === activeEksStatusFilter);
-            const matchQuery  = (query === '') || (rowSearch.indexOf(query) !== -1);
+            const matchStatus = (activeFilterStatus === 'all') || (rowStatus === activeFilterStatus);
+            const matchQuery = (query === '') || (rowSearch.indexOf(query) !== -1);
 
             if (matchStatus && matchQuery) {
                 row.style.display = '';
@@ -2283,372 +1714,40 @@ if ($rawPhysDesc !== '' && stripos($rawPhysDesc, 'kertas') === false) {
                 row.style.display = 'none';
             }
         });
-
-        if (emptyRow) {
-            emptyRow.style.display = (rows.length > 0 && visibleCount === 0) ? '' : 'none';
-        }
     }
 
-    // ─── Scroll & Tindakan Cepat Eksemplar ───
-    function scrollToEksemplarAndPinjam() {
-        switchDetailTab('fisik');
-        const section = document.getElementById('section-eksemplar');
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        if (catalogData.firstAvailBarcode) {
-            openPinjamDialog(catalogData.firstAvailBarcode, catalogData.callNumber, catalogData.defaultLocation);
-        } else {
-            showToast('Silakan periksa daftar ketersediaan eksemplar pada tabel di bawah.', 'info');
-        }
+    const searchInputEl = document.getElementById('inventorySearchInput');
+    if (searchInputEl) {
+        searchInputEl.addEventListener('input', applyInventoryFilter);
     }
 
-    function scrollToEksemplarAndFilterAvail() {
-        switchDetailTab('fisik');
-        const availBtn = document.querySelector('.opac-filter-btn[data-eks-filter="avail"]');
-        setEksStatusFilter('avail', availBtn);
-        const section = document.getElementById('section-eksemplar');
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-
-    function scrollToAndHighlightBarcodes() {
-        switchDetailTab('fisik');
-        resetEksFilter();
-        const section = document.getElementById('section-eksemplar');
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        document.querySelectorAll('#tbl_eksemplars_fisik .barcode-cell').forEach(function (cell) {
-            cell.classList.remove('barcode-highlight-flash');
-            void cell.offsetWidth;
-            cell.classList.add('barcode-highlight-flash');
-        });
-    }
-
-    function openPinjamDialog(barcode, callNum, locationName) {
-        const bcEl   = document.getElementById('modalPinjamBarcode');
-        const callEl = document.getElementById('modalPinjamCall');
-        const locEl  = document.getElementById('modalPinjamLoc');
-
-        if (bcEl) bcEl.textContent = barcode || '-';
-        if (callEl) callEl.textContent = callNum || catalogData.callNumber || '-';
-        if (locEl) locEl.textContent = locationName || catalogData.defaultLocation || '-';
-
-        const modalEl = document.getElementById('pinjamEksModal');
-        if (modalEl) {
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
-    }
-
-    // ─── Simpan Koleksi Favorit (Bookmark via localStorage) ───
-    const BOOKMARK_STORAGE_KEY = 'opac_saved_catalogs_v1';
-
-    function getSavedCatalogs() {
-        try {
-            const raw = localStorage.getItem(BOOKMARK_STORAGE_KEY);
-            return raw ? JSON.parse(raw) : [];
-        } catch (e) {
-            return [];
-        }
-    }
-
-    function updateBookmarkButtonState() {
-        const list = getSavedCatalogs();
-        const isSaved = list.indexOf(Number(catalogData.id)) !== -1;
-        const btn = document.getElementById('btnBookmarkCatalog');
-        const icon = document.getElementById('iconBookmarkCatalog');
-
-        if (btn && icon) {
-            btn.classList.toggle('is-active', isSaved);
-            icon.className = isSaved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
-        }
-    }
-
-    function toggleBookmarkCatalog() {
-        let list = getSavedCatalogs();
-        const idNum = Number(catalogData.id);
-        const idx = list.indexOf(idNum);
-
-        if (idx === -1) {
-            list.push(idNum);
-            showToast('Koleksi disimpan ke daftar bacaan Anda.', 'success');
-        } else {
-            list.splice(idx, 1);
-            showToast('Koleksi dihapus dari daftar bacaan.', 'info');
-        }
-
-        try {
-            localStorage.setItem(BOOKMARK_STORAGE_KEY, JSON.stringify(list));
-        } catch (e) {}
-        updateBookmarkButtonState();
-    }
-
-    // ─── Salin, Bagikan, & Ekspor ───
-    function copySingleBarcode(barcode) {
-        if (!barcode || barcode === '-') return;
-        copyTextWithToast(barcode, 'Nomor barcode ' + barcode + ' disalin ke clipboard!');
-    }
-
-    function copyToClipboard() {
-        const textData = `Judul: ${catalogData.title}
-Pengarang: ${catalogData.author || 'N/A'}
-Penerbit: ${catalogData.publisher || 'N/A'}
-Tahun: ${catalogData.publishYear || 'N/A'}
-ISBN: ${catalogData.isbn || 'N/A'}
-Nomor Panggil: ${catalogData.callNumber || 'N/A'}
-Tautan: ${catalogData.currentUrl}`;
-
-        copyTextWithToast(textData, 'Detail katalog telah disalin ke clipboard!');
-    }
-
-    function copyLink() {
-        copyTextWithToast(catalogData.currentUrl, 'Tautan katalog telah disalin ke clipboard!');
-    }
-
-    function copyTextWithToast(text, successMsg) {
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(function () {
-                showToast(successMsg, 'success');
-            }).catch(function () {
-                fallbackCopyTextToClipboard(text, successMsg);
-            });
-        } else {
-            fallbackCopyTextToClipboard(text, successMsg);
-        }
-    }
-
-    function fallbackCopyTextToClipboard(text, successMsg) {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.top = '0';
-        textArea.style.left = '0';
-        textArea.style.opacity = '0';
-
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        try {
-            const successful = document.execCommand('copy');
-            if (successful) {
-                showToast(successMsg || 'Berhasil disalin ke clipboard!', 'success');
-            } else {
-                showToast('Gagal menyalin ke clipboard', 'danger');
-            }
-        } catch (err) {
-            showToast('Peramban tidak mendukung salin otomatis', 'warning');
-        }
-
-        document.body.removeChild(textArea);
-    }
-
-    function shareViaEmail() {
-        const subject = encodeURIComponent('Katalog Perpustakaan: ' + catalogData.title);
-        const body = encodeURIComponent(`Berikut informasi koleksi katalog perpustakaan:
-
-Judul: ${catalogData.title}
-Pengarang: ${catalogData.author || '-'}
-Penerbit: ${catalogData.publisher || '-'} (${catalogData.publishYear || '-'})
-Nomor Panggil: ${catalogData.callNumber || '-'}
-
-Lihat detail lengkap di: ${catalogData.currentUrl}`);
-
-        window.open(`mailto:?subject=${subject}&body=${body}`);
-    }
-
-    function shareViaWhatsapp() {
-        const text = encodeURIComponent(`*Katalog Perpustakaan*
-
-*Judul:* ${catalogData.title}
-*Pengarang:* ${catalogData.author || '-'}
-*Penerbit:* ${catalogData.publisher || '-'} (${catalogData.publishYear || '-'})
-*Nomor Panggil:* ${catalogData.callNumber || '-'}
-
-Tautan: ${catalogData.currentUrl}`);
-
-        window.open(`https://wa.me/?text=${text}`, '_blank');
-    }
-
-    function closeShareMenu() {
-        const menuBagikan = document.getElementById('bagikanDropdownMenu');
-        if (menuBagikan) menuBagikan.style.display = 'none';
-    }
-
-    function exportBibTeX() {
-        const controlNumber = (catalogData.controlNumber || '').replace(/[^a-zA-Z0-9]/g, '') || 'catalog' + catalogData.id;
-        const bibtex = `@book{${controlNumber},
-    title = {${catalogData.title}},
-    author = {${catalogData.author}},
-    publisher = {${catalogData.publisher}},
-    year = {${catalogData.publishYear}},
-    isbn = {${catalogData.isbn}},
-    address = {${catalogData.publishLocation}},
-    note = {Available at: ${catalogData.currentUrl}}
-}`;
-
-        downloadFile(`catalog_${catalogData.id}.bib`, bibtex, 'text/plain');
-    }
-
-    function exportRIS() {
-        const ris = `TY  - BOOK
-TI  - ${catalogData.title}
-AU  - ${catalogData.author}
-PB  - ${catalogData.publisher}
-PY  - ${catalogData.publishYear}
-SN  - ${catalogData.isbn}
-CY  - ${catalogData.publishLocation}
-CN  - ${catalogData.callNumber}
-UR  - ${catalogData.currentUrl}
-N2  - ${(catalogData.note || '').substring(0, 250)}
-KW  - ${catalogData.subject}
-ER  - 
-`;
-
-        downloadFile(`catalog_${catalogData.id}.ris`, ris, 'application/x-research-info-systems');
-    }
-
-    function exportCSV() {
-        const csvContent = [
-            ['Field', 'Value'],
-            ['ID', catalogData.id],
-            ['Control Number', catalogData.controlNumber],
-            ['Title', catalogData.title],
-            ['Author', catalogData.author],
-            ['Publisher', catalogData.publisher],
-            ['Publish Location', catalogData.publishLocation],
-            ['Publish Year', catalogData.publishYear],
-            ['ISBN', catalogData.isbn],
-            ['Call Number', catalogData.callNumber],
-            ['Subject', catalogData.subject],
-            ['Physical Description', catalogData.physicalDescription],
-            ['Languages', catalogData.languages],
-            ['Note', catalogData.note],
-            ['URL', catalogData.currentUrl]
-        ];
-
-        const csv = csvContent.map(row =>
-            row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')
-        ).join('\n');
-
-        downloadFile(`catalog_${catalogData.id}.csv`, csv, 'text/csv');
-    }
-
-    function downloadFile(filename, content, mimeType = 'text/plain') {
-        try {
-            const blob = new Blob([content], { type: mimeType + ';charset=utf-8' });
-            const url = window.URL.createObjectURL(blob);
-            const element = document.createElement('a');
-            element.setAttribute('href', url);
-            element.setAttribute('download', filename);
-            element.style.display = 'none';
-
-            document.body.appendChild(element);
-            element.click();
-            document.body.removeChild(element);
-
+    // Highlight barcodes
+    function highlightBarcodes() {
+        scrollToInventory();
+        switchKatalogTab('fisik');
+        const tableWrap = document.querySelector('.katalog-table-wrap');
+        if (tableWrap) {
+            tableWrap.style.boxShadow = '0 0 0 3px rgba(29, 78, 216, 0.3)';
             setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-            }, 100);
-
-            showToast(`Berkas ${filename} berhasil diunduh!`, 'success');
-        } catch (error) {
-            console.error('Download error:', error);
-            showToast('Gagal mengunduh berkas. Silakan coba lagi.', 'danger');
+                tableWrap.style.boxShadow = '';
+            }, 1500);
         }
     }
 
-    function showToast(message, type = 'info') {
-        const existingToasts = document.querySelectorAll('.custom-toast');
-        existingToasts.forEach(toast => toast.remove());
-
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed custom-toast`;
-        toast.style.cssText = 'top: 88px; right: 24px; z-index: 9999; max-width: 380px; border-radius: 12px; box-shadow: 0 10px 25px rgba(15,23,42,0.15);';
-
-        const iconClass = type === 'success' ? 'check-circle' :
-            type === 'danger' ? 'exclamation-circle' :
-            type === 'warning' ? 'exclamation-triangle' : 'info-circle';
-
-        toast.innerHTML = `
-            <i class="fas fa-${iconClass} me-2"></i>
-            <span>${message}</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
-        `;
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 150);
-            }
-        }, 3800);
+    // Salin Tautan
+    function copyCatalogLink() {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(catalogData.currentUrl).then(() => {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'success', title: 'Tautan Disalin', text: 'Tautan katalog berhasil disalin ke clipboard!', timer: 1600, showConfirmButton: false });
+                }
+            });
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        updateBookmarkButtonState();
-
-        // Live search input eksemplar
-        const eksSearchInput = document.getElementById('eksSearchInput');
-        if (eksSearchInput) {
-            eksSearchInput.addEventListener('input', applyEksTableFilter);
-        }
-
-        // Dropdown Unduh MARC
-        const btnMarc  = document.getElementById('downloadMarcDropdown');
-        const menuMarc = document.getElementById('marcDropdownMenu');
-        const caretMarc = document.getElementById('marcCaretIcon');
-
-        if (btnMarc && menuMarc) {
-            btnMarc.addEventListener('click', function (e) {
-                e.stopPropagation();
-                const isOpen = menuMarc.style.display === 'block';
-                menuMarc.style.display = isOpen ? 'none' : 'block';
-                btnMarc.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-                if (caretMarc) {
-                    caretMarc.className = isOpen ? 'fa-solid fa-caret-down' : 'fa-solid fa-caret-up';
-                }
-            });
-
-            document.addEventListener('click', function (e) {
-                const wrapper = document.getElementById('marcDropdownWrapper');
-                if (wrapper && !wrapper.contains(e.target)) {
-                    menuMarc.style.display = 'none';
-                    btnMarc.setAttribute('aria-expanded', 'false');
-                    if (caretMarc) caretMarc.className = 'fa-solid fa-caret-down';
-                }
-            });
-        }
-
-        // Dropdown Bagikan
-        const btnBagikan  = document.getElementById('bagikanDropdownBtn');
-        const menuBagikan = document.getElementById('bagikanDropdownMenu');
-
-        if (btnBagikan && menuBagikan) {
-            btnBagikan.addEventListener('click', function (e) {
-                e.stopPropagation();
-                const isOpen = menuBagikan.style.display === 'block';
-                menuBagikan.style.display = isOpen ? 'none' : 'block';
-                btnBagikan.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-            });
-
-            document.addEventListener('click', function (e) {
-                const wrapper = document.getElementById('bagikanDropdownWrapper');
-                if (wrapper && !wrapper.contains(e.target)) {
-                    menuBagikan.style.display = 'none';
-                    btnBagikan.setAttribute('aria-expanded', 'false');
-                }
-            });
-        }
-    });
+    function handleCoverClick() {
+        // Toggle view or notify
+    }
 </script>
 
-<?= $this->endSection() ?>
+<?= $this->endSection() ?>

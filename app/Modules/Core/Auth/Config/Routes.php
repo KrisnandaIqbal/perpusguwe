@@ -2,11 +2,9 @@
 	$routes = \Config\Services::routes(true);
 }
 
-if(is_profiling()){
-	$routes->get('login', 'Auth::login', ['namespace' => 'Auth\Controllers', 'as' => 'login']);
-	$routes->post('login', 'Auth::attemptLogin', ['namespace' => 'Auth\Controllers']);
-	$routes->get('logout', 'Auth::logout', ['namespace' => 'Auth\Controllers', 'as' => 'logout']);
-}
+$routes->get('login', 'Auth::login', ['namespace' => 'Auth\Controllers', 'as' => 'login']);
+$routes->post('login', 'Auth::attemptLogin', ['namespace' => 'Auth\Controllers']);
+$routes->get('logout', 'Auth::logout', ['namespace' => 'Auth\Controllers', 'as' => 'logout']);
 
 $routes->group('/auth', ['namespace' => 'Auth\Controllers\Api'], function ($subroutes) {
     $subroutes->get('', 'Auth::index');

@@ -1,5 +1,34 @@
 <?php
 
+if (!function_exists('buildOpacUrl')) {
+    /**
+     * Membangun URL OPAC dengan mengubah/menambah parameter tertentu
+     * sambil mempertahankan parameter filter lainnya.
+     *
+     * @param array $changes Array key-value parameter yang ingin diubah/ditambah
+     * @param array $removals Array nama parameter yang ingin dihapus
+     * @return string URL lengkap
+     */
+    function buildOpacUrl(array $changes = [], array $removals = []): string
+    {
+        $params = request()->getGet();
+        if (!isset($changes['page'])) {
+            unset($params['page']);
+        }
+        foreach ($removals as $rem) {
+            unset($params[$rem]);
+        }
+        foreach ($changes as $k => $v) {
+            if ($v === null || $v === '') {
+                unset($params[$k]);
+            } else {
+                $params[$k] = $v;
+            }
+        }
+        return base_url('opac') . (!empty($params) ? '?' . http_build_query($params) : '');
+    }
+}
+
 if (!function_exists('buildFilterUrl')) {
     /**
      * Generate URL filter bersih menuju halaman OPAC untuk kriteria tertentu
@@ -211,27 +240,50 @@ if (!function_exists('renderModernBookCard')) {
             }
         }
 
-        // Pilih palet warna sampul buku berdasarkan ID
+        // Pilih palet warna sampul buku yang selaras (nuansa sapphire, slate, ocean, indigo & spruce)
         $palettes = [
-            ['bg' => 'linear-gradient(145deg, #10254c 0%, #0a1833 100%)', 'accent' => '#f59e0b', 'pill_bg' => 'rgba(245, 158, 11, 0.16)'],
-            ['bg' => 'linear-gradient(145deg, #093529 0%, #052119 100%)', 'accent' => '#fbbf24', 'pill_bg' => 'rgba(16, 185, 129, 0.2)'],
-            ['bg' => 'linear-gradient(145deg, #153462 0%, #0c203f 100%)', 'accent' => '#fcd34d', 'pill_bg' => 'rgba(59, 130, 246, 0.22)'],
-            ['bg' => 'linear-gradient(145deg, #4a1e0c 0%, #2d1106 100%)', 'accent' => '#fbbf24', 'pill_bg' => 'rgba(245, 158, 11, 0.2)'],
-            ['bg' => 'linear-gradient(145deg, #2b194d 0%, #180d2e 100%)', 'accent' => '#f59e0b', 'pill_bg' => 'rgba(168, 85, 247, 0.2)'],
+            ['bg' => 'linear-gradient(145deg, #0f3fb4 0%, #0a266e 100%)', 'accent' => '#ffffff', 'pill_bg' => 'rgba(255, 255, 255, 0.20)'],
+            ['bg' => 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)', 'accent' => '#cbd5e1', 'pill_bg' => 'rgba(255, 255, 255, 0.14)'],
+            ['bg' => 'linear-gradient(145deg, #155e75 0%, #083344 100%)', 'accent' => '#a5f3fc', 'pill_bg' => 'rgba(165, 243, 252, 0.16)'],
+            ['bg' => 'linear-gradient(145deg, #1e3a8a 0%, #0f1f4b 100%)', 'accent' => '#bfdbfe', 'pill_bg' => 'rgba(191, 219, 254, 0.18)'],
+            ['bg' => 'linear-gradient(145deg, #144738 0%, #09261e 100%)', 'accent' => '#a7f3d0', 'pill_bg' => 'rgba(167, 243, 208, 0.16)'],
         ];
         $palette = $palettes[$id % count($palettes)];
 
-        // Status ketersediaan eksemplar
+        // Cek Badge Rekomendasi (Baru atau Populer/Sering Dipinjam)
+        $isPopuler = (bool) ($isArr ? ($item['is_populer'] ?? false) : ($item->is_populer ?? false));
+        $totalDipinjam = (int) ($isArr ? ($item['total_dipinjam'] ?? ($item['peminjam'] ?? 0)) : ($item->total_dipinjam ?? ($item->peminjam ?? 0)));
+
+        // Syarat label Baru: Hanya jika CreateDate maksimal 7 hari (1 minggu) yang lalu
+        $createDate = $isArr ? ($item['CreateDate'] ?? null) : ($item->CreateDate ?? null);
+        $isBaru = false;
+        if (!empty($createDate)) {
+            $tsCreate = strtotime($createDate);
+            if ($tsCreate && $tsCreate >= strtotime('-7 days')) {
+                $isBaru = true;
+            }
+        }
+
+        // Status ketersediaan eksemplar sesuai desain baru
         if ($totalEks > 0 && $availEks > 0) {
-            $statusBadgeHtml = '<span class="opac-status-pill status-available"><i class="fa-regular fa-circle-check me-1"></i>Tersedia di Rak</span>';
+            $statusBadgeHtml = '<span class="opac-status-badge badge-available">Tersedia dipinjam</span>';
             $eksCountHtml    = esc($availEks . '/' . $totalEks . ' Eks.');
         } elseif ($totalEks > 0 && $availEks === 0) {
-            $statusBadgeHtml = '<span class="opac-status-pill status-borrowed"><i class="fa-regular fa-clock me-1"></i>Dipinjam</span>';
+            $statusBadgeHtml = '<span class="opac-status-badge badge-borrowed">Sedang dipinjam</span>';
             $eksCountHtml    = esc('0/' . $totalEks . ' Eks.');
         } else {
-            // Jika belum ada data di tabel collections, tampilkan default 1/1 Eks Tersedia di Rak
-            $statusBadgeHtml = '<span class="opac-status-pill status-available"><i class="fa-regular fa-circle-check me-1"></i>Tersedia di Rak</span>';
+            // Default jika belum ada eksemplar terdaftar
+            $statusBadgeHtml = '<span class="opac-status-badge badge-available">Tersedia dipinjam</span>';
             $eksCountHtml    = '1/1 Eks.';
+        }
+
+        // Teks Keterangan Rekomendasi (Baru atau Populer) untuk di body kartu
+        $recomTextHtml = '';
+        if ($isBaru) {
+            $recomTextHtml = '<div class="mb-2"><span class="opac-recom-pill recom-baru"><i class="fas fa-sparkles me-1 text-success"></i>Koleksi Baru</span></div>';
+        } elseif ($isPopuler || $totalDipinjam > 0) {
+            $peminjamCount = $totalDipinjam > 0 ? $totalDipinjam : 1;
+            $recomTextHtml = '<div class="mb-2"><span class="opac-recom-pill recom-popular"><i class="fas fa-fire me-1 text-danger"></i>Telah dipinjam ' . $peminjamCount . 'x</span></div>';
         }
 
         // Baris metadata bawah: Edisi · Tahun · Subjek
@@ -314,83 +366,71 @@ if (!function_exists('renderModernBookCard')) {
         ob_start();
         ?>
         <div class="<?= esc($colClass) ?>">
-            <div class="opac-modern-card h-100 d-flex flex-column" data-catalog-id="<?= (int) $id ?>" data-book-meta="<?= $modalJsonAttr ?>">
+            <div class="opac-modern-card opac-warm-card h-100 d-flex flex-column position-relative" data-catalog-id="<?= (int) $id ?>" data-book-meta="<?= $modalJsonAttr ?>">
                 <!-- Area Sampul Buku -->
-                <a href="<?= $detailUrl ?>" class="opac-cover-stage text-decoration-none js-open-book-modal">
-                    <div class="opac-book-3d" style="background: <?= $palette['bg'] ?>;">
-                        <?php if ($hasValidCoverFile): ?>
-                            <img src="<?= esc($coverImgSrc) ?>"
-                                 alt="<?= esc($title) ?>"
-                                 class="opac-real-cover-img"
-                                 loading="lazy"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <?php endif; ?>
+                <div class="opac-cover-wrapper position-relative">
+                    <a href="<?= $detailUrl ?>" class="opac-cover-stage text-decoration-none js-open-book-modal">
+                        <div class="opac-book-3d" style="background: <?= $palette['bg'] ?>;">
+                            <?php if ($hasValidCoverFile): ?>
+                                <img src="<?= esc($coverImgSrc) ?>"
+                                     alt="<?= esc($title) ?>"
+                                     class="opac-real-cover-img"
+                                     loading="lazy"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <?php endif; ?>
 
-                        <div class="opac-generated-cover" style="display: <?= $hasValidCoverFile ? 'none' : 'flex' ?>;">
-                            <div class="opac-book-spine"></div>
-                            <div class="opac-cover-geo-circle"></div>
-                            <div class="opac-cover-geo-rect"></div>
+                            <div class="opac-generated-cover" style="display: <?= $hasValidCoverFile ? 'none' : 'flex' ?>;">
+                                <div class="opac-book-spine"></div>
+                                <div class="opac-cover-geo-circle"></div>
+                                <div class="opac-cover-geo-rect"></div>
 
-                            <div class="opac-cover-top d-flex justify-content-between align-items-center">
-                                <span class="opac-cover-tag" style="background: <?= $palette['pill_bg'] ?>; color: <?= $palette['accent'] ?>;">
-                                    <?= esc($topLabel) ?>
-                                </span>
-                                <?php if ($year !== '' && $year !== '-'): ?>
-                                    <span class="opac-cover-year"><?= esc($year) ?></span>
-                                <?php endif; ?>
-                            </div>
+                                <div class="opac-cover-top d-flex justify-content-between align-items-center">
+                                    <span class="opac-cover-tag" style="background: <?= $palette['pill_bg'] ?>; color: <?= $palette['accent'] ?>;">
+                                        <?= esc($topLabel) ?>
+                                    </span>
+                                    <?php if ($year !== '' && $year !== '-'): ?>
+                                        <span class="opac-cover-year"><?= esc($year) ?></span>
+                                    <?php endif; ?>
+                                </div>
 
-                            <div class="opac-cover-middle my-auto">
-                                <div class="opac-cover-title"><?= esc(mb_strimwidth($title, 0, 85, '...')) ?></div>
-                                <div class="opac-cover-author"><?= esc(mb_strimwidth($displayAuthor, 0, 55, '...')) ?></div>
-                            </div>
+                                <div class="opac-cover-middle my-auto">
+                                    <div class="opac-cover-title"><?= esc(mb_strimwidth($title, 0, 85, '...')) ?></div>
+                                    <div class="opac-cover-author"><?= esc(mb_strimwidth($displayAuthor, 0, 55, '...')) ?></div>
+                                </div>
 
-                            <div class="opac-cover-bottom d-flex justify-content-between align-items-end">
-                                <span class="opac-cover-call"><?= esc(mb_strimwidth($callNumber, 0, 18, '')) ?></span>
-                                <span class="opac-cover-edition" style="color: <?= $palette['accent'] ?>;">
-                                    <?= esc(mb_strimwidth($footerRightOnCover, 0, 18, '')) ?>
-                                </span>
+                                <div class="opac-cover-bottom d-flex justify-content-between align-items-end">
+                                    <span class="opac-cover-call"><?= esc(mb_strimwidth($callNumber, 0, 18, '')) ?></span>
+                                    <span class="opac-cover-edition" style="color: <?= $palette['accent'] ?>;">
+                                        <?= esc(mb_strimwidth($footerRightOnCover, 0, 18, '')) ?>
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
 
-                <!-- Area Informasi & Sirkulasi -->
-                <div class="opac-card-body d-flex flex-column flex-grow-1">
-                    <!-- Baris 1: Status & Jumlah Eksemplar -->
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <?= $statusBadgeHtml ?>
-                        <span class="opac-eks-count"><?= $eksCountHtml ?></span>
-                    </div>
-
-                    <!-- Baris 2: Nomor Panggil & Lokasi Rak -->
-                    <div class="opac-call-row mb-2 text-truncate" title="<?= esc($callNumber . ' · ' . $shelfLoc) ?>">
-                        <span class="opac-call-badge"><?= esc($callNumber) ?></span>
-                        <span class="opac-shelf-text">&middot; <?= esc($shelfLoc) ?></span>
+                <!-- Area Informasi Sesuai Desain Baru -->
+                <div class="opac-card-body d-flex flex-column flex-grow-1 pt-2">
+                    <!-- Kategori Subjek Uppercase -->
+                    <div class="opac-book-kicker text-truncate mb-1" title="<?= esc($firstSubj) ?>">
+                        <?= esc(mb_strtoupper($firstSubj)) ?>
                     </div>
 
-                    <!-- Baris 3: Judul Buku -->
+                    <!-- Judul Buku -->
                     <h5 class="opac-book-heading mb-1" title="<?= esc($title) ?>">
                         <a href="<?= $detailUrl ?>" class="text-decoration-none js-open-book-modal">
                             <?= esc($title) ?>
                         </a>
                     </h5>
 
-                    <!-- Baris 4: Pengarang -->
-                    <div class="opac-book-author text-truncate mb-1" title="<?= esc($displayAuthor) ?>">
+                    <!-- Pengarang -->
+                    <div class="opac-book-author text-truncate mb-2" title="<?= esc($displayAuthor) ?>">
                         <?= esc($displayAuthor) ?>
                     </div>
 
-                    <!-- Baris 5: Edisi · Tahun · Subjek -->
-                    <div class="opac-book-submeta mb-3" title="<?= esc($metaLine) ?>">
-                        <?= esc($metaLine) ?>
-                    </div>
-
-                    <!-- Baris 6: Tombol Lihat Detail & Sirkulasi -->
-                    <div class="mt-auto pt-1">
-                        <a href="<?= $detailUrl ?>" class="btn opac-btn-detail w-100 js-open-book-modal">
-                            Lihat Detail &amp; Sirkulasi
-                        </a>
+                    <!-- Status Ketersediaan Badge -->
+                    <div class="opac-book-status-wrap mt-auto pt-1">
+                        <?= $statusBadgeHtml ?>
                     </div>
                 </div>
             </div>

@@ -23,14 +23,59 @@ public function login()
 		echo view('Auth\Views\authlogin', $data);
 	}
 
+	public function logout()
+	{
+		session()->remove('session_member');
+		return parent::logout();
+	}
+
 
 	public function attemptLogin()
 	{
 		try {
-			$username = $this->request->getPost('login');
-			$password = $this->request->getPost('password');
+			$roleType = $this->request->getPost('role_type') ?? 'admin';
+			$username = trim($this->request->getPost('login') ?? '');
+			$password = $this->request->getPost('password') ?? '';
 
-			// Gunakan service authentication yang sudah ada
+			$db = db_connect();
+
+			// Jika masuk sebagai ANGGOTA: Cukup masukkan No. Anggota atau NIK (tanpa perlu password)
+			if ($roleType === 'anggota' || empty($password)) {
+				$member = $db->table('members')
+					->where('MemberNo', $username)
+					->orWhere('IdentityNo', $username)
+					->get()->getRow();
+
+				if ($member) {
+					session()->set('logged_in', $member->ID);
+					session()->set('username', $member->MemberNo);
+					session()->set('member_id', $member->ID);
+					session()->set('auth_permissions', ['dashboard', 'dashboard/index', 'dashboard/access']);
+					session()->set('session_member', [
+						'member_id'     => (int) $member->ID,
+						'member_no'     => $member->MemberNo,
+						'nama'          => $member->Fullname,
+						'unit_kerja_id' => $member->UnitKerja_id !== null ? (int) $member->UnitKerja_id : null,
+					]);
+
+					$userData = new \stdClass();
+					$userData->id = $member->ID;
+					$userData->username = $member->MemberNo;
+					$userData->first_name = $member->Fullname;
+					$userData->last_name = '';
+					$userData->email = $member->Email ?? '';
+					$userData->phone = $member->NoHp ?? $member->Phone ?? '';
+					$userData->category = 'anggota';
+					$userData->anggota = 1;
+					session()->set('user', $userData);
+
+					return redirect()->to(base_url('portal'));
+				} else {
+					return redirect()->back()->withInput()->with('error', 'Nomor Anggota tidak ditemukan di database.');
+				}
+			}
+
+			// Gunakan service authentication yang sudah ada untuk ADMIN
 			if (!service('authentication')->attempt([
 				'username' => $username,
 				'password' => $password
@@ -142,6 +187,34 @@ public function login()
 			$payload = JWT::decode($token, (new Key(getenv('security.TOKEN_SECRET'), getenv('security.TOKEN_ALG'))));
 			session()->set('payload', $payload);
 			
+			// Cek apakah user adalah anggota
+			$isAnggota = (
+				($user->category ?? '') === 'anggota' ||
+				!empty($user->anggota) ||
+				is_member('anggota', $user->id) ||
+				is_member('keanggotaan', $user->id)
+			);
+
+			if ($isAnggota) {
+				$member = $db->table('members')->where('MemberNo', $username)->get()->getRow();
+				if ($member) {
+					session()->set('session_member', [
+						'member_id'     => (int) $member->ID,
+						'member_no'     => $member->MemberNo,
+						'nama'          => $member->Fullname,
+						'unit_kerja_id' => $member->UnitKerja_id !== null ? (int) $member->UnitKerja_id : null,
+					]);
+				}
+				$perms = session()->get('auth_permissions') ?? [];
+				foreach (['dashboard', 'dashboard/index', 'dashboard/access'] as $p) {
+					if (!in_array($p, $perms, true)) {
+						$perms[] = $p;
+					}
+				}
+				session()->set('auth_permissions', $perms);
+				return redirect()->to(base_url('portal'));
+			}
+
 			return redirect()->to('/dashboard');
 		} catch (\Exception $e) {
 			return redirect()->back()->withInput()->with('error', $e->getMessage());

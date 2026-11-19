@@ -17,7 +17,7 @@ $email = $email ?? '';
     <link rel="icon" href="<?= !empty($logo) ? base_url('uploads/branch/' . $logo) : base_url('assets/img/logo-inlislite-icon.webp') ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css') ?>/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -164,7 +164,7 @@ $email = $email ?? '';
             position: relative;
             width: 100%;
             max-width: 215px;
-            aspect-ratio: 3 / 4.15;
+            aspect-ratio: 2 / 3;
             border-radius: 4px 8px 8px 4px;
             box-shadow:
                 -4px 0 8px rgba(0, 0, 0, 0.15),
@@ -350,6 +350,99 @@ $email = $email ?? '';
             border: 1px solid #fde68a;
         }
 
+        /* Pill Rekomendasi (Populer / Baru) */
+        .opac-recom-pill {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.73rem;
+            font-weight: 600;
+            padding: 3.5px 10px;
+            border-radius: 999px;
+            line-height: 1.25;
+            letter-spacing: 0.01em;
+        }
+
+        .opac-recom-pill.recom-popular {
+            background-color: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+        }
+
+        .opac-recom-pill.recom-baru {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        /* Subtle Utilities Fallback untuk Bootstrap 5.0.2 */
+        .bg-danger-subtle {
+            background-color: #fee2e2 !important;
+        }
+        .text-danger-emphasis {
+            color: #991b1b !important;
+        }
+        .border-danger-subtle {
+            border-color: #fecaca !important;
+        }
+
+        .bg-warning-subtle {
+            background-color: #fef3c7 !important;
+        }
+        .text-warning-emphasis {
+            color: #92400e !important;
+        }
+        .border-warning-subtle {
+            border-color: #fde68a !important;
+        }
+
+        .bg-success-subtle {
+            background-color: #ecfdf5 !important;
+        }
+        .text-success-emphasis {
+            color: #065f46 !important;
+        }
+        .border-success-subtle {
+            border-color: #a7f3d0 !important;
+        }
+
+        .bg-primary-subtle {
+            background-color: #eff6ff !important;
+        }
+        .text-primary-emphasis {
+            color: #1e40af !important;
+        }
+        .border-primary-subtle {
+            border-color: #bfdbfe !important;
+        }
+
+        /* Custom Sleek Scrollbar untuk Carousel Rekomendasi */
+        .opac-carousel-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 12px;
+        }
+
+        .opac-carousel-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .opac-carousel-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 999px;
+        }
+
+        .opac-carousel-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+            transition: background 0.2s ease;
+        }
+
+        .opac-carousel-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
         .opac-eks-count {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.74rem;
@@ -436,14 +529,33 @@ $email = $email ?? '';
         }
 
         /* ─── Pop-Up Modal Deskripsi Bibliografis OPAC ─── */
+        /* Backdrop Blur saat Modal Terbuka */
+        .modal-backdrop.show {
+            opacity: 0.55 !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            background-color: rgba(15, 23, 42, 0.6) !important;
+        }
+
+        /* Blur pada background (main content, navbar, footer) saat modal aktif */
+        body.modal-open > *:not(.modal):not(.modal-backdrop) {
+            filter: blur(6px);
+            transition: filter 0.25s ease;
+        }
+
+        .opac-meta-modal {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
         .opac-meta-modal .modal-dialog {
             max-width: 720px;
         }
 
         .opac-meta-modal .modal-content {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.38);
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
             padding: 30px 34px 26px;
             background: #ffffff;
         }
@@ -468,8 +580,10 @@ $email = $email ?? '';
         }
 
         .opac-modal-close-btn {
-            width: 38px;
-            height: 38px;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
             border-radius: 10px;
             border: 1px solid #e2e8f0;
             background: #ffffff;
@@ -554,7 +668,8 @@ $email = $email ?? '';
         }
 
         .opac-modal-input {
-            font-size: 0.84rem;
+            font-size: 1rem;
+            min-height: 48px;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
             padding: 10px 14px;
@@ -572,10 +687,11 @@ $email = $email ?? '';
         .opac-modal-btn-pinjam {
             background-color: #1b3878;
             color: #ffffff;
-            font-size: 0.84rem;
+            font-size: 0.95rem;
             font-weight: 600;
             border-radius: 10px;
-            padding: 10px 18px;
+            padding: 12px 18px;
+            min-height: 48px;
             border: none;
             white-space: nowrap;
             display: inline-flex;

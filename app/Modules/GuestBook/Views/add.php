@@ -1,577 +1,384 @@
 <?= $this->extend('App\Views\layout\opac\layout'); ?>
 
-<?= $this->section('content') ?>
+<?= $this->section('style') ?>
+<link rel="stylesheet" href="<?= base_url('assets/css/buku-tamu-modern.css') ?>?v=<?= time() ?>">
 <style>
-	:root {
-		--primary: #1b3878;
-		--primary-dark: #1b3878;
-		--primary-light: #e6f4ee;
-		--accent: #f8c43a;
-		--light-gray: #f5f5f5;
-		--text: #333333;
-		--white: #ffffff;
-		--shadow: rgba(0, 0, 0, 0.1);
-		--border-radius: 12px;
-	}
-
-	.page-container {
-		background: linear-gradient(135deg, var(--primary-light), #ffffff);
-		min-height: 100vh;
-		padding: 20px 0;
-	}
-
-	.content-wrapper {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 0 20px;
-	}
-
-	/* Header Section */
-	.page-header {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 30px;
-		margin-bottom: 30px;
-		box-shadow: 0 5px 15px var(--shadow);
-		border-left: 5px solid var(--primary);
-	}
-
-	.library-info h1 {
-		color: var(--primary);
-		font-size: 1.8rem;
-		font-weight: 700;
-		margin-bottom: 5px;
-	}
-
-	.library-location {
-		color: #666;
-		font-size: 1.1rem;
-		margin-bottom: 20px;
-	}
-
-	.breadcrumb-custom {
-		background: var(--primary-light);
-		padding: 12px 20px;
-		border-radius: 25px;
-		margin: 0;
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		font-size: 0.9rem;
-	}
-
-	.breadcrumb-custom a {
-		color: var(--primary);
-		text-decoration: none;
-		font-weight: 500;
-	}
-
-	.breadcrumb-custom .active {
-		color: var(--primary-dark);
-		font-weight: 600;
-	}
-
-	/* Navigation Tabs */
-	.nav-tabs-custom {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 10px;
-		margin-bottom: 30px;
-		box-shadow: 0 3px 10px var(--shadow);
-		display: flex;
-		gap: 10px;
-	}
-
-	.nav-tab {
-		flex: 1;
-		padding: 15px 20px;
-		text-align: center;
-		border-radius: 8px;
-		text-decoration: none;
-		color: #666;
-		font-weight: 500;
-		transition: all 0.3s ease;
-		background: transparent;
-		border: 2px solid transparent;
-	}
-
-	.nav-tab:hover {
-		background: var(--primary-light);
-		color: var(--primary);
-		text-decoration: none;
-	}
-
-	.nav-tab.active {
-		background: var(--primary);
-		color: white;
-		border-color: var(--primary-dark);
-		box-shadow: 0 3px 10px rgba(3, 149, 80, 0.3);
-	}
-
-	.nav-tab i {
-		margin-right: 8px;
-		font-size: 1.1rem;
-	}
-
-	/* Search Section */
-	.search-section {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 40px;
-		margin-bottom: 30px;
-		box-shadow: 0 5px 15px var(--shadow);
-		text-align: center;
-	}
-
-	.search-title {
-		color: var(--primary);
-		font-size: 1.5rem;
-		font-weight: 600;
-		margin-bottom: 10px;
-	}
-
-	.search-subtitle {
-		color: #666;
-		margin-bottom: 30px;
-		font-size: 1.1rem;
-	}
-
-	.search-form {
-		max-width: 500px;
+	/* Member specific styles inside card */
+	.bt-member-search-box {
+		max-width: 560px;
 		margin: 0 auto;
 	}
-
-	.search-input-group {
-		position: relative;
-		display: flex;
-		border-radius: 50px;
-		overflow: hidden;
-		box-shadow: 0 5px 20px var(--shadow);
-		background: white;
-	}
-
-	.search-input {
-		flex: 1;
-		padding: 18px 25px;
-		border: none;
-		font-size: 16px;
-		outline: none;
-		background: white;
-	}
-
-	.search-input::placeholder {
-		color: #999;
-	}
-
-	.search-btn {
-		background: var(--primary);
-		color: white;
-		border: none;
-		padding: 18px 30px;
-		cursor: pointer;
-		transition: all 0.3s;
-		font-size: 16px;
-		font-weight: 600;
-	}
-
-	.search-btn:hover {
-		background: var(--primary-dark);
-	}
-
-	.search-btn i {
-		margin-right: 8px;
-	}
-
-	/* Alert Messages */
-	.alert-custom {
-		border-radius: var(--border-radius);
-		border: none;
-		padding: 20px 25px;
-		margin-bottom: 25px;
-		font-size: 1rem;
-		display: flex;
-		align-items: center;
-		box-shadow: 0 3px 10px var(--shadow);
-	}
-
-	.alert-warning-custom {
-		background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-		color: #856404;
-		border-left: 5px solid #ffc107;
-	}
-
-	.alert-success-custom {
-		background: linear-gradient(135deg, #d4edda, #b8e6c1);
-		color: #155724;
-		border-left: 5px solid #28a745;
-	}
-
-	.alert-custom i {
-		font-size: 1.5rem;
-		margin-right: 15px;
-	}
-
-	.alert-close {
-		margin-left: auto;
-		background: none;
-		border: none;
-		font-size: 1.5rem;
-		cursor: pointer;
-		opacity: 0.7;
-	}
-
-	.alert-close:hover {
-		opacity: 1;
-	}
-
-	/* Member Profile Section */
-	.member-profile {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 30px;
-		margin-bottom: 30px;
-		box-shadow: 0 5px 15px var(--shadow);
-	}
-
-	.welcome-header {
-		background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-		color: white;
-		padding: 25px;
-		border-radius: var(--border-radius);
-		margin-bottom: 25px;
-		text-align: center;
-	}
-
-	.welcome-header h2 {
-		margin: 0;
-		font-size: 1.5rem;
-		font-weight: 600;
-	}
-
-	.welcome-header .member-number {
-		opacity: 0.9;
-		font-size: 1rem;
-		margin-top: 5px;
-	}
-
-	/* Action Section */
-	.action-section {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 30px;
-		box-shadow: 0 5px 15px var(--shadow);
-		text-align: center;
-	}
-
-	.tamu-judul {
-		color: var(--primary);
-		font-size: 1.5rem;
-		font-weight: 600;
-		margin-bottom: 8px;
-	}
-
-	.tamu-sub {
-		color: #5a6268;
-		margin-bottom: 25px;
-	}
-
-	.tamu-form {
-		max-width: 640px;
-		margin: 0 auto;
-	}
-
-	.tamu-hitung {
-		margin: 15px 0 0;
-		color: #5a6268;
-	}
-
-	.alert-error-custom {
-		background: #f8d7da;
-		color: #721c24;
-		text-align: left;
-	}
-
-	.save-btn {
-		background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-		color: white;
-		border: none;
-		padding: 18px 40px;
-		border-radius: 50px;
-		font-size: 1.1rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow: 0 5px 15px rgba(3, 149, 80, 0.3);
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-	}
-
-	.save-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 8px 25px rgba(3, 149, 80, 0.4);
-	}
-
-	.save-btn i {
-		font-size: 1.2rem;
-	}
-
-	/* Responsive */
-	@media (max-width: 768px) {
-		.nav-tabs-custom {
-			flex-direction: column;
-		}
-
-		.nav-tab {
-			margin-bottom: 5px;
-		}
-
-		.search-input-group {
-			flex-direction: column;
-			border-radius: 15px;
-		}
-
-		.search-btn {
-			border-radius: 0 0 15px 15px;
-		}
-
-		.page-header {
-			padding: 20px;
-		}
-
-		.search-section {
-			padding: 25px;
-		}
-	}
-
-	/* Animation */
-	@keyframes fadeInUp {
-		from {
-			opacity: 0;
-			transform: translateY(30px);
-		}
-
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	.content-wrapper>* {
-		animation: fadeInUp 0.6s ease forwards;
-	}
-
-	.content-wrapper>*:nth-child(1) {
-		animation-delay: 0.1s;
-	}
-
-	.content-wrapper>*:nth-child(2) {
-		animation-delay: 0.2s;
-	}
-
-	.content-wrapper>*:nth-child(3) {
-		animation-delay: 0.3s;
-	}
-
-	.content-wrapper>*:nth-child(4) {
-		animation-delay: 0.4s;
+	.bt-member-profile-wrap {
+		margin-top: 32px;
+		border-top: 1px solid var(--bt-border-color);
+		padding-top: 28px;
 	}
 </style>
+<?= $this->endSection() ?>
 
-<div class="page-container" style="padding-top: 130px !important; padding-bottom: 40px !important;">
-	<div class="content-wrapper">
-		<!-- Header Section -->
-		<div class="page-header">
-			<div class="library-info">
-				<h1><?= $data->Name ?? 'Perpustakaan' ?></h1>
-				<div class="library-location"><?= $data->LocationLibrary_name ?? 'Dinas Perpustakaan dan Kearsipan' ?></div>
-				<nav class="breadcrumb-custom">
+<?= $this->section('content') ?>
+<div class="bt-page-wrapper">
+	<!-- Ornamen dekoratif latar belakang -->
+	<div class="bt-bg-circle bt-bg-circle-left"></div>
+	<div class="bt-bg-circle bt-bg-circle-left-inner"></div>
+	<div class="bt-bg-circle bt-bg-circle-right"></div>
+	<div class="bt-bg-circle bt-bg-circle-right-inner"></div>
+
+	<div class="bt-container">
+		<!-- Hero Banner Card -->
+		<div class="bt-hero-card">
+			<div class="bt-hero-content">
+				<h1 class="bt-hero-title"><?= esc($data->Name ?? 'Perpustakaan') ?></h1>
+				<div class="bt-hero-subtitle"><?= esc($data->LocationLibrary_name ?? 'Buku Tamu') ?></div>
+				
+				<nav class="bt-breadcrumb" aria-label="Breadcrumb">
 					<a href="<?= base_url() ?>"><i class="fas fa-home"></i> Beranda</a>
-					<span>/</span>
+					<span class="separator">/</span>
 					<span>Buku Tamu</span>
-					<span>/</span>
-					<span class="active">Anggota</span>
+					<span class="separator">/</span>
+					<span class="current" id="btBreadcrumbCurrent">Anggota</span>
 				</nav>
-			</div><br>
+			</div>
+
+			<div class="bt-hero-illustration" style="background-image: url('<?= base_url('assets/img/buku-tamu-hero-people-clean.png') ?>');"></div>
 		</div>
 
-		<!-- Navigation Tabs -->
-		<div class="nav-tabs-custom">
-			<a href="<?= base_url('buku-tamu/anggota') ?>" class="nav-tab active">
-				<i class="fas fa-user"></i>
+		<!-- Segmented Switch Tabs (Seamless Instant Switch) -->
+		<div class="bt-tabs-pill" role="tablist">
+			<button type="button" class="bt-tab-btn active" data-target="anggota" id="tabBtnAnggota">
+				<i class="far fa-user"></i>
 				<span>Anggota</span>
-			</a>
-			<a href="<?= base_url('buku-tamu/non_anggota') ?>" class="nav-tab">
+			</button>
+			<button type="button" class="bt-tab-btn" data-target="non_anggota" id="tabBtnNonAnggota">
 				<i class="fas fa-user-plus"></i>
 				<span>Bukan Anggota</span>
-			</a>
-			<a href="<?= base_url('buku-tamu/rombongan') ?>" class="nav-tab">
+			</button>
+			<button type="button" class="bt-tab-btn" data-target="rombongan" id="tabBtnRombongan">
 				<i class="fas fa-users"></i>
 				<span>Rombongan</span>
-			</a>
+			</button>
 		</div>
 
-		<?php if (empty($member)) : ?>
-			<?php if (!empty($message)) : ?>
-				<div class="alert-custom alert-error-custom" role="alert">
-					<i class="fas fa-exclamation-circle"></i>
-					<div><?= esc(strip_tags($message)) ?></div>
-				</div>
-			<?php endif; ?>
-
-			<?php if (!empty($kunjungan_baru)) : ?>
-				<p class="tamu-hitung">
-					Data kunjungan salah?
-					<a href="<?= base_url('buku-tamu/anggota') . '?' . http_build_query(['member_no' => $kunjungan_baru['member_no'], 'ubah' => $kunjungan_baru['id']]) ?>">Ubah</a>
-				</p>
-			<?php endif; ?>
-
-			<!-- Search Section -->
-			<div class="search-section">
-				<h2 class="search-title">Cari Anggota Perpustakaan</h2>
-				<p class="search-subtitle">Masukkan nomor anggota untuk melanjutkan ke buku tamu</p>
-
-				<form method="get" action="<?= base_url('buku-tamu/anggota') ?>" class="search-form">
-					<div class="search-input-group">
-						<input type="text"
-							class="search-input"
-							name="member_no"
-							id="member_no"
-							placeholder="Masukkan nomor anggota..."
-							required>
-						<button class="search-btn" type="submit">
-							<i class="fas fa-search"></i>
-							Cari Anggota
-						</button>
-					</div>
-				</form>
+		<!-- Fallback link jika Javascript dinonaktifkan -->
+		<noscript>
+			<div style="text-align: center; margin-bottom: 20px;">
+				<a href="<?= base_url('buku-tamu/anggota') ?>">Anggota</a> | 
+				<a href="<?= base_url('buku-tamu/non_anggota') ?>">Bukan Anggota</a> | 
+				<a href="<?= base_url('buku-tamu/rombongan') ?>">Rombongan</a>
 			</div>
+		</noscript>
 
-			<!-- Warning Alert -->
-			<div class="alert-custom alert-warning-custom">
-				<i class="fas fa-exclamation-triangle"></i>
-				<div>
-					<strong>Perhatian!</strong><br>
-					Silakan masukkan nomor anggota terlebih dahulu untuk melanjutkan pengisian buku tamu.
-				</div>
-				<button type="button" class="alert-close" onclick="this.parentElement.style.display='none'">
-					<span>&times;</span>
-				</button>
-			</div>
-
-		<?php else : ?>
-			
-			<!-- Action Section -->
-			<div class="action-section">
-				<h2 class="tamu-judul">Data Kunjungan</h2>
-				<?php if (!empty($kirim_otomatis)) : ?>
-					<p class="tamu-sub" aria-live="polite">Mencatat kunjungan Anda...</p>
-				<?php else : ?>
-					<p class="tamu-sub">Periksa nama, unit, dan nomor WhatsApp Anda. Ubah kalau ada yang tidak sesuai.</p>
-				<?php endif; ?>
-
-				<?php if (!empty($errors)) : ?>
-					<div class="alert-custom alert-error-custom" role="alert">
-						<i class="fas fa-exclamation-circle"></i>
-						<div>Periksa lagi isian yang ditandai merah.</div>
+		<!-- ════════════════════ TAB 1: ANGGOTA ════════════════════ -->
+		<div class="bt-tab-pane active" id="paneAnggota">
+			<div class="bt-card">
+				<?php if (empty($member)) : ?>
+					<div class="bt-card-header">
+						<h2 class="bt-card-title">Buku Tamu Anggota</h2>
+						<p class="bt-card-subtitle">Masukkan nomor anggota atau pindai barcode kartu perpustakaan Anda</p>
 					</div>
-				<?php endif; ?>
 
-				<form id="frm_store_anggota" class="tamu-form" method="post" action="<?php echo base_url('buku-tamu/store_anggota'); ?>"<?= !empty($kirim_otomatis) ? ' data-kirim-otomatis' : '' ?>>
-					<?= csrf_field() ?>
-					<input type="hidden" name="member_no" value="<?= esc($member->MemberNo, 'attr') ?>">
-					<?php if (!empty($kunjungan_id)) : ?>
-						<input type="hidden" name="kunjungan_id" value="<?= (int) $kunjungan_id ?>">
+					<?php if (!empty($message)) : ?>
+						<div class="bt-alert bt-alert-error" role="alert">
+							<i class="fas fa-exclamation-circle" style="font-size: 1.25rem; margin-top: 2px;"></i>
+							<div><?= esc(strip_tags($message)) ?></div>
+							<button type="button" class="bt-alert-close" onclick="this.parentElement.style.display='none'">
+								<span>&times;</span>
+							</button>
+						</div>
 					<?php endif; ?>
 
-					<?= view('GuestBook\Views\isian_tamu', [
-						'isian'             => $isian,
-						'errors'            => $errors,
-						'unit_kerja'        => $unit_kerja,
-					]) ?>
+					<?php if (!empty($kunjungan_baru)) : ?>
+						<div class="bt-alert bt-alert-success" role="alert">
+							<i class="fas fa-check-circle" style="font-size: 1.25rem; margin-top: 2px;"></i>
+							<div>
+								Kunjungan Anda sudah dicatat. Ada data yang salah? 
+								<a href="<?= base_url('buku-tamu/anggota') . '?' . http_build_query(['member_no' => $kunjungan_baru['member_no'], 'ubah' => $kunjungan_baru['id']]) ?>" style="color: #1d4ed8; font-weight: 700; text-decoration: underline;">Ubah data kunjungan</a>
+							</div>
+						</div>
+					<?php endif; ?>
 
-					<button type="submit" class="save-btn" id="simpanKunjungan">
-						<i class="fas fa-save"></i>
-						Simpan Kunjungan
-					</button>
-				</form>
+					<!-- Search Box Form -->
+					<form method="get" action="<?= base_url('buku-tamu/anggota') ?>" class="bt-member-search-box">
+						<div class="bt-field-group">
+							<label for="member_no" class="bt-field-label text-center d-block mb-2">Nomor Anggota / Barcode <span class="required">*</span></label>
+							<div class="bt-input-wrap">
+								<i class="fas fa-barcode bt-input-icon"></i>
+								<input type="text"
+									class="bt-input form-control"
+									name="member_no"
+									id="member_no"
+									placeholder="Ketik atau pindai nomor anggota..."
+									autocomplete="off"
+									required>
+							</div>
+						</div>
 
-				<?php if (!empty($kunjungan_id)) : ?>
-					<p class="tamu-hitung">Ubah isian yang salah, lalu tekan Simpan Kunjungan.</p>
-				<?php elseif (empty($kirim_otomatis)) : ?>
-					<p class="tamu-hitung">Lengkapi isian yang masih kosong, lalu tekan Simpan Kunjungan.</p>
+						<div class="bt-action-area" style="margin-top: 20px;">
+							<button class="bt-btn-primary" type="submit">
+								<i class="fas fa-search" style="font-size: 0.9rem;"></i>
+								<span>Cari Anggota</span>
+							</button>
+							<p class="bt-legal-note">
+								Tempelkan kartu pada alat pemindai atau tekan Cari setelah mengisi nomor anggota.
+							</p>
+						</div>
+					</form>
+
+				<?php else : ?>
+
+					<div class="bt-card-header">
+						<h2 class="bt-card-title">Konfirmasi Data Kunjungan</h2>
+						<?php if (!empty($kirim_otomatis)) : ?>
+							<p class="bt-card-subtitle" aria-live="polite">Mencatat kunjungan Anda...</p>
+						<?php else : ?>
+							<p class="bt-card-subtitle">Periksa nama, unit, dan nomor WhatsApp Anda. Ubah bila ada yang tidak sesuai.</p>
+						<?php endif; ?>
+					</div>
+
+					<?php if (!empty($errors)) : ?>
+						<div class="bt-alert bt-alert-error" role="alert">
+							<i class="fas fa-exclamation-circle" style="font-size: 1.25rem; margin-top: 2px;"></i>
+							<div>Periksa kembali isian yang ditandai merah di bawah ini.</div>
+						</div>
+					<?php endif; ?>
+
+					<form id="frm_store_anggota" method="post" action="<?= base_url('buku-tamu/store_anggota'); ?>"<?= !empty($kirim_otomatis) ? ' data-kirim-otomatis' : '' ?>>
+						<?= csrf_field() ?>
+						<input type="hidden" name="member_no" value="<?= esc($member->MemberNo, 'attr') ?>">
+						<?php if (!empty($kunjungan_id)) : ?>
+							<input type="hidden" name="kunjungan_id" value="<?= (int) $kunjungan_id ?>">
+						<?php endif; ?>
+
+						<?= view('GuestBook\Views\isian_tamu', [
+							'isian'             => $isian,
+							'errors'            => $errors,
+							'unit_kerja'        => $unit_kerja,
+						]) ?>
+
+						<div class="bt-action-area">
+							<button type="submit" class="bt-btn-primary" id="simpanKunjungan">
+								<i class="fas fa-save" style="font-size: 0.9rem;"></i>
+								<span>Simpan Kunjungan</span>
+							</button>
+							<p class="bt-legal-note">
+								<?php if (!empty($kunjungan_id)) : ?>
+									Ubah isian yang salah, lalu tekan Simpan Kunjungan.
+								<?php elseif (empty($kirim_otomatis)) : ?>
+									Lengkapi isian yang masih kosong, lalu tekan Simpan Kunjungan.
+								<?php else : ?>
+									Sedang menyimpan data kunjungan Anda secara otomatis...
+								<?php endif; ?>
+							</p>
+						</div>
+					</form>
+
+					<!-- Profil Anggota Ringkas -->
+					<div class="bt-member-profile-wrap">
+						<div class="d-flex align-items-center gap-3 mb-3">
+							<div style="width: 44px; height: 44px; border-radius: 12px; background: #eff6ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+								<i class="far fa-id-card"></i>
+							</div>
+							<div>
+								<h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #1e293b;">Profil Anggota</h3>
+								<small style="color: #64748b;">No. Anggota: <?= esc($member->MemberNo) ?></small>
+							</div>
+						</div>
+						<?= view('Member\Views\member_profile', array('member' => $member ?? '', 'jenis_anggota' => $jenis_anggota ?? [])) ?>
+					</div>
+
 				<?php endif; ?>
 			</div>
+		</div>
 
-
-			<!-- Member Profile -->
-			<div class="member-profile">
-				<div class="welcome-header">
-					<h2>Profil Anggota</h2>
-					<div class="member-number">No. Anggota: <?= $member->MemberNo ?></div>
+		<!-- ════════════════════ TAB 2: BUKAN ANGGOTA ════════════════════ -->
+		<div class="bt-tab-pane" id="paneNonAnggota">
+			<div class="bt-card">
+				<div class="bt-card-header">
+					<h2 class="bt-card-title">Buku Tamu Non Anggota</h2>
+					<p class="bt-card-subtitle">Silakan isi data diri Anda untuk tercatat sebagai pengunjung perpustakaan</p>
 				</div>
-				<?= view('Member\Views\member_profile', array('member' => $member ?? '', 'jenis_anggota' => $jenis_anggota ?? [])) ?>
-			</div>
 
-		<?php endif; ?>
+				<form id="frm_create" method="post" action="<?= base_url('buku-tamu/non_anggota') ?>">
+					<?= csrf_field() ?>
+					
+					<?= view('GuestBook\Views\isian_tamu', [
+						'isian'             => [],
+						'errors'            => [],
+						'unit_kerja'        => $unit_kerja ?? [],
+					]) ?>
+
+					<div class="bt-action-area">
+						<button type="submit" class="bt-btn-primary" id="saveBtn" name="submit">
+							<i class="fas fa-lock" style="font-size: 0.9rem;"></i>
+							<span class="btn-text">Simpan Buku Tamu</span>
+							<span class="btn-loading" style="display: none;">
+								<i class="fas fa-spinner fa-spin"></i>
+								Menyimpan...
+							</span>
+						</button>
+						<p class="bt-legal-note">
+							Dengan mengisi formulir ini, data kunjungan Anda akan tercatat dalam buku tamu perpustakaan.
+						</p>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- ════════════════════ TAB 3: ROMBONGAN ════════════════════ -->
+		<div class="bt-tab-pane" id="paneRombongan">
+			<div class="bt-card">
+				<div class="bt-card-header">
+					<h2 class="bt-card-title">Buku Tamu Rombongan</h2>
+					<p class="bt-card-subtitle">Untuk kunjungan bersama paling sedikit 6 orang. Diisi oleh penanggung jawab rombongan.</p>
+				</div>
+
+				<form id="frm_create_rombongan" method="post" action="<?= base_url('buku-tamu/rombongan') ?>">
+					<?= csrf_field() ?>
+					
+					<?= view('GuestBook\Views\isian_tamu', [
+						'isian'             => [],
+						'errors'            => [],
+						'unit_kerja'        => $unit_kerja ?? [],
+						'rombongan'         => true,
+					]) ?>
+
+					<div class="bt-action-area">
+						<button type="submit" class="bt-btn-primary" id="saveBtnRombongan" name="submit">
+							<i class="fas fa-lock" style="font-size: 0.9rem;"></i>
+							<span class="btn-text">Simpan Buku Tamu Rombongan</span>
+							<span class="btn-loading" style="display: none;">
+								<i class="fas fa-spinner fa-spin"></i>
+								Menyimpan...
+							</span>
+						</button>
+						<p class="bt-legal-note">
+							Dengan mengisi formulir ini, data kunjungan rombongan akan tercatat dalam buku tamu perpustakaan.
+						</p>
+					</div>
+				</form>
+			</div>
+		</div>
+
 	</div>
 </div>
 
 <script>
-	// Auto-focus pada input search
-	document.addEventListener('DOMContentLoaded', function() {
-		const searchInput = document.getElementById('member_no');
-		if (searchInput) {
-			searchInput.focus();
+// Seamless Instant Switching between tabs
+document.addEventListener('DOMContentLoaded', function() {
+	const tabs = {
+		'anggota': {
+			btn: document.getElementById('tabBtnAnggota'),
+			pane: document.getElementById('paneAnggota'),
+			title: 'Anggota',
+			url: '<?= base_url('buku-tamu/anggota') ?>'
+		},
+		'non_anggota': {
+			btn: document.getElementById('tabBtnNonAnggota'),
+			pane: document.getElementById('paneNonAnggota'),
+			title: 'Bukan Anggota',
+			url: '<?= base_url('buku-tamu/non_anggota') ?>'
+		},
+		'rombongan': {
+			btn: document.getElementById('tabBtnRombongan'),
+			pane: document.getElementById('paneRombongan'),
+			title: 'Rombongan',
+			url: '<?= base_url('buku-tamu/rombongan') ?>'
 		}
-	});
+	};
 
-	// Enter key untuk submit form
-	document.getElementById('member_no')?.addEventListener('keypress', function(e) {
-		if (e.key === 'Enter') {
+	const breadcrumbCurrent = document.getElementById('btBreadcrumbCurrent');
+
+	function switchTab(targetKey, updateHistory = true) {
+		if (!tabs[targetKey]) return;
+
+		Object.keys(tabs).forEach(key => {
+			const item = tabs[key];
+			if (key === targetKey) {
+				item.btn.classList.add('active');
+				item.pane.classList.add('active');
+			} else {
+				item.btn.classList.remove('active');
+				item.pane.classList.remove('active');
+			}
+		});
+
+		if (breadcrumbCurrent) {
+			breadcrumbCurrent.textContent = tabs[targetKey].title;
+		}
+
+		if (updateHistory && window.history.pushState) {
+			window.history.pushState({ tab: targetKey }, tabs[targetKey].title, tabs[targetKey].url);
+		}
+
+		if (targetKey === 'anggota') {
+			const memberInput = document.getElementById('member_no');
+			if (memberInput) memberInput.focus();
+		} else if (targetKey === 'non_anggota') {
+			const namaInput = document.querySelector('#paneNonAnggota input[name="Nama"]');
+			if (namaInput) namaInput.focus();
+		} else if (targetKey === 'rombongan') {
+			const namaRombongan = document.querySelector('#paneRombongan input[name="Nama"]');
+			if (namaRombongan) namaRombongan.focus();
+		}
+	}
+
+	document.querySelectorAll('.bt-tab-btn').forEach(btn => {
+		btn.addEventListener('click', function(e) {
 			e.preventDefault();
-			this.closest('form').submit();
-		}
-	});
-
-	// Animasi untuk alerts
-	document.querySelectorAll('.alert-close').forEach(button => {
-		button.addEventListener('click', function() {
-			const alert = this.parentElement;
-			alert.style.animation = 'fadeOut 0.3s ease forwards';
-			setTimeout(() => {
-				alert.style.display = 'none';
-			}, 300);
+			const target = this.getAttribute('data-target');
+			switchTab(target, true);
 		});
 	});
 
-	// Add fadeOut animation
-	const style = document.createElement('style');
-	style.textContent = `
-	@keyframes fadeOut {
-		from { opacity: 1; transform: translateY(0); }
-		to { opacity: 0; transform: translateY(-20px); }
+	window.addEventListener('popstate', function(e) {
+		if (e.state && e.state.tab) {
+			switchTab(e.state.tab, false);
+		} else {
+			const path = window.location.pathname;
+			if (path.includes('non_anggota')) {
+				switchTab('non_anggota', false);
+			} else if (path.includes('rombongan')) {
+				switchTab('rombongan', false);
+			} else {
+				switchTab('anggota', false);
+			}
+		}
+	});
+
+	const searchInput = document.getElementById('member_no');
+	if (searchInput) {
+		searchInput.focus();
 	}
-`;
-	document.head.appendChild(style);
+});
+
+document.getElementById('member_no')?.addEventListener('keypress', function(e) {
+	if (e.key === 'Enter') {
+		e.preventDefault();
+		this.closest('form').submit();
+	}
+});
 </script>
+
 <?php if (session()->getFlashdata('success')) : ?>
-	<script>
-		document.addEventListener('DOMContentLoaded', function() {
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		if (typeof Swal !== 'undefined') {
 			Swal.fire({
 				icon: 'success',
 				title: 'Berhasil!',
-				text: '<?= session()->getFlashdata('success') ?>',
+				text: <?= json_encode((string) session()->getFlashdata('success')) ?>,
 				showConfirmButton: false,
 				timer: 2000
 			});
-		});
-	</script>
+		} else {
+			alert(<?= json_encode((string) session()->getFlashdata('success')) ?>);
+		}
+	});
+</script>
 <?php endif; ?>
 
 <?php if (!empty($kirim_otomatis)) : ?>
 <script>
-	// Data anggota sudah lengkap: kunjungan langsung dikirim. Tanpa JavaScript, tombol Simpan Kunjungan tetap bisa dipakai.
 	document.querySelector('[data-kirim-otomatis]').submit();
 </script>
 <?php endif; ?>

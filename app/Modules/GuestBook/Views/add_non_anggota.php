@@ -1,606 +1,331 @@
 <?= $this->extend('App\Views\layout\opac\layout'); ?>
 
-<?= $this->section('content') ?>
+<?= $this->section('style') ?>
+<link rel="stylesheet" href="<?= base_url('assets/css/buku-tamu-modern.css') ?>?v=<?= time() ?>">
 <style>
-	:root {
-		--primary: #1b3878;
-		--primary-dark: #1b3878;
-		--primary-light: #e6f4ee;
-		--accent: #f8c43a;
-		--light-gray: #f5f5f5;
-		--text: #333333;
-		--white: #ffffff;
-		--shadow: rgba(0, 0, 0, 0.1);
-		--border-radius: 12px;
-	}
-
-	.page-container {
-		background: linear-gradient(135deg, var(--primary-light), #ffffff);
-		min-height: 100vh;
-		padding: 20px 0;
-	}
-
-	.content-wrapper {
-		max-width: 1200px;
+	.bt-member-search-box {
+		max-width: 560px;
 		margin: 0 auto;
-		padding: 0 20px;
 	}
-
-	/* Header Section */
-	.page-header {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 30px;
-		margin-bottom: 30px;
-		box-shadow: 0 5px 15px var(--shadow);
-		border-left: 5px solid var(--primary);
+	.bt-member-profile-wrap {
+		margin-top: 32px;
+		border-top: 1px solid var(--bt-border-color);
+		padding-top: 28px;
 	}
-
-	.library-info h1 {
-		color: var(--primary);
-		font-size: 1.8rem;
-		font-weight: 700;
-		margin-bottom: 5px;
-	}
-
-	.library-location {
-		color: #666;
-		font-size: 1.1rem;
-		margin-bottom: 20px;
-	}
-
-	.breadcrumb-custom {
-		background: var(--primary-light);
-		padding: 12px 20px;
-		border-radius: 25px;
-		margin: 0;
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		font-size: 0.9rem;
-	}
-
-	.breadcrumb-custom a {
-		color: var(--primary);
-		text-decoration: none;
-		font-weight: 500;
-	}
-
-	.breadcrumb-custom .active {
-		color: var(--primary-dark);
-		font-weight: 600;
-	}
-
-	/* Navigation Tabs */
-	.nav-tabs-custom {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 10px;
-		margin-bottom: 30px;
-		box-shadow: 0 3px 10px var(--shadow);
-		display: flex;
-		gap: 10px;
-	}
-
-	.nav-tab {
-		flex: 1;
-		padding: 15px 20px;
-		text-align: center;
-		border-radius: 8px;
-		text-decoration: none;
-		color: #666;
-		font-weight: 500;
-		transition: all 0.3s ease;
-		background: transparent;
-		border: 2px solid transparent;
-	}
-
-	.nav-tab:hover {
-		background: var(--primary-light);
-		color: var(--primary);
-		text-decoration: none;
-	}
-
-	.nav-tab.active {
-		background: var(--primary);
-		color: white;
-		border-color: var(--primary-dark);
-		box-shadow: 0 3px 10px rgba(3, 149, 80, 0.3);
-	}
-
-	.nav-tab i {
-		margin-right: 8px;
-		font-size: 1.1rem;
-	}
-
-	/* Form Section */
-	.form-section {
-		background: white;
-		border-radius: var(--border-radius);
-		padding: 40px;
-		margin-bottom: 30px;
-		box-shadow: 0 5px 15px var(--shadow);
-	}
-
-	.form-title {
-		color: var(--primary);
-		font-size: 1.8rem;
-		font-weight: 600;
-		margin-bottom: 10px;
-		text-align: center;
-	}
-
-	.form-subtitle {
-		color: #666;
-		margin-bottom: 40px;
-		font-size: 1.1rem;
-		text-align: center;
-	}
-
-	/* Form Styling */
-	.form-group {
-		margin-bottom: 25px;
-	}
-
-	.form-group label {
-		color: var(--text);
-		font-weight: 600;
-		margin-bottom: 8px;
-		display: block;
-		font-size: 0.95rem;
-	}
-
-	.form-group label.required::after {
-		content: " *";
-		color: #dc3545;
-		font-weight: bold;
-	}
-
-	.form-control {
-		width: 100%;
-		padding: 15px 20px;
-		border: 2px solid #e9ecef;
-		border-radius: 10px;
-		font-size: 16px;
-		transition: all 0.3s ease;
-		background-color: #fff;
-	}
-
-	.form-control:focus {
-		outline: none;
-		border-color: var(--primary);
-		box-shadow: 0 0 0 3px rgba(3, 149, 80, 0.1);
-		background-color: #fff;
-	}
-
-	.form-control::placeholder {
-		color: #999;
-	}
-
-	/* Form Row */
-	.form-row {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-		gap: 20px;
-		margin-bottom: 20px;
-	}
-
-	.form-row-3 {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: 20px;
-		margin-bottom: 20px;
-	}
-
-	/* Textarea */
-	textarea.form-control {
-		resize: vertical;
-		min-height: 100px;
-	}
-
-	/* Submit Button */
-	.submit-section {
-		text-align: center;
-		padding-top: 20px;
-		border-top: 2px solid var(--light-gray);
-	}
-
-	.save-btn {
-		background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-		color: white;
-		border: none;
-		padding: 18px 40px;
-		border-radius: 50px;
-		font-size: 1.1rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow: 0 5px 15px rgba(3, 149, 80, 0.3);
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		min-width: 200px;
-		justify-content: center;
-	}
-
-	.save-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 8px 25px rgba(3, 149, 80, 0.4);
-	}
-
-	.save-btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-	.save-btn:disabled:hover {
-		transform: none;
-		box-shadow: 0 5px 15px rgba(3, 149, 80, 0.3);
-	}
-
-	.save-btn i {
-		font-size: 1.2rem;
-	}
-
-	/* Alert Messages */
-	.alert-custom {
-		border-radius: var(--border-radius);
-		border: none;
-		padding: 20px 25px;
-		margin-bottom: 25px;
-		font-size: 1rem;
-		display: flex;
-		align-items: center;
-		box-shadow: 0 3px 10px var(--shadow);
-	}
-
-	.alert-warning-custom {
-		background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-		color: #856404;
-		border-left: 5px solid #ffc107;
-	}
-
-	.alert-success-custom {
-		background: linear-gradient(135deg, #d4edda, #b8e6c1);
-		color: #155724;
-		border-left: 5px solid #28a745;
-	}
-
-	.alert-error-custom {
-		background: linear-gradient(135deg, #f8d7da, #f5c2c7);
-		color: #721c24;
-		border-left: 5px solid #dc3545;
-	}
-
-	.alert-custom i {
-		font-size: 1.5rem;
-		margin-right: 15px;
-	}
-
-	.alert-close {
-		margin-left: auto;
-		background: none;
-		border: none;
-		font-size: 1.5rem;
-		cursor: pointer;
-		opacity: 0.7;
-	}
-
-	.alert-close:hover {
-		opacity: 1;
-	}
-
-	/* Validation Styling */
-	.form-control.is-invalid {
-		border-color: #dc3545;
-		box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
-	}
-
-	.invalid-feedback {
-		color: #dc3545;
-		font-size: 0.875rem;
-		margin-top: 5px;
-		display: block;
-	}
-
-	/* Responsive */
-	@media (max-width: 768px) {
-		.nav-tabs-custom {
-			flex-direction: column;
-		}
-
-		.nav-tab {
-			margin-bottom: 5px;
-		}
-
-		.form-row {
-			grid-template-columns: 1fr;
-		}
-
-		.form-row-3 {
-			grid-template-columns: 1fr;
-		}
-
-		.page-header {
-			padding: 20px;
-		}
-
-		.form-section {
-			padding: 25px;
-		}
-	}
-
-	/* Animation */
-	@keyframes fadeInUp {
-		from {
-			opacity: 0;
-			transform: translateY(30px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	.content-wrapper > * {
-		animation: fadeInUp 0.6s ease forwards;
-	}
-
-	.content-wrapper > *:nth-child(1) { animation-delay: 0.1s; }
-	.content-wrapper > *:nth-child(2) { animation-delay: 0.2s; }
-	.content-wrapper > *:nth-child(3) { animation-delay: 0.3s; }
-	.content-wrapper > *:nth-child(4) { animation-delay: 0.4s; }
 </style>
+<?= $this->endSection() ?>
 
-<div class="page-container" style="padding-top: 100px !important; padding-bottom: 40px !important;">
-	<div class="content-wrapper">
-		<!-- Header Section -->
-		<div class="page-header">
-			<div class="library-info">
-				<h1><?= $data->Name ?? 'Perpustakaan' ?></h1>
-				<div class="library-location"><?= $data->LocationLibrary_name ?? 'Dinas Perpustakaan dan Kearsipan' ?></div>
-				<nav class="breadcrumb-custom">
+<?= $this->section('content') ?>
+<div class="bt-page-wrapper">
+	<!-- Ornamen dekoratif latar belakang -->
+	<div class="bt-bg-circle bt-bg-circle-left"></div>
+	<div class="bt-bg-circle bt-bg-circle-left-inner"></div>
+	<div class="bt-bg-circle bt-bg-circle-right"></div>
+	<div class="bt-bg-circle bt-bg-circle-right-inner"></div>
+
+	<div class="bt-container">
+		<!-- Hero Banner Card -->
+		<div class="bt-hero-card">
+			<div class="bt-hero-content">
+				<h1 class="bt-hero-title"><?= esc($data->Name ?? 'Perpustakaan') ?></h1>
+				<div class="bt-hero-subtitle"><?= esc($data->LocationLibrary_name ?? 'Buku Tamu') ?></div>
+				
+				<nav class="bt-breadcrumb" aria-label="Breadcrumb">
 					<a href="<?= base_url() ?>"><i class="fas fa-home"></i> Beranda</a>
-					<span>/</span>
+					<span class="separator">/</span>
 					<span>Buku Tamu</span>
-					<span>/</span>
-					<span class="active">Bukan Anggota</span>
+					<span class="separator">/</span>
+					<span class="current" id="btBreadcrumbCurrent">Bukan Anggota</span>
 				</nav>
-			</div><br>
+			</div>
+
+			<div class="bt-hero-illustration" style="background-image: url('<?= base_url('assets/img/buku-tamu-hero-people-clean.png') ?>');"></div>
 		</div>
 
-		<!-- Navigation Tabs -->
-		<div class="nav-tabs-custom">
-			<a href="<?= base_url('buku-tamu/anggota') ?>" class="nav-tab">
-				<i class="fas fa-user"></i>
+		<!-- Segmented Switch Tabs (Seamless Instant Switch) -->
+		<div class="bt-tabs-pill" role="tablist">
+			<button type="button" class="bt-tab-btn" data-target="anggota" id="tabBtnAnggota">
+				<i class="far fa-user"></i>
 				<span>Anggota</span>
-			</a>
-			<a href="<?= base_url('buku-tamu/non_anggota') ?>" class="nav-tab active">
+			</button>
+			<button type="button" class="bt-tab-btn active" data-target="non_anggota" id="tabBtnNonAnggota">
 				<i class="fas fa-user-plus"></i>
 				<span>Bukan Anggota</span>
-			</a>
-			<a href="<?= base_url('buku-tamu/rombongan') ?>" class="nav-tab">
+			</button>
+			<button type="button" class="bt-tab-btn" data-target="rombongan" id="tabBtnRombongan">
 				<i class="fas fa-users"></i>
 				<span>Rombongan</span>
-			</a>
+			</button>
 		</div>
 
-		<!-- Validation Errors (if any) -->
+		<!-- Fallback link jika Javascript dinonaktifkan -->
+		<noscript>
+			<div style="text-align: center; margin-bottom: 20px;">
+				<a href="<?= base_url('buku-tamu/anggota') ?>">Anggota</a> | 
+				<a href="<?= base_url('buku-tamu/non_anggota') ?>">Bukan Anggota</a> | 
+				<a href="<?= base_url('buku-tamu/rombongan') ?>">Rombongan</a>
+			</div>
+		</noscript>
+
+		<!-- Error Alert (jika ada pesan galat dari session) -->
 		<?php if (!empty($message)) : ?>
-			<div class="alert-custom alert-error-custom" id="validationAlert">
-				<i class="fas fa-exclamation-circle"></i>
+			<div class="bt-alert bt-alert-error" id="validationAlert" role="alert">
+				<i class="fas fa-exclamation-circle" style="font-size: 1.25rem; margin-top: 2px;"></i>
 				<div>
 					<strong>Perhatian!</strong><br>
 					<?= $message ?>
 				</div>
-				<button type="button" class="alert-close" onclick="this.parentElement.style.display='none'">
+				<button type="button" class="bt-alert-close" onclick="this.parentElement.style.display='none'">
 					<span>&times;</span>
 				</button>
 			</div>
 		<?php endif; ?>
 
-		<!-- Form Section -->
-		<div class="form-section">
-			<h2 class="form-title">Buku Tamu Non Anggota</h2>
-			<p class="form-subtitle">Silakan isi data diri Anda untuk tercatat sebagai pengunjung perpustakaan</p>
-
-			<form id="frm_create" method="post" action="<?= base_url('buku-tamu/non_anggota') ?>">
-				<?= csrf_field() ?>
-				
-				<?= view('GuestBook\Views\isian_tamu', [
-					'isian'             => $isian,
-					'errors'            => $errors,
-					'unit_kerja'        => $unit_kerja,
-				]) ?>
-
-
-				<!-- Submit Button -->
-				<div class="submit-section">
-					<button type="submit" class="save-btn" id="saveBtn" name="submit">
-						<i class="fas fa-save"></i>
-						<span class="btn-text">Simpan Buku Tamu</span>
-						<span class="btn-loading" style="display: none;">
-							<i class="fas fa-spinner fa-spin"></i>
-							Menyimpan...
-						</span>
-					</button>
-					<p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
-						Dengan mengisi formulir ini, data kunjungan Anda akan tercatat dalam buku tamu perpustakaan.
-					</p>
+		<!-- ════════════════════ TAB 1: ANGGOTA ════════════════════ -->
+		<div class="bt-tab-pane" id="paneAnggota">
+			<div class="bt-card">
+				<div class="bt-card-header">
+					<h2 class="bt-card-title">Buku Tamu Anggota</h2>
+					<p class="bt-card-subtitle">Masukkan nomor anggota atau pindai barcode kartu perpustakaan Anda</p>
 				</div>
-			</form>
+
+				<form method="get" action="<?= base_url('buku-tamu/anggota') ?>" class="bt-member-search-box">
+					<div class="bt-field-group">
+						<label for="member_no" class="bt-field-label text-center d-block mb-2">Nomor Anggota / Barcode <span class="required">*</span></label>
+						<div class="bt-input-wrap">
+							<i class="fas fa-barcode bt-input-icon"></i>
+							<input type="text"
+								class="bt-input form-control"
+								name="member_no"
+								id="member_no"
+								placeholder="Ketik atau pindai nomor anggota..."
+								autocomplete="off"
+								required>
+						</div>
+					</div>
+
+					<div class="bt-action-area" style="margin-top: 20px;">
+						<button class="bt-btn-primary" type="submit">
+							<i class="fas fa-search" style="font-size: 0.9rem;"></i>
+							<span>Cari Anggota</span>
+						</button>
+						<p class="bt-legal-note">
+							Tempelkan kartu pada alat pemindai barcode atau tekan Cari setelah mengisi nomor anggota.
+						</p>
+					</div>
+				</form>
+			</div>
 		</div>
+
+		<!-- ════════════════════ TAB 2: BUKAN ANGGOTA ════════════════════ -->
+		<div class="bt-tab-pane active" id="paneNonAnggota">
+			<div class="bt-card">
+				<div class="bt-card-header">
+					<h2 class="bt-card-title">Buku Tamu Non Anggota</h2>
+					<p class="bt-card-subtitle">Silakan isi data diri Anda untuk tercatat sebagai pengunjung perpustakaan</p>
+				</div>
+
+				<form id="frm_create" method="post" action="<?= base_url('buku-tamu/non_anggota') ?>">
+					<?= csrf_field() ?>
+					
+					<?= view('GuestBook\Views\isian_tamu', [
+						'isian'             => $isian ?? [],
+						'errors'            => $errors ?? [],
+						'unit_kerja'        => $unit_kerja ?? [],
+					]) ?>
+
+					<div class="bt-action-area">
+						<button type="submit" class="bt-btn-primary" id="saveBtn" name="submit">
+							<i class="fas fa-lock" style="font-size: 0.9rem;"></i>
+							<span class="btn-text">Simpan Buku Tamu</span>
+							<span class="btn-loading" style="display: none;">
+								<i class="fas fa-spinner fa-spin"></i>
+								Menyimpan...
+							</span>
+						</button>
+						<p class="bt-legal-note">
+							Dengan mengisi formulir ini, data kunjungan Anda akan tercatat dalam buku tamu perpustakaan.
+						</p>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- ════════════════════ TAB 3: ROMBONGAN ════════════════════ -->
+		<div class="bt-tab-pane" id="paneRombongan">
+			<div class="bt-card">
+				<div class="bt-card-header">
+					<h2 class="bt-card-title">Buku Tamu Rombongan</h2>
+					<p class="bt-card-subtitle">Untuk kunjungan bersama paling sedikit 6 orang. Diisi oleh penanggung jawab rombongan.</p>
+				</div>
+
+				<form id="frm_create_rombongan" method="post" action="<?= base_url('buku-tamu/rombongan') ?>">
+					<?= csrf_field() ?>
+					
+					<?= view('GuestBook\Views\isian_tamu', [
+						'isian'             => [],
+						'errors'            => [],
+						'unit_kerja'        => $unit_kerja ?? [],
+						'rombongan'         => true,
+					]) ?>
+
+					<div class="bt-action-area">
+						<button type="submit" class="bt-btn-primary" id="saveBtnRombongan" name="submit">
+							<i class="fas fa-lock" style="font-size: 0.9rem;"></i>
+							<span class="btn-text">Simpan Buku Tamu Rombongan</span>
+							<span class="btn-loading" style="display: none;">
+								<i class="fas fa-spinner fa-spin"></i>
+								Menyimpan...
+							</span>
+						</button>
+						<p class="bt-legal-note">
+							Dengan mengisi formulir ini, data kunjungan rombongan akan tercatat dalam buku tamu perpustakaan.
+						</p>
+					</div>
+				</form>
+			</div>
+		</div>
+
 	</div>
 </div>
 
 <script>
-// Auto-focus pada input pertama
+// Seamless Instant Switching between tabs
 document.addEventListener('DOMContentLoaded', function() {
-	const firstInput = document.getElementById('Nama');
-	if (firstInput) {
-		firstInput.focus();
+	const tabs = {
+		'anggota': {
+			btn: document.getElementById('tabBtnAnggota'),
+			pane: document.getElementById('paneAnggota'),
+			title: 'Anggota',
+			url: '<?= base_url('buku-tamu/anggota') ?>'
+		},
+		'non_anggota': {
+			btn: document.getElementById('tabBtnNonAnggota'),
+			pane: document.getElementById('paneNonAnggota'),
+			title: 'Bukan Anggota',
+			url: '<?= base_url('buku-tamu/non_anggota') ?>'
+		},
+		'rombongan': {
+			btn: document.getElementById('tabBtnRombongan'),
+			pane: document.getElementById('paneRombongan'),
+			title: 'Rombongan',
+			url: '<?= base_url('buku-tamu/rombongan') ?>'
+		}
+	};
+
+	const breadcrumbCurrent = document.getElementById('btBreadcrumbCurrent');
+
+	function switchTab(targetKey, updateHistory = true) {
+		if (!tabs[targetKey]) return;
+
+		Object.keys(tabs).forEach(key => {
+			const item = tabs[key];
+			if (key === targetKey) {
+				item.btn.classList.add('active');
+				item.pane.classList.add('active');
+			} else {
+				item.btn.classList.remove('active');
+				item.pane.classList.remove('active');
+			}
+		});
+
+		if (breadcrumbCurrent) {
+			breadcrumbCurrent.textContent = tabs[targetKey].title;
+		}
+
+		if (updateHistory && window.history.pushState) {
+			window.history.pushState({ tab: targetKey }, tabs[targetKey].title, tabs[targetKey].url);
+		}
+
+		// Focus pada input yang sesuai
+		if (targetKey === 'anggota') {
+			const memberInput = document.getElementById('member_no');
+			if (memberInput) memberInput.focus();
+		} else if (targetKey === 'non_anggota') {
+			const namaInput = document.querySelector('#paneNonAnggota input[name="Nama"]');
+			if (namaInput) namaInput.focus();
+		} else if (targetKey === 'rombongan') {
+			const namaRombongan = document.querySelector('#paneRombongan input[name="Nama"]');
+			if (namaRombongan) namaRombongan.focus();
+		}
 	}
 
-	// Auto-hide validation alerts after 7 seconds
+	// Event listener tombol tab
+	document.querySelectorAll('.bt-tab-btn').forEach(btn => {
+		btn.addEventListener('click', function(e) {
+			e.preventDefault();
+			const target = this.getAttribute('data-target');
+			switchTab(target, true);
+		});
+	});
+
+	// Handle browser back/forward buttons
+	window.addEventListener('popstate', function(e) {
+		if (e.state && e.state.tab) {
+			switchTab(e.state.tab, false);
+		} else {
+			// Deteksi dari pathname jika ada
+			const path = window.location.pathname;
+			if (path.includes('anggota') && !path.includes('non_anggota')) {
+				switchTab('anggota', false);
+			} else if (path.includes('rombongan')) {
+				switchTab('rombongan', false);
+			} else {
+				switchTab('non_anggota', false);
+			}
+		}
+	});
+
+	// Auto hide alert error
 	const validationAlert = document.getElementById('validationAlert');
-	
 	if (validationAlert) {
 		setTimeout(() => {
-			validationAlert.style.animation = 'fadeOut 0.5s ease forwards';
-			setTimeout(() => {
-				validationAlert.style.display = 'none';
-			}, 500);
+			validationAlert.style.transition = 'opacity 0.5s ease';
+			validationAlert.style.opacity = '0';
+			setTimeout(() => { validationAlert.style.display = 'none'; }, 500);
 		}, 7000);
 	}
-
-	// Check for toastr messages dan tampilkan sebagai notifikasi
-	checkToastrMessages();
 });
 
-// Function untuk check toastr messages
-function checkToastrMessages() {
-	<?php if (get_message('toastr_msg')): ?>
-		const toastrMsg = "<?= get_message('toastr_msg') ?>";
-		const toastrType = "<?= get_message('toastr_type') ?>";
+// Form loading handler
+['frm_create', 'frm_create_rombongan'].forEach(formId => {
+	const frm = document.getElementById(formId);
+	if (!frm) return;
+	frm.addEventListener('submit', function() {
+		const saveBtn = this.querySelector('button[type="submit"]');
+		if (!saveBtn) return;
+		const btnText = saveBtn.querySelector('.btn-text');
+		const btnLoading = saveBtn.querySelector('.btn-loading');
+
+		saveBtn.disabled = true;
+		if (btnText) btnText.style.display = 'none';
+		if (btnLoading) btnLoading.style.display = 'inline-flex';
 		
-		if (toastrMsg && toastrType) {
-			showCustomNotification(toastrMsg, toastrType);
-			
-			// Clear the messages after showing
-			<?php 
-			unset_message('toastr_msg'); 
-			unset_message('toastr_type'); 
-			?>
-		}
-	<?php endif; ?>
-}
-
-// Function untuk show custom notification
-function showCustomNotification(message, type) {
-	const alertClass = type === 'success' ? 'alert-success-custom' : 'alert-error-custom';
-	const iconClass = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-	const title = type === 'success' ? 'Berhasil!' : 'Perhatian!';
-	
-	const notification = document.createElement('div');
-	notification.className = `alert-custom ${alertClass}`;
-	notification.style.position = 'fixed';
-	notification.style.top = '20px';
-	notification.style.right = '20px';
-	notification.style.zIndex = '9999';
-	notification.style.minWidth = '300px';
-	notification.style.animation = 'slideInRight 0.5s ease forwards';
-	
-	notification.innerHTML = `
-		<i class="${iconClass}"></i>
-		<div>
-			<strong>${title}</strong><br>
-			${message}
-		</div>
-		<button type="button" class="alert-close" onclick="this.parentElement.remove()">
-			<span>&times;</span>
-		</button>
-	`;
-	
-	document.body.appendChild(notification);
-	
-	// Auto remove after 5 seconds
-	setTimeout(() => {
-		notification.style.animation = 'slideOutRight 0.5s ease forwards';
 		setTimeout(() => {
-			if (notification.parentNode) {
-				notification.remove();
+			if (saveBtn.disabled) {
+				saveBtn.disabled = false;
+				if (btnText) btnText.style.display = 'inline-flex';
+				if (btnLoading) btnLoading.style.display = 'none';
 			}
-		}, 500);
-	}, 5000);
-}
-
-// Form validation
-document.getElementById('frm_create').addEventListener('submit', function(e) {
-	const saveBtn = document.getElementById('saveBtn');
-	const btnText = saveBtn.querySelector('.btn-text');
-	const btnLoading = saveBtn.querySelector('.btn-loading');
-
-	// Show loading state
-	saveBtn.disabled = true;
-	btnText.style.display = 'none';
-	btnLoading.style.display = 'inline-flex';
-	
-	// Set timeout untuk re-enable button jika ada error (fallback)
-	setTimeout(() => {
-		if (saveBtn.disabled) {
-			saveBtn.disabled = false;
-			btnText.style.display = 'inline-flex';
-			btnLoading.style.display = 'none';
-		}
-	}, 10000); // 10 detik timeout
-});
-
-// Remove validation styling on input
-document.querySelectorAll('.form-control').forEach(input => {
-	input.addEventListener('input', function() {
-		this.classList.remove('is-invalid');
-		const feedback = this.parentNode.querySelector('.invalid-feedback');
-		if (feedback) {
-			feedback.style.display = 'none';
-		}
+		}, 12000);
 	});
 });
-
-// Animasi untuk alerts
-document.querySelectorAll('.alert-close').forEach(button => {
-	button.addEventListener('click', function() {
-		const alert = this.parentElement;
-		alert.style.animation = 'fadeOut 0.3s ease forwards';
-		setTimeout(() => {
-			alert.style.display = 'none';
-		}, 300);
-	});
-});
-
-// Add animations
-const style = document.createElement('style');
-style.textContent = `
-	@keyframes fadeOut {
-		from { opacity: 1; transform: translateY(0); }
-		to { opacity: 0; transform: translateY(-20px); }
-	}
-	
-	@keyframes slideInRight {
-		from { 
-			opacity: 0; 
-			transform: translateX(100%); 
-		}
-		to { 
-			opacity: 1; 
-			transform: translateX(0); 
-		}
-	}
-	
-	@keyframes slideOutRight {
-		from { 
-			opacity: 1; 
-			transform: translateX(0); 
-		}
-		to { 
-			opacity: 0; 
-			transform: translateX(100%); 
-		}
-	}
-`;
-document.head.appendChild(style);
 </script>
 
 <?php if (session()->getFlashdata('success')) : ?>
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
-		Swal.fire({
-			icon: 'success',
-			title: 'Berhasil!',
-			text: '<?= session()->getFlashdata('success') ?>',
-			showConfirmButton: false,
-			timer: 2000
-		});
+		if (typeof Swal !== 'undefined') {
+			Swal.fire({
+				icon: 'success',
+				title: 'Berhasil!',
+				text: <?= json_encode((string) session()->getFlashdata('success')) ?>,
+				showConfirmButton: false,
+				timer: 2200
+			});
+		} else {
+			alert(<?= json_encode((string) session()->getFlashdata('success')) ?>);
+		}
 	});
 </script>
 <?php endif; ?>

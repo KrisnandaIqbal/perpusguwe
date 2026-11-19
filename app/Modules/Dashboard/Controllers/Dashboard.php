@@ -35,17 +35,22 @@ class Dashboard extends \Base\Controllers\BaseController
 
 	public function index()
 {
-    if(is_member('anggota')){
-        $page = 'anggota';
-        $member_no = user()->username;
-        $member = get_member($member_no);
-        $peminjaman = get_peminjaman($member->ID);
-        $pelanggaran = get_pelanggaran($member->ID);
+    $currentUser = user();
+    $isAnggota = false;
 
-        $this->data['total_peminjaman'] = count($peminjaman);
-        $this->data['total_pelanggaran'] = count($pelanggaran);
+    if ($currentUser) {
+        $isAnggota = (
+            ($currentUser->category ?? '') === 'anggota' ||
+            !empty($currentUser->anggota) ||
+            is_member('anggota') ||
+            is_member('keanggotaan')
+        );
+    }
 
-        echo view('Dashboard\Views\\' . $page, $this->data);
+    if ($isAnggota) {
+        $this->data['title'] = 'Dashboard Anggota';
+        echo view('Dashboard\Views\anggota', $this->data);
+        return;
     }else{
         $page = 'index';
 

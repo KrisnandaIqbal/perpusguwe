@@ -111,7 +111,29 @@
         el.style.setProperty('--lensa', 'url(#lens-panel-' + i + ')');
         return buatLensa('lens-panel-' + i, el, null, 2.5, 46);
     }).filter(Boolean);
-    var gambarSemua = function () { gambar(); panel.forEach(function (f) { f(); }); };
+    var bnav = document.querySelector('.gn-bottom-nav');
+    var gambarBnav = null;
+    if (bnav) {
+        bnav.style.setProperty('--lensa-bnav', 'url(#lens-bnav)');
+        gambarBnav = buatLensa('lens-bnav', bnav, null, 2.5, 46);
+    }
+    var bnavSheet = document.getElementById('gn-bnav-layanan-sheet');
+    var gambarBnavSheet = null;
+    if (bnavSheet) {
+        bnavSheet.style.setProperty('--lensa-bnav-sheet', 'url(#lens-bnav-sheet)');
+        gambarBnavSheet = buatLensa('lens-bnav-sheet', bnavSheet, null, 2.5, 46);
+        if (typeof MutationObserver === 'function') {
+            new MutationObserver(function () {
+                if (!bnavSheet.hidden && gambarBnavSheet) gambarBnavSheet();
+            }).observe(bnavSheet, { attributes: true, attributeFilter: ['hidden'] });
+        }
+    }
+    var gambarSemua = function () {
+        gambar();
+        panel.forEach(function (f) { f(); });
+        if (gambarBnav) gambarBnav();
+        if (gambarBnavSheet) gambarBnavSheet();
+    };
     var timer;
     gambarSemua();
     window.addEventListener('resize', function () { clearTimeout(timer); timer = setTimeout(gambarSemua, 120); });

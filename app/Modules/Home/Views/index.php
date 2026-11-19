@@ -22,6 +22,7 @@
 </head>
 
 <body>
+    <a class="skip-link" href="#beranda">Lewati ke konten utama</a>
     <?= $this->include('App\Views\layout\partial\loader') ?>
     <main class="page-shell">
         <div class="site-frame">

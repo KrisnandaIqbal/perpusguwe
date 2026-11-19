@@ -17,7 +17,7 @@
     }
 
     // Lengkung kiri foto hero: sudut atasnya bundar (48% lebar dan tinggi), jadi di ketinggian kartu atas dan lingkaran hias
-    // tepi foto menjorok ke dalam. Jorokannya dihitung supaya pusat kartu dan lingkaran tepat berada di garis tepi foto.
+    // tepi foto menjorok ke dalam. Jorokannya dihitung supaya pusat kartu tepat berada di garis tepi foto.
     var heroVisual = document.querySelector('.hero-visual');
     function lengkungTepi() {
         var foto = heroVisual && heroVisual.querySelector('.hero-image-wrap');
@@ -31,7 +31,6 @@
             return a * (1 - Math.sqrt(Math.max(0, 1 - t * t)));
         }
         heroVisual.style.setProperty('--lengkung-kartu', jorok(heroVisual.querySelector('.card-top')).toFixed(1) + 'px');
-        heroVisual.style.setProperty('--lengkung-orbit', jorok(heroVisual.querySelector('.orbit-one')).toFixed(1) + 'px');
     }
     lengkungTepi();
     window.addEventListener('resize', lengkungTepi);

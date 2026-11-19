@@ -55,10 +55,31 @@ class Opac extends \Base\Controllers\BaseController
     $this->data['opac_banners'] = $this->getOpacBanners();
     $this->data['search_log_id'] = $this->logSearch();
     $this->loadRujukanTanpaHasil();
-    $this->data['baris_rekomendasi'] = $this->getBarisTamu();
+    $this->data['baris_rekomendasi'] = $this->getBarisBeranda();
+    $this->data['jelajah'] = $this->getJelajah();
     $endTime = microtime(true);
     $this->data['execution_time'] = $endTime - $startTime;
     return view('Opac\Views\index', $this->data);
+}
+
+/**
+ * Kejutan Buku Acak: Redirect ke halaman detail buku acak yang aktif.
+ */
+public function acak()
+{
+    $randomBook = $this->db->table('catalogs')
+        ->select('ID')
+        ->where('IsOPAC', 1)
+        ->orderBy('RAND()')
+        ->limit(1)
+        ->get()
+        ->getRow();
+
+    if ($randomBook && !empty($randomBook->ID)) {
+        return redirect()->to(base_url('opac/detail/' . $randomBook->ID));
+    }
+
+    return redirect()->to(base_url('opac'));
 }
 
 /**
@@ -163,14 +184,62 @@ private function koleksiMirip(string $query, int $batas = 8): array
     return enrichCatalogsWithCirculation(array_values(array_filter(array_map(fn ($id) => $baris[$id] ?? null, $urut))));
 }
 
+// Beranda polos (tanpa pencarian, filter, huruf abjad, atau halaman > 1).
+private function berandaPolos(): bool
+{
+    foreach (['search', 'search_by', 'Author', 'Publisher', 'Subject', 'PublishYear', 'PublishLocation', 'DeweyNo', 'format', 'language', 'year_start', 'year_end'] as $p) {
+        if (trim((string) ($this->request->getVar($p) ?? '')) !== '') {
+            return false;
+        }
+    }
+
+    $letter = trim((string) ($this->request->getVar('letter') ?? ''));
+    if ($letter !== '' && preg_match('/^[A-Za-z0-9]$/', $letter)) {
+        return false;
+    }
+
+    if ((int) ($this->request->getVar('page') ?? 1) > 1) {
+        return false;
+    }
+
+    $category = trim((string) ($this->request->getVar('category') ?? ''));
+    if ($category !== '' && $category !== 'semua') {
+        return false;
+    }
+
+    $availability = trim((string) ($this->request->getVar('availability') ?? ''));
+    if ($availability !== '' && $availability !== 'semua') {
+        return false;
+    }
+
+    $sort = trim((string) ($this->request->getVar('sort') ?? ''));
+    if ($sort !== '' && $sort !== 'terbaru') {
+        return false;
+    }
+
+    if ((int) ($this->request->getVar('year_from') ?? 0) > 0
+        || (int) ($this->request->getVar('year_to') ?? 0) > 0
+        || (int) ($this->request->getVar('only_available') ?? 0) === 1) {
+        return false;
+    }
+
+    $advQueries = $this->request->getVar('adv_query');
+    if (is_array($advQueries)) {
+        foreach ($advQueries as $q) {
+            if (trim((string) $q) !== '') {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 // Baris rekomendasi hanya di beranda polos (tanpa pencarian, filter, atau halaman lain).
 private function getBarisTamu(): array
 {
-    $param = ['search', 'search_by', 'Author', 'Publisher', 'Subject', 'PublishYear', 'PublishLocation', 'DeweyNo', 'page'];
-    foreach ($param as $p) {
-        if (!empty($this->request->getVar($p))) {
-            return [];
-        }
+    if (!$this->berandaPolos()) {
+        return [];
     }
 
     return cache()->remember('opac_baris_tamu', 3600, function () {
@@ -181,6 +250,111 @@ private function getBarisTamu(): array
         foreach ($baris as &$b) {
             $b = enrichCatalogsWithCirculation($b);
         }
+        unset($b);
+        return $baris;
+    });
+}
+
+private function getBarisBeranda(): array
+{
+    if (!$this->berandaPolos()) {
+        return [];
+    }
+
+    $anggota = session('session_member');
+    if (!$anggota) {
+        return [];
+    }
+
+    $semua = $this->getBarisAnggota($anggota);
+    return array_diff_key($semua, ['Paling banyak dipinjam' => 1, 'Koleksi baru' => 1]);
+}
+
+private function getJelajah(): array
+{
+    if (!$this->berandaPolos()) {
+        return [];
+    }
+
+    $pengarang = cache('opac_top_authors_v2');
+    if (!$pengarang) {
+        $pengarang = $this->db->table('catalogs')
+            ->select('Author as name, COUNT(*) as count')
+            ->where('IsOPAC', 1)
+            ->where("Author IS NOT NULL AND Author != ''", null, false)
+            ->groupBy('Author')
+            ->orderBy('count', 'DESC')
+            ->limit(12)
+            ->get()
+            ->getResultArray();
+        cache()->save('opac_top_authors_v2', $pengarang, 600);
+    }
+
+    return ['ddc' => $this->getDdcDirectoryData()['ddc_hierarchy'] ?? [], 'pengarang' => $pengarang];
+}
+
+private function getBarisAnggota(array $anggota): array
+{
+    $id = (int) $anggota['member_id'];
+    return cache()->remember('rekomendasi_beranda_' . $id, 3600, function () use ($id, $anggota) {
+        $R    = \Rekomendasi\Libraries\Ranker::class;
+        $unit = (int) ($anggota['unit_kerja_id'] ?? 0) ?: null;
+        $izin = (int) ($this->db->table('members')->select('IzinPersonalisasi')->where('ID', $id)->get()->getRow()->IzinPersonalisasi ?? 1);
+
+        $riwayat  = $izin ? $this->katalogModel->riwayatAnggota($id) : [];
+        $dipinjam = array_column($riwayat, 'id');
+        $bobot    = \Rekomendasi\Libraries\Beranda::bobot(count($riwayat), (bool) $izin);
+
+        $populerUnit = $this->katalogModel->kandidatPopuler(60, $unit);
+        $namaUnit    = $unit ? $this->db->table('master_unit')->select('nama_unit')->where('id', $unit)->get()->getRow()->nama_unit ?? null : null;
+        $petaPopuler = array_column($populerUnit, 'populer', 'id');
+
+        $baris = [];
+        if ($riwayat) {
+            $terakhir = $riwayat[0] + ['ID' => $riwayat[0]['id']];
+            $baris['Karena kamu meminjam "' . mb_strimwidth($terakhir['Title'], 0, 60, '...') . '"'] = $this->barisSerupa($terakhir, $bobot, $dipinjam, 20, $petaPopuler);
+        }
+
+        $baris[$namaUnit && $this->katalogModel->unitCukupPinjaman($unit) ? 'Populer di ' . $namaUnit : 'Paling banyak dipinjam'] = $R::baris($populerUnit, $R::BOBOT_COLD_START, $dipinjam);
+
+        $subjek = \Rekomendasi\Libraries\Beranda::subjekFavorit($riwayat);
+        if ($subjek) {
+            $sumber   = ['DeweyNo' => '', 'Subject' => $subjek, 'Author' => ''];
+            $kandidat = $this->katalogModel->kandidatSubjek($subjek);
+            foreach ($kandidat as &$k) {
+                $k['content'] = \Rekomendasi\Libraries\ContentScore::score($sumber, $k);
+                $k['populer'] = $petaPopuler[$k['id']] ?? 0;
+            }
+            unset($k);
+            $baris['Subjek favoritmu: ' . mb_convert_case($subjek, MB_CASE_TITLE)] = $R::baris($kandidat, $bobot, $dipinjam);
+        }
+
+        $kelas     = \Rekomendasi\Libraries\Beranda::kelasFavorit($riwayat);
+        $judulBaru = 'Koleksi baru';
+        $baru      = [];
+        foreach ($kelas ? [$kelas, $kelas[0]] : [null] as $awalan) {
+            $baru = $R::baris($this->katalogModel->kandidatBaru(60, $awalan), $R::BOBOT_COLD_START, $dipinjam);
+            if ($awalan && count($baru) >= $R::MIN_PER_BARIS) {
+                $tigaDigit = strlen($awalan) === 3;
+                $nama      = $this->db->table('master_kelas_besar')->select('namakelas')->where('kdKelas', $tigaDigit ? $awalan : $awalan . '00')->get()->getRow()->namakelas ?? null;
+                $nama      = $nama ? trim(preg_replace('/^\d+\s*-\s*/', '', $nama)) : null;
+                $judulBaru = $tigaDigit
+                    ? 'Koleksi baru di ' . ($nama ? 'bidang ' . $nama . ' (DDC ' . $awalan . ')' : 'DDC ' . $awalan)
+                    : ($nama ? 'Koleksi baru di bidang ' . $nama : 'Koleksi baru di DDC ' . $awalan . '00');
+                break;
+            }
+        }
+        if (count($baru) < $R::MIN_PER_BARIS) {
+            $judulBaru = 'Koleksi baru';
+            $baru      = $R::baris($this->katalogModel->kandidatBaru(), $R::BOBOT_COLD_START, $dipinjam);
+        }
+        $baris[$judulBaru] = $baru;
+
+        $baris = $R::halaman($baris);
+        foreach ($baris as &$b) {
+            $b = enrichCatalogsWithCirculation($b);
+        }
+        unset($b);
         return $baris;
     });
 }
@@ -194,125 +368,245 @@ private function getOpacBanners()
     }
 }
 
-private function loadRegularCatalogs()
+private function applyAdvancedSearch($builder): bool
 {
-    $perPage     = 12;
-    $currentPage = $this->request->getVar('page') ?? 1;
+    $hasAdvCriteria = false;
+    $advFields = $this->request->getVar('adv_field');
+    $advQueries = $this->request->getVar('adv_query');
+    $advBools = $this->request->getVar('adv_bool');
+    $advMatches = $this->request->getVar('adv_match');
 
-    $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
+    $allowedFields = [
+        'Title'           => 'Title',
+        'Author'          => 'Author',
+        'Subject'         => 'Subject',
+        'Publisher'       => 'Publisher',
+        'PublishLocation' => 'PublishLocation',
+        'ISBN'            => 'ISBN',
+        'DeweyNo'         => 'DeweyNo',
+        'CallNumber'      => 'CallNumber'
+    ];
 
-    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
-    $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
-    $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
+    if (is_array($advQueries)) {
+        $validCriteria = [];
+        foreach ($advQueries as $i => $rawQ) {
+            $cleanQ = sanitizeSearch((string)$rawQ);
+            $field = $advFields[$i] ?? 'Title';
+            if ($cleanQ !== '' && isset($allowedFields[$field])) {
+                $boolOp = strtoupper(trim((string)($advBools[$i] ?? 'AND')));
+                if (!in_array($boolOp, ['AND', 'OR', 'NOT'], true)) {
+                    $boolOp = 'AND';
+                }
+                $matchMode = strtolower(trim((string)($advMatches[$i] ?? 'contains')));
+                if (!in_array($matchMode, ['contains', 'exact', 'starts_with'], true)) {
+                    $matchMode = 'contains';
+                }
 
-    $rawSearch = (string) ($this->request->getVar('search') ?? '');
-    $search    = sanitizeSearch($rawSearch);
+                $validCriteria[] = [
+                    'field' => $allowedFields[$field],
+                    'query' => $cleanQ,
+                    'raw'   => trim((string)$rawQ),
+                    'bool'  => $boolOp,
+                    'match' => $matchMode
+                ];
+            }
+        }
 
-    if ($search !== '') {
-        $this->applyFulltextSearch($builder, $search, $searchBy, $rawSearch);
-    }
+        if (!empty($validCriteria)) {
+            $hasAdvCriteria = true;
+            $builder->groupStart();
+            foreach ($validCriteria as $idx => $c) {
+                $col = $c['field'];
+                $val = $c['query'];
+                $raw = $c['raw'];
+                $match = $c['match'];
+                $bool = $c['bool'];
 
-    $additionalFilters = ['Publisher', 'Author', 'PublishLocation', 'Subject', 'PublishYear', 'DeweyNo'];
-    foreach ($additionalFilters as $filter) {
-        $value = $this->request->getVar($filter);
-        if (!empty($value)) {
-            if ($filter === 'Author') {
-                $authors = array_values(array_filter(array_map('trim', preg_split('/[;,]+/', (string) $value))));
-                if (!empty($authors)) {
-                    $builder->groupStart();
-                    foreach ($authors as $idx => $author) {
-                        $cleanAuthor = sanitizeSearch($author);
-                        if ($idx === 0) {
-                            $builder->like('Author', $cleanAuthor);
+                $isFirst = ($idx === 0);
+
+                if ($match === 'exact') {
+                    if ($isFirst) {
+                        $builder->where($col, $val);
+                    } else {
+                        if ($bool === 'OR') {
+                            $builder->orWhere($col, $val);
+                        } elseif ($bool === 'NOT') {
+                            $builder->where("{$col} !=", $val);
                         } else {
-                            $builder->orLike('Author', $cleanAuthor);
+                            $builder->where($col, $val);
                         }
                     }
-                    $builder->groupEnd();
+                } elseif ($match === 'starts_with') {
+                    if ($isFirst) {
+                        $builder->like($col, $val, 'after');
+                    } else {
+                        if ($bool === 'OR') {
+                            $builder->orLike($col, $val, 'after');
+                        } elseif ($bool === 'NOT') {
+                            $builder->notLike($col, $val, 'after');
+                        } else {
+                            $builder->like($col, $val, 'after');
+                        }
+                    }
+                } else { // contains
+                    if ($col === 'Title' || $col === 'Subject') {
+                        if ($isFirst) {
+                            $this->applyFulltextSearch($builder, $val, $col, $raw);
+                        } else {
+                            if ($bool === 'OR') {
+                                $builder->orLike($col, $val);
+                            } elseif ($bool === 'NOT') {
+                                $builder->notLike($col, $val);
+                            } else {
+                                $builder->like($col, $val);
+                            }
+                        }
+                    } else {
+                        if ($isFirst) {
+                            $builder->like($col, $val);
+                        } else {
+                            if ($bool === 'OR') {
+                                $builder->orLike($col, $val);
+                            } elseif ($bool === 'NOT') {
+                                $builder->notLike($col, $val);
+                            } else {
+                                $builder->like($col, $val);
+                            }
+                        }
+                    }
                 }
-            } elseif ($filter === 'Subject') {
-                // Hindari duplikasi filter jika sudah dicari melalui search + search_by=Subject dengan nilai sama
-                if ($searchBy === 'Subject' && mb_strtolower(trim((string) $value)) === mb_strtolower(trim($rawSearch))) {
-                    continue;
-                }
-                $this->applyFulltextSearch($builder, sanitizeSearch((string) $value), 'Subject', (string) $value);
-            } elseif ($filter === 'DeweyNo') {
-                if ($searchBy === 'DeweyNo' && mb_strtolower(trim((string) $value)) === mb_strtolower(trim($rawSearch))) {
-                    continue;
-                }
-                $cleanDewey = sanitizeSearch((string) $value);
-                if (strlen($cleanDewey) === 3 && substr($cleanDewey, -1) === '0') {
-                    $prefix = substr($cleanDewey, 0, 2);
-                    $builder->where("(DeweyNo LIKE '{$cleanDewey}%' OR DeweyNo LIKE '{$prefix}%')", null, false);
-                } else {
-                    $builder->like('DeweyNo', $cleanDewey, 'after');
-                }
-            } else {
-                $builder->like($filter, sanitizeSearch((string) $value));
             }
+            $builder->groupEnd();
         }
     }
 
-    $catalogs = $builder->paginate($perPage, 'default', $currentPage);
-    $catalogs = enrichCatalogsWithCirculation($catalogs);
-    $pager    = $this->katalogModel->pager;
-
-    $this->data['pager']         = $pager;
-    $this->data['catalogs']      = $catalogs;
-    $this->data['total_records'] = $pager->getTotal();
-
-    $this->loadTopSidebarFacets();
-
-    // Jika diakses via ?Subject=... tanpa parameter search, sinkronkan ke tampilan pencarian Subjek
-    $subjectParam = trim((string) ($this->request->getVar('Subject') ?? ''));
-    $deweyParam   = trim((string) ($this->request->getVar('DeweyNo') ?? ''));
-    if ($rawSearch === '' && $subjectParam !== '') {
-        $this->data['search']    = esc($subjectParam);
-        $this->data['search_by'] = 'Subject';
-    } elseif ($rawSearch === '' && $deweyParam !== '') {
-        $this->data['search']    = esc($deweyParam);
-        $this->data['search_by'] = 'DeweyNo';
-    } else {
-        $this->data['search']    = esc($rawSearch);
-        $this->data['search_by'] = $searchBy;
+    // Filter rentang tahun
+    $yearFrom = (int)($this->request->getVar('year_from') ?? 0);
+    $yearTo   = (int)($this->request->getVar('year_to') ?? 0);
+    if ($yearFrom > 0 && $yearTo > 0) {
+        $minY = min($yearFrom, $yearTo);
+        $maxY = max($yearFrom, $yearTo);
+        $builder->where("catalogs.PublishYear REGEXP '^[12][0-9]{3}$'");
+        $builder->where("CAST(catalogs.PublishYear AS SIGNED) >=", $minY);
+        $builder->where("CAST(catalogs.PublishYear AS SIGNED) <=", $maxY);
+        $hasAdvCriteria = true;
+    } elseif ($yearFrom > 0) {
+        $builder->where("catalogs.PublishYear REGEXP '^[12][0-9]{3}$'");
+        $builder->where("CAST(catalogs.PublishYear AS SIGNED) >=", $yearFrom);
+        $hasAdvCriteria = true;
+    } elseif ($yearTo > 0) {
+        $builder->where("catalogs.PublishYear REGEXP '^[12][0-9]{3}$'");
+        $builder->where("CAST(catalogs.PublishYear AS SIGNED) <=", $yearTo);
+        $hasAdvCriteria = true;
     }
+
+    // Filter bahasa
+    $lang = trim((string)($this->request->getVar('language') ?? ''));
+    if ($lang !== '') {
+        $builder->like('catalogs.Languages', sanitizeSearch($lang));
+        $hasAdvCriteria = true;
+    }
+
+    // Filter hanya koleksi tersedia (eksemplar aktif & tidak sedang dipinjam: Status_id = 1)
+    $onlyAvail = (int)($this->request->getVar('only_available') ?? 0);
+    if ($onlyAvail === 1) {
+        $builder->where("EXISTS (SELECT 1 FROM collections col_chk WHERE col_chk.Catalog_id = catalogs.ID AND col_chk.Status_id = 1)");
+        $hasAdvCriteria = true;
+    }
+
+    return $hasAdvCriteria;
 }
 
-private function loadRegularCatalogscache()
-{
-    $cacheTTL    = 3600;
-    $perPage     = 12;
-    $currentPage = $this->request->getVar('page') ?? 1;
+    private function applyOpacCatalogFilters($builder): array
+    {
+        $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
+        $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
+        $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
 
-    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
-    $rawSearchBy     = (string) ($this->request->getVar('search_by') ?? '');
-    $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
-    $rawSearch       = (string) ($this->request->getVar('search') ?? '');
+        $rawSearch = (string) ($this->request->getVar('search') ?? '');
+        $search    = sanitizeSearch($rawSearch);
 
-    $requestParams = $this->request->getGet();
-    ksort($requestParams);
-    $cacheKey = 'catalog_data_' . md5(http_build_query($requestParams));
-
-    if ($cachedData = cache($cacheKey)) {
-        // ========== CACHE HIT ==========
-        $this->data   = array_merge($this->data, $cachedData);
-        $totalRecords = $cachedData['total_records'];
-
-        // ✅ Buat pager HTML string dengan custom template
-        $pager = service('pager');
-        $pager->setPath('/opac', 'default');
-        $this->data['pager'] = $pager->makeLinks($currentPage, $perPage, $totalRecords, 'opac_pagination');
-
-    } else {
-        // ========== CACHE MISS ==========
-        $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1)->orderBy("ID", "DESC");
-
-        $search = sanitizeSearch($rawSearch);
+        $this->applyAdvancedSearch($builder);
 
         if ($search !== '') {
             $this->applyFulltextSearch($builder, $search, $searchBy, $rawSearch);
         }
 
+        // Filter Kategori (dari Pills Kategori di atas)
+        $category = trim((string) ($this->request->getVar('category') ?? ''));
+        if ($category !== '' && $category !== 'semua') {
+            switch ($category) {
+                case 'fiksi':
+                    $builder->where("(catalogs.Subject LIKE '%fiksi%' OR catalogs.Subject LIKE '%sastra%' OR catalogs.Subject LIKE '%novel%' OR catalogs.Subject LIKE '%cerita%')", null, false);
+                    break;
+                case 'pendidikan':
+                    $builder->where("catalogs.Subject LIKE '%pendidikan%'", null, false);
+                    break;
+                case 'sejarah':
+                    $builder->where("(catalogs.Subject LIKE '%sejarah%' OR catalogs.Subject LIKE '%biografi%')", null, false);
+                    break;
+                case 'anak':
+                    $builder->where("(catalogs.Subject LIKE '%anak%' OR catalogs.Subject LIKE '%cerita%' OR catalogs.Subject LIKE '%dongeng%')", null, false);
+                    break;
+                case 'pengembangan_diri':
+                    $builder->where("(catalogs.Subject LIKE '%pengembangan diri%' OR catalogs.Subject LIKE '%psikologi%' OR catalogs.Subject LIKE '%motivasi%' OR catalogs.Subject LIKE '%kepemimpinan%' OR catalogs.Subject LIKE '%kewiraswastaan%')", null, false);
+                    break;
+                case 'menenangkan':
+                    $builder->where("(catalogs.Subject LIKE '%puisi%' OR catalogs.Subject LIKE '%sastra%' OR catalogs.Subject LIKE '%seni%' OR catalogs.Subject LIKE '%filsafat%' OR catalogs.Subject LIKE '%refleksi%' OR catalogs.Subject LIKE '%spiritual%')", null, false);
+                    break;
+                case 'rasa_ingin_tahu':
+                    $builder->where("(catalogs.Subject LIKE '%sains%' OR catalogs.Subject LIKE '%ilmiah%' OR catalogs.Subject LIKE '%teknologi%' OR catalogs.Subject LIKE '%riset%' OR catalogs.Subject LIKE '%penelitian%' OR catalogs.Subject LIKE '%sejarah%')", null, false);
+                    break;
+                case 'inspirasi_visual':
+                    $builder->where("(catalogs.Subject LIKE '%desain%' OR catalogs.Subject LIKE '%arsitektur%' OR catalogs.Subject LIKE '%fotografi%' OR catalogs.Subject LIKE '%seni rupa%' OR catalogs.Subject LIKE '%grafis%' OR catalogs.Subject LIKE '%ilustrasi%')", null, false);
+                    break;
+                case 'petualangan':
+                    $builder->where("(catalogs.Subject LIKE '%petualangan%' OR catalogs.Subject LIKE '%eksplorasi%' OR catalogs.Subject LIKE '%fiksi%' OR catalogs.Subject LIKE '%travel%' OR catalogs.Subject LIKE '%perjalanan%')", null, false);
+                    break;
+                default:
+                    $cleanCat = sanitizeSearch($category);
+                    $builder->like('catalogs.Subject', $cleanCat);
+                    break;
+            }
+        }
+
+        // Filter Ketersediaan (Semua, Tersedia, Sedang dipinjam)
+        $availability = trim((string) ($this->request->getVar('availability') ?? 'semua'));
+        if ($availability === 'tersedia') {
+            $builder->where("EXISTS (SELECT 1 FROM collections col_av WHERE col_av.Catalog_id = catalogs.ID AND col_av.Status_id = 1)", null, false);
+        } elseif ($availability === 'dipinjam') {
+            $builder->where("EXISTS (SELECT 1 FROM collections col_ln WHERE col_ln.Catalog_id = catalogs.ID AND col_ln.Status_id = 5)", null, false);
+        }
+
+        // Filter Format Koleksi (Buku cetak=1, E-book=2, Buku audio=10)
+        $format = trim((string) ($this->request->getVar('format') ?? ''));
+        if ($format === 'cetak') {
+            $builder->where('catalogs.Worksheet_id', 1);
+        } elseif ($format === 'ebook') {
+            $builder->where('catalogs.Worksheet_id', 2);
+        } elseif ($format === 'audio') {
+            $builder->where('catalogs.Worksheet_id', 10);
+        }
+
+        // Filter Bahasa (Indonesia: ind, Inggris: eng)
+        $language = trim((string) ($this->request->getVar('language') ?? ''));
+        if ($language === 'ind' || $language === 'id') {
+            $builder->where('catalogs.Languages', 'ind');
+        } elseif ($language === 'eng' || $language === 'en') {
+            $builder->where('catalogs.Languages', 'eng');
+        }
+
+        // Filter Rentang Tahun Terbit (Dari & Sampai)
+        $yearStart = trim((string) ($this->request->getVar('year_start') ?? ''));
+        $yearEnd   = trim((string) ($this->request->getVar('year_end') ?? ''));
+        if ($yearStart !== '' && is_numeric($yearStart)) {
+            $builder->where('catalogs.PublishYear >=', (int) $yearStart);
+        }
+        if ($yearEnd !== '' && is_numeric($yearEnd)) {
+            $builder->where('catalogs.PublishYear <=', (int) $yearEnd);
+        }
+
+        // Filter Tambahan Tradisional
         $additionalFilters = ['Publisher', 'Author', 'PublishLocation', 'Subject', 'PublishYear', 'DeweyNo'];
         foreach ($additionalFilters as $filter) {
             $value = $this->request->getVar($filter);
@@ -353,10 +647,136 @@ private function loadRegularCatalogscache()
             }
         }
 
+        // Filter huruf abjad (?letter=A)
+        $rawLetter = trim((string) ($this->request->getVar('letter') ?? ''));
+        $letter    = preg_match('/^[A-Za-z0-9]$/', $rawLetter) ? strtoupper($rawLetter) : '';
+        $letterCol = ($searchBy === 'Author') ? 'catalogs.Author' : 'catalogs.Title';
+        if ($letter !== '') {
+            $builder->like($letterCol, $letter, 'after');
+        }
+
+        // Pengurutan (Sorting)
+        $rawSort = trim((string) ($this->request->getVar('sort') ?? ''));
+        $sort    = $rawSort !== '' ? $rawSort : 'terbaru';
+
+        if ($rawSort === '' && $letter !== '') {
+            $builder->orderBy($letterCol, 'ASC')->orderBy('catalogs.ID', 'DESC');
+        } else {
+            switch ($sort) {
+                case 'title_asc':
+                    $builder->orderBy('catalogs.Title', 'ASC');
+                    break;
+                case 'title_desc':
+                    $builder->orderBy('catalogs.Title', 'DESC');
+                    break;
+                case 'year_desc':
+                    $builder->orderBy('catalogs.PublishYear', 'DESC')->orderBy('catalogs.ID', 'DESC');
+                    break;
+                case 'year_asc':
+                    $builder->where("catalogs.PublishYear IS NOT NULL AND catalogs.PublishYear != '' AND catalogs.PublishYear != '0000'")
+                            ->orderBy('catalogs.PublishYear', 'ASC')->orderBy('catalogs.ID', 'DESC');
+                    break;
+                case 'populer':
+                    $builder->join(
+                        '(SELECT Catalog_id, COUNT(*) as loan_count FROM collections c JOIN collectionloanitems cli ON cli.Collection_id = c.ID GROUP BY Catalog_id) loan_stats',
+                        'loan_stats.Catalog_id = catalogs.ID',
+                        'left'
+                    )->orderBy('COALESCE(loan_stats.loan_count, 0)', 'DESC')->orderBy('catalogs.ID', 'DESC');
+                    break;
+                case 'terbaru':
+                default:
+                    $builder->orderBy('catalogs.ID', 'DESC');
+                    break;
+            }
+        }
+
+        return [
+            'search'              => $rawSearch,
+            'search_by'           => $searchBy,
+            'letter'              => $letter,
+            'category'            => $category,
+            'availability'        => $availability,
+            'format'              => $format,
+            'language'            => $language,
+            'year_start'          => $yearStart,
+            'year_end'            => $yearEnd,
+            'sort'                => $sort,
+            'Author'              => (string) ($this->request->getVar('Author') ?? ''),
+            'Subject'             => (string) ($this->request->getVar('Subject') ?? ''),
+            'DeweyNo'             => (string) ($this->request->getVar('DeweyNo') ?? ''),
+            'Publisher'           => (string) ($this->request->getVar('Publisher') ?? ''),
+            'PublishYear'         => (string) ($this->request->getVar('PublishYear') ?? ''),
+            'PublishLocation'     => (string) ($this->request->getVar('PublishLocation') ?? ''),
+        ];
+    }
+
+private function loadRegularCatalogs()
+{
+    $perPage     = 16;
+    $currentPage = (int) ($this->request->getVar('page') ?? 1);
+    if ($currentPage < 1) $currentPage = 1;
+
+    $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1);
+    $filterParams = $this->applyOpacCatalogFilters($builder);
+
+    $catalogs = $builder->paginate($perPage, 'default', $currentPage);
+    $catalogs = enrichCatalogsWithCirculation($catalogs);
+    $pager    = $this->katalogModel->pager;
+
+    $this->data['pager']         = $pager;
+    $this->data['catalogs']      = $catalogs;
+    $this->data['total_records'] = $pager ? $pager->getTotal() : count($catalogs);
+    $this->data['currentPage']   = $currentPage;
+    $this->data['perPage']       = $perPage;
+
+    $this->loadTopSidebarFacets();
+
+    $this->data = array_merge($this->data, $filterParams);
+
+    $subjectParam = trim((string) ($this->request->getVar('Subject') ?? ''));
+    $deweyParam   = trim((string) ($this->request->getVar('DeweyNo') ?? ''));
+    if ($filterParams['search'] === '' && $subjectParam !== '') {
+        $this->data['search']    = $subjectParam;
+        $this->data['search_by'] = 'Subject';
+    } elseif ($filterParams['search'] === '' && $deweyParam !== '') {
+        $this->data['search']    = $deweyParam;
+        $this->data['search_by'] = 'DeweyNo';
+    } else {
+        $this->data['search']    = $filterParams['search'];
+        $this->data['search_by'] = $filterParams['search_by'];
+    }
+}
+
+private function loadRegularCatalogscache()
+{
+    $cacheTTL    = 3600;
+    $perPage     = 16;
+    $currentPage = (int) ($this->request->getVar('page') ?? 1);
+    if ($currentPage < 1) $currentPage = 1;
+
+    $requestParams = $this->request->getGet();
+    ksort($requestParams);
+    $cacheKey = 'catalog_data_v2_' . md5(http_build_query($requestParams));
+
+    if ($cachedData = cache($cacheKey)) {
+        // ========== CACHE HIT ==========
+        $this->data   = array_merge($this->data, $cachedData);
+        $totalRecords = $cachedData['total_records'];
+
+        // ✅ Buat pager HTML string dengan custom template
+        $pager = service('pager');
+        $pager->setPath('/opac', 'default');
+        $this->data['pager'] = $pager->makeLinks($currentPage, $perPage, $totalRecords, 'opac_pagination');
+
+    } else {
+        // ========== CACHE MISS ==========
+        $builder = $this->katalogModel->select('catalogs.*')->where('IsOPAC', 1);
+        $filterParams = $this->applyOpacCatalogFilters($builder);
+
         $catalogs     = $builder->paginate($perPage, 'default', $currentPage);
         $catalogs     = enrichCatalogsWithCirculation($catalogs);
         $pager        = $this->katalogModel->pager;
-        $totalRecords = $pager->getTotal();
+        $totalRecords = $pager ? $pager->getTotal() : count($catalogs);
 
         // ✅ Simpan pager sebagai OBJEK untuk cache miss
         $this->data['pager']         = $pager;
@@ -374,16 +794,39 @@ private function loadRegularCatalogscache()
 
     $this->loadTopSidebarFacets();
 
+    $rawLetter       = trim((string) ($this->request->getVar('letter') ?? ''));
+    $rawSearch       = (string) ($this->request->getVar('search') ?? '');
+    $rawSearchBy     = trim((string) ($this->request->getVar('search_by') ?? ''));
+    $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
+    $searchBy        = in_array($rawSearchBy, $allowedSearchBy, true) ? $rawSearchBy : '';
+
+    $this->data['currentPage']       = $currentPage;
+    $this->data['perPage']           = $perPage;
+    $this->data['letter']            = preg_match('/^[A-Za-z0-9]$/', $rawLetter) ? strtoupper($rawLetter) : '';
+    $this->data['Author']            = (string) ($this->request->getVar('Author') ?? '');
+    $this->data['Subject']           = (string) ($this->request->getVar('Subject') ?? '');
+    $this->data['DeweyNo']           = (string) ($this->request->getVar('DeweyNo') ?? '');
+    $this->data['Publisher']         = (string) ($this->request->getVar('Publisher') ?? '');
+    $this->data['PublishYear']       = (string) ($this->request->getVar('PublishYear') ?? '');
+    $this->data['PublishLocation']   = (string) ($this->request->getVar('PublishLocation') ?? '');
+    $this->data['category']          = (string) ($this->request->getVar('category') ?? '');
+    $this->data['availability']      = (string) ($this->request->getVar('availability') ?? 'semua');
+    $this->data['format']            = (string) ($this->request->getVar('format') ?? '');
+    $this->data['language']          = (string) ($this->request->getVar('language') ?? '');
+    $this->data['year_start']        = (string) ($this->request->getVar('year_start') ?? '');
+    $this->data['year_end']          = (string) ($this->request->getVar('year_end') ?? '');
+    $this->data['sort']              = (string) ($this->request->getVar('sort') ?? 'terbaru');
+
     $subjectParam = trim((string) ($this->request->getVar('Subject') ?? ''));
     $deweyParam   = trim((string) ($this->request->getVar('DeweyNo') ?? ''));
     if ($rawSearch === '' && $subjectParam !== '') {
-        $this->data['search']    = esc($subjectParam);
+        $this->data['search']    = $subjectParam;
         $this->data['search_by'] = 'Subject';
     } elseif ($rawSearch === '' && $deweyParam !== '') {
-        $this->data['search']    = esc($deweyParam);
+        $this->data['search']    = $deweyParam;
         $this->data['search_by'] = 'DeweyNo';
     } else {
-        $this->data['search']    = esc($rawSearch);
+        $this->data['search']    = $rawSearch;
         $this->data['search_by'] = $searchBy;
     }
 }
@@ -621,6 +1064,12 @@ private function loadTopSidebarFacets(): void
     /** Baris "Buku terkait" untuk satu judul; kosong kalau kurang dari Ranker::MIN_PER_BARIS. */
     private function bukuTerkait(array $catalog): array
     {
+        $baris = $this->barisSerupa($catalog, \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL);
+        return \Rekomendasi\Libraries\Ranker::halaman(['terkait' => $baris])['terkait'] ?? [];
+    }
+
+    private function barisSerupa(array $catalog, array $bobot, array $dipinjam = [], int $batas = 8, array $populer = []): array
+    {
         $ddc = preg_replace('/[\s.]/', '', (string) ($catalog['DeweyNo'] ?? ''));
         if (strlen($ddc) < 3) {
             return [];
@@ -642,21 +1091,15 @@ private function loadTopSidebarFacets(): void
         }
 
         foreach ($kandidat as &$k) {
-            $k['id']      = $k['ID'];
+            $k['id']        = $k['ID'];
             $k['content']   = \Rekomendasi\Libraries\ContentScore::score($catalog, $k);
             $k['kolab']     = $kolab[$k['ID']]['kolab'] ?? 0;
             $k['keyakinan'] = $kolab[$k['ID']]['keyakinan'] ?? 0;
+            $k['populer']   = $populer[$k['ID']] ?? 0;
         }
         unset($k);
 
-        $baris = \Rekomendasi\Libraries\Ranker::baris(
-            $kandidat,
-            \Rekomendasi\Libraries\Ranker::BOBOT_DETAIL,
-            [],
-            \Rekomendasi\Libraries\Ranker::majalah($catalog),
-            8
-        );
-        return \Rekomendasi\Libraries\Ranker::halaman(['terkait' => $baris])['terkait'] ?? [];
+        return \Rekomendasi\Libraries\Ranker::baris($kandidat, $bobot, $dipinjam, \Rekomendasi\Libraries\Ranker::majalah($catalog), $batas);
     }
 
     public function search()
@@ -728,136 +1171,30 @@ private function loadTopSidebarFacets(): void
         return view('Opac\Views\search', $this->data);
     }
 
+/**
+ * Halaman Browse digabung ke OPAC (#jelajah). Tautan lama tetap hidup lewat redirect.
+ */
 public function browse()
 {
-    $allowedTypes = ['title', 'author', 'subject'];
-    $rawType      = $this->request->getVar('type') ?? 'title';
-    if ($rawType === 'ddc') {
-        $rawType = 'subject';
-    }
-    $browseType   = in_array($rawType, $allowedTypes) ? $rawType : 'title';
+    $type   = (string) ($this->request->getVar('type') ?? '');
+    $q      = trim((string) ($this->request->getVar('q') ?? ''));
+    $letter = strtoupper(trim((string) ($this->request->getVar('letter') ?? '')));
 
-    $typeTitles = [
-        'title'   => 'Browse Berdasarkan Judul',
-        'author'  => 'Browse Berdasarkan Pengarang',
-        'subject' => 'Browse Berdasarkan Subjek',
-    ];
-    $this->data['title'] = ($typeTitles[$browseType] ?? 'Browse Katalog') . ' - Perpustakaan Kemnaker RI';
-
-    $letter = trim((string) ($this->request->getVar('letter') ?? 'A'));
-    $letter = preg_match('/^[A-Za-z0-9]$/', $letter) ? strtoupper($letter) : 'A';
-
-    $query = trim((string) (
-        (method_exists($this->request, 'getVar') ? $this->request->getVar('q') : null)
-        ?? (method_exists($this->request, 'getGet') ? $this->request->getGet('q') : null)
-        ?? ($_GET['q'] ?? '')
-    ));
-
-    // Statistik umum
-    $this->data['total_authors'] = $this->katalogModel
-        ->where('Author !=', '')
-        ->countAllResults(false);
-    $this->katalogModel->resetQuery();
-
-    $this->data['total_titles'] = $this->katalogModel
-        ->countAllResults(false);
-    $this->katalogModel->resetQuery();
-
-    $this->data['total_languages'] = $this->katalogModel
-        ->select('Languages')
-        ->where('Languages !=', '')
-        ->groupBy('Languages')
-        ->countAllResults(false);
-    $this->katalogModel->resetQuery();
-
-    // Data DDC teragregasi sebagai mesin direktori Subjek (000 - 900)
-    $ddcDirectory = $this->getDdcDirectoryData($letter, $query);
-    $this->data['total_subjects'] = $ddcDirectory['total_ddc'] ?? 0;
-    $this->data['total_ddc']      = $this->data['total_subjects'];
-
-    $this->data['browse_type']  = $browseType;
-    $this->data['letter']       = $letter;
-    $this->data['search_query'] = $query;
-    $this->data['alphabet']     = range('A', 'Z');
-
-    if ($browseType === 'subject') {
-        foreach ($ddcDirectory as $k => $v) {
-            $this->data[$k] = $v;
-        }
-        $this->data['catalogs'] = [];
-        $this->data['pager']    = null;
-    } else {
-        // Sediakan subjek terpopuler sebagai pintasan topik pada tab judul
-        $this->data['top_subjects'] = $ddcDirectory['ddc_top_divisions'] ?? [];
-
-        // Pengarang terpopuler untuk tab pengarang (12 teratas dengan koleksi terbanyak)
-        $cacheKeyAuthors = 'opac_top_authors_v2';
-        $topAuthors      = cache($cacheKeyAuthors);
-        if (!$topAuthors) {
-            $topAuthors = $this->db->table('catalogs')
-                ->select('Author as name, COUNT(*) as count')
-                ->where('IsOPAC', 1)
-                ->where("Author IS NOT NULL AND Author != ''", null, false)
-                ->groupBy('Author')
-                ->orderBy('count', 'DESC')
-                ->limit(12)
-                ->get()
-                ->getResultArray();
-            cache()->save($cacheKeyAuthors, $topAuthors, 600);
-        }
-        $this->data['top_authors'] = $topAuthors;
-
-        // Pagination
-        $perPage     = 12;
-        $currentPage = (int) ($this->request->getVar('page_browse') ?? 1);
-
-        $this->katalogModel->where('IsOPAC', 1);
-
-        if ($query !== '') {
-            $words = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY);
-            $searchCol = ($browseType === 'author') ? 'Author' : 'Title';
-            if (!empty($words)) {
-                $this->katalogModel->groupStart();
-                foreach ($words as $w) {
-                    $this->katalogModel->like($searchCol, $w);
-                }
-                $this->katalogModel->groupEnd();
-            }
-            $this->katalogModel->orderBy($searchCol, 'ASC');
-        } else {
-            if ($browseType === 'author') {
-                $this->katalogModel->like('Author', $letter, 'after')
-                                   ->orderBy('Author', 'ASC');
-            } else {
-                $this->katalogModel->like('Title', $letter, 'after')
-                                   ->orderBy('Title', 'ASC');
-            }
-        }
-
-        $catalogs                  = $this->katalogModel->paginate($perPage, 'browse', $currentPage);
-        $this->data['catalogs']    = enrichCatalogsWithCirculation($catalogs);
-        $this->data['pager']       = $this->katalogModel->pager;
-        $this->data['perPage']     = $perPage;
-
-        // Tangani permintaan AJAX untuk pembaruan instan (live search)
-        if ($this->request->getVar('ajax') == 1 || $this->request->isAJAX()) {
-            return $this->response->setJSON([
-                'status'       => 'success',
-                'browse_type'  => $browseType,
-                'query'        => $query,
-                'letter'       => $letter,
-                'total'        => $this->data['pager'] ? $this->data['pager']->getTotal('browse') : count($catalogs),
-                'html'         => view('Opac\Views\browse_results', $this->data),
-            ]);
-        }
+    if ($type === 'title' || $type === 'author') {
+        $by = $type === 'author' ? 'Author' : 'Title';
+        $to = $q !== ''
+            ? ['search' => $q, 'search_by' => $by]
+            : ['search_by' => $by, 'letter' => preg_match('/^[A-Z0-9]$/', $letter) ? $letter : 'A'];
+        return redirect()->to(base_url('opac?' . http_build_query($to)));
     }
 
-    return view('Opac\Views\browse', $this->data);
+    if ($q !== '') {
+        return redirect()->to(base_url('opac?' . http_build_query(['search' => $q, 'search_by' => ctype_digit($q) ? 'DeweyNo' : 'Subject'])));
+    }
+
+    return redirect()->to(base_url('opac#jelajah'));
 }
 
-/**
- * Helper untuk mengambil dan mencache direktori subjek secara teragregasi
- */
 private function getSubjectDirectoryData($letter = '', $query = '')
 {
     $cacheKey  = 'opac_subjects_directory_v2';

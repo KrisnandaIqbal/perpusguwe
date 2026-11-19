@@ -1,8 +1,21 @@
 <?= $this->extend('App\Views\layout\opac\layout'); ?>
 
 <?= $this->section('style') ?>
+<link rel="stylesheet" href="<?= base_url('assets/css/opac_style.css') ?>?v=<?= time() ?>">
 <style>
     :root {
+        --opac-primary: #0f3fb4;
+        --opac-primary-dark: #0a2f8c;
+        --opac-primary-light: #2563eb;
+        --opac-primary-subtle: #eff6ff;
+        --opac-card-bg: rgba(255, 255, 255, 0.85);
+        --opac-card-bg-hover: #ffffff;
+        --opac-card-border: #e2e8f0;
+        --opac-text-primary: #1e293b;
+        --opac-text-secondary: #64748b;
+        --opac-text-muted: #8c96a3;
+        --opac-border-subtle: #e2e8f0;
+
         --browse-primary: #1b3878;
         --browse-primary-dark: #122550;
         --browse-accent: #3b82f6;
@@ -549,151 +562,305 @@
         color: #1b3878;
     }
 
-    /* List View Card for Books */
-    .catalog-list-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 18px 20px;
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-        position: relative;
-    }
-    .catalog-list-card:hover {
-        border-color: #93c5fd;
-        box-shadow: 0 10px 28px rgba(27, 56, 120, 0.08);
-        transform: translateY(-2px);
-    }
-    .catalog-list-cover-link {
-        display: block;
-        text-decoration: none !important;
-        flex-shrink: 0;
-    }
-    .catalog-list-thumb {
-        width: 86px;
-        height: 122px;
-        object-fit: cover;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-        flex-shrink: 0;
-        background: #f1f5f9;
-        display: block;
-        transition: transform 0.2s ease;
-    }
-    .catalog-list-thumb-cover {
-        width: 86px;
-        height: 122px;
-        min-width: 86px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-        flex-shrink: 0;
-        position: relative;
-        overflow: hidden;
+    /* ─── Header Katalog (Sesuai Standar OPAC) ─── */
+    .opac-catalog-header {
         display: flex;
-        flex-direction: column;
         justify-content: space-between;
-        padding: 8px 7px 7px 11px;
-        color: #ffffff;
-        text-decoration: none !important;
-        transition: transform 0.2s ease;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--opac-border-subtle, #e2e8f0);
     }
-    .catalog-list-cover-link:hover .catalog-list-thumb-cover,
-    .catalog-list-cover-link:hover .catalog-list-thumb {
-        transform: scale(1.03);
-    }
-    .catalog-thumb-spine {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 5px;
-        background: rgba(255, 255, 255, 0.22);
-        box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.25);
-    }
-    .catalog-thumb-tag {
-        font-size: 0.58rem;
+
+    .opac-section-heading {
+        font-size: 1.35rem;
         font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        white-space: nowrap;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+        margin-bottom: 2px;
+    }
+
+    .opac-section-subheading {
+        font-size: 0.84rem;
+        color: var(--opac-text-secondary, #64748b);
+        margin: 0;
+    }
+
+    .opac-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .opac-view-switch-btn {
+        width: 34px;
+        height: 34px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        border-radius: 8px;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .opac-view-switch-btn:hover {
+        background: #f8fafc;
+        color: #1e293b;
+    }
+
+    .opac-view-switch-btn.active {
+        background: #ffffff;
+        color: var(--opac-primary, #0f3fb4);
+        border-color: var(--opac-primary, #0f3fb4);
+    }
+
+    /* ─── Grid & Book Card (Sesuai Desain Asli OPAC) ─── */
+    .opac-catalog-grid {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .opac-warm-card {
+        background-color: var(--opac-card-bg, rgba(255, 255, 255, 0.85));
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 4px;
+        border: 1px solid var(--opac-card-border, #e2e8f0);
+        padding: 12px;
+        transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
+        position: relative;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .opac-warm-card:hover {
+        transform: translateY(-3px);
+        background-color: var(--opac-card-bg-hover, #ffffff);
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .opac-cover-wrapper {
+        position: relative;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .opac-cover-stage {
+        width: 100%;
+        display: block;
+    }
+
+    .opac-book-3d {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1.45;
+        border-radius: 8px;
         overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        transition: transform 0.22s ease;
     }
-    .catalog-thumb-title {
-        font-size: 0.68rem;
+
+    .opac-warm-card:hover .opac-book-3d {
+        transform: scale(1.015);
+    }
+
+    .opac-real-cover-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 8px;
+    }
+
+    /* Kicker Kategori Uppercase */
+    .opac-book-kicker {
+        font-size: 0.72rem;
         font-weight: 700;
-        line-height: 1.25;
-        color: #ffffff;
-        margin-top: auto;
-        margin-bottom: auto;
-        padding: 4px 0;
+        letter-spacing: 0.06em;
+        color: var(--opac-text-muted, #8c96a3);
+        text-transform: uppercase;
+        line-height: 1.2;
+    }
+
+    /* Judul Buku */
+    .opac-book-heading {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--opac-text-primary, #1e293b);
+        line-height: 1.35;
+        margin-top: 2px;
         display: -webkit-box;
-        -webkit-line-clamp: 3;
+        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        min-height: 2.45rem;
     }
-    .catalog-thumb-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 0.55rem;
-        color: rgba(255, 255, 255, 0.75);
-        line-height: 1;
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
-        padding-top: 4px;
-    }
-    .catalog-thumb-call {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 50px;
-    }
-    .catalog-year-pill {
-        background: #eff6ff !important;
-        color: #1d4ed8 !important;
-        border: 1px solid #bfdbfe !important;
-        font-size: 0.78rem;
-        font-weight: 600;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        display: inline-flex;
-        align-items: center;
-        line-height: 1.3;
-    }
-    .badge-control-no {
-        background: #f8fafc;
-        color: #64748b;
-        border: 1px solid #e2e8f0;
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 3px 9px;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-    }
-    .catalog-list-heading {
-        font-size: 1.08rem;
-        font-weight: 700;
-        line-height: 1.4;
-        margin-bottom: 6px;
-    }
-    .catalog-list-heading a {
-        color: #0f172a;
+
+    .opac-book-heading a {
+        color: var(--opac-text-primary, #1e293b);
+        text-decoration: none;
         transition: color 0.15s ease;
     }
-    .catalog-list-heading a:hover {
-        color: #2563eb;
+
+    .opac-book-heading a:hover {
+        color: var(--opac-primary, #0f3fb4);
     }
-    .catalog-list-meta-row {
-        gap: 8px 18px;
+
+    /* Pengarang */
+    .opac-book-author {
+        font-size: 0.8rem;
+        color: var(--opac-text-secondary, #64748b);
+        font-weight: 500;
+        line-height: 1.3;
     }
-    .catalog-list-meta-row .meta-item {
+
+    /* Status Badge */
+    .opac-status-badge {
         display: inline-flex;
         align-items: center;
-        font-size: 0.84rem;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: nowrap;
     }
+
+    .opac-status-badge.badge-available {
+        background-color: #e6f4ea;
+        color: #137333;
+    }
+
+    .opac-status-badge.badge-borrowed {
+        background-color: #fef3c7;
+        color: #b45309;
+    }
+
+    /* ─── Mode Daftar (List View Persis OPAC) ─── */
+    .opac-catalog-grid.view-list > .opac-col-book {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+    }
+
+    .opac-catalog-grid.view-list .opac-warm-card {
+        flex-direction: row !important;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 14px;
+    }
+
+    .opac-catalog-grid.view-list .opac-cover-wrapper {
+        width: 105px !important;
+        max-width: 105px !important;
+        flex-shrink: 0;
+    }
+
+    .opac-catalog-grid.view-list .opac-book-3d {
+        aspect-ratio: 1 / 1.45;
+    }
+
+    /* ─── Pagination Persis OPAC ─── */
+    .opac-pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 36px;
+        padding-top: 20px;
+        border-top: 1px solid var(--opac-border-subtle, #e2e8f0);
+    }
+
+    .opac-page-info {
+        font-size: 0.84rem;
+        color: var(--opac-text-secondary, #64748b);
+        margin: 0;
+    }
+
+    .opac-custom-pagination .page-item .page-link {
+        border: none;
+        background: transparent;
+        color: #475569;
+        font-size: 0.88rem;
+        font-weight: 600;
+        min-width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 2px;
+        transition: all 0.18s ease;
+    }
+
+    .opac-custom-pagination .page-item .page-link:hover {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .opac-custom-pagination .page-item.active .page-link {
+        background-color: var(--opac-primary, #0f3fb4);
+        color: #ffffff;
+        box-shadow: 0 3px 8px rgba(15, 63, 180, 0.25);
+    }
+
+    .opac-custom-pagination .page-item.disabled .page-link {
+        color: #cbd5e1;
+        cursor: not-allowed;
+    }
+
+    /* ─── Mode HP (Mobile: diperkecil proporsional & compact persis OPAC) ─── */
+    @media (max-width: 767.98px) {
+        .opac-section-heading {
+            font-size: 1.12rem;
+        }
+
+        .opac-section-subheading {
+            font-size: 0.75rem;
+        }
+
+        .opac-catalog-grid > .opac-col-book {
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+            margin-bottom: 8px;
+        }
+
+        .opac-warm-card {
+            padding: 7px 6px 8px;
+            border-radius: 10px;
+        }
+
+        .opac-book-kicker {
+            font-size: 0.58rem;
+            letter-spacing: 0.04em;
+            margin-bottom: 2px;
+        }
+
+        .opac-book-heading {
+            font-size: 0.74rem !important;
+            line-height: 1.22 !important;
+            min-height: 1.82rem;
+            margin-bottom: 2px;
+        }
+
+        .opac-book-author {
+            font-size: 0.65rem;
+            margin-bottom: 4px;
+        }
+
+        .opac-status-badge {
+            font-size: 0.62rem;
+            padding: 2px 6px;
+        }
+    }
+
     .subject-badge-item {
         background-color: #f1f5f9 !important;
         color: #475569 !important;
@@ -711,26 +878,6 @@
         background-color: #1b3878 !important;
         color: #ffffff !important;
         border-color: #1b3878 !important;
-    }
-
-    /* View Mode Switcher Button Group */
-    .view-mode-btn {
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #475569;
-        font-size: 0.85rem;
-        font-weight: 600;
-        padding: 6px 14px;
-        transition: all 0.2s ease;
-    }
-    .view-mode-btn:hover {
-        background: #f8fafc;
-        color: #1b3878;
-    }
-    .view-mode-btn.active {
-        background: #1b3878;
-        color: #ffffff;
-        border-color: #1b3878;
     }
 
     /* Back to Top Button */
@@ -1140,21 +1287,45 @@
 
 <?= $this->section('script') ?>
 <script>
-// --- Tampilan Switcher (Grid / List / Table) ---
+// --- Tampilan Switcher (Grid / List / Table) Sesuai Standar OPAC ---
 function switchView(viewType) {
-    document.querySelectorAll('.view-container').forEach(el => el.style.display = 'none');
-    const target = document.getElementById(viewType + 'View');
-    if (target) target.style.display = 'block';
+    const grid = document.getElementById('opacCatalogGrid');
+    const table = document.getElementById('tableView');
+    const btnGrid = document.getElementById('btnViewGrid');
+    const btnList = document.getElementById('btnViewList');
+    const btnTable = document.getElementById('btnViewTable');
 
-    // Update active button state
-    document.querySelectorAll('.view-mode-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById('btnView' + viewType.charAt(0).toUpperCase() + viewType.slice(1));
-    if (activeBtn) activeBtn.classList.add('active');
+    if (btnGrid) btnGrid.classList.remove('active');
+    if (btnList) btnList.classList.remove('active');
+    if (btnTable) btnTable.classList.remove('active');
+
+    if (viewType === 'table') {
+        if (grid) grid.style.display = 'none';
+        if (table) table.style.display = 'block';
+        if (btnTable) btnTable.classList.add('active');
+    } else if (viewType === 'list') {
+        if (table) table.style.display = 'none';
+        if (grid) {
+            grid.style.display = 'flex';
+            grid.classList.add('view-list');
+        }
+        if (btnList) btnList.classList.add('active');
+    } else {
+        // Default 'grid'
+        if (table) table.style.display = 'none';
+        if (grid) {
+            grid.style.display = 'flex';
+            grid.classList.remove('view-list');
+        }
+        if (btnGrid) btnGrid.classList.add('active');
+        viewType = 'grid';
+    }
 
     try {
         localStorage.setItem('opac_browse_view_mode', viewType);
     } catch (e) {}
 }
+window.switchView = switchView;
 
 function exportBrowseResults(format) {
     const params = new URLSearchParams(window.location.search);
@@ -1320,7 +1491,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         params.set('ajax', '1');
 
-        fetch('<?= base_url('opac/browse') ?>?' + params.toString(), {
+        fetch(window.location.pathname + '?' + params.toString(), {
             signal: liveSearchAbortController.signal,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
