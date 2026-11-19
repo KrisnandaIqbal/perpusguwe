@@ -20,7 +20,7 @@ import {
   calculateDaysRemaining,
 } from '../utils/libraryLogic';
 import { BookCoverArt } from './BookCoverArt';
-import { BookGridCard } from './BookGridCard';
+import { RekomendasiCard, type BukuRekomendasi } from './RekomendasiCard';
 
 interface OverviewTabProps {
   activeMember: Member;
@@ -37,6 +37,17 @@ interface OverviewTabProps {
   referenceDate: string;
 }
 
+interface BarisRekomendasi {
+  judul: string;
+  buku: BukuRekomendasi[];
+}
+
+declare global {
+  interface Window {
+    __REKOMENDASI__?: { profilUrl: string; baris: BarisRekomendasi[] };
+  }
+}
+
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   activeMember,
   books,
@@ -51,6 +62,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onOpenToteBagDrawer,
   referenceDate,
 }) => {
+  const rekomendasi = window.__REKOMENDASI__?.baris ?? [];
+  const rekomendasiProfilUrl = window.__REKOMENDASI__?.profilUrl ?? '#';
   const [homeSearchQuery, setHomeSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'Semua' | BookItem['category']>('Semua');
   const [onlySavedFilter, setOnlySavedFilter] = useState(false);
@@ -207,65 +220,33 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </section>
 
-      {/* 3. DAFTAR BUKU KOLEKSI PERPUSTAKAAN */}
-      <section
-        id="beranda-daftar-buku"
-        className="space-y-4"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-extrabold text-slate-900">
-              Katalog Koleksi Buku ({homeFilteredBooks.length} Judul)
-            </h2>
-            <p className="text-xs text-slate-700">
-              Klik sampul untuk melihat detail & baca E-Book, atau klik +Pinjam untuk memasukkan ke Tote Bag
-            </p>
+      {/* Rekomendasi asli dari server (window.__REKOMENDASI__, diisi PHP di Dashboard\Viewsnggota) */}
+      <section id="beranda-daftar-buku" aria-labelledby="rek-judul" className="space-y-6">
+        <div>
+          <h2 id="rek-judul" className="text-lg font-extrabold text-slate-900">
+            Disarankan untukmu
+          </h2>
+          <p className="text-xs text-slate-700">
+            Dari riwayat pinjam dan koleksi unit kerjamu. Atur di{' '}
+            <a href={rekomendasiProfilUrl} className="font-bold text-sky-700 hover:underline">
+              Profil
+            </a>
+            .
+          </p>
+        </div>
+        {rekomendasi.length === 0 && (
+          <p className="text-sm text-slate-700">Belum ada saran buku untukmu.</p>
+        )}
+        {rekomendasi.map((baris) => (
+          <div key={baris.judul} className="space-y-3">
+            <h3 className="text-sm font-bold text-slate-900">{baris.judul}</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {baris.buku.map((b) => (
+                <RekomendasiCard key={b.id} buku={b} />
+              ))}
+            </div>
           </div>
-          {onlySavedFilter && (
-            <button
-              type="button"
-              onClick={() => setOnlySavedFilter(false)}
-              className="text-xs font-bold text-sky-700 hover:underline cursor-pointer self-start sm:self-auto"
-            >
-              Tampilkan Semua Koleksi
-            </button>
-          )}
-        </div>
-
-        {/* Category Filter Chips */}
-        <div className="flex flex-wrap items-center gap-2">
-          {categories.map((cat) => {
-            const active = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  active
-                    ? 'bg-sky-600 text-white shadow-xs'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:border-sky-300 hover:text-sky-700'
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {homeFilteredBooks.map((book) => (
-            <BookGridCard
-              key={book.id}
-              book={book}
-              onClick={onOpenBookDetail}
-              isBookmarked={bookmarkedIds.includes(book.id)}
-              isInToteBag={toteBagIds.includes(book.id)}
-              onToggleBookmark={onToggleBookmark}
-              onAddToToteBag={onAddToToteBag}
-            />
-          ))}
-        </div>
+        ))}
       </section>
     </div>
   );
