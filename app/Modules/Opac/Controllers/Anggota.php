@@ -87,6 +87,16 @@ class Anggota extends \Base\Controllers\BaseController
         return view('Opac\Views\profil', $this->dataTampilan('Profil Anggota') + ['member' => $member]);
     }
 
+    /** Dashboard BiblioVerse untuk anggota; terpisah dari Dashboard\Controllers\Dashboard (admin). */
+    public function dashboard()
+    {
+        if (!session('session_member')) {
+            return redirect()->to(base_url('opac/masuk'));
+        }
+        $baris = (new Opac())->getBarisAnggota(session('session_member'));
+        return view('Dashboard\\Views\\anggota', ['baris_rekomendasi' => array_map(fn ($isi) => array_slice($isi, 0, 4), $baris)]);
+    }
+
     public function simpanIzin()
     {
         $id = session('session_member')['member_id'] ?? null;

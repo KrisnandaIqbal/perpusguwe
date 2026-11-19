@@ -234,7 +234,7 @@ private function urutkanHasil($builder): void
  * Tanpa izin personalisasi atau tanpa riwayat: hanya populer di unit kerja dan koleksi baru.
  * Di-cache per anggota 1 jam; Anggota::simpanIzin() menghapusnya supaya perubahan izin langsung berlaku.
  */
-private function getBarisAnggota(array $anggota): array
+public function getBarisAnggota(array $anggota): array
 {
     $id = (int) $anggota['member_id'];
     return cache()->remember('rekomendasi_beranda_' . $id, 3600, function () use ($id, $anggota) {

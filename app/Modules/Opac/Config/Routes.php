@@ -23,6 +23,8 @@ $routes->group('opac', ['namespace' => 'Opac\Controllers'], function ($subroutes
 	$subroutes->post('masuk', 'Anggota::prosesMasuk');
 	$subroutes->get('keluar', 'Anggota::keluar');
 	$subroutes->get('profil', 'Anggota::profil');
+	// Di bawah profil* supaya lolos filter session/permissions yang sama dengan profil.
+	$subroutes->get('profil/dashboard', 'Anggota::dashboard');
 	$subroutes->post('profil/izin', 'Anggota::simpanIzin');
 	
 	// MARC Download Routes - Method terpisah untuk setiap format

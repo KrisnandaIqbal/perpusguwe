@@ -47,7 +47,7 @@ $_panah = landing_icon('chevron', 'gn-chev');
         <?php if (session()->get('logged_in')) : ?>
             <a class="gn-login" href="<?= base_url('dashboard') ?>">Dashboard</a>
         <?php elseif (session()->get('session_member')) : ?>
-            <a class="gn-login" href="<?= base_url('opac/profil') ?>">Profil</a>
+            <a class="gn-login" href="<?= base_url('opac/profil/dashboard') ?>">Dashboard</a>
         <?php else : ?>
             <a class="gn-login" href="<?= base_url('opac/masuk') ?>">Masuk</a>
         <?php endif; ?>

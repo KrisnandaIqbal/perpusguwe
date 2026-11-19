@@ -1,4 +1,3 @@
-<?php helper('menu'); ?>
 <!doctype html>
 <html lang="id">
 <head>
@@ -35,6 +34,35 @@
 <body class="bg-slate-50 text-slate-900 antialiased selection:bg-sky-600 selection:text-white">
     <div id="root"></div>
 
+    <script>
+        window.__REKOMENDASI__ = <?= json_encode([
+            'profilUrl' => base_url('opac/profil'),
+            'baris'     => array_map(fn ($judul, $isi) => [
+                'judul' => $judul,
+                'buku'  => array_map(function ($b) {
+                    $cover = trim((string) ($b['CoverURL'] ?? ''));
+                    if ($cover !== '' && !filter_var($cover, FILTER_VALIDATE_URL)) {
+                        $cover = is_file(FCPATH . 'uploads/katalog/' . $cover) ? base_url('uploads/katalog/' . $cover) : '';
+                    }
+                    return [
+                        'id'        => (int) $b['ID'],
+                        'url'       => base_url('opac/detail/' . (int) $b['ID']),
+                        'judul'     => (string) $b['Title'],
+                        'pengarang' => trim((string) ($b['Author'] ?? '')),
+                        'penerbit'  => trim((string) ($b['Publisher'] ?? '')),
+                        'tahun'     => trim((string) ($b['PublishYear'] ?? '')),
+                        'subjek'    => trim(explode(';', (string) ($b['Subject'] ?? ''))[0]),
+                        'cover'     => in_array($cover, ['default-cover.jpg', 'default-cover.png'], true) ? '' : $cover,
+                        'ddc'       => trim((string) ($b['DeweyNo'] ?? '')) ?: '-',
+                        'tersedia'  => (int) ($b['AvailEks'] ?? 0),
+                        'total'     => (int) ($b['TotalEks'] ?? 0),
+                        'lokasi'    => trim((string) ($b['ShelfLocation'] ?? '')) ?: 'Koleksi Umum',
+                    ];
+                }, $isi),
+            ], array_keys($baris_rekomendasi ?? []), array_values($baris_rekomendasi ?? [])),
+        ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
+    </script>
+
     <button type="button" class="admin-fab" id="adminMenuOpen"><i class="fas fa-bars"></i> Menu</button>
     <div class="admin-scrim" id="adminMenuScrim"></div>
     <aside class="admin-drawer" aria-label="Menu">
@@ -42,9 +70,15 @@
             <span>Menu</span>
             <button type="button" id="adminMenuClose" aria-label="Tutup menu"><i class="fas fa-times"></i></button>
         </header>
-        <nav><?= display_menu_backend(0, 1, isset(user()->category) ? user()->category : 'admin'); ?></nav>
+        <nav>
+            <ul>
+                <li><a href="<?= base_url() ?>">Beranda</a></li>
+                <li><a href="<?= base_url('opac') ?>">OPAC</a></li>
+                <li><a href="<?= base_url('opac/profil') ?>">Profil</a></li>
+            </ul>
+        </nav>
         <footer>
-            <a href="<?= base_url('logout') ?>"><i class="fas fa-sign-out-alt"></i> Keluar</a>
+            <a href="<?= base_url('opac/keluar') ?>"><i class="fas fa-sign-out-alt"></i> Keluar</a>
         </footer>
     </aside>
 
