@@ -29,9 +29,48 @@ public function login()
 		return redirect()->to(base_url('opac/masuk'));
 	}
 
+	private const MAKS_GAGAL = 5;
+	private const JEDA_DETIK = 900;
+
+	/** Kunci cache per IP dan per username, supaya serangan dari satu IP maupun terhadap satu akun sama-sama tertahan. */
+	private function kunciGagal(): array
+	{
+		return [
+			'rahasia_gagal_ip_' . md5($this->request->getIPAddress()),
+			'rahasia_gagal_u_' . md5(mb_strtolower(trim((string) $this->request->getPost('login')))),
+		];
+	}
+
+	private function sisaBlokir(): int
+	{
+		$sisa = 0;
+		foreach ($this->kunciGagal() as $kunci) {
+			$c = cache($kunci);
+			if ($c && $c['n'] >= self::MAKS_GAGAL) {
+				$sisa = max($sisa, $c['sampai'] - time());
+			}
+		}
+		return $sisa;
+	}
+
+	private function loginGagal()
+	{
+		foreach ($this->kunciGagal() as $kunci) {
+			$c = cache($kunci) ?: ['n' => 0, 'sampai' => time() + self::JEDA_DETIK];
+			$c['n']++;
+			cache()->save($kunci, $c, max(1, $c['sampai'] - time()));
+		}
+		return redirect()->back()->withInput()->with('error', 'Maaf, username atau password anda salah.');
+	}
+
 	public function attemptLogin()
 	{
 		try {
+			$sisa = $this->sisaBlokir();
+			if ($sisa > 0) {
+				return redirect()->back()->withInput()->with('error', 'Terlalu banyak percobaan masuk. Coba lagi dalam ' . ceil($sisa / 60) . ' menit.');
+			}
+
 			$username = $this->request->getPost('login');
 			$password = $this->request->getPost('password');
 
@@ -40,7 +79,7 @@ public function login()
 				'username' => $username,
 				'password' => $password
 			])) {
-				return redirect()->back()->withInput()->with('error', 'Maaf, username atau password anda salah.');
+				return $this->loginGagal();
 			}
 
 			// Jika autentikasi berhasil, ambil data user dari database
@@ -48,13 +87,13 @@ public function login()
 			$user = $db->table('users')->where('username', $username)->get()->getRowObject();
 
 			if (is_null($user)) {
-				return redirect()->back()->withInput()->with('error', 'Maaf, username atau password anda salah.');
+				return $this->loginGagal();
 			}
 
 			// Akun anggota masuk lewat opac/masuk; login petugas tidak boleh menjadi jalan masuk anggota.
 			if (($user->category ?? '') === 'anggota' || is_member('anggota', $user->id) || is_member('keanggotaan', $user->id)) {
 				service('authentication')->logout();
-				return redirect()->back()->withInput()->with('error', 'Maaf, username atau password anda salah.');
+				return $this->loginGagal();
 			}
 
 			// Bersihkan error lama yang mungkin masih tersimpan di session
@@ -153,6 +192,10 @@ public function login()
 			$payload = JWT::decode($token, (new Key(getenv('security.TOKEN_SECRET'), getenv('security.TOKEN_ALG'))));
 			session()->set('payload', $payload);
 			
+			foreach ($this->kunciGagal() as $kunci) {
+				cache()->delete($kunci);
+			}
+
 			return redirect()->to('/dashboard');
 		} catch (\Exception $e) {
 			return redirect()->back()->withInput()->with('error', $e->getMessage());
