@@ -640,34 +640,6 @@ html, body {
     }
 }
 
-/* Modal Pop-up di HP: Hampir full-screen dengan tombol tutup besar */
-@media (max-width: 576px) {
-    .opac-meta-modal .modal-dialog {
-        margin: 10px;
-        max-width: calc(100% - 20px);
-    }
-    .opac-meta-modal .modal-content {
-        padding: 20px 16px;
-        border-radius: 20px;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-    .opac-modal-close-btn {
-        width: 44px !important;
-        height: 44px !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
-    }
-    .opac-modal-btn-pinjam {
-        min-height: 48px;
-        width: 100%;
-    }
-    .opac-modal-input {
-        min-height: 48px;
-        font-size: 1rem;
-    }
-}
-
 /* Scrollbar styling */
 .stat-list::-webkit-scrollbar {
     width: 6px;

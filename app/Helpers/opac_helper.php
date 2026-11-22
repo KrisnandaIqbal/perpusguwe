@@ -187,17 +187,17 @@ if (!function_exists('enrichCatalogsWithCirculation')) {
     }
 }
 
-if (!function_exists('renderModernBookCard')) {
+if (!function_exists('opacBookMeta')) {
     /**
-     * Render kartu buku vertikal modern dengan sampul dinamis/gambar, badge sirkulasi,
-     * nomor panggil, lokasi rak, metadata, dan tombol detail.
+     * Data satu buku untuk modal preview dan sampul buatan. Dipakai kartu lama (renderModernBookCard)
+     * dan kartu rak beranda (beranda_kartu_buku). `kicker` dan `coverStyle` hanya untuk kartu, bukan modal.
      *
-     * @param object|array $item Data katalog
-     * @param string $colClass Kelas grid Bootstrap (misal: 'col-xl-4 col-md-6' atau 'col-lg-3 col-md-6')
-     * @return string HTML kartu buku
+     * @param object|array $item Data katalog (sudah lewat enrichCatalogsWithCirculation)
      */
-    function renderModernBookCard($item, string $colClass = 'col-xl-4 col-md-6'): string
+    function opacBookMeta($item): array
     {
+        helper('landing');
+
         $isArr      = is_array($item);
         $id         = $isArr ? ($item['ID'] ?? 0) : ($item->ID ?? 0);
         $title      = trim((string) ($isArr ? ($item['Title'] ?? 'Tanpa Judul') : ($item->Title ?? 'Tanpa Judul')));
@@ -209,7 +209,6 @@ if (!function_exists('renderModernBookCard')) {
         $coverURL   = trim((string) ($isArr ? ($item['CoverURL'] ?? '') : ($item->CoverURL ?? '')));
         $isbn       = trim((string) ($isArr ? ($item['ISBN'] ?? '') : ($item->ISBN ?? '')));
         $note       = trim(strip_tags((string) ($isArr ? ($item['Note'] ?? '') : ($item->Note ?? ''))));
-        $physDesc   = trim((string) ($isArr ? ($item['PhysicalDescription'] ?? '') : ($item->PhysicalDescription ?? '')));
         $pubLoc     = trim((string) ($isArr ? ($item['PublishLocation'] ?? '') : ($item->PublishLocation ?? '')));
 
         $catCall    = trim((string) ($isArr ? ($item['CallNumber'] ?? '') : ($item->CallNumber ?? '')));
@@ -250,63 +249,12 @@ if (!function_exists('renderModernBookCard')) {
         ];
         $palette = $palettes[$id % count($palettes)];
 
-        // Cek Badge Rekomendasi (Baru atau Populer/Sering Dipinjam)
-        $isPopuler = (bool) ($isArr ? ($item['is_populer'] ?? false) : ($item->is_populer ?? false));
-        $totalDipinjam = (int) ($isArr ? ($item['total_dipinjam'] ?? ($item['peminjam'] ?? 0)) : ($item->total_dipinjam ?? ($item->peminjam ?? 0)));
-
-        // Syarat label Baru: Hanya jika CreateDate maksimal 7 hari (1 minggu) yang lalu
-        $createDate = $isArr ? ($item['CreateDate'] ?? null) : ($item->CreateDate ?? null);
-        $isBaru = false;
-        if (!empty($createDate)) {
-            $tsCreate = strtotime($createDate);
-            if ($tsCreate && $tsCreate >= strtotime('-7 days')) {
-                $isBaru = true;
-            }
-        }
-
-        // Status ketersediaan eksemplar sesuai desain baru
-        if ($totalEks > 0 && $availEks > 0) {
-            $statusBadgeHtml = '<span class="opac-status-badge badge-available">Tersedia dipinjam</span>';
-            $eksCountHtml    = esc($availEks . '/' . $totalEks . ' Eks.');
-        } elseif ($totalEks > 0 && $availEks === 0) {
-            $statusBadgeHtml = '<span class="opac-status-badge badge-borrowed">Sedang dipinjam</span>';
-            $eksCountHtml    = esc('0/' . $totalEks . ' Eks.');
-        } else {
-            // Default jika belum ada eksemplar terdaftar
-            $statusBadgeHtml = '<span class="opac-status-badge badge-available">Tersedia dipinjam</span>';
-            $eksCountHtml    = '1/1 Eks.';
-        }
-
-        // Teks Keterangan Rekomendasi (Baru atau Populer) untuk di body kartu
-        $recomTextHtml = '';
-        if ($isBaru) {
-            $recomTextHtml = '<div class="mb-2"><span class="opac-recom-pill recom-baru"><i class="fas fa-sparkles me-1 text-success"></i>Koleksi Baru</span></div>';
-        } elseif ($isPopuler || $totalDipinjam > 0) {
-            $peminjamCount = $totalDipinjam > 0 ? $totalDipinjam : 1;
-            $recomTextHtml = '<div class="mb-2"><span class="opac-recom-pill recom-popular"><i class="fas fa-fire me-1 text-danger"></i>Telah dipinjam ' . $peminjamCount . 'x</span></div>';
-        }
-
-        // Baris metadata bawah: Edisi · Tahun · Subjek
-        $metaParts = [];
-        if ($edition !== '') {
-            $metaParts[] = $edition;
-        } elseif ($publisher !== '') {
-            $metaParts[] = $publisher;
-        }
-        if ($year !== '' && $year !== '0000' && $year !== '-') {
-            $metaParts[] = $year;
-        }
-        if (!empty($subjects)) {
-            $metaParts[] = implode(', ', array_slice($subjects, 0, 2));
-        }
-        $metaLine = !empty($metaParts) ? implode(' · ', $metaParts) : 'Koleksi Perpustakaan';
-
         $displayAuthor = $author !== '' && $author !== '-' ? $author : 'Tim Penyusun / Instansi';
         $footerRightOnCover = $edition !== '' ? $edition : ($publisher !== '' ? mb_substr($publisher, 0, 18) : 'Koleksi Resmi');
         $detailUrl = base_url('opac/detail/' . $id);
 
         // Siapkan Penerbit & Tahun untuk pop-up
-        $pubAndYear = $publisher !== '' ? $publisher : ($pubLoc !== '' ? $pubLoc : 'Penerbit Kemnaker / Umum');
+        $pubAndYear = $publisher !== '' ? $publisher : ($pubLoc !== '' ? $pubLoc : '-');
         if ($year !== '' && $year !== '-' && $year !== '0000') {
             $pubAndYear .= ' (' . $year . ')';
         }
@@ -318,26 +266,18 @@ if (!function_exists('renderModernBookCard')) {
         }
         if ($edition !== '' && $edition !== '-') {
             $isbnParts[] = $edition;
-        } elseif ($physDesc !== '' && $physDesc !== '-') {
-            $isbnParts[] = $physDesc;
         }
-        $isbnAndEdition = !empty($isbnParts) ? implode(' · ', $isbnParts) : 'Koleksi Cetak Resmi';
+        $isbnAndEdition = !empty($isbnParts) ? implode(' · ', $isbnParts) : '-';
 
-        // Siapkan Abstrak / Ringkasan Koleksi untuk pop-up
-        if ($note !== '' && $note !== '-') {
-            $abstractText = $note;
-        } else {
-            $subjSummary  = !empty($subjects) ? implode(', ', $subjects) : 'literatur umum dan ketenagakerjaan';
-            $abstractText = 'Koleksi bibliografis berjudul "' . $title . '" yang disusun oleh ' . $displayAuthor
-                . ($publisher !== '' ? ' dan diterbitkan oleh ' . $publisher : '')
-                . ($year !== '' && $year !== '-' ? ' pada tahun ' . $year : '')
-                . '. Mencakup bahasan mengenai ' . $subjSummary . '.';
-        }
+        // Ringkasan hanya dari catatan katalog; kosong berarti modal menyembunyikan bagian ini.
+        $abstractText = ($note !== '' && $note !== '-') ? $note : '';
 
         $isAvailable = ($totalEks === 0 || $availEks > 0);
-        $statusModalText = $isAvailable
-            ? 'Tersedia di Rak (' . ($totalEks > 0 ? $availEks . '/' . $totalEks : '1/1') . ' Eks.)'
-            : 'Dipinjam (0/' . $totalEks . ' Eks.)';
+        $statusModalText = match (true) {
+            $totalEks === 0 => 'Eksemplar belum terdata',
+            $isAvailable    => 'Tersedia: ' . $availEks . ' dari ' . $totalEks . ' eksemplar',
+            default         => 'Sedang dipinjam: 0 dari ' . $totalEks . ' eksemplar',
+        };
 
         $modalData = [
             'id'              => $id,
@@ -348,8 +288,9 @@ if (!function_exists('renderModernBookCard')) {
             'isbnAndEdition'  => $isbnAndEdition,
             'callNumber'      => $callNumber,
             'abstract'        => $abstractText,
-            'subjects'        => !empty($subjects) ? $subjects : ['Koleksi Umum'],
+            'subjects'        => array_values($subjects),
             'isAvailable'     => $isAvailable,
+            'stockState'      => $totalEks === 0 ? 'kosong' : ($isAvailable ? 'ada' : 'habis'),
             'statusModalText' => $statusModalText,
             'detailUrl'       => $detailUrl,
             'hasCover'        => $hasValidCoverFile,
@@ -361,12 +302,48 @@ if (!function_exists('renderModernBookCard')) {
             'year'            => ($year !== '' && $year !== '-') ? $year : '',
             'footerRight'     => $footerRightOnCover,
         ];
-        $modalJsonAttr = htmlspecialchars(json_encode($modalData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+        return $modalData + ['kicker' => $firstSubj, 'coverStyle' => landing_cover_style((object) $item)];
+    }
+}
+
+if (!function_exists('opacBookMetaAttr')) {
+    /** Metadata modal preview sebagai isi atribut `data-book-meta` (JSON yang sudah di-escape). */
+    function opacBookMetaAttr($item): string
+    {
+        $meta = opacBookMeta($item);
+        unset($meta['kicker']);
+
+        return htmlspecialchars(json_encode($meta, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('renderModernBookCard')) {
+    /**
+     * Render kartu buku vertikal modern dengan sampul dinamis/gambar, badge sirkulasi,
+     * nomor panggil, lokasi rak, metadata, dan tombol detail.
+     *
+     * @param object|array $item Data katalog
+     * @param string $colClass Kelas grid Bootstrap (misal: 'col-xl-4 col-md-6' atau 'col-lg-3 col-md-6')
+     * @return string HTML kartu buku
+     */
+    function renderModernBookCard($item, string $colClass = 'col-xl-4 col-md-6'): string
+    {
+        $m         = opacBookMeta($item);
+        $title     = $m['title'];
+        $palette   = ['bg' => $m['paletteBg'], 'accent' => $m['paletteAccent'], 'pill_bg' => $m['palettePillBg']];
+        $detailUrl = $m['detailUrl'];
+        $firstSubj = $m['kicker'];
+        $hasValidCoverFile = $m['hasCover'];
+        $coverImgSrc       = $m['coverImgSrc'];
+        $year      = $m['year'];
+        $statusBadgeHtml = $m['isAvailable']
+            ? '<span class="opac-status-badge badge-available">Tersedia dipinjam</span>'
+            : '<span class="opac-status-badge badge-borrowed">Sedang dipinjam</span>';
 
         ob_start();
         ?>
         <div class="<?= esc($colClass) ?>">
-            <div class="opac-modern-card opac-warm-card h-100 d-flex flex-column position-relative" data-catalog-id="<?= (int) $id ?>" data-book-meta="<?= $modalJsonAttr ?>">
+            <div class="opac-modern-card opac-warm-card h-100 d-flex flex-column position-relative" data-catalog-id="<?= (int) $m['id'] ?>" data-book-meta="<?= opacBookMetaAttr($item) ?>">
                 <!-- Area Sampul Buku -->
                 <div class="opac-cover-wrapper position-relative">
                     <a href="<?= $detailUrl ?>" class="opac-cover-stage text-decoration-none js-open-book-modal">
@@ -386,22 +363,22 @@ if (!function_exists('renderModernBookCard')) {
 
                                 <div class="opac-cover-top d-flex justify-content-between align-items-center">
                                     <span class="opac-cover-tag" style="background: <?= $palette['pill_bg'] ?>; color: <?= $palette['accent'] ?>;">
-                                        <?= esc($topLabel) ?>
+                                        <?= esc($m['topLabel']) ?>
                                     </span>
-                                    <?php if ($year !== '' && $year !== '-'): ?>
+                                    <?php if ($year !== ''): ?>
                                         <span class="opac-cover-year"><?= esc($year) ?></span>
                                     <?php endif; ?>
                                 </div>
 
                                 <div class="opac-cover-middle my-auto">
                                     <div class="opac-cover-title"><?= esc(mb_strimwidth($title, 0, 85, '...')) ?></div>
-                                    <div class="opac-cover-author"><?= esc(mb_strimwidth($displayAuthor, 0, 55, '...')) ?></div>
+                                    <div class="opac-cover-author"><?= esc(mb_strimwidth($m['author'], 0, 55, '...')) ?></div>
                                 </div>
 
                                 <div class="opac-cover-bottom d-flex justify-content-between align-items-end">
-                                    <span class="opac-cover-call"><?= esc(mb_strimwidth($callNumber, 0, 18, '')) ?></span>
+                                    <span class="opac-cover-call"><?= esc(mb_strimwidth($m['callNumber'], 0, 18, '')) ?></span>
                                     <span class="opac-cover-edition" style="color: <?= $palette['accent'] ?>;">
-                                        <?= esc(mb_strimwidth($footerRightOnCover, 0, 18, '')) ?>
+                                        <?= esc(mb_strimwidth($m['footerRight'], 0, 18, '')) ?>
                                     </span>
                                 </div>
                             </div>
@@ -424,8 +401,8 @@ if (!function_exists('renderModernBookCard')) {
                     </h5>
 
                     <!-- Pengarang -->
-                    <div class="opac-book-author text-truncate mb-2" title="<?= esc($displayAuthor) ?>">
-                        <?= esc($displayAuthor) ?>
+                    <div class="opac-book-author text-truncate mb-2" title="<?= esc($m['author']) ?>">
+                        <?= esc($m['author']) ?>
                     </div>
 
                     <!-- Status Ketersediaan Badge -->

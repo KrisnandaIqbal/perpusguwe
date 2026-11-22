@@ -16,6 +16,8 @@ $email = $email ?? '';
 
     <link rel="icon" href="<?= !empty($logo) ? base_url('uploads/branch/' . $logo) : base_url('assets/img/logo-inlislite-icon.webp') ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css') ?>/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= base_url('assets/css/opac_beranda.css') ?>?v=<?= filemtime(FCPATH . 'assets/css/opac_beranda.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/opac_modal.css') ?>?v=<?= filemtime(FCPATH . 'assets/css/opac_modal.css') ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&display=swap" rel="stylesheet">
 
@@ -528,193 +530,6 @@ $email = $email ?? '';
             color: #ffffff;
         }
 
-        /* ─── Pop-Up Modal Deskripsi Bibliografis OPAC ─── */
-        /* Backdrop Blur saat Modal Terbuka */
-        .modal-backdrop.show {
-            opacity: 0.55 !important;
-            backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
-            background-color: rgba(15, 23, 42, 0.6) !important;
-        }
-
-        /* Blur pada background (main content, navbar, footer) saat modal aktif */
-        body.modal-open > *:not(.modal):not(.modal-backdrop) {
-            filter: blur(6px);
-            transition: filter 0.25s ease;
-        }
-
-        .opac-meta-modal {
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-
-        .opac-meta-modal .modal-dialog {
-            max-width: 720px;
-        }
-
-        .opac-meta-modal .modal-content {
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
-            padding: 30px 34px 26px;
-            background: #ffffff;
-        }
-
-        .opac-modal-kicker {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            color: #64748b;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        .opac-modal-title {
-            font-family: 'Libre Baskerville', Georgia, serif;
-            font-size: 1.32rem;
-            font-weight: 700;
-            line-height: 1.38;
-            color: #0f172a;
-            margin-bottom: 0;
-        }
-
-        .opac-modal-close-btn {
-            width: 44px;
-            height: 44px;
-            min-width: 44px;
-            min-height: 44px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
-            color: #475569;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .opac-modal-close-btn:hover {
-            background: #f1f5f9;
-            color: #0f172a;
-            border-color: #cbd5e1;
-        }
-
-        .opac-modal-ddc-pill {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #1e293b;
-            background-color: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            padding: 4px 10px;
-            border-radius: 6px;
-        }
-
-        .opac-modal-field-label {
-            font-size: 0.74rem;
-            color: #94a3b8;
-            margin-bottom: 3px;
-            font-weight: 500;
-        }
-
-        .opac-modal-field-value {
-            font-size: 0.84rem;
-            color: #1e293b;
-            font-weight: 600;
-            line-height: 1.4;
-        }
-
-        .opac-modal-field-value.shelf-highlight {
-            font-family: 'JetBrains Mono', monospace;
-            color: #1b3878;
-            font-size: 0.8rem;
-        }
-
-        .opac-modal-section-heading {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            color: #64748b;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        .opac-modal-abstract {
-            font-size: 0.85rem;
-            color: #475569;
-            line-height: 1.62;
-            margin-bottom: 12px;
-        }
-
-        .opac-modal-subjects {
-            font-size: 0.78rem;
-            color: #64748b;
-            line-height: 1.5;
-        }
-
-        .opac-modal-subjects a {
-            color: #475569;
-            text-decoration: none;
-            transition: color 0.15s ease;
-        }
-
-        .opac-modal-subjects a:hover {
-            color: #1b3878;
-            text-decoration: underline;
-        }
-
-        .opac-modal-input {
-            font-size: 1rem;
-            min-height: 48px;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            padding: 10px 14px;
-            color: #1e293b;
-            background-color: #f8fafc;
-        }
-
-        .opac-modal-input:focus {
-            background-color: #ffffff;
-            border-color: #1b3878;
-            box-shadow: 0 0 0 3px rgba(27, 56, 120, 0.12);
-            outline: none;
-        }
-
-        .opac-modal-btn-pinjam {
-            background-color: #1b3878;
-            color: #ffffff;
-            font-size: 0.95rem;
-            font-weight: 600;
-            border-radius: 10px;
-            padding: 12px 18px;
-            min-height: 48px;
-            border: none;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .opac-modal-btn-pinjam:hover {
-            background-color: #152c5e;
-            color: #ffffff;
-            transform: translateY(-1px);
-        }
-
-        @media (max-width: 576px) {
-            .opac-meta-modal .modal-content {
-                padding: 20px;
-            }
-            .opac-modal-title {
-                font-size: 1.1rem;
-            }
-        }
     </style>
 
     <?= $this->renderSection('style') ?>
@@ -735,94 +550,46 @@ $email = $email ?? '';
     <?= $this->include('App\Views\layout\partial\footer_publik') ?>
 
     <!-- ─── Modal Pop-Up Deskripsi Bibliografis OPAC ─── -->
-    <div class="modal fade opac-meta-modal" id="opacBookMetaModal" tabindex="-1" aria-labelledby="opacModalTitle" aria-hidden="true">
+    <div class="modal fade om-modal" id="opacBookMetaModal" tabindex="-1" aria-labelledby="omJudul" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <!-- Header -->
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
-                    <div>
-                        <div class="opac-modal-kicker">DESKRIPSI BIBLIOGRAFIS OPAC KEMNAKER</div>
-                        <h3 class="opac-modal-title" id="opacModalTitle">-</h3>
+                <button type="button" class="om-tutup" data-bs-dismiss="modal" aria-label="Tutup">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                </button>
+                <div class="om-grid">
+                    <div class="om-sampul">
+                        <img class="ob-cover-img" id="omSampulFoto" alt="" hidden>
+                        <div class="ob-cover" id="omSampulBuatan" aria-hidden="true">
+                            <span class="ob-cover-punggung"></span>
+                            <span class="ob-cover-kategori" id="omSampulKategori"></span>
+                            <strong class="ob-cover-judul" id="omSampulJudul"></strong>
+                            <span class="ob-cover-penulis" id="omSampulPenulis"></span>
+                            <span class="ob-cover-bulat" id="omSampulBulat"></span>
+                        </div>
                     </div>
-                    <button type="button" class="opac-modal-close-btn" data-bs-dismiss="modal" aria-label="Tutup">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-
-                <!-- Body: 2 Kolom (Sampul di Kiri, Detail di Kanan) -->
-                <div class="row g-4 align-items-start">
-                    <!-- Kolom Kiri: Sampul Buku 3D -->
-                    <div class="col-sm-4 d-flex flex-column align-items-center">
-                        <div class="opac-book-3d w-100" id="opacModalBook3d" style="max-width: 195px;">
-                            <img src="" alt="" id="opacModalCoverImg" class="opac-real-cover-img" style="display: none;"
-                                 onerror="this.style.display='none'; document.getElementById('opacModalGenCover').style.display='flex';">
-                            <div class="opac-generated-cover" id="opacModalGenCover" style="display: flex;">
-                                <div class="opac-book-spine"></div>
-                                <div class="opac-cover-geo-circle"></div>
-                                <div class="opac-cover-geo-rect"></div>
-
-                                <div class="opac-cover-top d-flex justify-content-between align-items-center">
-                                    <span class="opac-cover-tag" id="opacModalCoverTag">-</span>
-                                    <span class="opac-cover-year" id="opacModalCoverYear"></span>
-                                </div>
-
-                                <div class="opac-cover-middle my-auto">
-                                    <div class="opac-cover-title" id="opacModalCoverTitle">-</div>
-                                    <div class="opac-cover-author" id="opacModalCoverAuthor">-</div>
-                                </div>
-
-                                <div class="opac-cover-bottom d-flex justify-content-between align-items-end">
-                                    <span class="opac-cover-call" id="opacModalCoverCall">-</span>
-                                    <span class="opac-cover-edition" id="opacModalCoverEdition">-</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <a href="#" id="opacModalFullDetailLink" class="btn btn-link btn-sm text-decoration-none mt-3 fw-semibold" style="color: #1b3878; font-size: 0.76rem;">
-                            <i class="fa-solid fa-up-right-from-square me-1"></i>Halaman Detail &amp; MARC
-                        </a>
-                    </div>
-
-                    <!-- Kolom Kanan: Metadata & Sirkulasi -->
-                    <div class="col-sm-8">
-                        <!-- Baris Badge Status & DDC -->
-                        <div class="d-flex flex-wrap align-items-center gap-2 pb-3 mb-3 border-bottom">
-                            <span id="opacModalStatusBadge" class="opac-status-pill status-available">
-                                <i class="fa-regular fa-circle-check me-1"></i>Tersedia di Rak
-                            </span>
-                            <span class="opac-modal-ddc-pill" id="opacModalDdcBadge">DDC: -</span>
-                        </div>
-
-                        <!-- Grid 2x2 Informasi Utama -->
-                        <div class="row g-3 pb-3 mb-3 border-bottom">
-                            <div class="col-6">
-                                <div class="opac-modal-field-label">Pengarang / Penyusun</div>
-                                <div class="opac-modal-field-value" id="opacModalAuthor">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="opac-modal-field-label">Lokasi Rak Fisik</div>
-                                <div class="opac-modal-field-value shelf-highlight">
-                                    <i class="fa-solid fa-location-dot me-1"></i><span id="opacModalShelf">-</span>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="opac-modal-field-label">Penerbit &amp; Tahun</div>
-                                <div class="opac-modal-field-value fw-normal" id="opacModalPubYear">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="opac-modal-field-label">ISBN &amp; Edisi</div>
-                                <div class="opac-modal-field-value fw-normal" id="opacModalIsbnEdition" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">-</div>
-                            </div>
-                        </div>
-
-                        <!-- Abstrak / Ringkasan Koleksi -->
+                    <div class="om-isi">
                         <div>
-                            <div class="opac-modal-section-heading">ABSTRAK / RINGKASAN KOLEKSI</div>
-                            <p class="opac-modal-abstract" id="opacModalAbstract">-</p>
-                            <div class="opac-modal-subjects">
-                                <strong class="text-dark">Tajuk Subjek:</strong>
-                                <span id="opacModalSubjects">-</span>
-                            </div>
+                            <h2 class="om-judul" id="omJudul"></h2>
+                            <p class="om-penulis" id="omPenulis"></p>
+                            <span class="om-stok" id="omStok"></span>
+                        </div>
+                        <dl class="om-info">
+                            <div><dt>Nomor panggil</dt><dd id="omPanggil"></dd></div>
+                            <div><dt>Lokasi rak</dt><dd id="omRak"></dd></div>
+                            <div><dt>Penerbit dan tahun</dt><dd id="omPenerbit"></dd></div>
+                            <div><dt>ISBN dan edisi</dt><dd id="omIsbn"></dd></div>
+                        </dl>
+                        <div class="om-ringkas" id="omRingkas">
+                            <h3>Ringkasan</h3>
+                            <p id="omRingkasan"></p>
+                        </div>
+                        <div class="om-subjek" id="omSubjekWrap">
+                            <h3>Subjek</h3>
+                            <ul id="omSubjek"></ul>
+                        </div>
+                        <div class="om-aksi">
+                            <a class="om-btn om-btn-utama" id="omDetail" href="#">Lihat detail</a>
+                            <button type="button" class="om-btn om-btn-lain" data-bs-dismiss="modal">Tutup</button>
                         </div>
                     </div>
                 </div>
@@ -845,102 +612,9 @@ $email = $email ?? '';
             };
         })();
 
-        // Handler Pop-Up Deskripsi Bibliografis OPAC
-        document.addEventListener('DOMContentLoaded', function () {
-            const modalEl = document.getElementById('opacBookMetaModal');
-            if (!modalEl) return;
-
-            let currentBookData = null;
-
-            document.addEventListener('click', function (e) {
-                const trigger = e.target.closest('.js-open-book-modal');
-                if (!trigger) return;
-
-                const card = trigger.closest('.opac-modern-card');
-                if (!card || !card.dataset.bookMeta) return;
-
-                e.preventDefault();
-
-                try {
-                    const data = JSON.parse(card.dataset.bookMeta);
-                    currentBookData = data;
-                    populateAndShowBookModal(data);
-                } catch (err) {
-                    console.error('Gagal memuat metadata buku:', err);
-                    window.location.href = trigger.getAttribute('href');
-                }
-            });
-
-            function populateAndShowBookModal(data) {
-                document.getElementById('opacModalTitle').textContent = data.title || 'Tanpa Judul';
-                document.getElementById('opacModalAuthor').textContent = data.author || '-';
-                document.getElementById('opacModalShelf').textContent = data.shelfLoc || 'Rak Koleksi Umum';
-                document.getElementById('opacModalPubYear').textContent = data.pubAndYear || '-';
-                document.getElementById('opacModalIsbnEdition').textContent = data.isbnAndEdition || '-';
-                document.getElementById('opacModalDdcBadge').textContent = 'DDC: ' + (data.callNumber || '-');
-                document.getElementById('opacModalAbstract').textContent = data.abstract || '-';
-                document.getElementById('opacModalFullDetailLink').setAttribute('href', data.detailUrl || '#');
-
-                // Status ketersediaan
-                const statusBadge = document.getElementById('opacModalStatusBadge');
-                if (data.isAvailable) {
-                    statusBadge.className = 'opac-status-pill status-available';
-                    statusBadge.innerHTML = '<i class="fa-regular fa-circle-check me-1"></i>' + (data.statusModalText || 'Tersedia di Rak');
-                } else {
-                    statusBadge.className = 'opac-status-pill status-borrowed';
-                    statusBadge.innerHTML = '<i class="fa-regular fa-clock me-1"></i>' + (data.statusModalText || 'Dipinjam');
-                }
-
-                // Tajuk Subjek
-                const subjContainer = document.getElementById('opacModalSubjects');
-                subjContainer.innerHTML = '';
-                const subjects = Array.isArray(data.subjects) ? data.subjects : ['Koleksi Umum'];
-                subjects.forEach(function (subj, idx) {
-                    const a = document.createElement('a');
-                    a.href = '<?= base_url('opac') ?>?search=' + encodeURIComponent(subj) + '&search_by=Subject';
-                    a.textContent = subj;
-                    subjContainer.appendChild(a);
-                    if (idx < subjects.length - 1) {
-                        subjContainer.appendChild(document.createTextNode(' · '));
-                    }
-                });
-
-                // Sampul Buku 3D di dalam Modal
-                const book3d = document.getElementById('opacModalBook3d');
-                const coverImg = document.getElementById('opacModalCoverImg');
-                const genCover = document.getElementById('opacModalGenCover');
-
-                book3d.style.background = data.paletteBg || 'linear-gradient(145deg, #10254c 0%, #0a1833 100%)';
-
-                const coverTag = document.getElementById('opacModalCoverTag');
-                coverTag.textContent = data.topLabel || 'KOLEKSI';
-                coverTag.style.background = data.palettePillBg || 'rgba(245, 158, 11, 0.16)';
-                coverTag.style.color = data.paletteAccent || '#f59e0b';
-
-                document.getElementById('opacModalCoverYear').textContent = data.year || '';
-                document.getElementById('opacModalCoverTitle').textContent = data.title || '';
-                document.getElementById('opacModalCoverAuthor').textContent = data.author || '';
-                document.getElementById('opacModalCoverCall').textContent = data.callNumber || '';
-
-                const coverEd = document.getElementById('opacModalCoverEdition');
-                coverEd.textContent = data.footerRight || '';
-                coverEd.style.color = data.paletteAccent || '#f59e0b';
-
-                if (data.hasCover && data.coverImgSrc) {
-                    coverImg.src = data.coverImgSrc;
-                    coverImg.alt = data.title || '';
-                    coverImg.style.display = 'block';
-                    genCover.style.display = 'none';
-                } else {
-                    coverImg.style.display = 'none';
-                    genCover.style.display = 'flex';
-                }
-
-                const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modalInstance.show();
-            }
-        });
     </script>
+    <script>window.OPAC_URL = <?= json_encode(base_url('opac')) ?>;</script>
+    <script src="<?= base_url('assets/js/opac_modal.js') ?>?v=<?= filemtime(FCPATH . 'assets/js/opac_modal.js') ?>" defer></script>
 
     <?= $this->renderSection('script') ?>
 </body>

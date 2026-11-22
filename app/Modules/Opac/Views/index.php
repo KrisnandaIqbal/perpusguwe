@@ -2,7 +2,6 @@
 
 <?= $this->section('style') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/opac_style.css') ?>?v=<?= time() ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/opac_beranda.css') ?>?v=<?= filemtime(FCPATH . 'assets/css/opac_beranda.css') ?>">
 <noscript><style>.ob-panel[hidden] { display: block; }</style></noscript>
 <style>
     /* Inisialisasi variabel dan base styling tema baru (diselaraskan dengan brand Kemnaker) */

@@ -23,8 +23,10 @@ if (! function_exists('beranda_kartu_buku')) {
         $tahun    = trim((string) ($b['PublishYear'] ?? ''));
         $tahun    = in_array($tahun, ['', '0000', '-'], true) ? 'Koleksi baru' : $tahun;
 
+        helper('opac');
+
         ob_start(); ?>
-        <article class="ob-card">
+        <article class="ob-card" data-book-meta="<?= opacBookMetaAttr($b) ?>">
             <div class="ob-card-cover">
                 <?php if ($jenis === 'populer' && $urutan > 0) : ?><span class="ob-rank">#<?= $urutan ?></span><?php endif; ?>
                 <?php if (landing_has_cover($buku)) : ?>
@@ -56,7 +58,7 @@ if (! function_exists('beranda_kartu_buku')) {
                     <?php if ($total > 0) : ?>
                         <span class="ob-stok <?= $tersedia > 0 ? 'ob-stok-ada' : 'ob-stok-habis' ?>"><?= $tersedia > 0 ? 'Tersedia' : 'Sedang dipinjam' ?></span>
                     <?php endif; ?>
-                    <a class="ob-lihat" href="<?= base_url('opac/detail/' . $id) ?>" aria-label="Lihat detail: <?= esc($judul, 'attr') ?>">Lihat</a>
+                    <a class="ob-lihat js-open-book-modal" href="<?= base_url('opac/detail/' . $id) ?>" aria-label="Lihat detail: <?= esc($judul, 'attr') ?>">Lihat</a>
                 </div>
             </div>
         </article>
