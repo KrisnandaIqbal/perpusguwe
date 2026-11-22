@@ -27,6 +27,12 @@ $routes->group('opac', ['namespace' => 'Opac\Controllers'], function ($subroutes
 	// Di bawah profil* supaya lolos filter session/permissions yang sama dengan profil.
 	$subroutes->get('profil/dashboard', 'Anggota::dashboard');
 	$subroutes->post('profil/izin', 'Anggota::simpanIzin');
+	$subroutes->get('profil/keranjang', 'Anggota::keranjang');
+	// Favorit dinonaktifkan sementara: peminjaman mandiri belum dibuka untuk umum.
+	// $subroutes->get('profil/favorit', 'Anggota::favorit');
+	$subroutes->get('profil/riwayat', 'Anggota::riwayat');
+	$subroutes->post('profil/keranjang/ubah', 'Anggota::ubahKeranjang');
+	// $subroutes->post('profil/favorit/ubah', 'Anggota::ubahFavorit');
 	
 	// MARC Download Routes - Method terpisah untuk setiap format
 	$subroutes->add('downloadMarcUtf8/(:num)', 'Opac::downloadMarcUtf8/$1');
