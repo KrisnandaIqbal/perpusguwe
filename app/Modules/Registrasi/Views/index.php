@@ -2416,7 +2416,8 @@ $_asnId = $asn_id ?? '';
         box-shadow: 0 12px 48px rgba(27, 58, 92, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
         transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .rf-mcard-front { z-index: 1; background: #fff; color: #0d1c2e; transform: rotate(-3deg); }
+    /* Bayangan depan dibuat tipis: bayangan lebar jatuh ke kartu belakang dan membuatnya tampak abu-abu */
+    .rf-mcard-front { z-index: 1; background: #fff; color: #0d1c2e; transform: rotate(-3deg); box-shadow: 0 1px 3px rgba(13, 28, 46, 0.12), 0 0 0 1px rgba(13, 28, 46, 0.04); }
     .rf-mcard-back { position: absolute; inset: 0; z-index: 0; background: #fff; transform: translate(24px, 22px) rotate(3deg); }
     /* Lingkaran besar berisi foto ruang baca di kanan depan; cincin emas dan biru dari box-shadow */
     .rf-mc-lengkung {
@@ -2464,13 +2465,6 @@ $_asnId = $asn_id ?? '';
         .rf-card-stage:hover .rf-mcard-back { transform: translate(16px, 14px) rotate(1.5deg); }
     }
 
-    .rf-live-pill {
-        position: absolute; z-index: 2; left: 14px; bottom: 0; margin: 0;
-        display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 14px;
-        background: #fff; border-radius: 999px; box-shadow: 0 14px 30px rgba(22, 33, 51, 0.16);
-        font-size: 12px; font-weight: 700; color: var(--navy-950);
-    }
-    .rf-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald-600); }
 
     /* Stepper */
     .rf-stepper { padding: 14px 22px; border-radius: 20px; margin-bottom: 32px; gap: 14px; box-shadow: var(--shadow-card); }
@@ -2649,12 +2643,11 @@ $_asnId = $asn_id ?? '';
                             <div class="rf-mc-nama" id="mcNama">
                                 <div id="mcName"><span class="rf-mc-baris">Nama Lengkap</span></div>
                             </div>
-                            <div class="rf-mc-nomor">Setelah verifikasi</div>
+                            <div class="rf-mc-nomor">Nomor anggota</div>
                         </div>
                         <svg class="rf-mc-barcode" style="width: calc(<?= min(132, $_barcode['lebar']) ?> * var(--u))" viewBox="0 0 <?= $_barcode['lebar'] ?> 1" preserveAspectRatio="none" shape-rendering="crispEdges"><path fill="#0d1c2e" d="<?= $_jalurBc ?>"/></svg>
                     </div>
                 </div>
-                <p class="rf-live-pill"><span class="rf-live-dot" aria-hidden="true"></span>Pratinjau langsung</p>
             </div>
         </section>
 
