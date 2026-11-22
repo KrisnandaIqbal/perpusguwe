@@ -315,8 +315,15 @@ private function getBarisBeranda(): array
         return [];
     }
 
-    $semua = $this->getBarisAnggota($anggota);
-    return array_diff_key($semua, ['Paling banyak dipinjam' => 1, 'Koleksi baru' => 1]);
+    // Rak "Paling sering dipinjam" dan "Baru masuk rak" sudah ada di bawah untuk semua pengunjung, jadi rak pribadi
+    // hanya "Karena kamu meminjam ..." dan "Populer di <unit>". "Subjek favoritmu" dan "Koleksi baru ..." tidak dipakai di beranda.
+    return array_filter(
+        $this->getBarisAnggota($anggota),
+        static fn ($judul) => !in_array($judul, ['Paling banyak dipinjam', 'Koleksi baru'], true)
+            && !str_starts_with($judul, 'Subjek favoritmu')
+            && !str_starts_with($judul, 'Koleksi baru'),
+        ARRAY_FILTER_USE_KEY
+    );
 }
 
 // Data panel Filter (kelas DDC dan pengarang terbanyak). Keduanya di-cache, jadi aman dipanggil di setiap halaman OPAC.
