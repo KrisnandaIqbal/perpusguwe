@@ -34,16 +34,20 @@ $jenis        = $nilai('Jenis');
 			<div class="pilihan-jenis <?= $salah('Jenis') ?>" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
 				<div>
 					<input type="radio" name="Jenis" id="jenis_kemnaker" value="kemnaker" <?= $jenis === 'kemnaker' ? 'checked' : '' ?> required style="position: absolute; opacity: 0; pointer-events: none;">
-					<label for="jenis_kemnaker" class="bt-radio-card" style="display: block; margin: 0; padding: 14px 18px; border: 1.5px solid var(--bt-input-border); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
-						<strong style="display: block; font-size: 0.95rem; color: #1e293b;">Kemnaker</strong>
-						<span style="color: #64748b; font-size: 0.82rem;">Satuan kerja di Kementerian Ketenagakerjaan</span>
+					<label for="jenis_kemnaker" class="bt-radio-card">
+						<span class="bt-radio-teks">
+							<strong>Kemnaker</strong>
+							<span>Satuan kerja di Kementerian Ketenagakerjaan</span>
+						</span>
 					</label>
 				</div>
 				<div>
 					<input type="radio" name="Jenis" id="jenis_lainnya" value="<?= IsianTamu::LAINNYA ?>" <?= $jenis === IsianTamu::LAINNYA ? 'checked' : '' ?> style="position: absolute; opacity: 0; pointer-events: none;">
-					<label for="jenis_lainnya" class="bt-radio-card" style="display: block; margin: 0; padding: 14px 18px; border: 1.5px solid var(--bt-input-border); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
-						<strong style="display: block; font-size: 0.95rem; color: #1e293b;">Lainnya</strong>
-						<span style="color: #64748b; font-size: 0.82rem;">Sekolah, kampus, perusahaan, atau instansi lain</span>
+					<label for="jenis_lainnya" class="bt-radio-card">
+						<span class="bt-radio-teks">
+							<strong>Lainnya</strong>
+							<span>Sekolah, kampus, perusahaan, atau instansi lain</span>
+						</span>
 					</label>
 				</div>
 			</div>
@@ -105,7 +109,7 @@ $jenis        = $nilai('Jenis');
 	<?php if ($rombongan) : ?>
 		<div class="bt-field-group">
 			<label for="CountPersonel" class="bt-field-label">Jumlah Anggota Rombongan <span class="required">*</span></label>
-			<div class="bt-input-wrap">
+			<div class="bt-input-wrap bt-input-sempit">
 				<i class="fas fa-user-friends bt-input-icon"></i>
 				<input type="number" class="bt-input form-control <?= $salah('CountPersonel') ?>" name="CountPersonel" id="CountPersonel"
 					min="<?= IsianTamu::MIN_ROMBONGAN ?>" max="<?= IsianTamu::MAX_ROMBONGAN ?>" step="1" inputmode="numeric"
@@ -120,29 +124,60 @@ $jenis        = $nilai('Jenis');
 
 <style>
 	.isian-tamu [hidden] { display: none !important; }
+	.isian-tamu .bt-input-sempit { max-width: 320px; }
 	.isian-tamu label.bt-radio-card {
+		display: flex;
+		align-items: flex-start;
+		gap: 14px;
 		min-height: 64px;
-		border-radius: 8px !important;
-		border-color: #7c8699 !important;
+		margin: 0;
+		padding: 16px 18px;
+		border: 1.5px solid #7c8699;
+		border-radius: 8px;
+		cursor: pointer;
+		transition: background-color 0.18s, border-color 0.18s;
+	}
+	.isian-tamu label.bt-radio-card::before {
+		content: '';
+		flex: none;
+		box-sizing: border-box;
+		width: 20px;
+		height: 20px;
+		margin-top: 2px;
+		border: 2px solid #7c8699;
+		border-radius: 50%;
+		background: #ffffff;
 	}
 	.isian-tamu label.bt-radio-card:hover {
 		background-color: #f5f7fa;
 	}
-	.isian-tamu label.bt-radio-card span {
-		color: #5b6272 !important;
-		font-size: 0.9rem !important;
+	.isian-tamu .bt-radio-teks {
+		display: flex;
+		flex-direction: column;
+	}
+	.isian-tamu .bt-radio-teks strong {
+		font-size: 1rem;
+		color: #151922;
+	}
+	.isian-tamu .bt-radio-teks span {
+		font-size: 0.9rem;
+		color: #5b6272;
 	}
 	.isian-tamu input[type="radio"]:checked + label.bt-radio-card {
-		border-color: #0f3fb4 !important;
-		background-color: #f5f7fa !important;
-		box-shadow: 0 0 0 1px #0f3fb4 !important;
+		border-color: #0f3fb4;
+		background-color: #eef2fc;
+		box-shadow: 0 0 0 1px #0f3fb4;
+	}
+	.isian-tamu input[type="radio"]:checked + label.bt-radio-card::before {
+		border-color: #0f3fb4;
+		background: radial-gradient(circle, #0f3fb4 0 4px, #ffffff 5px);
 	}
 	.isian-tamu input[type="radio"]:focus-visible + label.bt-radio-card {
 		outline: 2px solid #0f3fb4;
 		outline-offset: 3px;
 	}
 	.isian-tamu .pilihan-jenis.is-invalid label.bt-radio-card {
-		border-color: #b91c1c !important;
+		border-color: #b91c1c;
 	}
 </style>
 

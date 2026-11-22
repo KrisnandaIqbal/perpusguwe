@@ -28,6 +28,11 @@
     padding: 0 20px;
 }
 
+.bt-container-lebar {
+    max-width: 1180px;
+    padding: 0 24px;
+}
+
 /* ─── Judul halaman ─── */
 .bt-hero-card {
     margin-bottom: 28px;
@@ -64,44 +69,257 @@
 }
 
 /* ─── Tab tipe tamu ─── */
+.bt-tabs-label {
+    margin: 32px 0 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--bt-text-main);
+}
+
 .bt-tabs-pill {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
     margin-bottom: 24px;
 }
 
 .bt-tab-btn {
-    flex: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: 48px;
-    padding: 0 12px;
-    border: 1px solid #c4cce0;
-    border-radius: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-height: 76px;
+    padding: 16px 18px;
+    border: 1px solid #c9cfda;
+    border-radius: 12px;
     background: #ffffff;
-    font-size: 15px;
-    font-weight: 700;
-    color: #45506a;
+    text-align: left;
+    color: var(--bt-text-main);
     cursor: pointer;
-    transition: background 0.18s, color 0.18s;
+    transition: background 0.18s, border-color 0.18s;
 }
 
 .bt-tab-btn:hover {
     background: #f5f7fa;
-    color: #151922;
 }
 
 .bt-tab-btn.active {
     border-color: var(--bt-primary);
-    background: var(--bt-primary);
-    color: #ffffff;
+    background: #eef2fc;
+    box-shadow: 0 0 0 1px var(--bt-primary);
 }
 
 .bt-tab-btn i {
+    flex: none;
+    margin-top: 3px;
+    font-size: 20px;
+    color: #45506a;
+}
+
+.bt-tab-btn.active i,
+.bt-tab-btn.active .bt-tab-judul {
+    color: var(--bt-primary-dark);
+}
+
+.bt-tab-teks {
+    display: flex;
+    flex-direction: column;
+}
+
+.bt-tab-judul {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.bt-tab-ket {
+    font-size: 14px;
+    color: var(--bt-text-muted);
+}
+
+.bt-tab-btn.active .bt-tab-ket {
+    color: #3b4458;
+}
+
+/* ─── Isian di kiri, panduan di kanan ─── */
+.bt-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.bt-layout > .bt-card {
+    flex: 999 1 520px;
+    min-width: 0;
+    margin-bottom: 0;
+    border-radius: 16px;
+}
+
+/* Konfirmasi data anggota tanpa panel samping: kartu tetap selebar form biasa */
+.bt-layout-solo > .bt-card {
+    flex: 1 1 auto;
+    max-width: 760px;
+}
+
+.bt-samping {
+    flex: 1 1 320px;
+    min-width: 0;
+    padding: 28px;
+    border-radius: 16px;
+    background: #f5f7fa;
+    font-size: 14px;
+    color: #3b4458;
+}
+
+.bt-samping-judul {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--bt-text-main);
+}
+
+.bt-samping h3 {
+    margin: 0;
     font-size: 15px;
-    color: inherit;
+    font-weight: 700;
+    color: var(--bt-text-main);
+}
+
+.bt-samping p {
+    margin: 4px 0 0;
+}
+
+.bt-samping a {
+    font-weight: 600;
+    color: var(--bt-primary);
+}
+
+.bt-samping-judul + .bt-samping-blok {
+    margin-top: 16px;
+}
+
+.bt-samping-blok + .bt-samping-blok,
+.bt-langkah + .bt-samping-blok {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #dde2ea;
+}
+
+/* Gambar sisi belakang kartu anggota, posisi mengikuti KartuPng (342 x 216) */
+.bt-kartu {
+    position: relative;
+    width: 100%;
+    max-width: 342px;
+    aspect-ratio: 342 / 216;
+    margin-top: 16px;
+    border-radius: 12px;
+    background: #0d1c2e;
+    overflow: hidden;
+}
+
+.bt-kartu-qr {
+    position: absolute;
+    left: 13.2%;
+    top: 27.8%;
+    width: 23.4%;
+    height: 37%;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: #f0ebe1;
+}
+
+.bt-kartu-qr svg {
+    width: 86%;
+    height: 86%;
+}
+
+.bt-kartu-teks {
+    position: absolute;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #acabab;
+}
+
+.bt-kartu-qr-label {
+    left: 13.2%;
+    top: 68%;
+    width: 23.4%;
+    text-align: center;
+}
+
+.bt-kartu-no-label {
+    right: 4.7%;
+    top: 71%;
+}
+
+.bt-kartu-no {
+    position: absolute;
+    right: 4.7%;
+    top: 79%;
+    width: 38%;
+    height: 8%;
+    border-radius: 3px;
+    background: #f0ebe1;
+}
+
+.bt-kartu-titik {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px var(--bt-primary);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--bt-primary);
+}
+
+.bt-kartu-titik-1 {
+    left: 6%;
+    top: 22%;
+}
+
+.bt-kartu-titik-2 {
+    right: 48%;
+    top: 76%;
+}
+
+.bt-langkah {
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: langkah;
+}
+
+.bt-langkah li {
+    display: flex;
+    gap: 12px;
+    counter-increment: langkah;
+}
+
+.bt-langkah li + li {
+    margin-top: 12px;
+}
+
+.bt-langkah li::before {
+    content: counter(langkah);
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bt-primary);
+    font-size: 13px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.bt-langkah strong {
+    color: var(--bt-text-main);
 }
 
 /* ─── Kartu form ─── */
@@ -170,12 +388,12 @@
 
 .bt-input {
     width: 100%;
-    height: 52px;
+    height: 56px;
     padding: 0 16px 0 48px;
-    border: 1px solid var(--bt-input-border);
+    border: 1.5px solid var(--bt-input-border);
     border-radius: 8px;
     background: #ffffff;
-    font-size: 16px;
+    font-size: 17px;
     color: var(--bt-text-main);
     outline: none;
     transition: border-color 0.18s, box-shadow 0.18s;
@@ -255,12 +473,12 @@ select.bt-input {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    min-height: 52px;
+    min-height: 56px;
     padding: 0 32px;
     border: 1px solid var(--bt-primary);
     border-radius: 8px;
     background: var(--bt-primary);
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     color: #ffffff;
     cursor: pointer;
@@ -336,6 +554,23 @@ select.bt-input {
     cursor: pointer;
 }
 
+.bt-cari-baris {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.bt-cari-baris .bt-input-wrap {
+    flex: 1 1 280px;
+    min-width: 0;
+}
+
+.bt-input-nomor {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+}
+
 .bt-member-search-box {
     max-width: 560px;
 }
@@ -359,13 +594,12 @@ select.bt-input {
         padding: 24px 18px;
     }
 
-    .bt-tab-btn {
-        padding: 0 6px;
-        font-size: 14px;
+    .bt-container-lebar {
+        padding: 0 16px;
     }
 
-    .bt-tab-btn i {
-        display: none;
+    .bt-samping {
+        padding: 22px 18px;
     }
 
     .bt-btn-primary {

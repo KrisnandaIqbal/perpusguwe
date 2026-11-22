@@ -262,7 +262,7 @@ class GuestBook extends \App\Controllers\BaseController
 
 		$this->data['title'] = 'Buku Tamu - Bukan Anggota';
 		$this->data['message'] = $this->data['errors'] ? 'Periksa lagi isian yang ditandai merah.' : $this->session->getFlashdata('message');
-		return view('GuestBook\Views\add_non_anggota', $this->data);
+		return view('GuestBook\Views\add', $this->data + ['tab' => 'non_anggota']);
 	}
 
 	public function rombongan()
@@ -316,7 +316,7 @@ class GuestBook extends \App\Controllers\BaseController
 
 		$this->data['message'] = $this->data['errors'] ? 'Periksa lagi isian yang ditandai merah.' : $this->session->getFlashdata('message');
 
-		return view('GuestBook\Views\add_rombongan', $this->data);
+		return view('GuestBook\Views\add', $this->data + ['tab' => 'rombongan']);
 	}
 
 	public function getKnownFaces($prefix = '')
