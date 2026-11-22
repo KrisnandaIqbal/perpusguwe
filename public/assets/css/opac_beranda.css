@@ -998,7 +998,60 @@
     color: #ffffff;
 }
 
+/* Anggota yang login: stok di baris sendiri, lalu "Lihat" melebar dan tombol Keranjang 44 px di kanannya. */
+.ob-card-aksi-anggota {
+    flex-wrap: wrap;
+}
+
+.ob-card-aksi-anggota .ob-stok {
+    flex-basis: 100%;
+}
+
+.ob-card-aksi-anggota .ob-lihat {
+    flex: 1;
+    margin-left: 0;
+}
+
+.ob-keranjang {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #d3e0f2;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--opac-primary, #0f3fb4);
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+
+.ob-keranjang svg {
+    width: 20px;
+    height: 20px;
+}
+
+.ob-keranjang:hover {
+    background: #f5f7fa;
+}
+
+.ob-keranjang[aria-pressed='true'] {
+    border-color: var(--opac-primary, #0f3fb4);
+    background: var(--opac-primary, #0f3fb4);
+    color: #ffffff;
+}
+
+.ob-keranjang[aria-busy='true'] {
+    opacity: 0.6;
+    cursor: progress;
+}
+
 @media (prefers-reduced-motion: reduce) {
+    .ob-keranjang {
+        transition: none;
+    }
+
     .ob-card,
     .ob-cover,
     .ob-cover-img {

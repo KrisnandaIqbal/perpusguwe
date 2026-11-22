@@ -54,11 +54,13 @@ if (! function_exists('beranda_kartu_buku')) {
                 </span>
                 <h3><?= esc($judul) ?></h3>
                 <p><?= esc($penulis) ?></p>
-                <div class="ob-card-aksi">
+                <?php $keranjang = opacTombolKeranjang($id, 'ob-keranjang', false, $judul); ?>
+                <div class="ob-card-aksi<?= $keranjang !== '' ? ' ob-card-aksi-anggota' : '' ?>">
                     <?php if ($total > 0) : ?>
                         <span class="ob-stok <?= $tersedia > 0 ? 'ob-stok-ada' : 'ob-stok-habis' ?>"><?= $tersedia > 0 ? 'Tersedia' : 'Sedang dipinjam' ?></span>
                     <?php endif; ?>
                     <a class="ob-lihat js-open-book-modal" href="<?= base_url('opac/detail/' . $id) ?>" aria-label="Lihat detail: <?= esc($judul, 'attr') ?>">Lihat</a>
+                    <?= $keranjang ?>
                 </div>
             </div>
         </article>

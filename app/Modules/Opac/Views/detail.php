@@ -178,6 +178,7 @@ $idKatalog = implode(' · ', array_filter([
                         <a class="od-btn od-btn-utama" href="<?= base_url('opac/baca-digital/' . $catalogId) ?>" target="_blank" rel="noopener">Baca PDF digital</a>
                     <?php endif; ?>
                     <button type="button" class="od-btn <?= $totalDigital > 0 ? 'od-btn-lain' : 'od-btn-utama' ?>" data-ke="sectionInventory">Lihat ketersediaan</button>
+                    <?= opacTombolKeranjang((int) $catalogId, 'od-btn od-btn-lain od-keranjang', true, $rawTitle) ?>
                     <button type="button" class="od-btn od-btn-teks" id="odSalin">Salin tautan</button>
                 </div>
             </div>

@@ -183,24 +183,37 @@ class Anggota extends \Base\Controllers\BaseController
         ]);
     }
 
+    /** Dari form di dashboard: kembali ke halaman asal. Dari tombol di OPAC (fetch dengan X-Requested-With): balas JSON. */
     private function ubahDaftar(string $tabel, string $nama)
     {
-        $id = session('session_member')['member_id'] ?? null;
+        $ajax = $this->request->isAJAX();
+        $id   = session('session_member')['member_id'] ?? null;
         if (!$id) {
-            return redirect()->to(base_url('opac/masuk'));
+            return $ajax ? $this->response->setStatusCode(401)->setJSON(['pesan' => 'Masuk dulu untuk memakai ' . $nama . '.']) : redirect()->to(base_url('opac/masuk'));
         }
         $katalog = (int) $this->request->getPost('catalog_id');
         if (!$this->db->tableExists($tabel) || !$this->db->table('catalogs')->where('ID', $katalog)->countAllResults()) {
-            return redirect()->back()->with('pesan', $nama . ' belum bisa dipakai.');
+            $pesan = $nama . ' belum bisa dipakai.';
+            return $ajax ? $this->response->setStatusCode(422)->setJSON(['pesan' => $pesan]) : redirect()->back()->with('pesan', $pesan);
         }
 
         $baris = ['member_id' => $id, 'catalog_id' => $katalog];
-        if ($this->db->table($tabel)->where($baris)->countAllResults()) {
+        $ada   = $this->db->table($tabel)->where($baris)->countAllResults() > 0;
+        if ($ada) {
             $this->db->table($tabel)->where($baris)->delete();
-            return redirect()->back()->with('pesan', 'Dihapus dari ' . $nama . '.');
+        } else {
+            $this->db->table($tabel)->insert($baris);
         }
-        $this->db->table($tabel)->insert($baris);
-        return redirect()->back()->with('pesan', 'Ditambahkan ke ' . $nama . '.');
+        $pesan = ($ada ? 'Dihapus dari ' : 'Ditambahkan ke ') . $nama . '.';
+
+        if ($ajax) {
+            return $this->response->setJSON([
+                'aktif'  => !$ada,
+                'jumlah' => $this->db->table($tabel)->where('member_id', $id)->countAllResults(),
+                'pesan'  => $pesan,
+            ]);
+        }
+        return redirect()->back()->with('pesan', $pesan);
     }
 
     public function simpanIzin()

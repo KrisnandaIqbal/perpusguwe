@@ -177,6 +177,23 @@ body {
     background: #f5f7fa;
 }
 
+.od-keranjang svg {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+}
+
+.od-keranjang[aria-pressed='true'],
+.od-keranjang[aria-pressed='true']:hover {
+    background: var(--opac-primary, #0f3fb4);
+    color: #ffffff;
+}
+
+.od-keranjang[aria-busy='true'] {
+    opacity: 0.6;
+    cursor: progress;
+}
+
 .od-btn-teks {
     border-color: transparent;
     background: transparent;

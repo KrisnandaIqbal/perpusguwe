@@ -317,6 +317,50 @@ if (!function_exists('opacBookMetaAttr')) {
     }
 }
 
+if (!function_exists('opacKeranjang')) {
+    /**
+     * Id katalog di Keranjang anggota yang sedang masuk. null bila bukan anggota atau tabel member_keranjang
+     * belum dibuat (artifacts/20261122_create_favorit_dan_keranjang_anggota.sql): tombol Keranjang lalu disembunyikan.
+     */
+    function opacKeranjang(): ?array
+    {
+        static $ids = false;
+        if ($ids === false) {
+            $anggota = session('session_member')['member_id'] ?? null;
+            $db      = \Config\Database::connect('data');
+            $ids     = ($anggota && $db->tableExists('member_keranjang'))
+                ? array_map('intval', array_column($db->table('member_keranjang')->select('catalog_id')->where('member_id', $anggota)->get()->getResultArray(), 'catalog_id'))
+                : null;
+        }
+
+        return $ids;
+    }
+}
+
+if (!function_exists('opacTombolKeranjang')) {
+    /**
+     * Tombol Keranjang untuk anggota yang login, string kosong untuk pengunjung. $id 0 berarti diisi skrip (modal).
+     * $teks false: tombol ikon saja. Perilakunya diatur assets/js/opac_keranjang.js lewat atribut data-keranjang.
+     */
+    function opacTombolKeranjang(int $id, string $kelas, bool $teks = true, string $judul = ''): string
+    {
+        $ids = opacKeranjang();
+        if ($ids === null) {
+            return '';
+        }
+        helper('dashboard_anggota');
+        $aktif = $id > 0 && in_array($id, $ids, true);
+        $on    = 'Keluarkan dari Keranjang';
+        $off   = 'Masukkan ke Keranjang';
+        $teksLabel = $aktif ? $on : $off;
+        $label     = $teksLabel . ($judul !== '' ? ': ' . $judul : '');
+
+        return '<button type="button" class="' . $kelas . '" data-keranjang="' . $id . '" data-on="' . $on . '" data-off="' . $off . '" data-judul="' . esc($judul, 'attr') . '" aria-pressed="' . ($aktif ? 'true' : 'false') . '"'
+            . ($teks ? '' : ' aria-label="' . esc($label, 'attr') . '" title="' . esc($label, 'attr') . '"') . '>'
+            . dm_ikon('keranjang') . ($teks ? '<span data-teks>' . $teksLabel . '</span>' : '') . '</button>';
+    }
+}
+
 if (!function_exists('renderModernBookCard')) {
     /**
      * Render kartu buku vertikal modern dengan sampul dinamis/gambar, badge sirkulasi,

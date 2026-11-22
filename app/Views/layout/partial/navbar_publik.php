@@ -11,7 +11,7 @@ $_aktif = static function (bool $cocok): string {
 $_ikon = static fn(string $nama): string => landing_icon($nama, 'gn-icon');
 $_panah = landing_icon('chevron', 'gn-chev');
 ?>
-<link rel="stylesheet" href="<?= $_aset ?>/navbar.css?v=11">
+<link rel="stylesheet" href="<?= $_aset ?>/navbar.css?v=12">
 
 <header class="gn-bar">
     <a href="<?= base_url('home') ?>" class="gn-brand" aria-label="Perpustakaan Kementerian Ketenagakerjaan RI - Beranda">
@@ -47,6 +47,12 @@ $_panah = landing_icon('chevron', 'gn-chev');
         <?php if (session()->get('logged_in')) : ?>
             <a class="gn-login" href="<?= base_url('dashboard') ?>">Dashboard</a>
         <?php elseif (session()->get('session_member')) : ?>
+            <?php helper(['opac', 'dashboard_anggota']); ?>
+            <?php if (($_keranjang = opacKeranjang()) !== null) : ?>
+                <a class="gn-keranjang" href="<?= base_url('opac/profil/keranjang') ?>" aria-label="Keranjang, <?= count($_keranjang) ?> buku">
+                    <?= dm_ikon('keranjang') ?><span class="gn-keranjang-n" data-keranjang-hitung<?= $_keranjang ? '' : ' hidden' ?>><?= count($_keranjang) ?></span>
+                </a>
+            <?php endif; ?>
             <a class="gn-login" href="<?= base_url('opac/profil/dashboard') ?>">Dashboard</a>
         <?php else : ?>
             <a class="gn-login" href="<?= base_url('opac/masuk') ?>">Masuk</a>

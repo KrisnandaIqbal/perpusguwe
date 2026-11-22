@@ -1,4 +1,5 @@
 <?php
+helper('opac');
 $nama_perpustakaan = $nama_perpustakaan ?? 'Perpustakaan Mitra';
 $alamat = $alamat_perpustakaan ?? 'Jl.Perpustakaan Mitra';
 $tentang_kami = $tentang_kami ?? 'Perpustakaan Mitra';
@@ -589,6 +590,7 @@ $email = $email ?? '';
                         </div>
                         <div class="om-aksi">
                             <a class="om-btn om-btn-utama" id="omDetail" href="#">Lihat detail</a>
+                            <?= opacTombolKeranjang(0, 'om-btn om-btn-lain om-keranjang') ?>
                             <button type="button" class="om-btn om-btn-lain" data-bs-dismiss="modal">Tutup</button>
                         </div>
                     </div>
@@ -615,6 +617,11 @@ $email = $email ?? '';
     </script>
     <script>window.OPAC_URL = <?= json_encode(base_url('opac')) ?>;</script>
     <script src="<?= base_url('assets/js/opac_modal.js') ?>?v=<?= filemtime(FCPATH . 'assets/js/opac_modal.js') ?>" defer></script>
+    <?php if (($keranjangIds = opacKeranjang()) !== null) : ?>
+        <div class="visually-hidden" id="keranjangStatus" role="status" aria-live="polite"></div>
+        <script>window.OPAC_KERANJANG = { url: <?= json_encode(base_url('opac/profil/keranjang/ubah')) ?>, masuk: <?= json_encode(base_url('opac/masuk')) ?>, ids: <?= json_encode($keranjangIds) ?> };</script>
+        <script src="<?= base_url('assets/js/opac_keranjang.js') ?>?v=<?= filemtime(FCPATH . 'assets/js/opac_keranjang.js') ?>" defer></script>
+    <?php endif; ?>
 
     <?= $this->renderSection('script') ?>
 </body>

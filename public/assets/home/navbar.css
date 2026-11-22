@@ -74,6 +74,12 @@
 .gn-actions { display: flex; align-items: center; gap: 10px; margin-left: clamp(14px, 1.6vw, 28px); }
 .gn-login { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; transition: background .18s, transform .18s; }
 .gn-login:hover { background: var(--ink); color: #fff; transform: translateY(-1px); }
+.gn-keranjang { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; color: var(--blue); transition: background .18s; }
+.gn-keranjang:hover { background: #0f3fb414; }
+.gn-keranjang:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.gn-keranjang svg { width: 22px; height: 22px; }
+.gn-keranjang-n { position: absolute; top: 2px; right: 0; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+.gn-keranjang-n[hidden] { display: none; }
 .gn-login:focus-visible, .gn-link:focus-visible, .gn-burger:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 .gn-burger { display: none; width: 44px; height: 44px; padding: 10px; color: inherit; background: none; border: 0; }
 .gn-burger svg { display: block; width: 24px; height: 24px; }

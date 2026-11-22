@@ -39,6 +39,12 @@ document.addEventListener('DOMContentLoaded', function () {
         $('omIsbn').textContent = d.isbnAndEdition || '-';
         $('omDetail').href = d.detailUrl || '#';
 
+        const keranjang = modalEl.querySelector('[data-keranjang]');
+        if (keranjang) {
+            keranjang.dataset.keranjang = d.id;
+            keranjang.dataset.judul = d.title || '';
+        }
+
         const stok = $('omStok');
         stok.className = 'om-stok om-stok-' + (d.stockState || 'kosong');
         stok.textContent = d.statusModalText || '';
@@ -83,5 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
             foto.removeAttribute('src');
             tampilkanBuatan();
         }
+
+        modalEl.dispatchEvent(new Event('opac:isi'));
     }
 });
