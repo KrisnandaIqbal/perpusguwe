@@ -197,6 +197,7 @@ body {
 }
 
 .od-kartu {
+    container-type: inline-size;
     scroll-margin-top: 96px;
     min-width: 0;
     padding: 32px;
@@ -234,20 +235,42 @@ body {
 }
 
 .od-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px 32px;
     margin: 0;
 }
 
+.od-info > div {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 4px 16px;
+    padding: 14px 0;
+    border-top: 1px solid #eef0f4;
+}
+
+/* Kartu sempit: label di atas nilai, supaya nilai panjang tidak terjepit jadi empat baris. */
+@container (max-width: 480px) {
+    .od-info > div {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.od-info > div:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.od-info > div:last-child {
+    padding-bottom: 0;
+}
+
 .od-info dt {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
+    line-height: 1.5;
     color: #5b6272;
 }
 
 .od-info dd {
-    margin: 4px 0 0;
+    margin: 0;
     font-size: 16px;
     line-height: 1.45;
     color: #151922;
@@ -568,7 +591,6 @@ body {
     .od-kartu {
         padding: 24px 18px;
     }
-
     .od-aksi {
         flex-direction: column;
         align-items: stretch;
