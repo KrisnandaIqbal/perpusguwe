@@ -1312,6 +1312,11 @@ $ddcLainnya = $activeDeweyParam !== '' && !in_array($activeDeweyParam, $kodeDdc,
             </div>
         </div>
     </form>
+
+    <div class="ob-wave" aria-hidden="true">
+        <svg class="ob-wave-belakang" viewBox="0 0 2880 80" preserveAspectRatio="none" focusable="false"><path d="M0 30C240 60 480 60 720 30S1200 0 1440 30 1920 60 2160 30 2640 0 2880 30V80H0Z"/></svg>
+        <svg class="ob-wave-depan" viewBox="0 0 2880 80" preserveAspectRatio="none" focusable="false"><path d="M0 44C240 16 480 16 720 44S1200 72 1440 44 1920 16 2160 44 2640 72 2880 44V80H0Z"/></svg>
+    </div>
 </section>
 
 <?php helper('opac_beranda'); ?>

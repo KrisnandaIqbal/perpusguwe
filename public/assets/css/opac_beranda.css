@@ -20,9 +20,45 @@
 .ob-hero {
     position: relative;
     z-index: 20;
-    padding: 112px 0 56px;
+    padding: 112px 0 104px;
     background: #eef5ff;
-    border-bottom: 1px solid #dbe7f8;
+}
+
+.ob-hero > .ob-shell {
+    position: relative;
+    z-index: 1;
+}
+
+/* Gelombang di batas bawah hero; atas permintaan supaya halaman tidak terasa statis, sengaja pelan */
+.ob-wave {
+    position: absolute;
+    inset: auto 0 -1px;
+    height: 64px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.ob-wave svg {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 200%;
+    height: 100%;
+    animation: ob-ombak 24s linear infinite;
+}
+
+.ob-wave .ob-wave-belakang {
+    fill: #dbe7f8;
+    animation-duration: 36s;
+}
+
+.ob-wave .ob-wave-depan {
+    fill: var(--slate-50, #f8fafc);
+}
+
+@keyframes ob-ombak {
+    to {
+        transform: translateX(-50%);
+    }
 }
 
 .ob-hero-grid {
@@ -265,6 +301,19 @@
     place-items: center;
     border: 1px dashed #b8cff0;
     border-radius: 50%;
+    position: relative;
+    animation: ob-dentum 2.4s ease-out 0.06s infinite;
+}
+
+/* Riak yang memancar dari logo, seperti gelombang suara */
+.ob-ring::after {
+    content: '';
+    position: absolute;
+    inset: 11%;
+    border: 2px solid #b8cff0;
+    border-radius: 50%;
+    opacity: 0;
+    animation: ob-riak 2.4s ease-out infinite;
 }
 
 .ob-ring-in {
@@ -275,6 +324,32 @@
     border: 1px solid #d3e0f2;
     border-radius: 50%;
     background: #f7faff;
+    position: relative;
+    z-index: 1;
+    animation: ob-dentum-kuat 2.4s ease-out infinite;
+}
+
+/* Ketukan sengaja tidak rata supaya terasa seperti speaker memutar lagu */
+@keyframes ob-dentum-kuat {
+    0%, 16%, 38%, 58%, 82%, 100% { transform: scale(1); }
+    6% { transform: scale(1.05); }
+    28% { transform: scale(1.025); }
+    48% { transform: scale(1.06); }
+    72% { transform: scale(1.02); }
+}
+
+@keyframes ob-dentum {
+    0%, 16%, 38%, 58%, 82%, 100% { transform: scale(1); }
+    6% { transform: scale(1.02); }
+    28% { transform: scale(1.01); }
+    48% { transform: scale(1.025); }
+    72% { transform: scale(1.008); }
+}
+
+@keyframes ob-riak {
+    0%, 44% { transform: scale(1); opacity: 0; }
+    48% { opacity: 0.9; }
+    100% { transform: scale(1.32); opacity: 0; }
 }
 
 .ob-ring-in img {
@@ -1052,6 +1127,13 @@
         transition: none;
     }
 
+    .ob-wave svg,
+    .ob-ring,
+    .ob-ring-in,
+    .ob-ring::after {
+        animation: none;
+    }
+
     .ob-card,
     .ob-cover,
     .ob-cover-img {
@@ -1072,7 +1154,7 @@
 /* ─── Tablet dan HP ─── */
 @media (max-width: 991.98px) {
     .ob-hero {
-        padding: 104px 0 48px;
+        padding: 104px 0 88px;
     }
 
     .ob-hero-grid {
@@ -1086,7 +1168,11 @@
 
 @media (max-width: 575.98px) {
     .ob-hero {
-        padding: 96px 0 32px;
+        padding: 96px 0 64px;
+    }
+
+    .ob-wave {
+        height: 40px;
     }
 
     .ob-hero-copy {
