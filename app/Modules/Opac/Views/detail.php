@@ -133,12 +133,6 @@ $idKatalog = implode(' · ', array_filter([
 <!-- ─── Hero: sampul dan informasi utama ─── -->
 <section class="od-hero" aria-labelledby="odJudul">
     <div class="ob-shell">
-        <nav class="od-krumb" aria-label="Breadcrumb">
-            <a href="<?= base_url() ?>">Beranda</a><span aria-hidden="true">/</span>
-            <a href="<?= base_url('opac') ?>">OPAC</a><span aria-hidden="true">/</span>
-            <span aria-current="page">Detail katalog</span>
-        </nav>
-
         <div class="od-hero-grid">
             <div class="od-sampul">
                 <?php if ($meta['hasCover']) : ?>
