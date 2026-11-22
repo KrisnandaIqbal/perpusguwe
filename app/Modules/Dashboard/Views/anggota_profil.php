@@ -18,6 +18,15 @@ foreach ($kartu['qr'] as $y => $baris) {
     }
 }
 
+$jalurBarcode = '';
+foreach ($kartu['barcode']['bar'] as [$bx, $bw]) {
+    $jalurBarcode .= "M{$bx} 0h{$bw}v1h-{$bw}z";
+}
+// Kepala yang sama di dua sisi kartu
+$kepala = '<div class="abs kepala"><div class="baris-logo"><img class="logo" src="' . esc($logo, 'attr') . '" alt="Logo Kemnaker">'
+    . '<div><div class="judul">PERPUSTAKAAN</div><div class="sub">Kementerian Ketenagakerjaan RI</div></div></div>'
+    . '<div class="garis" aria-hidden="true"><i></i><i></i><i></i></div></div>';
+
 $ringkas = [
     ['opac/profil/riwayat', 'katalog', $ringkasan['dipinjam'], 'Sedang dipinjam'],
     ['opac/profil/riwayat', 'riwayat', $ringkasan['total'], 'Total pinjaman'],
@@ -46,20 +55,14 @@ $data = [
             <figcaption>Depan</figcaption>
             <div class="slot">
                 <div class="kt kt-depan">
-                    <img class="abs motif" src="<?= esc($logo, 'attr') ?>" alt="">
-                    <div class="abs kolom <?= $kartu['foto'] ? '' : 'tanpa-foto' ?>">
-                        <img class="logo" src="<?= base_url('assets/img/kartu/logo-kemnaker-teks.webp') ?>" alt="Logo Kemnaker">
-                        <?php if ($kartu['foto']) : ?><img class="foto" src="<?= esc($kartu['foto'], 'attr') ?>" alt="Fotomu"><?php endif; ?>
-                        <div class="nama <?= count($kartu['nama_baris']) > 1 ? 'is-dua' : '' ?>">
-                            <div class="label">Nama</div>
-                            <div class="value"><?php foreach ($kartu['nama_baris'] as $baris) : ?><span class="baris"><?= esc($baris) ?></span><?php endforeach; ?></div>
-                        </div>
-                        <div class="nomor <?= $kartu['nomor_urut'] ? '' : 'is-full' ?>">
-                            <div class="label">No. Anggota</div>
-                            <div class="value"><?= esc($kartu['nomor_depan']) ?></div>
-                        </div>
+                    <div class="abs lengkung"><img src="<?= base_url('assets/home/hero/01-ruang-baca.jpg') ?>" alt=""></div>
+                    <?= $kepala ?>
+                    <div class="abs kolom">
+                        <?php if ($kartu['foto']) : ?><img class="foto" src="<?= esc($kartu['foto'], 'attr') ?>" alt="Fotomu"><?php else : ?><div class="foto kosong"></div><?php endif; ?>
+                        <div class="nama"><?php foreach ($kartu['nama_baris'] as $baris) : ?><span class="baris"><?= esc($baris) ?></span><?php endforeach; ?></div>
+                        <div class="nomor"><?= esc($kartu['member_no']) ?></div>
                     </div>
-                    <div class="abs tegak" aria-hidden="true"><?php foreach (str_split('PERPUSTAKAAN') as $huruf) : ?><span><?= $huruf ?></span><?php endforeach; ?></div>
+                    <svg class="abs barcode" style="width: <?= min(132, $kartu['barcode']['lebar']) ?>px" viewBox="0 0 <?= $kartu['barcode']['lebar'] ?> 1" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="Barcode No. Anggota <?= esc($kartu['member_no'], 'attr') ?>"><path fill="#0D1C2E" d="<?= $jalurBarcode ?>"/></svg>
                 </div>
             </div>
         </figure>
@@ -67,16 +70,14 @@ $data = [
             <figcaption>Belakang</figcaption>
             <div class="slot">
                 <div class="kt kt-belakang">
-                    <img class="abs motif" src="<?= esc($logo, 'attr') ?>" alt="">
+                    <?= $kepala ?>
                     <div class="abs scan">
                         <svg class="qr" viewBox="0 0 <?= $ukuranQr ?> <?= $ukuranQr ?>" shape-rendering="crispEdges" role="img" aria-label="Kode QR No. Anggota <?= esc($kartu['member_no'], 'attr') ?>"><path d="<?= $jalurQr ?>"/></svg>
-                        <div class="label">QR Scan</div>
+                        <div class="no"><?= esc($kartu['member_no']) ?></div>
                     </div>
-                    <div class="abs info">
-                        <div class="logo" style="--logo: url('<?= base_url('assets/img/kartu/logo-kemnaker-teks-putih.png') ?>')"></div>
-                        <div class="berlaku"><div class="label">Berlaku s/d</div><div class="value"><?= esc($kartu['berlaku']) ?></div></div>
-                        <div class="perpus"><div class="label">Perpustakaan Kemnaker RI</div><div class="value">Jl. Jend. Gatot Subroto Kav. 51<br>Jakarta Selatan &middot; (021) 520-7797</div></div>
-                        <div class="nomor"><div class="label">No. Anggota</div><div class="value"><?= esc($kartu['member_no']) ?></div></div>
+                    <div class="abs berlaku">
+                        <div><div class="label">Berlaku s/d</div><div class="value"><?= esc($kartu['berlaku']) ?></div></div>
+                        <div class="petunjuk">Pindai kode QR di meja layanan</div>
                     </div>
                 </div>
             </div>

@@ -54,8 +54,8 @@ final class KartuPngTest extends CIUnitTestCase
         $this->assertSame(0, $alpha(513, 324), 'tengah kartu harus tidak tembus');
     }
 
-    /** Foto di sisi depan berbentuk 2:3 seperti pas foto di pendaftaran, bukan persegi. */
-    public function testFotoDepanBerasio2Banding3()
+    /** Foto anggota di sisi depan berbentuk 3:4 (54 x 72 px desain, mulai di 20, 56) dan memenuhi kotaknya. */
+    public function testFotoDepanBerasio3Banding4()
     {
         $foto = tempnam(sys_get_temp_dir(), 'foto') . '.png';
         $src  = imagecreatetruecolor(200, 300);
@@ -69,10 +69,32 @@ final class KartuPngTest extends CIUnitTestCase
 
         $merah = fn (int $x, int $y) => (imagecolorat($img, $x, $y) >> 16 & 0xFF) > 200 && (imagecolorat($img, $x, $y) >> 8 & 0xFF) < 60;
 
-        // Nama satu baris: kotak foto mulai (18, 60), tinggi sekitar 58 px, jadi lebarnya sekitar 39 px (skala 3)
-        $tengahY = (60 + 29) * 3;
-        $this->assertTrue($merah((18 + 30) * 3, $tengahY), 'di dalam kotak foto harus terisi foto');
-        $this->assertFalse($merah((18 + 45) * 3, $tengahY), 'di luar lebar 2:3 tidak boleh terisi foto');
-        $this->assertTrue($merah((18 + 20) * 3, (60 + 55) * 3), 'bagian bawah foto tidak boleh terpotong');
+        $this->assertTrue($merah((20 + 27) * 3, (56 + 36) * 3), 'di dalam kotak foto harus terisi foto');
+        $this->assertTrue($merah((20 + 50) * 3, (56 + 68) * 3), 'foto memenuhi kotak sampai pojok bawah');
+        $this->assertFalse($merah((20 + 60) * 3, (56 + 36) * 3), 'di kanan kotak tidak boleh terisi foto');
+        $this->assertFalse($merah((20 + 27) * 3, (56 + 76) * 3), 'di bawah kotak tidak boleh terisi foto');
+    }
+
+    /** Lengkung foto ruang baca di kanan depan terisi dan pojok kiri atas kartu tetap putih. */
+    public function testLengkungFotoDiKananDepan()
+    {
+        $img    = imagecreatefromstring((new KartuPng())->depan($this->card));
+        $putih  = fn (int $x, int $y) => (imagecolorat($img, $x, $y) & 0xFFFFFF) === 0xFFFFFF;
+
+        $this->assertTrue($putih(100 * 3, 5 * 3), 'kolom kiri berlatar putih');
+        $this->assertFalse($putih(300 * 3, 100 * 3), 'kanan kartu berisi foto, bukan putih');
+    }
+
+    /** Barcode di depan tergambar: ada piksel gelap di baris tengahnya dan bagian kanan barcode kosong. */
+    public function testBarcodeDepanTergambar()
+    {
+        $img   = imagecreatefromstring((new KartuPng())->depan($this->card));
+        $gelap = 0;
+        for ($x = 20 * 3; $x < 132 * 3; $x++) {
+            $gelap += (imagecolorat($img, $x, 190 * 3) & 0xFF) < 80 ? 1 : 0;
+        }
+
+        $this->assertGreaterThan(100, $gelap, 'barcode harus punya garis gelap');
+        $this->assertSame(0xFFFFFF, imagecolorat($img, 140 * 3, 190 * 3) & 0xFFFFFF, 'di kanan barcode harus putih');
     }
 }

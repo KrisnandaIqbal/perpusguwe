@@ -828,13 +828,35 @@ if (!function_exists('namaKartuBaris')) {
     }
 }
 
+if (!function_exists('kartuBarcode')) {
+    /**
+     * Garis barcode Code 128 untuk kartu: ['lebar' => jumlah modul, 'bar' => [[posisi, lebar], ...]].
+     * Bentuknya mirip matriks QR, jadi tiap tampilan kartu menggambarnya sendiri (SVG, GD).
+     */
+    function kartuBarcode(string $kode): array {
+        $data = (new class extends \Picqer\Barcode\BarcodeGeneratorSVG {
+            public function data(string $kode): \Picqer\Barcode\Barcode {
+                return $this->getBarcodeData($kode, self::TYPE_CODE_128);
+            }
+        })->data($kode);
+
+        $x   = 0;
+        $bar = [];
+        foreach ($data->getBars() as $b) {
+            if ($b->isBar()) {
+                $bar[] = [$x, $b->getWidth()];
+            }
+            $x += $b->getWidth();
+        }
+
+        return ['lebar' => $data->getWidth(), 'bar' => $bar];
+    }
+}
+
 if (!function_exists('kartuAnggotaData')) {
     /** Isi kartu anggota, dipakai halaman cetak dan lampiran PDF di email persetujuan. */
     function kartuAnggotaData(object $anggota): array {
         $memberNo = (string) $anggota->MemberNo;
-
-        // No. Anggota YYMMDD99999: sisi depan menampilkan nomor urutnya saja (001, 002, ...)
-        $isUniversal = (bool) preg_match('/^[0-9]{11}$/', $memberNo);
 
         // PhotoUrl bisa berisi beberapa file dipisah koma; kartu memakai yang pertama
         $fotoName = trim(explode(',', (string) $anggota->PhotoUrl)[0]);
@@ -849,10 +871,9 @@ if (!function_exists('kartuAnggotaData')) {
             'foto'        => $fotoUrl,
             'foto_path'   => $fotoPath,
             'member_no'   => $memberNo,
-            'nomor_depan' => $isUniversal ? str_pad((string) (int) substr($memberNo, -5), 3, '0', STR_PAD_LEFT) : $memberNo,
-            'nomor_urut'  => $isUniversal,
             'berlaku'     => tanggalKartu($anggota->EndDate),
             'qr'          => (new \chillerlan\QRCode\QRCode(new \chillerlan\QRCode\QROptions(['addQuietzone' => false])))->getMatrix($memberNo)->matrix(true),
+            'barcode'     => kartuBarcode($memberNo),
         ];
     }
 }

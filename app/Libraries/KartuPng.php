@@ -5,7 +5,7 @@ namespace App\Libraries;
 /**
  * Kartu anggota sebagai gambar PNG untuk lampiran email, digambar dengan GD.
  *
- * Posisi, ukuran, dan warna mengikuti kartu-anggota-pdf.php (desain 342 x 216 px), digambar 3x
+ * Posisi, ukuran, dan warna mengikuti kartu-anggota-pdf.php (desain 342 x 216 px, kartu putih berfoto ruang baca), digambar 3x
  * supaya tajam (sekitar 300 dpi pada lebar 85,6 mm). Pojok kartu transparan dengan radius 12 px,
  * hal yang tidak bisa dilakukan PDF karena penampil PDF selalu menggambar kertas putih.
  *
@@ -30,71 +30,66 @@ class KartuPng
         $this->aset = rtrim($aset ?? FCPATH . 'assets', '/\\') . '/';
     }
 
-    /** Sisi depan: logo, foto, nama, dan nomor urut. */
+    /** Sisi depan: kepala, foto ruang baca berlengkung, foto anggota, nama, nomor, dan barcode. */
     public function depan(array $card): string
     {
-        $img = $this->kanvas('#F0EBE1');
+        $img = $this->kanvas('#FFFFFF');
 
-        $this->tempel($img, 'img/kartu/logo-kemnaker.png', 168, 3, 210, 210, 0.85);
-        $this->tempel($img, 'img/kartu/logo-kemnaker-teks.png', 18, 14, 26.65, 36);
+        // Lingkaran besar (pusat 425,165, jari-jari 260) berisi foto ruang baca, dengan cincin biru dan emas di luarnya
+        $this->bulatan($img, 425, 165, 267, '#2E7BC4');
+        $this->bulatan($img, 425, 165, 263.5, '#D4A437');
+        $this->bulatan($img, 425, 165, 260, null, $this->fotoRuang(177, 216), 165);
 
-        // Ukuran dan posisi nama sama dengan kartu-anggota-pdf.php
-        $baris    = $card['nama_baris'] ?? [$card['nama']];
-        $duaBaris = count($baris) > 1;
-        $urut     = !empty($card['nomor_urut']);
-        $namaLh   = $duaBaris ? 18 : 19.2;
-        // Blok nama (label 10,5 + jarak 3 + baris) berakhir 10 px di atas nomor (171)
-        $namaTop  = 171 - 10 - (10.5 + 3 + count($baris) * $namaLh);
+        $this->kepala($img);
 
         if (!empty($card['foto_path']) && is_file($card['foto_path'])) {
-            // Foto 2:3 seperti pas foto di pendaftaran, berhenti 10 px di atas nama, jadi lebih kecil kalau nama dua baris
-            $fotoH = $namaTop - 10 - 60;
-            // Rata kiri dengan logo, nama, dan nomor
-            $this->foto($img, $card['foto_path'], 18, 60, $fotoH * 2 / 3, $fotoH, 3);
+            // Foto 3:4 dipotong dari tengah atas
+            $this->foto($img, $card['foto_path'], 20, 56, 54, 72, 4);
+        } else {
+            $this->kotakBulat($img, 20, 56, 54, 72, 4, '#E8EEF4');
         }
 
-        $this->teks($img, 'NAMA', 'Bold', 7, '#8A8B8A', 18, $namaTop, 10.5, 1.12);
-        foreach ($baris as $i => $isi) {
-            $this->teks($img, $isi, 'ExtraBold', 16, '#0D1C2E', 18, $namaTop + 13.5 + $i * $namaLh, $namaLh, -0.16, 'kiri', 145);
+        // Nama (maksimal dua baris, diatur namaKartuBaris) lalu nomor, rata kiri
+        $baris = $card['nama_baris'] ?? [$card['nama']];
+        $y     = 56 + 72 + 8;
+        foreach ($baris as $isi) {
+            $this->teks($img, $isi, 'ExtraBold', 12, '#0D1C2E', 20, $y, 14.4, 0, 'kiri', 132);
+            $y += 14.4;
         }
+        $this->teks($img, $card['member_no'], 'Bold', 9, '#5B6878', 20, $y + 4, 11.7, 0.9);
 
-        $this->teks($img, 'NO. ANGGOTA', 'Bold', 7, '#7F8286', 19, 171, 7, 1.26);
-        $this->teks($img, $card['nomor_depan'], 'ExtraBold', $urut ? 18 : 13, '#0D1C2E', 19, 171 + 7 + ($urut ? 4 : 8), 18, $urut ? -0.18 : 0);
-
-        // Tulisan tegak: satu huruf per baris 6 px, di tengah kolom selebar 6 px
-        foreach (str_split('PERPUSTAKAAN') as $i => $huruf) {
-            $this->teks($img, $huruf, 'Bold', 5.5, '#A09F9E', self::W - 13.5 - 6, 18 + $i * 6, 6, 0, 'tengah', 6);
-        }
+        $this->barcode($img, $card['barcode'], 20, 188, 14, '#0D1C2E');
 
         return $this->png($img);
     }
 
-    /** Sisi belakang: kode QR, masa berlaku, alamat, dan No. Anggota lengkap. */
+    /** Sisi belakang: kepala, kode QR di tengah, masa berlaku, dan petunjuk memindai. */
     public function belakang(array $card): string
     {
-        $img = $this->kanvas('#0D1C2E');
+        $img = $this->kanvas('#FFFFFF');
 
-        $this->tempel($img, 'img/kartu/logo-kemnaker.png', 71, 8, 200, 200, 0.14);
+        $this->kepala($img);
 
-        // QR gelap di atas kotak krem: versi krem di atas navy tidak terbaca alat pemindai
-        $this->kotakBulat($img, 45, 60, 80, 80, 6, '#F0EBE1');
-        $this->qr($img, $card['qr'], 49, 64, 72, '#0D1C2E');
-        $this->teks($img, 'QR SCAN', 'Bold', 7, '#ACABAB', 45, 146, 10.5, 0.98, 'tengah', 80);
+        $this->qr($img, $card['qr'], (self::W - 88) / 2, 61, 88, '#0D1C2E');
+        $this->teks($img, $card['member_no'], 'Bold', 6, '#0D1C2E', 0, 153, 8.4, 1.2, 'tengah', self::W);
 
-        $kanan = self::W - 16.2;
-        $this->tempel($img, 'img/kartu/logo-kemnaker-teks-putih.png', $kanan - 26.65, 24, 26.65, 36);
-
-        $this->teks($img, 'BERLAKU S/D', 'Bold', 6, '#ACABAB', $kanan, 70, 9, 0.96, 'kanan');
-        $this->teks($img, $card['berlaku'], 'ExtraBold', 11, '#B8943F', $kanan, 81, 16.5, 0.22, 'kanan');
-
-        $this->teks($img, 'PERPUSTAKAAN KEMNAKER RI', 'Bold', 6, '#ACABAB', $kanan, 115, 9, 0.84, 'kanan');
-        $this->teks($img, 'Jl. Jend. Gatot Subroto Kav. 51', 'Medium', 6.5, '#CEC9C3', $kanan, 124, 10.4, 0, 'kanan');
-        $this->teks($img, 'Jakarta Selatan · (021) 520-7797', 'Medium', 6.5, '#CEC9C3', $kanan, 134.4, 10.4, 0, 'kanan');
-
-        $this->teks($img, 'NO. ANGGOTA', 'Bold', 6, '#ACABAB', $kanan, 162, 9, 0.96, 'kanan');
-        $this->teks($img, $card['member_no'], 'ExtraBold', 15, '#F0EBE1', $kanan, 173, 20, 0.3, 'kanan');
+        $this->teks($img, 'BERLAKU S/D', 'Bold', 5.5, '#5B6878', 20, 167.5, 7.7, 0.66);
+        $this->teks($img, $card['berlaku'], 'Bold', 6.5, '#17406B', 20, 176.2, 9.1);
+        $this->teks($img, 'Pindai kode QR di meja layanan', 'Medium', 5.5, '#5B6878', 20, 190.3, 7.7);
 
         return $this->png($img);
+    }
+
+    /** Kepala dua sisi: logo, nama perpustakaan, dan garis tiga warna Kemnaker. */
+    private function kepala(\GdImage $img): void
+    {
+        $this->tempel($img, 'img/kartu/logo-kemnaker.png', 20, 18, 24, 24);
+        $this->teks($img, 'PERPUSTAKAAN', 'ExtraBold', 7.5, '#17406B', 50, 21.4, 9, 0.6);
+        $this->teks($img, 'Kementerian Ketenagakerjaan RI', 'Medium', 5.5, '#4A5A6B', 50, 31.4, 7.15);
+
+        $this->kotakBulat($img, 20, 49, 32, 2, 1, '#17406B');
+        $this->kotakBulat($img, 54, 49, 20, 2, 1, '#2E7BC4');
+        $this->kotakBulat($img, 76, 49, 12, 2, 1, '#D4A437');
     }
 
     // ----------------------------------------------------------------
@@ -210,6 +205,81 @@ class KartuPng
         $this->pojok($tmp, $r * self::S);
 
         imagecopy($img, $tmp, (int) round($x * self::S), (int) round($y * self::S), 0, 0, $tw, $th);
+    }
+
+    /** Foto ruang baca dipotong memenuhi kotak $w x $h px desain; bagian yang dipertahankan condong ke kanan (72%). */
+    private function fotoRuang(float $w, float $h): \GdImage
+    {
+        $src = imagecreatefromstring((string) file_get_contents($this->aset . 'home/hero/01-ruang-baca.jpg'));
+        $tw  = (int) round($w * self::S);
+        $th  = (int) round($h * self::S);
+        $sh  = imagesy($src);
+        $cw  = (int) round($sh * $tw / $th);
+        $cx  = (int) round((imagesx($src) - $cw) * 0.72);
+
+        $tmp = $this->kosong($tw, $th);
+        imagecopyresampled($tmp, $src, 0, 0, $cx, 0, $tw, $th, $cw, $sh);
+
+        return $tmp;
+    }
+
+    /**
+     * Lingkaran berpusat di ($cx, $cy) dengan jari-jari $r (px desain), warna rata $hex atau isi gambar $isi
+     * yang tepi kirinya di $ix px desain. Hanya busur kiri yang berada di dalam kartu, jadi tiap baris
+     * diisi dari titik potong lengkung sampai tepi kanan; piksel di lengkung diberi transparansi sebagian.
+     */
+    private function bulatan(\GdImage $img, float $cx, float $cy, float $r, ?string $hex, ?\GdImage $isi = null, float $ix = 0): void
+    {
+        $w  = imagesx($img);
+        $h  = imagesy($img);
+        $cx *= self::S;
+        $cy *= self::S;
+        $r  *= self::S;
+        $ix = (int) round($ix * self::S);
+
+        for ($y = 0; $y < $h; $y++) {
+            $dy = $y + 0.5 - $cy;
+            if (abs($dy) >= $r) {
+                continue;
+            }
+
+            $kiri  = $cx - sqrt($r * $r - $dy * $dy);
+            $mulai = (int) ceil($kiri) + 1;
+
+            for ($x = max(0, (int) floor($kiri) - 1); $x < min($w, $mulai); $x++) {
+                $cakupan = max(0.0, min(1.0, $r - hypot($x + 0.5 - $cx, $dy) + 0.5));
+                if ($cakupan <= 0) {
+                    continue;
+                }
+
+                $alpha = (int) round(127 - $cakupan * 127);
+                imagesetpixel($img, $x, $y, $isi ? ((imagecolorat($isi, $x - $ix, $y) & 0xFFFFFF) | ($alpha << 24)) : $this->warna($img, $hex, $alpha));
+            }
+
+            if ($mulai < $w) {
+                $isi
+                    ? imagecopy($img, $isi, $mulai, $y, $mulai - $ix, $y, $w - $mulai, 1)
+                    : imagefilledrectangle($img, $mulai, $y, $w - 1, $y, $this->warna($img, $hex));
+            }
+        }
+    }
+
+    /** Barcode Code 128 setinggi $h px, satu modul selebar 1 px desain (mengecil kalau lebih lebar dari kolom 132 px). */
+    private function barcode(\GdImage $img, array $data, float $x, float $y, float $h, string $hex): void
+    {
+        $modul = min(1.0, 132 / $data['lebar']);
+        $gelap = $this->warna($img, $hex);
+
+        foreach ($data['bar'] as [$bx, $bw]) {
+            imagefilledrectangle(
+                $img,
+                (int) round(($x + $bx * $modul) * self::S),
+                (int) round($y * self::S),
+                (int) round(($x + ($bx + $bw) * $modul) * self::S) - 1,
+                (int) round(($y + $h) * self::S) - 1,
+                $gelap
+            );
+        }
     }
 
     private function kotakBulat(\GdImage $img, float $x, float $y, float $w, float $h, float $r, string $hex): void

@@ -337,7 +337,7 @@ $_asnId = $asn_id ?? '';
     /* ─── Main Two-Column Layout ─── */
     .rf-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 350px;
+        grid-template-columns: minmax(0, 1fr);
         gap: 32px;
         align-items: start;
     }
@@ -2396,10 +2396,6 @@ $_asnId = $asn_id ?? '';
         .rf-title-line { white-space: nowrap; }
         .rf-title-mark { display: block; width: fit-content; }
     }
-    .rf-title-mark::after {
-        content: ""; position: absolute; left: 2%; right: 1%; bottom: -5px; height: 5px;
-        background: var(--accent-600); border-radius: 100%; transform: rotate(-1.5deg);
-    }
     .rf-lead { font-size: 15px; line-height: 1.8; max-width: 540px; color: var(--text-secondary); margin: 0 0 26px; }
     .rf-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
     .rf-chips li {
@@ -2420,36 +2416,48 @@ $_asnId = $asn_id ?? '';
         box-shadow: 0 12px 48px rgba(27, 58, 92, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
         transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .rf-mcard-front { z-index: 1; background: #f0ebe1; color: #0d1c2e; transform: rotate(-3deg); }
-    .rf-mcard-back { position: absolute; inset: 0; z-index: 0; background: #0d1c2e; transform: translate(24px, 22px) rotate(3deg); }
-    .rf-mc-motif { position: absolute; display: block; object-fit: contain; }
-    .rf-mcard-front .rf-mc-motif { left: calc(168 * var(--u)); top: calc(3 * var(--u)); width: calc(210 * var(--u)); height: calc(210 * var(--u)); opacity: 0.85; }
-    .rf-mcard-back .rf-mc-motif { left: calc(71 * var(--u)); top: calc(8 * var(--u)); width: calc(200 * var(--u)); height: calc(200 * var(--u)); opacity: 0.14; }
-    .rf-mc-kolom {
-        position: absolute; left: calc(18 * var(--u)); top: calc(14 * var(--u));
-        width: calc(150 * var(--u)); height: calc(186 * var(--u));
-        display: flex; flex-direction: column; align-items: flex-start; gap: calc(10 * var(--u));
+    .rf-mcard-front { z-index: 1; background: #fff; color: #0d1c2e; transform: rotate(-3deg); }
+    .rf-mcard-back { position: absolute; inset: 0; z-index: 0; background: #fff; transform: translate(24px, 22px) rotate(3deg); }
+    /* Lingkaran besar berisi foto ruang baca di kanan depan; cincin emas dan biru dari box-shadow */
+    .rf-mc-lengkung {
+        position: absolute; left: calc(165 * var(--u)); top: calc(-95 * var(--u)); width: calc(520 * var(--u)); height: calc(520 * var(--u));
+        border-radius: 50%; overflow: hidden; background: #17406b;
+        box-shadow: 0 0 0 calc(3.5 * var(--u)) #d4a437, 0 0 0 calc(7 * var(--u)) #2e7bc4;
     }
-    .rf-mc-logo { display: block; width: auto; height: calc(36 * var(--u)); }
+    .rf-mc-lengkung img { position: absolute; left: 0; top: calc(95 * var(--u)); width: calc(177 * var(--u)); height: calc(216 * var(--u)); object-fit: cover; object-position: 72% 50%; }
+    .rf-mc-kepala { position: absolute; left: calc(20 * var(--u)); top: calc(18 * var(--u)); display: flex; flex-direction: column; gap: calc(7 * var(--u)); color: #17406b; }
+    .rf-mc-baris-logo { display: flex; align-items: center; gap: calc(6 * var(--u)); }
+    .rf-mc-logo { display: block; width: calc(24 * var(--u)); height: calc(24 * var(--u)); object-fit: contain; }
+    .rf-mc-judul { font-size: calc(7.5 * var(--u)); font-weight: 800; line-height: 1.2; letter-spacing: 0.08em; }
+    .rf-mc-sub { margin-top: calc(1 * var(--u)); font-size: calc(5.5 * var(--u)); font-weight: 500; line-height: 1.3; color: #4a5a6b; }
+    .rf-mc-garis { display: flex; gap: calc(2 * var(--u)); }
+    .rf-mc-garis i { display: block; height: calc(2 * var(--u)); border-radius: calc(1 * var(--u)); }
+    .rf-mc-garis i:nth-child(1) { width: calc(32 * var(--u)); background: #17406b; }
+    .rf-mc-garis i:nth-child(2) { width: calc(20 * var(--u)); background: #2e7bc4; }
+    .rf-mc-garis i:nth-child(3) { width: calc(12 * var(--u)); background: #d4a437; }
+    .rf-mc-kolom {
+        position: absolute; left: calc(20 * var(--u)); top: calc(56 * var(--u)); width: calc(132 * var(--u));
+        display: flex; flex-direction: column; align-items: flex-start; gap: calc(8 * var(--u));
+    }
     .rf-mc-foto {
-        position: relative; flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; overflow: hidden;
-        border-radius: calc(3 * var(--u)); background: rgba(13, 28, 46, 0.08);
+        position: relative; flex: none; width: calc(54 * var(--u)); height: calc(72 * var(--u)); overflow: hidden;
+        border-radius: calc(4 * var(--u)); background: #e8eef4;
         display: grid; place-items: center;
         font-size: calc(14 * var(--u)); font-weight: 800; color: rgba(13, 28, 46, 0.5);
     }
     .rf-mc-foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-    .rf-mc-label { font-weight: 700; text-transform: uppercase; white-space: nowrap; opacity: 0.5; font-size: calc(7 * var(--u)); letter-spacing: calc(1.12 * var(--u)); line-height: calc(10.5 * var(--u)); }
-    .rf-mc-nama { max-width: calc(150 * var(--u)); }
-    .rf-mc-nama .rf-mc-value { padding-top: calc(3 * var(--u)); font-size: calc(16 * var(--u)); font-weight: 800; line-height: calc(19.2 * var(--u)); letter-spacing: calc(-0.16 * var(--u)); }
-    .rf-mc-nama.is-dua .rf-mc-value { line-height: calc(18 * var(--u)); }
-    .rf-mc-baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: calc(4 * var(--u)); margin-bottom: calc(-4 * var(--u)); }
-    .rf-mc-nomor { margin-left: calc(1 * var(--u)); }
-    .rf-mc-nomor .rf-mc-value { padding-top: calc(8 * var(--u)); font-size: calc(13 * var(--u)); font-weight: 800; line-height: calc(18 * var(--u)); white-space: nowrap; }
-    .rf-mc-tegak {
-        position: absolute; right: calc(13.5 * var(--u)); top: calc(18 * var(--u));
-        display: flex; flex-direction: column; align-items: flex-end; gap: calc(1 * var(--u));
-        font-size: calc(5.5 * var(--u)); font-weight: 700; line-height: calc(6 * var(--u)); opacity: 0.35;
-    }
+    .rf-mc-nama { width: 100%; }
+    .rf-mc-baris { display: block; font-size: calc(12 * var(--u)); font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: calc(2 * var(--u)); margin-bottom: calc(-2 * var(--u)); }
+    .rf-mc-barcode { position: absolute; left: calc(20 * var(--u)); bottom: calc(14 * var(--u)); height: calc(14 * var(--u)); }
+    /* Kartu belakang sesuai desain: kepala, QR di tengah, masa berlaku dan petunjuk di kiri bawah */
+    .rf-mc-qr { position: absolute; left: calc(127 * var(--u)); top: calc(61 * var(--u)); width: calc(88 * var(--u)); height: calc(88 * var(--u)); }
+    .rf-mc-qr path { fill: #0d1c2e; }
+    .rf-mc-no { position: absolute; left: 0; right: 0; top: calc(153 * var(--u)); text-align: center; font-size: calc(6 * var(--u)); font-weight: 700; line-height: 1.4; letter-spacing: 0.2em; color: #0d1c2e; }
+    .rf-mc-berlaku { position: absolute; left: calc(20 * var(--u)); bottom: calc(18 * var(--u)); display: flex; flex-direction: column; gap: calc(5 * var(--u)); white-space: nowrap; }
+    .rf-mc-berlaku b { display: block; font-size: calc(5.5 * var(--u)); font-weight: 700; line-height: 1.4; letter-spacing: 0.12em; color: #5b6878; }
+    .rf-mc-berlaku span { display: block; margin-top: calc(1 * var(--u)); font-size: calc(6.5 * var(--u)); font-weight: 700; line-height: 1.4; color: #17406b; }
+    .rf-mc-berlaku small { font-size: calc(5.5 * var(--u)); font-weight: 500; line-height: 1.4; color: #5b6878; }
+    .rf-mc-nomor { margin-top: calc(-4 * var(--u)); font-size: calc(9 * var(--u)); font-weight: 700; line-height: 1.3; letter-spacing: 0.1em; color: #5b6878; white-space: nowrap; }
     /* Kursor di atas kartu: kartu depan meluruskan diri, kartu belakang mendekat */
     @media (hover: hover) {
         .rf-card-stage:hover .rf-mcard-front { transform: rotate(0deg); }
@@ -2544,9 +2552,6 @@ $_asnId = $asn_id ?? '';
         .rf-section { padding: 32px; }
         .rf-section-desc { padding-left: 44px; }
     }
-    @media (min-width: 993px) {
-        .rf-layout { grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; }
-    }
     @media (max-width: 992px) {
         .rf-hero { grid-template-columns: minmax(0, 1fr); gap: 36px; }
         .rf-card-stage { justify-self: start; }
@@ -2605,31 +2610,48 @@ $_asnId = $asn_id ?? '';
             </div>
 
             <div class="rf-card-stage">
-                <?php /* Replika sisi depan dan belakang kartu cetak (Anggota/Views/pdf/kartu-anggota.php, 342 x 216 px). Ukuran memakai satuan --u supaya ikut mengecil di layar sempit. */ ?>
+                <?php /* Replika sisi depan dan belakang kartu cetak (Anggota/Views/pdf/kartu-anggota.php, 342 x 216 px). Ukuran memakai satuan --u supaya ikut mengecil di layar sempit. */
+                $_kepala = '<div class="rf-mc-kepala"><div class="rf-mc-baris-logo"><img class="rf-mc-logo" src="' . base_url('assets/img/kartu/logo-kemnaker.png') . '" alt="">'
+                    . '<div><div class="rf-mc-judul">PERPUSTAKAAN</div><div class="rf-mc-sub">Kementerian Ketenagakerjaan RI</div></div></div>'
+                    . '<div class="rf-mc-garis" aria-hidden="true"><i></i><i></i><i></i></div></div>';
+
+                // Barcode dan QR contoh dari nomor palsu, supaya pratinjau terlihat seperti kartu jadi
+                helper('anggota');
+                $_contoh   = '26012600001';
+                $_barcode  = kartuBarcode($_contoh);
+                $_jalurBc  = '';
+                foreach ($_barcode['bar'] as [$_bx, $_bw]) {
+                    $_jalurBc .= "M{$_bx} 0h{$_bw}v1h-{$_bw}z";
+                }
+                $_qr       = (new \chillerlan\QRCode\QRCode(new \chillerlan\QRCode\QROptions(['addQuietzone' => false])))->getMatrix($_contoh)->matrix(true);
+                $_ukuranQr = count($_qr);
+                $_jalurQr  = '';
+                foreach ($_qr as $_y => $_baris) {
+                    foreach ($_baris as $_x => $_gelap) {
+                        $_jalurQr .= $_gelap ? "M{$_x} {$_y}h1v1h-1z" : '';
+                    }
+                } ?>
                 <div class="rf-card-tilt">
                     <div class="rf-mcard rf-mcard-back" aria-hidden="true">
-                        <img class="rf-mc-motif" src="<?= base_url('assets/img/kartu/logo-kemnaker-krem.png') ?>" alt="">
+                        <?= $_kepala ?>
+                        <svg class="rf-mc-qr" viewBox="0 0 <?= $_ukuranQr ?> <?= $_ukuranQr ?>" shape-rendering="crispEdges"><path d="<?= $_jalurQr ?>"/></svg>
+                        <div class="rf-mc-no"><?= $_contoh ?></div>
+                        <div class="rf-mc-berlaku"><div><b>BERLAKU S/D</b><span>Setelah verifikasi</span></div><small>Pindai kode QR di meja layanan</small></div>
                     </div>
                     <div class="rf-mcard rf-mcard-front" role="img" aria-label="Pratinjau sisi depan Kartu Anggota, terisi sesuai data formulir">
-                        <img class="rf-mc-motif" src="<?= base_url('assets/img/kartu/logo-kemnaker.png') ?>" alt="">
+                        <div class="rf-mc-lengkung"><img src="<?= base_url('assets/home/hero/01-ruang-baca.jpg') ?>" alt=""></div>
+                        <?= $_kepala ?>
                         <div class="rf-mc-kolom">
-                            <img class="rf-mc-logo" src="<?= base_url('assets/img/kartu/logo-kemnaker-teks.webp') ?>" alt="">
                             <div class="rf-mc-foto">
                                 <span id="mcPhotoQ">?</span>
                                 <img id="mcPhotoImg" alt="" hidden>
                             </div>
                             <div class="rf-mc-nama" id="mcNama">
-                                <div class="rf-mc-label">Nama</div>
-                                <div class="rf-mc-value" id="mcName"><span class="rf-mc-baris">Nama Lengkap</span></div>
+                                <div id="mcName"><span class="rf-mc-baris">Nama Lengkap</span></div>
                             </div>
-                            <div class="rf-mc-nomor">
-                                <div class="rf-mc-label">No. Anggota</div>
-                                <div class="rf-mc-value">Setelah verifikasi</div>
-                            </div>
+                            <div class="rf-mc-nomor">Setelah verifikasi</div>
                         </div>
-                        <div class="rf-mc-tegak" aria-hidden="true">
-                            <?php foreach (str_split('PERPUSTAKAAN') as $_huruf) : ?><span><?= $_huruf ?></span><?php endforeach; ?>
-                        </div>
+                        <svg class="rf-mc-barcode" style="width: calc(<?= min(132, $_barcode['lebar']) ?> * var(--u))" viewBox="0 0 <?= $_barcode['lebar'] ?> 1" preserveAspectRatio="none" shape-rendering="crispEdges"><path fill="#0d1c2e" d="<?= $_jalurBc ?>"/></svg>
                     </div>
                 </div>
                 <p class="rf-live-pill"><span class="rf-live-dot" aria-hidden="true"></span>Pratinjau langsung</p>
@@ -3084,70 +3106,6 @@ $_asnId = $asn_id ?? '';
 
                 </form>
             </div>
-
-            <!-- Sidebar Info Column -->
-            <aside class="rf-sidebar">
-
-                <!-- Benefits Card -->
-                <div class="rf-side-card">
-                    <div class="rf-side-header">
-                        <h3 class="rf-side-title">Hak Akses Anggota</h3>
-                        <p class="rf-side-sub">Fasilitas pemustaka terdaftar</p>
-                    </div>
-                    <ul class="rf-benefits-list">
-                        <li>
-                            <span class="rf-benefit-icon">
-                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3.5 8.5l3 3 6-7"/>
-                                </svg>
-                            </span>
-                            <div>Peminjaman hingga <strong>2 eksemplar</strong> buku fisik selama 10 hari kerja.</div>
-                        </li>
-                        <li>
-                            <span class="rf-benefit-icon">
-                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3.5 8.5l3 3 6-7"/>
-                                </svg>
-                            </span>
-                            <div>Akses pangkalan data jurnal & <strong>e-Resources Kemnaker RI</strong>.</div>
-                        </li>
-                        <li>
-                            <span class="rf-benefit-icon">
-                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3.5 8.5l3 3 6-7"/>
-                                </svg>
-                            </span>
-                            <div>Akses ruang perpustakaan & <strong>fasilitas penelusuran mandiri</strong>.</div>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Verification Flow (Connected Timeline) -->
-                <div class="rf-side-card">
-                    <div class="rf-side-header">
-                        <h3 class="rf-side-title">Alur Verifikasi Pustakawan</h3>
-                        <p class="rf-side-sub">Proses validasi kartu anggota digital</p>
-                    </div>
-                    <div class="rf-timeline">
-                        <div class="rf-timeline-item">
-                            <span class="rf-timeline-node"></span>
-                            <div class="rf-timeline-title">Pengiriman Formulir Online</div>
-                            <div class="rf-timeline-desc">Tanda terima & nomor registrasi langsung dikirim ke email Anda.</div>
-                        </div>
-                        <div class="rf-timeline-item">
-                            <span class="rf-timeline-node"></span>
-                            <div class="rf-timeline-title">Pengecekan Data Identitas</div>
-                            <div class="rf-timeline-desc">Pustakawan memvalidasi NIP dalam 1&times;24 jam kerja.</div>
-                        </div>
-                        <div class="rf-timeline-item">
-                            <span class="rf-timeline-node"></span>
-                            <div class="rf-timeline-title">Aktivasi Barcode Digital</div>
-                            <div class="rf-timeline-desc">Kartu digital diterbitkan & langsung siap digunakan di sirkulasi.</div>
-                        </div>
-                    </div>
-                </div>
-
-            </aside>
         </div>
 
     </div>

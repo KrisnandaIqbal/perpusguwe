@@ -3,7 +3,7 @@
  * Kartu anggota Perpustakaan Kemnaker, sisi depan dan belakang.
  * Ukuran dan posisi mengikuti desain Figma (kartu 342 x 216 px).
  *
- * @var array  $cards   nama, member_no, nomor_depan, nomor_urut, berlaku, qr (matriks boolean)
+ * @var array  $cards   nama, member_no, berlaku, qr (matriks boolean)
  * @var array  $skipped nama anggota yang tidak dicetak
  * @var string $logo    URL logo Kemnaker
  */
@@ -108,69 +108,53 @@
             .toolbar-inner, .notices, .sheet { padding-left: 16px; padding-right: 16px; }
             .entry { padding: 16px; }
         }
-        .card { position: relative; width: 342px; height: 216px; border-radius: 12px; overflow: hidden;
+        .card { position: relative; width: 342px; height: 216px; border-radius: 12px; overflow: hidden; background: #fff;
             box-shadow: 0 12px 48px 0 rgba(27, 58, 92, 0.20), 0 2px 8px 0 rgba(0, 0, 0, 0.08); }
-        .card img { display: block; object-fit: contain; }
+        .card img { display: block; }
         .abs { position: absolute; }
         .label { font-weight: 700; text-transform: uppercase; white-space: nowrap; }
 
+        /* Dua sisi putih berkepala sama: logo, nama perpustakaan, dan garis tiga warna Kemnaker */
+        .kepala { left: 20px; top: 18px; display: flex; flex-direction: column; gap: 7px; color: #17406B; }
+        .kepala .baris-logo { display: flex; align-items: center; gap: 6px; }
+        .kepala .logo { width: 24px; height: 24px; object-fit: contain; }
+        .kepala .judul { font-size: 7.5px; font-weight: 800; line-height: 1.2; letter-spacing: 0.08em; }
+        .kepala .sub { margin-top: 1px; font-size: 5.5px; font-weight: 500; line-height: 1.3; color: #4A5A6B; }
+        .kepala .garis { display: flex; gap: 2px; }
+        .kepala .garis i { display: block; height: 2px; border-radius: 1px; }
+        .kepala .garis i:nth-child(1) { width: 32px; background: #17406B; }
+        .kepala .garis i:nth-child(2) { width: 20px; background: #2E7BC4; }
+        .kepala .garis i:nth-child(3) { width: 12px; background: #D4A437; }
+
         /* --- Sisi depan --- */
-        .front { background: #F0EBE1; color: #0D1C2E; }
-        /* 210 px dengan jarak 3 px di atas dan bawah kartu (216 px) */
-        .front .motif { left: 168px; top: 3px; width: 210px; height: 210px; opacity: 0.85; }
-        /* Logo, foto, nama, dan nomor ditumpuk di kiri dengan jarak 10 px yang sama */
-        /* Bawah kolom di 200 px, 16 px dari tepi bawah kartu */
-        .front .kolom { left: 18px; top: 14px; width: 150px; height: 186px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
-        /* Tinggi 36 px membuat simbolnya selebar 24 px, sama dengan logo sisi belakang */
-        .front .logo { width: auto; height: 36px; }
+        /* Foto ruang baca di kanan, dipotong lingkaran besar; dua cincin emas dan biru dibuat dari box-shadow */
+        .front .lengkung { left: 165px; top: -95px; width: 520px; height: 520px; border-radius: 50%; overflow: hidden; background: #17406B;
+            box-shadow: 0 0 0 3.5px #D4A437, 0 0 0 7px #2E7BC4; }
+        .front .lengkung img { position: absolute; left: 0; top: 95px; width: 177px; height: 216px; object-fit: cover; object-position: 72% 50%; }
 
-        /* Foto 2:3 seperti pas foto di pendaftaran, mengisi sisa tinggi kolom */
-        .front .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }
-        /* Tanpa foto: nama dan nomor tetap di bawah, ruang di bawah logo dibiarkan kosong */
-        .front .tanpa-foto .nama { margin-top: auto; }
-
-        /* Berhenti sebelum motif besar yang mulai di 168 px */
-        .front .nama { max-width: 150px; }
-        .front .nama .label { font-size: 7px; line-height: 10.5px; letter-spacing: 1.12px; opacity: 0.4; }
-        .front .nama .value { padding-top: 3px; font-size: 16px; font-weight: 800; line-height: 19.2px; letter-spacing: -0.16px; }
+        /* Foto, nama, dan nomor ditumpuk rata kiri; jarak foto ke nama 8 px, nama ke nomor 4 px; tinggi kolom ikut jumlah baris nama */
+        .front .kolom { left: 20px; top: 56px; width: 132px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+        .front .foto { width: 54px; height: 72px; flex: none; border-radius: 4px; object-fit: cover; object-position: center top; }
+        .front .foto.kosong { background: #E8EEF4; box-shadow: inset 0 0 0 0.5px #C9D4E0; }
+        .front .nama { width: 100%; }
         /* Pemecahan baris dan singkatan diatur namaKartuBaris(); elipsis hanya jaga-jaga kalau huruf lebih lebar dari perkiraan */
-        /* Padding bawah dibalas margin negatif: batas potong overflow turun 4 px supaya ekor g, j, y tidak terpotong, posisi baris tetap */
-        .front .nama .baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 4px; margin-bottom: -4px; }
-        /* Nama dua baris: jarak baris 18 px supaya tetap terbaca sebagai satu nama */
-        .front .nama.is-dua .value { line-height: 18px; }
-
-        .front .kolom > .nomor { margin-left: 1px; }
-        .front .nomor { display: inline-flex; flex-direction: column; align-items: flex-start; }
-        .front .nomor .label { align-self: flex-start; font-size: 7px; line-height: 7px; letter-spacing: 1.26px; opacity: 0.45; }
-        .front .nomor .value { padding-top: 4px; font-size: 18px; font-weight: 800; line-height: 18px; letter-spacing: -0.18px; }
-        .front .nomor.is-full .value { padding-top: 8px; font-size: 13px; line-height: 18px; letter-spacing: 0; }
-
-        .front .tegak { right: 13.5px; top: 18px; display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
-            font-size: 5.5px; font-weight: 700; line-height: 6px; opacity: 0.35; }
+        /* Padding bawah dibalas margin negatif: batas potong overflow turun 2 px supaya ekor g, j, y tidak terpotong, posisi baris tetap */
+        .front .nama .baris { display: block; font-size: 12px; font-weight: 800; line-height: 1.2; color: #0D1C2E;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 2px; margin-bottom: -2px; }
+        .front .nomor { margin-top: -4px; font-size: 9px; font-weight: 700; line-height: 1.3; letter-spacing: 0.1em; color: #5B6878; }
+        /* Satu modul selebar 1 px, jadi lebarnya ikut isi nomor; lebar diatur di markup, mengecil kalau lebih dari kolom 132 px */
+        .front .barcode { left: 20px; bottom: 14px; height: 14px; }
 
         /* --- Sisi belakang --- */
-        .back { background: #0D1C2E; color: #F0EBE1; }
-        .back .motif { left: 71px; top: 8px; width: 200px; height: 200px; opacity: 0.14; }
-
-        /* 80 px, lebih besar dari desain (70 px), dengan titik tengah yang sama */
-        .back .scan { left: 45px; top: 60px; width: 80px; }
-        /* Gelap di atas terang dengan tepi kosong: versi krem di atas navy tidak terbaca alat pemindai */
-        .back .qr { display: block; width: 80px; height: 80px; padding: 4px; border-radius: 6px; background: #F0EBE1; }
+        .back .scan { left: 0; right: 0; top: 61px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        /* Putih polos tanpa bingkai: tepi kosong kartu sudah cukup lebar untuk alat pemindai */
+        .back .qr { width: 88px; height: 88px; }
         .back .qr path { fill: #0D1C2E; }
-        .back .scan .label { padding-top: 6px; font-size: 7px; line-height: 10.5px; letter-spacing: 0.98px; text-align: center; opacity: 0.7; }
-
-        .back .info { left: 193.8px; top: 24px; width: 132px; height: 168px; display: flex; flex-direction: column;
-            justify-content: space-between; align-items: flex-end; text-align: right; }
-        /* Logo dicetak krem lewat mask supaya sisi belakang hanya memakai navy, krem, dan emas */
-        /* Ukuran sama dengan logo sisi depan (tinggi 36 px, rasio gambar 1152:1556) */
-        .back .info .logo { height: 36px; aspect-ratio: 1152 / 1556; background: #F0EBE1;
-            -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat; }
-        /* Label diredupkan sedikit supaya nilainya yang terbaca lebih dulu */
-        .back .info .label { font-size: 6px; line-height: 9px; letter-spacing: 0.96px; opacity: 0.7; }
-        .back .berlaku .value { padding-top: 2px; font-size: 11px; font-weight: 800; line-height: 16.5px; letter-spacing: 0.22px; color: #B8943F; }
-        .back .perpus .label { letter-spacing: 0.84px; }
-        .back .perpus .value { padding-top: 2px; font-size: 6.5px; font-weight: 500; line-height: 10.4px; opacity: 0.85; white-space: nowrap; }
-        .back .nomor .value { padding-top: 2px; font-size: 15px; font-weight: 800; line-height: 20px; letter-spacing: 0.3px; white-space: nowrap; }
+        .back .scan .no { font-size: 6px; font-weight: 700; line-height: 1.4; letter-spacing: 0.2em; color: #0D1C2E; }
+        .back .berlaku { left: 20px; bottom: 18px; width: 100px; display: flex; flex-direction: column; gap: 5px; }
+        .back .berlaku .label { font-size: 5.5px; line-height: 1.4; letter-spacing: 0.12em; color: #5B6878; }
+        .back .berlaku .value { margin-top: 1px; font-size: 6.5px; font-weight: 700; line-height: 1.4; color: #17406B; }
+        .back .berlaku .petunjuk { font-size: 5.5px; font-weight: 500; line-height: 1.4; color: #5B6878; }
 
         @page { size: A4 portrait; margin: 10mm; }
 
@@ -263,6 +247,19 @@
                 }
             }
             ?>
+            <?php
+            // Garis barcode digambar sebagai satu path SVG, seperti kode QR
+            $barcode = '';
+            foreach ($card['barcode']['bar'] as [$bx, $bw]) {
+                $barcode .= "M{$bx} 0h{$bw}v1h-{$bw}z";
+            }
+
+            // Kepala yang sama di dua sisi kartu
+            $kepala = '<div class="abs kepala">'
+                . '<div class="baris-logo"><img class="logo" src="' . esc($logo, 'attr') . '" alt="Logo Kemnaker">'
+                . '<div><div class="judul">PERPUSTAKAAN</div><div class="sub">Kementerian Ketenagakerjaan RI</div></div></div>'
+                . '<div class="garis" aria-hidden="true"><i></i><i></i><i></i></div></div>';
+            ?>
             <section class="entry" aria-label="Kartu <?= esc($card['nama'], 'attr') ?>">
             <div class="entry-head">
                 <span class="urut"><?= str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) ?></span>
@@ -276,28 +273,24 @@
                 <figcaption>Depan</figcaption>
                 <div class="slot">
                     <div class="card front">
-                        <img class="abs motif" src="<?= esc($logo, 'attr') ?>" alt="">
-                        <div class="abs kolom <?= $card['foto'] ? '' : 'tanpa-foto' ?>">
-                            <img class="logo" src="<?= base_url('assets/img/kartu/logo-kemnaker-teks.webp') ?>" alt="Logo Kemnaker">
+                        <div class="abs lengkung"><img src="<?= base_url('assets/home/hero/01-ruang-baca.jpg') ?>" alt=""></div>
 
+                        <?= $kepala ?>
+
+                        <div class="abs kolom">
                             <?php if ($card['foto']): ?>
                                 <img class="foto" src="<?= esc($card['foto'], 'attr') ?>" alt="Foto <?= esc($card['nama'], 'attr') ?>">
+                            <?php else: ?>
+                                <div class="foto kosong"></div>
                             <?php endif; ?>
 
-                            <div class="nama <?= count($card['nama_baris']) > 1 ? 'is-dua' : '' ?>">
-                                <div class="label">Nama</div>
-                                <div class="value"><?php foreach ($card['nama_baris'] as $baris): ?><span class="baris"><?= esc($baris) ?></span><?php endforeach; ?></div>
-                            </div>
-
-                            <div class="nomor <?= $card['nomor_urut'] ? '' : 'is-full' ?>">
-                                <div class="label">No. Anggota</div>
-                                <div class="value"><?= esc($card['nomor_depan']) ?></div>
-                            </div>
+                            <div class="nama"><?php foreach ($card['nama_baris'] as $baris): ?><span class="baris"><?= esc($baris) ?></span><?php endforeach; ?></div>
+                            <div class="nomor"><?= esc($card['member_no']) ?></div>
                         </div>
 
-                        <div class="abs tegak" aria-hidden="true">
-                            <?php foreach (str_split('PERPUSTAKAAN') as $huruf): ?><span><?= $huruf ?></span><?php endforeach; ?>
-                        </div>
+                        <svg class="abs barcode" style="width: <?= min(132, $card['barcode']['lebar']) ?>px" viewBox="0 0 <?= $card['barcode']['lebar'] ?> 1" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="Barcode No. Anggota <?= esc($card['member_no'], 'attr') ?>">
+                            <path fill="#0D1C2E" d="<?= $barcode ?>"/>
+                        </svg>
                     </div>
                 </div>
                 </figure>
@@ -306,32 +299,21 @@
                 <figcaption>Belakang</figcaption>
                 <div class="slot">
                     <div class="card back">
-                        <img class="abs motif" src="<?= esc($logo, 'attr') ?>" alt="">
+                        <?= $kepala ?>
 
                         <div class="abs scan">
                             <svg class="qr" viewBox="0 0 <?= $size ?> <?= $size ?>" shape-rendering="crispEdges" role="img" aria-label="Kode QR No. Anggota <?= esc($card['member_no'], 'attr') ?>">
                                 <path d="<?= $path ?>"/>
                             </svg>
-                            <div class="label">QR Scan</div>
+                            <div class="no"><?= esc($card['member_no']) ?></div>
                         </div>
 
-                        <div class="abs info">
-                            <div class="logo" style="--logo: url('<?= base_url('assets/img/kartu/logo-kemnaker-teks-putih.png') ?>')"></div>
-
-                            <div class="berlaku">
+                        <div class="abs berlaku">
+                            <div>
                                 <div class="label">Berlaku s/d</div>
                                 <div class="value"><?= esc($card['berlaku']) ?></div>
                             </div>
-
-                            <div class="perpus">
-                                <div class="label">Perpustakaan Kemnaker RI</div>
-                                <div class="value">Jl. Jend. Gatot Subroto Kav. 51<br>Jakarta Selatan &middot; (021) 520-7797</div>
-                            </div>
-
-                            <div class="nomor">
-                                <div class="label">No. Anggota</div>
-                                <div class="value"><?= esc($card['member_no']) ?></div>
-                            </div>
+                            <div class="petunjuk">Pindai kode QR di meja layanan</div>
                         </div>
                     </div>
                 </div>

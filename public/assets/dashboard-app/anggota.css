@@ -144,40 +144,42 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 .dm-pf-petunjuk { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--muted); }
 
 /* Kartu anggota: desain sama dengan kartu cetak (342 x 216 px), lihat kartu-anggota.php */
-.kt { position: relative; width: 342px; height: 216px; border-radius: 12px; overflow: hidden; box-shadow: 0 12px 48px rgba(27, 58, 92, .2), 0 2px 8px rgba(0, 0, 0, .08); }
-.kt img { display: block; object-fit: contain; }
+.kt { position: relative; width: 342px; height: 216px; border-radius: 12px; overflow: hidden; background: #fff; color: #0D1C2E; box-shadow: 0 12px 48px rgba(27, 58, 92, .2), 0 2px 8px rgba(0, 0, 0, .08); }
+.kt img { display: block; }
 .kt .abs { position: absolute; }
 .kt .label { font-weight: 700; text-transform: uppercase; white-space: nowrap; }
-.kt-depan { background: #F0EBE1; color: #0D1C2E; }
-.kt-depan .motif { left: 168px; top: 3px; width: 210px; height: 210px; opacity: .85; }
-.kt-depan .kolom { left: 18px; top: 14px; width: 150px; height: 186px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
-.kt-depan .logo { width: auto; height: 36px; }
-.kt-depan .foto { flex: 1 1 0; min-height: 0; aspect-ratio: 2 / 3; border-radius: 3px; object-fit: cover; object-position: center top; }
-.kt-depan .tanpa-foto .nama { margin-top: auto; }
-.kt-depan .nama { max-width: 150px; }
-.kt-depan .nama .label { font-size: 7px; line-height: 10.5px; letter-spacing: 1.12px; opacity: .4; }
-.kt-depan .nama .value { padding-top: 3px; font-size: 16px; font-weight: 800; line-height: 19.2px; letter-spacing: -.16px; }
-.kt-depan .nama .baris { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 4px; margin-bottom: -4px; }
-.kt-depan .nama.is-dua .value { line-height: 18px; }
-.kt-depan .kolom > .nomor { margin-left: 1px; }
-.kt-depan .nomor { display: inline-flex; flex-direction: column; align-items: flex-start; }
-.kt-depan .nomor .label { font-size: 7px; line-height: 7px; letter-spacing: 1.26px; opacity: .45; }
-.kt-depan .nomor .value { padding-top: 4px; font-size: 18px; font-weight: 800; line-height: 18px; letter-spacing: -.18px; }
-.kt-depan .nomor.is-full .value { padding-top: 8px; font-size: 13px; letter-spacing: 0; }
-.kt-depan .tegak { right: 13.5px; top: 18px; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 5.5px; font-weight: 700; line-height: 6px; opacity: .35; }
-.kt-belakang { background: #0D1C2E; color: #F0EBE1; }
-.kt-belakang .motif { left: 71px; top: 8px; width: 200px; height: 200px; opacity: .14; }
-.kt-belakang .scan { left: 45px; top: 60px; width: 80px; }
-.kt-belakang .qr { display: block; width: 80px; height: 80px; padding: 4px; border-radius: 6px; background: #F0EBE1; }
+/* Kepala dua sisi: logo, nama perpustakaan, garis tiga warna Kemnaker */
+.kt .kepala { left: 20px; top: 18px; display: flex; flex-direction: column; gap: 7px; color: #17406B; }
+.kt .kepala .baris-logo { display: flex; align-items: center; gap: 6px; }
+.kt .kepala .logo { width: 24px; height: 24px; object-fit: contain; }
+.kt .kepala .judul { font-size: 7.5px; font-weight: 800; line-height: 1.2; letter-spacing: .08em; }
+.kt .kepala .sub { margin-top: 1px; font-size: 5.5px; font-weight: 500; line-height: 1.3; color: #4A5A6B; }
+.kt .kepala .garis { display: flex; gap: 2px; }
+.kt .kepala .garis i { display: block; height: 2px; border-radius: 1px; }
+.kt .kepala .garis i:nth-child(1) { width: 32px; background: #17406B; }
+.kt .kepala .garis i:nth-child(2) { width: 20px; background: #2E7BC4; }
+.kt .kepala .garis i:nth-child(3) { width: 12px; background: #D4A437; }
+/* Depan: foto ruang baca dalam lingkaran besar, cincin emas dan biru dari box-shadow */
+.kt-depan .lengkung { left: 165px; top: -95px; width: 520px; height: 520px; border-radius: 50%; overflow: hidden; background: #17406B; box-shadow: 0 0 0 3.5px #D4A437, 0 0 0 7px #2E7BC4; }
+.kt-depan .lengkung img { position: absolute; left: 0; top: 95px; width: 177px; height: 216px; object-fit: cover; object-position: 72% 50%; }
+/* Foto, nama, dan nomor rata kiri; jarak foto ke nama 8 px, nama ke nomor 4 px */
+.kt-depan .kolom { left: 20px; top: 56px; width: 132px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.kt-depan .foto { width: 54px; height: 72px; flex: none; border-radius: 4px; object-fit: cover; object-position: center top; }
+.kt-depan .foto.kosong { background: #E8EEF4; box-shadow: inset 0 0 0 .5px #C9D4E0; }
+.kt-depan .nama { width: 100%; }
+/* Padding bawah dibalas margin negatif: batas potong overflow turun 2 px supaya ekor g, j, y tidak terpotong */
+.kt-depan .nama .baris { display: block; font-size: 12px; font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 2px; margin-bottom: -2px; }
+.kt-depan .nomor { margin-top: -4px; font-size: 9px; font-weight: 700; line-height: 1.3; letter-spacing: .1em; color: #5B6878; }
+.kt-depan .barcode { left: 20px; bottom: 14px; height: 14px; }
+/* Belakang: putih polos, QR di tengah, masa berlaku di kiri bawah */
+.kt-belakang .scan { left: 0; right: 0; top: 61px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.kt-belakang .qr { width: 88px; height: 88px; }
 .kt-belakang .qr path { fill: #0D1C2E; }
-.kt-belakang .scan .label { padding-top: 6px; font-size: 7px; line-height: 10.5px; letter-spacing: .98px; text-align: center; opacity: .7; }
-.kt-belakang .info { left: 193.8px; top: 24px; width: 132px; height: 168px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; text-align: right; }
-.kt-belakang .info .logo { height: 36px; aspect-ratio: 1152 / 1556; background: #F0EBE1; -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat; }
-.kt-belakang .info .label { font-size: 6px; line-height: 9px; letter-spacing: .96px; opacity: .7; }
-.kt-belakang .berlaku .value { padding-top: 2px; font-size: 11px; font-weight: 800; line-height: 16.5px; letter-spacing: .22px; color: #B8943F; }
-.kt-belakang .perpus .label { letter-spacing: .84px; }
-.kt-belakang .perpus .value { padding-top: 2px; font-size: 6.5px; font-weight: 500; line-height: 10.4px; opacity: .85; white-space: nowrap; }
-.kt-belakang .nomor .value { padding-top: 2px; font-size: 15px; font-weight: 800; line-height: 20px; letter-spacing: .3px; white-space: nowrap; }
+.kt-belakang .scan .no { font-size: 6px; font-weight: 700; line-height: 1.4; letter-spacing: .2em; }
+.kt-belakang .berlaku { left: 20px; bottom: 18px; width: 100px; display: flex; flex-direction: column; gap: 5px; }
+.kt-belakang .berlaku .label { font-size: 5.5px; line-height: 1.4; letter-spacing: .12em; color: #5B6878; }
+.kt-belakang .berlaku .value { margin-top: 1px; font-size: 6.5px; font-weight: 700; line-height: 1.4; color: #17406B; }
+.kt-belakang .berlaku .petunjuk { font-size: 5.5px; font-weight: 500; line-height: 1.4; color: #5B6878; }
 .dm-pf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1040px; }
 .dm-pf-stat { padding: 20px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); text-decoration: none; font-size: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; transition: transform .2s; }
 .dm-pf-stat:is(a):hover { transform: translateY(-3px); color: var(--blue); }

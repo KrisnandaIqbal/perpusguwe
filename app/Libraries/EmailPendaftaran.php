@@ -305,9 +305,7 @@ class EmailPendaftaran
         $dompdf->loadHtml(view('Anggota\Views\pdf\kartu-anggota-pdf', [
             'card'            => kartuAnggotaData($member),
             'logo'            => FCPATH . 'assets/img/kartu/logo-kemnaker.png',
-            'logo_krem'       => FCPATH . 'assets/img/kartu/logo-kemnaker-krem.png',
-            'logo_teks'       => FCPATH . 'assets/img/kartu/logo-kemnaker-teks.png',
-            'logo_teks_putih' => FCPATH . 'assets/img/kartu/logo-kemnaker-teks-putih.png',
+            'ruang'           => FCPATH . 'assets/home/hero/01-ruang-baca.jpg',
             // Garis miring terbalik di path Windows dibaca CSS sebagai karakter escape
             'fonts'           => str_replace('\\', '/', FCPATH) . 'assets/fonts/plus-jakarta-sans/',
         ], ['debug' => false]));
