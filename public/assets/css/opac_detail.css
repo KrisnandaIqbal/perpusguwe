@@ -197,11 +197,27 @@ body {
 }
 
 .od-kartu {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 40px;
+    padding: 36px;
+    border: 1px solid #e8ebf0;
+    border-radius: 20px;
+    background: #ffffff;
+}
+
+.od-bagian {
     scroll-margin-top: 96px;
     min-width: 0;
 }
 
-.od-kartu h2,
+.od-bagian + .od-bagian {
+    padding-top: 40px;
+    border-top: 1px solid #e8ebf0;
+}
+
+.od-bagian h2,
 .od-rak-judul {
     margin: 0 0 20px;
     font-family: 'Source Serif 4', Georgia, serif;
@@ -209,17 +225,6 @@ body {
     font-weight: 700;
     line-height: 1.2;
     color: #151922;
-}
-
-.od-dua {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
-    align-items: start;
-}
-
-.od-dua-ringkasan {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
 }
 
 .od-ringkas {
@@ -273,7 +278,7 @@ body {
     color: #5b6272;
 }
 
-.od-kartu h2 + .od-sub {
+.od-bagian h2 + .od-sub {
     margin-top: -12px;
 }
 
@@ -547,9 +552,6 @@ body {
         width: min(260px, 100%);
     }
 
-    .od-dua-ringkasan {
-        grid-template-columns: minmax(0, 1fr);
-    }
 }
 
 @media (max-width: 575.98px) {
@@ -560,6 +562,15 @@ body {
     .od-main {
         gap: 24px;
         padding-block: 32px 56px;
+    }
+
+    .od-kartu {
+        gap: 32px;
+        padding: 24px 18px;
+    }
+
+    .od-bagian + .od-bagian {
+        padding-top: 32px;
     }
 
     .od-aksi {
