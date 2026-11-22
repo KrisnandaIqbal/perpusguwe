@@ -176,13 +176,16 @@
 			<aside class="bt-samping" aria-labelledby="judulKartu">
 				<h2 class="bt-samping-judul" id="judulKartu">Cari di sisi belakang kartu</h2>
 
-				<div class="bt-kartu" role="img" aria-label="Sisi belakang kartu anggota: kode QR di kiri, nomor anggota lengkap di kanan bawah">
-					<div class="bt-kartu-qr">
-						<svg viewBox="0 0 21 21" aria-hidden="true"><g fill="#0d1c2e"><path d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0z"/></g><g fill="#f0ebe1"><path d="M1 1h5v5H1zM15 1h5v5h-5zM1 15h5v5H1z"/></g><g fill="#0d1c2e"><path d="M2 2h3v3H2zM16 2h3v3h-3zM2 16h3v3H2zM9 0h2v2H9zM8 3h1v3H8zM10 4h2v2h-2zM9 8h3v1H9zM0 9h2v2H0zM3 8h2v1H3zM4 10h3v1H4zM13 9h2v3h-2zM17 8h2v2h-2zM19 11h2v1h-2zM8 11h2v3H8zM11 13h2v2h-2zM14 14h3v1h-3zM18 14h2v3h-2zM9 16h3v1H9zM13 17h2v4h-2zM16 18h3v1h-3zM9 19h2v2H9zM19 20h2v1h-2z"/></g></svg>
+				<div class="bt-kartu" role="img" aria-label="Sisi belakang kartu anggota: kode QR di tengah, nomor anggota tepat di bawahnya">
+					<div class="bt-kartu-kepala">
+						<img src="<?= base_url('assets/home/logo-kemnaker.png') ?>" alt="" width="24" height="24">
+						<span class="bt-kartu-garis"><i></i><i></i><i></i></span>
 					</div>
-					<span class="bt-kartu-teks bt-kartu-qr-label">QR SCAN</span>
-					<span class="bt-kartu-teks bt-kartu-no-label">NO. ANGGOTA</span>
+					<div class="bt-kartu-qr">
+						<svg viewBox="0 0 21 21" aria-hidden="true"><g fill="#0d1c2e"><path d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0z"/></g><g fill="#ffffff"><path d="M1 1h5v5H1zM15 1h5v5h-5zM1 15h5v5H1z"/></g><g fill="#0d1c2e"><path d="M2 2h3v3H2zM16 2h3v3h-3zM2 16h3v3H2zM9 0h2v2H9zM8 3h1v3H8zM10 4h2v2h-2zM9 8h3v1H9zM0 9h2v2H0zM3 8h2v1H3zM4 10h3v1H4zM13 9h2v3h-2zM17 8h2v2h-2zM19 11h2v1h-2zM8 11h2v3H8zM11 13h2v2h-2zM14 14h3v1h-3zM18 14h2v3h-2zM9 16h3v1H9zM13 17h2v4h-2zM16 18h3v1h-3zM9 19h2v2H9zM19 20h2v1h-2z"/></g></svg>
+					</div>
 					<span class="bt-kartu-no"></span>
+					<span class="bt-kartu-berlaku"></span>
 					<span class="bt-kartu-titik bt-kartu-titik-1">1</span>
 					<span class="bt-kartu-titik bt-kartu-titik-2">2</span>
 				</div>
@@ -194,9 +197,7 @@
 
 				<div class="bt-samping-blok">
 					<h3>Kartu tertinggal?</h3>
-					<p>Tanyakan nomor anggota ke petugas di meja layanan, atau isi buku tamu sebagai <a href="<?= base_url('buku-tamu/non_anggota') ?>" data-target="non_anggota">Bukan Anggota</a>.</p>
-					<p>Telepon perpustakaan: <a href="tel:0215207797">(021) 520-7797</a></p>
-				</div>
+					<p>Tanyakan nomor anggota ke petugas di meja layanan, atau isi buku tamu sebagai <a href="<?= base_url('buku-tamu/non_anggota') ?>" data-target="non_anggota">Bukan Anggota</a>.</p>				</div>
 			</aside>
 			<?php endif; ?>
 			</div>
@@ -244,7 +245,7 @@
 					</div>
 					<div class="bt-samping-blok">
 						<h3>Butuh bantuan</h3>
-						<p>Tanyakan petugas di meja layanan, atau telepon <a href="tel:0215207797">(021) 520-7797</a>.</p>
+						<p>Tanyakan petugas di meja layanan.</p>
 					</div>
 				</aside>
 			</div>
@@ -289,7 +290,7 @@
 					</div>
 					<div class="bt-samping-blok">
 						<h3>Butuh bantuan</h3>
-						<p>Tanyakan petugas di meja layanan, atau telepon <a href="tel:0215207797">(021) 520-7797</a>.</p>
+						<p>Tanyakan petugas di meja layanan.</p>
 					</div>
 				</aside>
 			</div>
