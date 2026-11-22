@@ -2,6 +2,8 @@
 
 <?= $this->section('style') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/opac_style.css') ?>?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/opac_beranda.css') ?>?v=<?= filemtime(FCPATH . 'assets/css/opac_beranda.css') ?>">
+<noscript><style>.ob-panel[hidden] { display: block; }</style></noscript>
 <style>
     /* Inisialisasi variabel dan base styling tema baru (diselaraskan dengan brand Kemnaker) */
     :root {
@@ -1113,6 +1115,7 @@ $activeAuthor       = (string) (request()->getVar('Author') ?? '');
 $activeSubjectParam = (string) (request()->getVar('Subject') ?? '');
 $activeDeweyParam   = (string) (request()->getVar('DeweyNo') ?? '');
 $activePub          = (string) (request()->getVar('Publisher') ?? '');
+$activeIsbn         = (string) (request()->getVar('ISBN') ?? '');
 $activeYear         = (string) (request()->getVar('PublishYear') ?? '');
 $activeLocation     = (string) (request()->getVar('PublishLocation') ?? '');
 
@@ -1120,340 +1123,202 @@ $activeSubject = ($activeSearchBy === 'Subject' && $rawSearch !== '') ? $rawSear
 $activeDewey   = ($activeSearchBy === 'DeweyNo' && $rawSearch !== '') ? $rawSearch : $activeDeweyParam;
 
 $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !== '' || $activeDewey !== '' ||
-    $activeAuthor !== '' || $activePub !== '' || $activeYear !== '' || $activeLocation !== '' ||
+    $activeAuthor !== '' || $activePub !== '' || $activeIsbn !== '' || $activeYear !== '' || $activeLocation !== '' ||
     ($activeCategory !== '' && $activeCategory !== 'semua') ||
     ($activeAvailability !== '' && $activeAvailability !== 'semua') || $activeFormat !== '' ||
     $activeLanguage !== '' || $activeYearStart !== '' || $activeYearEnd !== '';
+
+// Beranda (rak buku) kalau tidak ada pencarian atau filter; selain itu daftar hasil. Penentunya ada di Opac::berandaPolos().
+$modeBeranda = !empty($mode_beranda);
+
+// Angka di tombol Filter: berapa isian panel yang sedang aktif.
+$jumlahFilter = count(array_filter([
+    $activeAuthor, $activePub, $activeIsbn, $activeDeweyParam,
+    ($activeAvailability !== 'semua' ? $activeAvailability : ''), $activeFormat, $activeLanguage, $activeYearStart, $activeYearEnd,
+], static fn ($v) => $v !== ''));
+$jelajahDdc       = $jelajah['ddc'] ?? [];
+$jelajahPengarang = $jelajah['pengarang'] ?? [];
 ?>
 
-<!-- ─── Top Hero Section: Search & Mood Pills (Redesain Editorial Sesuai Gambar) ─── -->
-<div class="opac-hero-section">
-    <div class="container-fluid px-3 px-md-4" style="max-width: 1540px;">
-        <div class="opac-hero-grid">
-            <!-- Kolom Kiri: Teks & Form Pencarian -->
-            <div class="opac-hero-content">
-                <span class="opac-hero-kicker">
-                    <?= esc($nama_perpustakaan ?? 'Perpustakaan Publik Kota') ?> &bull; Katalog Akses Terbuka
-                </span>
-                <h1 class="opac-hero-title">
-                    Temukan bacaan yang tepat di setiap rak.
-                </h1>
-                <p class="opac-hero-desc">
-                    Cari judul, penulis, nomor panggil, atau pilih berdasarkan suasana membaca Anda. Lihat posisi rak secara langsung dan pesan buku untuk diambil di meja layanan.
-                </p>
+<?php
+// Parameter yang tidak punya kolom di panel Filter ikut terkirim lewat input tersembunyi, supaya pencarian baru tidak menghapusnya.
+$bawaan = array_filter([
+    'category'        => $activeCategory !== 'semua' ? $activeCategory : '',
+    'sort'            => $activeSort !== 'terbaru' ? $activeSort : '',
+    'search_by'       => $activeSearchBy,
+    'letter'          => $activeLetter,
+    'Subject'         => $activeSubjectParam,
+    'PublishYear'     => $activeYear,
+    'PublishLocation' => $activeLocation,
+], static fn ($v) => $v !== '');
 
-                <!-- Search Input Form -->
-                <div class="opac-search-hero-box">
-                    <form method="GET" action="<?= base_url('opac') ?>" id="opacSearchForm">
-                        <?php if ($activeCategory !== ''): ?>
-                            <input type="hidden" name="category" value="<?= esc($activeCategory) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeSort !== '' && $activeSort !== 'terbaru'): ?>
-                            <input type="hidden" name="sort" value="<?= esc($activeSort) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeSearchBy !== ''): ?>
-                            <input type="hidden" name="search_by" value="<?= esc($activeSearchBy) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeLetter !== ''): ?>
-                            <input type="hidden" name="letter" value="<?= esc($activeLetter) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeAuthor !== ''): ?>
-                            <input type="hidden" name="Author" value="<?= esc($activeAuthor) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeSubjectParam !== ''): ?>
-                            <input type="hidden" name="Subject" value="<?= esc($activeSubjectParam) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeDeweyParam !== ''): ?>
-                            <input type="hidden" name="DeweyNo" value="<?= esc($activeDeweyParam) ?>">
-                        <?php endif; ?>
-                        <?php if ($activePub !== ''): ?>
-                            <input type="hidden" name="Publisher" value="<?= esc($activePub) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeYear !== ''): ?>
-                            <input type="hidden" name="PublishYear" value="<?= esc($activeYear) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeLocation !== ''): ?>
-                            <input type="hidden" name="PublishLocation" value="<?= esc($activeLocation) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeAvailability !== '' && $activeAvailability !== 'semua'): ?>
-                            <input type="hidden" name="availability" value="<?= esc($activeAvailability) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeFormat !== ''): ?>
-                            <input type="hidden" name="format" value="<?= esc($activeFormat) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeLanguage !== ''): ?>
-                            <input type="hidden" name="language" value="<?= esc($activeLanguage) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeYearStart !== ''): ?>
-                            <input type="hidden" name="year_start" value="<?= esc($activeYearStart) ?>">
-                        <?php endif; ?>
-                        <?php if ($activeYearEnd !== ''): ?>
-                            <input type="hidden" name="year_end" value="<?= esc($activeYearEnd) ?>">
-                        <?php endif; ?>
+$huruf      = array_merge(range('A', 'Z'), range(0, 9));
+$modeAbjad  = ($activeLetter !== '' && $activeSearchBy === 'Author') ? 'Author' : 'Title';
+$kodeDdc    = array_map(static fn ($k) => (string) substr((string) $k, 0, 1), array_keys($jelajahDdc));
+$ddcLainnya = $activeDeweyParam !== '' && !in_array($activeDeweyParam, $kodeDdc, true);
+?>
 
-                        <div class="opac-search-input-wrap">
-                            <i class="fas fa-search search-icon"></i>
-                            <input type="search" name="search" placeholder="Cari judul, penulis, ISBN, atau topik..." value="<?= esc($rawSearch) ?>" autocomplete="off">
-                            <?php if (!empty($rawSearch)): ?>
-                                <a href="<?= esc(buildOpacUrl([], ['search'])) ?>" class="text-muted me-2" title="Hapus pencarian" style="text-decoration: none;">
-                                    <i class="fas fa-times-circle"></i>
-                                </a>
-                            <?php endif; ?>
-                            <button type="submit" class="opac-search-btn-submit">
-                                <span class="d-none d-sm-inline">Cari Katalog</span>
-                                <span class="d-sm-none">Cari</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+<!-- ─── Hero: judul, kotak cari, panel Filter dan Abjad ─── -->
+<section class="ob-hero" aria-labelledby="opacHeroTitle">
+    <form class="ob-shell" id="opacSearchForm" method="get" action="<?= base_url('opac') ?>">
+        <?php foreach ($bawaan as $nama => $nilai): ?>
+            <input type="hidden" name="<?= esc($nama, 'attr') ?>" value="<?= esc($nilai, 'attr') ?>">
+        <?php endforeach; ?>
 
-                <!-- Baris Mood: Label & Link Kejutan Buku Acak -->
-                <div class="opac-mood-row">
-                    <span class="opac-mood-label">Jelajah berdasar nuansa baca</span>
-                    <a href="<?= base_url('opac/acak') ?>" class="opac-random-link">
-                        <i class="fas fa-random"></i>
-                        <span>Kejutan Buku Acak</span>
-                    </a>
-                </div>
+        <div class="ob-hero-grid">
+            <div class="ob-hero-copy">
+                <h1 class="ob-hero-title" id="opacHeroTitle"><span>OPAC</span> <em>Online Public Access Catalogue</em></h1>
+                <p class="ob-hero-desc">Telusuri koleksi tercetak perpustakaan. Cek ketersediaan, letak rak, dan status buku sebelum datang.</p>
 
-                <!-- Nuansa / Category Pills Track -->
-                <div class="opac-category-track">
-                    <!-- Semua Nuansa -->
-                    <a href="<?= esc(buildOpacUrl([], ['category', 'Subject'])) ?>" class="opac-pill-btn <?= ($activeCategory === '' || $activeCategory === 'semua') ? 'active' : '' ?>">
-                        Semua Nuansa
-                    </a>
-
-                    <!-- Menenangkan -->
-                    <a href="<?= esc(buildOpacUrl(['category' => 'menenangkan'], ['Subject'])) ?>" class="opac-pill-btn <?= $activeCategory === 'menenangkan' ? 'active' : '' ?>">
-                        Menenangkan
-                    </a>
-
-                    <!-- Rasa Ingin Tahu -->
-                    <a href="<?= esc(buildOpacUrl(['category' => 'rasa_ingin_tahu'], ['Subject'])) ?>" class="opac-pill-btn <?= $activeCategory === 'rasa_ingin_tahu' ? 'active' : '' ?>">
-                        Rasa Ingin Tahu
-                    </a>
-
-                    <!-- Inspirasi Visual -->
-                    <a href="<?= esc(buildOpacUrl(['category' => 'inspirasi_visual'], ['Subject'])) ?>" class="opac-pill-btn <?= $activeCategory === 'inspirasi_visual' ? 'active' : '' ?>">
-                        Inspirasi Visual
-                    </a>
-
-                    <!-- Petualangan -->
-                    <a href="<?= esc(buildOpacUrl(['category' => 'petualangan'], ['Subject'])) ?>" class="opac-pill-btn <?= $activeCategory === 'petualangan' ? 'active' : '' ?>">
-                        Petualangan
-                    </a>
-
-                    <!-- Dropdown Kategori Koleksi Lainnya -->
-                    <div class="dropdown opac-pill-dropdown">
-                        <button class="opac-pill-btn dropdown-toggle <?= in_array($activeCategory, ['fiksi', 'pendidikan', 'sejarah', 'anak', 'pengembangan_diri', 'Sosial', 'Ketenagakerjaan', 'Hukum', 'Manajemen', 'Komputer', 'Agama', 'Biografi', 'Ekonomi'], true) ? 'active' : '' ?>" type="button" id="dropdownLainnya" data-bs-toggle="dropdown" aria-expanded="false">
-                            Koleksi Lainnya
+                <div class="ob-search" role="search">
+                    <div class="ob-pill">
+                        <svg class="ob-pill-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <label for="opacSearchInput" class="visually-hidden">Kata kunci</label>
+                        <input type="search" id="opacSearchInput" name="search" value="<?= esc($rawSearch, 'attr') ?>" placeholder="Cari judul atau topik" autocomplete="off">
+                        <button type="button" class="ob-icon-btn" data-panel-toggle aria-controls="panelAbjad" aria-expanded="false" aria-label="Telusuri menurut abjad" title="Telusuri menurut abjad">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.6 10.5 7.7 3.2l3.1 7.3"/><path d="M5.6 8.3h4.2"/><path d="M5 13.5h5.2L5 20.3h5.2"/><path d="M16.8 3.5v16.8"/><path d="m13.2 16.8 3.6 3.6 3.6-3.6"/></svg>
                         </button>
-                        <ul class="dropdown-menu opac-dropdown-menu" aria-labelledby="dropdownLainnya">
-                            <li><a class="dropdown-item <?= $activeCategory === 'fiksi' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'fiksi'], ['Subject'])) ?>">Fiksi &amp; Sastra</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'pendidikan' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'pendidikan'], ['Subject'])) ?>">Pendidikan</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'sejarah' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'sejarah'], ['Subject'])) ?>">Sejarah &amp; Biografi</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'anak' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'anak'], ['Subject'])) ?>">Buku Anak</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'pengembangan_diri' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'pengembangan_diri'], ['Subject'])) ?>">Pengembangan Diri</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'Ketenagakerjaan' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'Ketenagakerjaan'], ['Subject'])) ?>">Ketenagakerjaan</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'Hukum' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'Hukum'], ['Subject'])) ?>">Hukum</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'Sosial' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'Sosial'], ['Subject'])) ?>">Sosial &amp; Budaya</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'Manajemen' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'Manajemen'], ['Subject'])) ?>">Manajemen &amp; Bisnis</a></li>
-                            <li><a class="dropdown-item <?= $activeCategory === 'Komputer' ? 'active' : '' ?>" href="<?= esc(buildOpacUrl(['category' => 'Komputer'], ['Subject'])) ?>">Komputer &amp; TI</a></li>
-                        </ul>
+                        <button type="submit" class="ob-go">Cari</button>
                     </div>
+                    <button type="button" class="ob-filter-btn" data-panel-toggle aria-controls="panelFilter" aria-expanded="false">
+                        <span class="ob-filter-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10"/><path d="M18 6h2"/><circle cx="16" cy="6" r="2"/><path d="M4 12h4"/><path d="M12 12h8"/><circle cx="10" cy="12" r="2"/><path d="M4 18h12"/><circle cx="18" cy="18" r="2"/></svg></span>
+                        Filter
+                        <?php if ($jumlahFilter > 0): ?>
+                            <span class="ob-filter-badge"><?= $jumlahFilter ?><span class="visually-hidden"> filter aktif</span></span>
+                        <?php endif; ?>
+                    </button>
                 </div>
+
+                <span class="ob-jumlah"><strong><?= number_format($total_records ?? 0) ?></strong> <?= $hasActiveQuery ? 'judul ditemukan' : 'judul di katalog' ?></span>
             </div>
 
-            <!-- Kolom Kanan: Card Gambar Suasana Perpustakaan -->
-            <div class="opac-hero-media">
-                <img src="<?= base_url('assets/img/opac-hero-library.jpg') ?>?v=<?= file_exists(FCPATH . 'assets/img/opac-hero-library.jpg') ? filemtime(FCPATH . 'assets/img/opac-hero-library.jpg') : time() ?>" alt="Suasana Koleksi Perpustakaan" loading="eager">
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ─── Main Content Section ─── -->
-<div class="container-fluid px-3 px-md-4 opac-main-container" style="max-width: 1540px;">
-    <!-- Tombol Filter Mobile (< 992px) -->
-    <div class="d-lg-none mb-2 d-flex justify-content-between align-items-center">
-        <button type="button" class="opac-mobile-filter-btn d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold" id="btnToggleFilterSheet" aria-controls="opacSidebarDrawer" aria-expanded="false">
-            <i class="fas fa-sliders-h"></i>
-            <span>Filter Koleksi</span>
-            <?php if ($hasActiveQuery): ?>
-                <span class="badge rounded-pill ms-1" style="background-color: var(--opac-primary); color: #ffffff;">Aktif</span>
-            <?php endif; ?>
-        </button>
-        <span class="small text-muted fw-semibold">
-            <?= number_format($total_records ?? 0) ?> buku
-        </span>
-    </div>
-
-    <div class="row g-4">
-        <!-- ─── Sidebar Filter Desktop / Drawer Mobile ─── -->
-        <div class="col-lg-4 col-xl-3 sidebar-section opac-sidebar-drawer" id="opacSidebarDrawer">
-            <!-- Header Khusus Mobile Drawer -->
-            <div class="opac-drawer-header d-lg-none">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fas fa-sliders-h text-dark"></i>
-                    <h5 class="mb-0 fw-bold fs-6 text-dark">Filter Koleksi</h5>
-                </div>
-                <button type="button" class="btn-close opac-drawer-close" aria-label="Tutup panel filter" id="btnCloseFilterSheet" style="min-width: 44px; min-height: 44px;"></button>
+            <div class="ob-hero-mark" aria-hidden="true">
+                <div class="ob-ring"><div class="ob-ring-in"><img src="<?= base_url('assets/home/logo-kemnaker.png') ?>" alt="" width="256" height="256"></div></div>
             </div>
 
-            <div class="opac-sidebar-wrap p-3">
-                <!-- Header Filter -->
-                <div class="opac-filter-header">
-                    <h4 class="opac-filter-title">Filter</h4>
-                    <a href="<?= base_url('opac') ?>" class="opac-filter-reset">Reset</a>
+            <!-- Panel Filter: semua isian ikut terkirim bersama kata kunci -->
+            <div class="ob-panel" id="panelFilter" hidden>
+                <div class="ob-panel-kepala">
+                    <h2>Filter pencarian</h2>
+                    <button type="button" class="ob-tutup" data-panel-close="panelFilter" aria-label="Tutup filter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
                 </div>
-
-                <!-- Form Filter -->
-                <form method="GET" action="<?= base_url('opac') ?>" id="opacSidebarFilterForm">
-                    <!-- Pertahankan parameter pencarian, kategori, sort, huruf, dan facet -->
-                    <?php if ($rawSearch !== ''): ?>
-                        <input type="hidden" name="search" value="<?= esc($rawSearch) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeCategory !== ''): ?>
-                        <input type="hidden" name="category" value="<?= esc($activeCategory) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeSort !== '' && $activeSort !== 'terbaru'): ?>
-                        <input type="hidden" name="sort" value="<?= esc($activeSort) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeSearchBy !== ''): ?>
-                        <input type="hidden" name="search_by" value="<?= esc($activeSearchBy) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeLetter !== ''): ?>
-                        <input type="hidden" name="letter" value="<?= esc($activeLetter) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeAuthor !== ''): ?>
-                        <input type="hidden" name="Author" value="<?= esc($activeAuthor) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeSubjectParam !== ''): ?>
-                        <input type="hidden" name="Subject" value="<?= esc($activeSubjectParam) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeDeweyParam !== ''): ?>
-                        <input type="hidden" name="DeweyNo" value="<?= esc($activeDeweyParam) ?>">
-                    <?php endif; ?>
-                    <?php if ($activePub !== ''): ?>
-                        <input type="hidden" name="Publisher" value="<?= esc($activePub) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeYear !== ''): ?>
-                        <input type="hidden" name="PublishYear" value="<?= esc($activeYear) ?>">
-                    <?php endif; ?>
-                    <?php if ($activeLocation !== ''): ?>
-                        <input type="hidden" name="PublishLocation" value="<?= esc($activeLocation) ?>">
-                    <?php endif; ?>
-
-                    <!-- Group 1: Ketersediaan -->
-                    <div class="opac-filter-group">
-                        <button type="button" class="opac-filter-toggle" data-bs-toggle="collapse" data-bs-target="#filterKetersediaan" aria-expanded="true">
-                            <span>Ketersediaan</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="collapse show" id="filterKetersediaan">
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="availability" value="semua" <?= ($activeAvailability === 'semua' || $activeAvailability === '') ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Semua buku</span>
-                            </label>
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="availability" value="tersedia" <?= $activeAvailability === 'tersedia' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Tersedia</span>
-                            </label>
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="availability" value="dipinjam" <?= $activeAvailability === 'dipinjam' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Sedang dipinjam</span>
-                            </label>
+                <div class="ob-panel-isi">
+                    <div class="ob-fields">
+                        <div class="ob-field">
+                            <label for="fAuthor">Pengarang</label>
+                            <input type="text" id="fAuthor" name="Author" value="<?= esc($activeAuthor, 'attr') ?>" placeholder="Nama pengarang" autocomplete="off">
                         </div>
-                    </div>
-
-                    <!-- Group 2: Format koleksi -->
-                    <div class="opac-filter-group">
-                        <button type="button" class="opac-filter-toggle" data-bs-toggle="collapse" data-bs-target="#filterFormat" aria-expanded="true">
-                            <span>Format koleksi</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="collapse show" id="filterFormat">
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="format" value="" <?= empty($activeFormat) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Semua format</span>
-                            </label>
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="format" value="cetak" <?= $activeFormat === 'cetak' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Buku cetak</span>
-                            </label>
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="format" value="ebook" <?= $activeFormat === 'ebook' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>E-book</span>
-                            </label>
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="format" value="audio" <?= $activeFormat === 'audio' ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Buku audio</span>
-                            </label>
+                        <div class="ob-field">
+                            <label for="fPublisher">Penerbit</label>
+                            <input type="text" id="fPublisher" name="Publisher" value="<?= esc($activePub, 'attr') ?>" placeholder="Nama penerbit" autocomplete="off">
                         </div>
-                    </div>
-
-                    <!-- Group 3: Bahasa -->
-                    <div class="opac-filter-group">
-                        <button type="button" class="opac-filter-toggle" data-bs-toggle="collapse" data-bs-target="#filterBahasa" aria-expanded="true">
-                            <span>Bahasa</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="collapse show" id="filterBahasa">
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="language" value="" <?= empty($activeLanguage) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Semua bahasa</span>
-                            </label>
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="language" value="ind" <?= ($activeLanguage === 'ind' || $activeLanguage === 'id') ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Indonesia</span>
-                            </label>
-                            <label class="opac-checkbox-item">
-                                <input type="radio" name="language" value="eng" <?= ($activeLanguage === 'eng' || $activeLanguage === 'en') ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <span>Inggris</span>
-                            </label>
+                        <div class="ob-field">
+                            <label for="fIsbn">ISBN</label>
+                            <input type="text" id="fIsbn" name="ISBN" value="<?= esc($activeIsbn, 'attr') ?>" placeholder="978-..." autocomplete="off">
                         </div>
-                    </div>
-
-                    <!-- Group 4: Tahun terbit -->
-                    <div class="opac-filter-group">
-                        <button type="button" class="opac-filter-toggle" data-bs-toggle="collapse" data-bs-target="#filterTahun" aria-expanded="true">
-                            <span>Tahun terbit</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="collapse show" id="filterTahun">
-                            <div class="opac-year-range-row mb-2">
-                                <input type="number" name="year_start" class="opac-year-input" placeholder="Dari" value="<?= esc($activeYearStart) ?>" min="1900" max="2099">
-                                <input type="number" name="year_end" class="opac-year-input" placeholder="Sampai" value="<?= esc($activeYearEnd) ?>" min="1900" max="2099">
+                        <div class="ob-field">
+                            <label for="fTersedia">Ketersediaan</label>
+                            <select id="fTersedia" name="availability">
+                                <option value="semua" <?= ($activeAvailability === 'semua' || $activeAvailability === '') ? 'selected' : '' ?>>Semua buku</option>
+                                <option value="tersedia" <?= $activeAvailability === 'tersedia' ? 'selected' : '' ?>>Tersedia</option>
+                                <option value="dipinjam" <?= $activeAvailability === 'dipinjam' ? 'selected' : '' ?>>Sedang dipinjam</option>
+                            </select>
+                        </div>
+                        <div class="ob-field">
+                            <label for="fFormat">Format koleksi</label>
+                            <select id="fFormat" name="format">
+                                <option value="" <?= $activeFormat === '' ? 'selected' : '' ?>>Semua format</option>
+                                <option value="cetak" <?= $activeFormat === 'cetak' ? 'selected' : '' ?>>Buku cetak</option>
+                                <option value="ebook" <?= $activeFormat === 'ebook' ? 'selected' : '' ?>>E-book</option>
+                                <option value="audio" <?= $activeFormat === 'audio' ? 'selected' : '' ?>>Buku audio</option>
+                            </select>
+                        </div>
+                        <div class="ob-field">
+                            <label for="fBahasa">Bahasa</label>
+                            <select id="fBahasa" name="language">
+                                <option value="" <?= $activeLanguage === '' ? 'selected' : '' ?>>Semua bahasa</option>
+                                <option value="ind" <?= ($activeLanguage === 'ind' || $activeLanguage === 'id') ? 'selected' : '' ?>>Indonesia</option>
+                                <option value="eng" <?= ($activeLanguage === 'eng' || $activeLanguage === 'en') ? 'selected' : '' ?>>Inggris</option>
+                            </select>
+                        </div>
+                        <fieldset class="ob-field">
+                            <legend>Tahun terbit</legend>
+                            <div class="ob-rentang">
+                                <input type="number" name="year_start" value="<?= esc($activeYearStart, 'attr') ?>" min="1900" max="2099" placeholder="Dari" aria-label="Tahun terbit dari">
+                                <span aria-hidden="true">-</span>
+                                <input type="number" name="year_end" value="<?= esc($activeYearEnd, 'attr') ?>" min="1900" max="2099" placeholder="Sampai" aria-label="Tahun terbit sampai">
                             </div>
-                            <button type="submit" class="opac-btn-apply-year w-100">
-                                Terapkan Tahun
-                            </button>
-                        </div>
+                        </fieldset>
                     </div>
 
-                    <noscript>
-                        <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">Terapkan Filter</button>
-                    </noscript>
-                </form>
+                    <?php if (!empty($jelajahDdc)): ?>
+                        <fieldset class="ob-grup">
+                            <legend class="ob-sub">Subjek (klasifikasi DDC)</legend>
+                            <div class="ob-ddc">
+                                <label><input type="radio" name="DeweyNo" value="" <?= $activeDeweyParam === '' ? 'checked' : '' ?>><span class="nama">Semua kelas</span></label>
+                                <?php if ($ddcLainnya): ?>
+                                    <label><input type="radio" name="DeweyNo" value="<?= esc($activeDeweyParam, 'attr') ?>" checked><span class="kode"><?= esc($activeDeweyParam) ?></span><span class="nama">Kelas yang sedang dipilih</span></label>
+                                <?php endif; ?>
+                                <?php foreach ($jelajahDdc as $kode => $kelas): $nilai = (string) substr((string) $kode, 0, 1); ?>
+                                    <label>
+                                        <input type="radio" name="DeweyNo" value="<?= esc($nilai, 'attr') ?>" <?= $activeDeweyParam === $nilai ? 'checked' : '' ?>>
+                                        <span class="kode"><?= esc($kode) ?></span>
+                                        <span class="nama"><?= esc($kelas['name']) ?></span>
+                                        <span class="jumlah"><?= number_format($kelas['count']) ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </fieldset>
+                    <?php endif; ?>
 
-                <!-- Usulkan Buku Callout Card (Sesuai Screenshot) -->
-                <div class="opac-callout-card">
-                    <div class="opac-callout-title">Belum menemukan buku yang dicari?</div>
-                    <div class="opac-callout-desc">Bantu lengkapi koleksi kami.</div>
-                    <a href="<?= base_url('home/pendaftaran-online') ?>" class="opac-callout-link">
-                        <span>Usulkan buku</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <?php if (!empty($jelajahPengarang)): ?>
+                        <div class="ob-grup">
+                            <span class="ob-sub">Pengarang dengan koleksi terbanyak</span>
+                            <div class="ob-chips">
+                                <?php foreach ($jelajahPengarang as $p): ?>
+                                    <a class="ob-chip" href="<?= base_url('opac?' . http_build_query(['search' => $p['name'], 'search_by' => 'Author'])) ?>"><?= esc($p['name']) ?> <small><?= number_format($p['count']) ?></small></a>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="ob-panel-kaki">
+                    <a class="ob-semua ob-usul" href="<?= base_url('home/pendaftaran-online') ?>">Belum menemukan bukunya? Usulkan buku</a>
+                    <a class="ob-btn" href="<?= base_url('opac') ?>">Reset</a>
+                    <button type="submit" class="ob-btn ob-btn-isi">Terapkan filter</button>
+                </div>
+            </div>
+
+            <!-- Panel Abjad: tautan langsung ke daftar buku berawalan huruf itu -->
+            <div class="ob-panel" id="panelAbjad" hidden>
+                <div class="ob-panel-kepala">
+                    <h2>Telusuri menurut abjad</h2>
+                    <div class="ob-kepala-alat">
+                        <div class="ob-abjad-mode" role="group" aria-label="Abjad berdasarkan">
+                            <button type="button" data-abjad-mode="Title" aria-pressed="<?= $modeAbjad === 'Title' ? 'true' : 'false' ?>">Judul</button>
+                            <button type="button" data-abjad-mode="Author" aria-pressed="<?= $modeAbjad === 'Author' ? 'true' : 'false' ?>">Pengarang</button>
+                        </div>
+                        <button type="button" class="ob-tutup" data-panel-close="panelAbjad" aria-label="Tutup abjad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+                    </div>
+                </div>
+                <div class="ob-panel-isi">
+                    <?php foreach (['Title' => 'judul', 'Author' => 'pengarang'] as $kriteria => $nama): ?>
+                        <nav class="ob-huruf" data-abjad-grup="<?= $kriteria ?>" aria-label="Abjad <?= $nama ?>" <?= $modeAbjad === $kriteria ? '' : 'hidden' ?>>
+                            <?php foreach ($huruf as $h): ?>
+                                <a href="<?= base_url('opac?' . http_build_query(['search_by' => $kriteria, 'letter' => $h])) ?>" <?= ($activeLetter === (string) $h && $modeAbjad === $kriteria) ? 'aria-current="true"' : '' ?>><?= $h ?></a>
+                            <?php endforeach; ?>
+                        </nav>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
+    </form>
+</section>
 
-        <!-- Backdrop untuk Mobile Sheet -->
-        <div class="opac-drawer-backdrop d-lg-none" id="opacDrawerBackdrop"></div>
+<?php helper('opac_beranda'); ?>
 
-        <!-- ─── Right Catalog Content Section ─── -->
-        <div class="col-lg-8 col-xl-9 catalog-section" style="min-width: 0;">
+<!-- ─── Isi halaman: rak buku (beranda) atau hasil pencarian ─── -->
+<div class="ob-shell ob-main" id="opacMain">
             <?php if (session()->getFlashdata('notif_izin')): ?>
                 <div class="alert alert-info opac-notif-izin mb-4" role="status">
                     Kami memakai riwayat pinjammu untuk menyarankan buku. Hanya kamu yang bisa melihatnya.
@@ -1461,21 +1326,41 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
                 </div>
             <?php endif; ?>
 
-            <?php if (!empty($baris_rekomendasi)): ?>
-                <?php foreach ($baris_rekomendasi as $judulBaris => $isiBaris): ?>
-                    <?php if (empty($isiBaris)) continue; ?>
-                    <section class="opac-shelf-section mb-4" aria-label="<?= esc($judulBaris) ?>">
-                        <h4 class="opac-shelf-heading fw-bold mb-2"><?= esc($judulBaris) ?></h4>
-                        <div class="opac-shelf-scroll">
-                            <?php foreach ($isiBaris as $catalog): ?>
-                                <?= renderModernBookCard($catalog, 'opac-shelf-item') ?>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <?php if ($modeBeranda): ?>
+                <?php
+                // Rak pribadi anggota (hanya muncul kalau sudah login dan punya riwayat), lalu rak untuk semua pengunjung.
+                foreach (($baris_rekomendasi ?? []) as $judulBaris => $isiBaris) {
+                    if (!empty($isiBaris)) {
+                        echo beranda_rak('rak-' . substr(md5($judulBaris), 0, 8), $judulBaris, '', $isiBaris);
+                    }
+                }
 
-            <!-- Header Katalog (Sesuai Screenshot: Judul, Jumlah Buku, Urutkan, View Mode) -->
+                // Chip topik: tautan biasa (muat ulang halaman) supaya tetap jalan tanpa JavaScript.
+                ob_start(); ?>
+                <nav class="ob-chips" aria-label="Pilih topik">
+                    <?php foreach ($topik_daftar as $kunci => $labelTopik): ?>
+                        <a class="ob-chip" href="<?= base_url('opac?' . http_build_query(['topik' => $kunci])) ?>#rak-topik" <?= $kunci === $topik_aktif ? 'aria-current="true"' : '' ?>><?= esc($labelTopik) ?></a>
+                    <?php endforeach; ?>
+                </nav>
+                <?php $chipTopik = ob_get_clean(); ?>
+
+                <?= beranda_rak('rak-topik', 'Jelajah per topik', 'Pilih topik untuk mengganti rak.', $rak_beranda['topik'] ?? [], [
+                    'semua'  => base_url('opac?' . http_build_query(['category' => $topik_kategori])),
+                    'antara' => $chipTopik,
+                    'kosong' => 'Belum ada buku untuk topik ' . ($topik_daftar[$topik_aktif] ?? '') . '.',
+                ]) ?>
+                <?= beranda_rak('rak-populer', 'Paling sering dipinjam', '12 bulan terakhir, dari semua anggota', $rak_beranda['populer'] ?? [], [
+                    'jenis'  => 'populer',
+                    'semua'  => base_url('opac?sort=populer'),
+                    'kosong' => 'Belum cukup data peminjaman untuk menampilkan rak ini.',
+                ]) ?>
+                <?= beranda_rak('rak-baru', 'Baru masuk rak', 'Koleksi terbaru yang ditambahkan ke katalog', $rak_beranda['baru'] ?? [], [
+                    'semua'  => base_url('opac?semua=1'),
+                    'kosong' => 'Belum ada koleksi baru.',
+                ]) ?>
+            <?php else: ?>
+
+            <!-- Header Hasil: judul, jumlah buku, urutkan, tampilan kisi atau daftar -->
             <div class="opac-catalog-header">
                 <div>
                     <h2 class="opac-section-heading">
@@ -1496,7 +1381,7 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
                         <?php elseif ($activeLocation !== ''): ?>
                             Lokasi Terbit: <span class="text-primary"><?= esc($activeLocation) ?></span>
                         <?php else: ?>
-                            Jelajahi koleksi
+                            Semua koleksi
                         <?php endif; ?>
                     </h2>
                     <p class="opac-section-subheading">
@@ -1505,15 +1390,9 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
                 </div>
 
                 <div class="opac-header-actions">
-                    <?php if ($hasActiveQuery): ?>
-                        <a href="<?= base_url('opac') ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                            <i class="fas fa-times me-1"></i>Reset
-                        </a>
-                    <?php elseif (!empty($jelajah)): ?>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 opac-jelajah-toggle-btn" data-bs-toggle="collapse" data-bs-target="#jelajah" aria-expanded="false" aria-controls="jelajah">
-                            <i class="fas fa-compass me-1"></i><span>Jelajah</span>
-                        </button>
-                    <?php endif; ?>
+                    <a href="<?= base_url('opac') ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="min-height: 44px; display: inline-flex; align-items: center;">
+                        <i class="fas fa-times me-1"></i><?= $hasActiveQuery ? 'Reset' : 'Kembali ke beranda' ?>
+                    </a>
 
                     <!-- Dropdown Urutkan -->
                     <div class="d-flex align-items-center opac-sort-wrap">
@@ -1540,64 +1419,6 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
                 </div>
             </div>
 
-            <?php if (!empty($jelajah)): ?>
-                <section class="jelajah collapse" id="jelajah" aria-labelledby="jelajah-h">
-                    <h4 class="fw-bold text-dark mb-3 fs-6" id="jelajah-h">Jelajahi koleksi</h4>
-
-                    <p class="jelajah-judul">Menurut abjad</p>
-                    <?php foreach (['Title' => 'Judul', 'Author' => 'Pengarang'] as $kriteria => $nama): ?>
-                        <div class="jelajah-huruf abjad-row mb-2">
-                            <span class="label"><?= $nama ?></span>
-                            <?php foreach (array_merge(range('A', 'Z'), range(0, 9)) as $h): ?>
-                                <a class="abjad-chip" href="<?= base_url('opac?' . http_build_query(['search_by' => $kriteria, 'letter' => $h])) ?>"><?= $h ?></a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endforeach; ?>
-
-                    <?php if (!empty($jelajah['ddc'])): ?>
-                        <p class="jelajah-judul">Menurut subjek (klasifikasi DDC)</p>
-                        <div class="row g-2">
-                            <?php foreach ($jelajah['ddc'] as $kode => $kelas): ?>
-                                <div class="col-md-6">
-                                    <details class="ddc-kelas">
-                                        <summary>
-                                            <span class="kode"><?= esc($kode) ?></span>
-                                            <?= esc($kelas['name']) ?>
-                                            <span class="jumlah"><?= number_format($kelas['count']) ?></span>
-                                        </summary>
-                                        <ul>
-                                            <li><a href="<?= base_url('opac?DeweyNo=' . substr($kode, 0, 1)) ?>">Semua kelas <?= esc($kode) ?></a></li>
-                                            <?php foreach ($kelas['divisions'] as $div): ?>
-                                                <?php if ($div['count'] > 0): ?>
-                                                    <li>
-                                                        <a href="<?= base_url('opac?DeweyNo=' . $div['code']) ?>">
-                                                            <span class="kode"><?= esc($div['code']) ?></span>
-                                                            <?= esc($div['name']) ?>
-                                                            <span class="jumlah"><?= number_format($div['count']) ?></span>
-                                                        </a>
-                                                    </li>
-                                                <?php endif; ?>
-                                            <?php endforeach; ?>
-                                        </ul>
-                                    </details>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($jelajah['pengarang'])): ?>
-                        <p class="jelajah-judul">Pengarang dengan koleksi terbanyak</p>
-                        <div class="d-flex flex-wrap gap-2">
-                            <?php foreach ($jelajah['pengarang'] as $p): ?>
-                                <a class="pengarang-chip" href="<?= base_url('opac?' . http_build_query(['search' => $p['name'], 'search_by' => 'Author'])) ?>">
-                                    <?= esc($p['name']) ?> <span><?= number_format($p['count']) ?></span>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </section>
-            <?php endif; ?>
-
             <!-- ─── Grid Kartu Buku (Desktop 4 kolom, Mobile 2 kolom compact) ─── -->
             <div class="row g-2 g-md-3 opac-catalog-grid" id="opacCatalogGrid">
                 <?php
@@ -1606,7 +1427,7 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
 
                 <?php if (!empty($displayCatalogs)): ?>
                     <?php foreach ($displayCatalogs as $catalog): ?>
-                        <?= renderModernBookCard($catalog, 'opac-col-book col-xl-3 col-lg-4 col-md-6 col-6') ?>
+                        <?= renderModernBookCard($catalog, 'opac-col-book col-xxl-2 col-xl-3 col-lg-3 col-md-4 col-6') ?>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <div class="col-12">
@@ -1639,7 +1460,7 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
                 <h5 class="fw-bold text-dark mt-4 mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>Mungkin kamu tertarik</h5>
                 <div class="row g-2 g-md-3 opac-catalog-grid">
                     <?php foreach ($catalogs_mirip as $catalog): ?>
-                        <?= renderModernBookCard($catalog, 'opac-col-book col-xl-3 col-lg-4 col-md-6 col-6') ?>
+                        <?= renderModernBookCard($catalog, 'opac-col-book col-xxl-2 col-xl-3 col-lg-3 col-md-4 col-6') ?>
                     <?php endforeach; ?>
                 </div>
             <?php elseif (!empty($onesearch_url) && !empty($displayCatalogs)): ?>
@@ -1676,25 +1497,13 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
                     </div>
                 </div>
             <?php endif; ?>
-        </div>
-    </div>
+            <?php endif; // akhir mode hasil pencarian ?>
 </div>
 
+<script src="<?= base_url('assets/js/opac_beranda.js') ?>?v=<?= filemtime(FCPATH . 'assets/js/opac_beranda.js') ?>" defer></script>
 <script>
-    // Autofocus input pencarian jika kosong & auto-open #jelajah
+    // Autofocus input pencarian jika kosong
     document.addEventListener('DOMContentLoaded', function() {
-        const jelajahEl = document.getElementById('jelajah');
-        if (jelajahEl && location.hash === '#jelajah') {
-            bootstrap.Collapse.getOrCreateInstance(jelajahEl).show();
-            setTimeout(function() { jelajahEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
-        }
-        window.addEventListener('hashchange', function() {
-            if (jelajahEl && location.hash === '#jelajah') {
-                bootstrap.Collapse.getOrCreateInstance(jelajahEl).show();
-                setTimeout(function() { jelajahEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
-            }
-        });
-
         const searchInput = document.querySelector('input[name="search"]');
         if (searchInput && !searchInput.value && window.innerWidth >= 1024) {
             searchInput.focus();
@@ -1727,40 +1536,6 @@ $hasActiveQuery = $rawSearch !== '' || $activeLetter !== '' || $activeSubject !=
             });
         }
     });
-
-    // Mobile Bottom Sheet Filter Toggle (< 1024px)
-    (function() {
-        const btnOpen = document.getElementById('btnToggleFilterSheet');
-        const btnClose = document.getElementById('btnCloseFilterSheet');
-        const backdrop = document.getElementById('opacDrawerBackdrop');
-        const drawer = document.getElementById('opacSidebarDrawer');
-
-        function openDrawer() {
-            if (!drawer || !backdrop) return;
-            drawer.classList.add('is-open');
-            backdrop.classList.add('is-open');
-            document.body.classList.add('opac-sheet-open');
-            if (btnOpen) btnOpen.setAttribute('aria-expanded', 'true');
-        }
-
-        function closeDrawer() {
-            if (!drawer || !backdrop) return;
-            drawer.classList.remove('is-open');
-            backdrop.classList.remove('is-open');
-            document.body.classList.remove('opac-sheet-open');
-            if (btnOpen) btnOpen.setAttribute('aria-expanded', 'false');
-        }
-
-        if (btnOpen) btnOpen.addEventListener('click', openDrawer);
-        if (btnClose) btnClose.addEventListener('click', closeDrawer);
-        if (backdrop) backdrop.addEventListener('click', closeDrawer);
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && drawer && drawer.classList.contains('is-open')) {
-                closeDrawer();
-            }
-        });
-    })();
 
     // Logging Klik Katalog
     (function () {

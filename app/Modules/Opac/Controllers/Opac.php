@@ -23,6 +23,16 @@ class Opac extends \Base\Controllers\BaseController
     public $katalogRuasModel;
     public $bannerModel;
 
+    /** Topik di rak "Jelajah per topik": kunci => [label chip, nilai ?category= yang dipakai filter katalog]. Urutan array = urutan chip. */
+    private const TOPIK = [
+        'kerja'     => ['Ketenagakerjaan', 'Ketenagakerjaan'],
+        'manajemen' => ['Manajemen & Bisnis', 'Manajemen'],
+        'diri'      => ['Pengembangan Diri', 'pengembangan_diri'],
+        'komputer'  => ['Komputer & TI', 'Komputer'],
+        'fiksi'     => ['Fiksi & Sastra', 'fiksi'],
+        'sejarah'   => ['Sejarah & Biografi', 'sejarah'],
+    ];
+
 
     function __construct()
     {
@@ -55,7 +65,12 @@ class Opac extends \Base\Controllers\BaseController
     $this->data['opac_banners'] = $this->getOpacBanners();
     $this->data['search_log_id'] = $this->logSearch();
     $this->loadRujukanTanpaHasil();
+    $this->data['mode_beranda'] = $this->berandaPolos();
     $this->data['baris_rekomendasi'] = $this->getBarisBeranda();
+    $this->data['rak_beranda'] = $this->getBarisTamu();
+    $this->data['topik_daftar'] = array_map(static fn ($t) => $t[0], self::TOPIK);
+    $this->data['topik_aktif'] = $this->topikAktif();
+    $this->data['topik_kategori'] = self::TOPIK[$this->topikAktif()][1];
     $this->data['jelajah'] = $this->getJelajah();
     $endTime = microtime(true);
     $this->data['execution_time'] = $endTime - $startTime;
@@ -187,10 +202,15 @@ private function koleksiMirip(string $query, int $batas = 8): array
 // Beranda polos (tanpa pencarian, filter, huruf abjad, atau halaman > 1).
 private function berandaPolos(): bool
 {
-    foreach (['search', 'search_by', 'Author', 'Publisher', 'Subject', 'PublishYear', 'PublishLocation', 'DeweyNo', 'format', 'language', 'year_start', 'year_end'] as $p) {
+    foreach (['search', 'search_by', 'Author', 'Publisher', 'ISBN', 'Subject', 'PublishYear', 'PublishLocation', 'DeweyNo', 'format', 'language', 'year_start', 'year_end'] as $p) {
         if (trim((string) ($this->request->getVar($p) ?? '')) !== '') {
             return false;
         }
+    }
+
+    // ?semua=1 = tombol "Lihat semua": daftar katalog penuh tanpa rak.
+    if ($this->request->getVar('semua') !== null) {
+        return false;
     }
 
     $letter = trim((string) ($this->request->getVar('letter') ?? ''));
@@ -235,18 +255,47 @@ private function berandaPolos(): bool
     return true;
 }
 
-// Baris rekomendasi hanya di beranda polos (tanpa pencarian, filter, atau halaman lain).
+private function topikAktif(): string
+{
+    $kunci = (string) ($this->request->getVar('topik') ?? '');
+    return isset(self::TOPIK[$kunci]) ? $kunci : array_key_first(self::TOPIK);
+}
+
+/** Buku satu topik, terbaru dulu; 'populer' diisi dari $petaPopuler supaya yang sering dipinjam naik. */
+private function kandidatTopik(string $topik, array $petaPopuler): array
+{
+    $builder = $this->db->table('catalogs')->select('catalogs.*, catalogs.ID AS id')->where('catalogs.IsOPAC', 1);
+    $this->terapkanKategori($builder, self::TOPIK[$topik][1]);
+    $rows = $builder->orderBy('catalogs.ID', 'DESC')->limit(200)->get()->getResultArray();
+
+    foreach ($rows as &$r) {
+        $r['populer'] = $petaPopuler[$r['id']] ?? 0;
+    }
+    unset($r);
+    return $rows;
+}
+
+/**
+ * Rak beranda untuk semua pengunjung, urut dari atas: topik, populer, baru (judul tidak muncul di dua rak; yang atas menang).
+ * Kunci: topik, populer, baru. Rak dengan kurang dari 4 judul tidak ikut. Hanya di beranda polos (tanpa pencarian, filter, atau halaman lain).
+ */
 private function getBarisTamu(): array
 {
     if (!$this->berandaPolos()) {
         return [];
     }
 
-    return cache()->remember('opac_baris_tamu', 3600, function () {
-        $populer = \Rekomendasi\Libraries\Ranker::baris($this->katalogModel->kandidatPopuler(), \Rekomendasi\Libraries\Ranker::BOBOT_COLD_START);
-        $baru    = \Rekomendasi\Libraries\Ranker::baris($this->katalogModel->kandidatBaru(), \Rekomendasi\Libraries\Ranker::BOBOT_COLD_START);
+    $topik = $this->topikAktif();
+    return cache()->remember('opac_rak_beranda_' . $topik, 3600, function () use ($topik) {
+        $R       = \Rekomendasi\Libraries\Ranker::class;
+        $populer = $this->katalogModel->kandidatPopuler();
+        $peta    = array_column($populer, 'populer', 'id');
 
-        $baris = \Rekomendasi\Libraries\Ranker::halaman(['Paling banyak dipinjam' => $populer, 'Koleksi baru' => $baru]);
+        $baris = $R::halaman([
+            'topik'   => $R::baris($this->kandidatTopik($topik, $peta), $R::BOBOT_COLD_START),
+            'populer' => $R::baris($populer, $R::BOBOT_COLD_START),
+            'baru'    => $R::baris($this->katalogModel->kandidatBaru(), $R::BOBOT_COLD_START),
+        ]);
         foreach ($baris as &$b) {
             $b = enrichCatalogsWithCirculation($b);
         }
@@ -270,12 +319,9 @@ private function getBarisBeranda(): array
     return array_diff_key($semua, ['Paling banyak dipinjam' => 1, 'Koleksi baru' => 1]);
 }
 
+// Data panel Filter (kelas DDC dan pengarang terbanyak). Keduanya di-cache, jadi aman dipanggil di setiap halaman OPAC.
 private function getJelajah(): array
 {
-    if (!$this->berandaPolos()) {
-        return [];
-    }
-
     $pengarang = cache('opac_top_authors_v2');
     if (!$pengarang) {
         $pengarang = $this->db->table('catalogs')
@@ -517,6 +563,43 @@ private function applyAdvancedSearch($builder): bool
     return $hasAdvCriteria;
 }
 
+    /** Batasi $builder ke satu kategori subjek. Dipakai filter katalog (?category=) dan rak topik beranda. */
+    private function terapkanKategori($builder, string $category): void
+    {
+        switch ($category) {
+            case 'fiksi':
+                $builder->where("(catalogs.Subject LIKE '%fiksi%' OR catalogs.Subject LIKE '%sastra%' OR catalogs.Subject LIKE '%novel%' OR catalogs.Subject LIKE '%cerita%')", null, false);
+                break;
+            case 'pendidikan':
+                $builder->where("catalogs.Subject LIKE '%pendidikan%'", null, false);
+                break;
+            case 'sejarah':
+                $builder->where("(catalogs.Subject LIKE '%sejarah%' OR catalogs.Subject LIKE '%biografi%')", null, false);
+                break;
+            case 'anak':
+                $builder->where("(catalogs.Subject LIKE '%anak%' OR catalogs.Subject LIKE '%cerita%' OR catalogs.Subject LIKE '%dongeng%')", null, false);
+                break;
+            case 'pengembangan_diri':
+                $builder->where("(catalogs.Subject LIKE '%pengembangan diri%' OR catalogs.Subject LIKE '%psikologi%' OR catalogs.Subject LIKE '%motivasi%' OR catalogs.Subject LIKE '%kepemimpinan%' OR catalogs.Subject LIKE '%kewiraswastaan%')", null, false);
+                break;
+            case 'menenangkan':
+                $builder->where("(catalogs.Subject LIKE '%puisi%' OR catalogs.Subject LIKE '%sastra%' OR catalogs.Subject LIKE '%seni%' OR catalogs.Subject LIKE '%filsafat%' OR catalogs.Subject LIKE '%refleksi%' OR catalogs.Subject LIKE '%spiritual%')", null, false);
+                break;
+            case 'rasa_ingin_tahu':
+                $builder->where("(catalogs.Subject LIKE '%sains%' OR catalogs.Subject LIKE '%ilmiah%' OR catalogs.Subject LIKE '%teknologi%' OR catalogs.Subject LIKE '%riset%' OR catalogs.Subject LIKE '%penelitian%' OR catalogs.Subject LIKE '%sejarah%')", null, false);
+                break;
+            case 'inspirasi_visual':
+                $builder->where("(catalogs.Subject LIKE '%desain%' OR catalogs.Subject LIKE '%arsitektur%' OR catalogs.Subject LIKE '%fotografi%' OR catalogs.Subject LIKE '%seni rupa%' OR catalogs.Subject LIKE '%grafis%' OR catalogs.Subject LIKE '%ilustrasi%')", null, false);
+                break;
+            case 'petualangan':
+                $builder->where("(catalogs.Subject LIKE '%petualangan%' OR catalogs.Subject LIKE '%eksplorasi%' OR catalogs.Subject LIKE '%fiksi%' OR catalogs.Subject LIKE '%travel%' OR catalogs.Subject LIKE '%perjalanan%')", null, false);
+                break;
+            default:
+                $builder->like('catalogs.Subject', sanitizeSearch($category));
+                break;
+        }
+    }
+
     private function applyOpacCatalogFilters($builder): array
     {
         $allowedSearchBy = ['Title', 'Author', 'Subject', 'Publisher', 'ISBN', 'DeweyNo'];
@@ -532,42 +615,10 @@ private function applyAdvancedSearch($builder): bool
             $this->applyFulltextSearch($builder, $search, $searchBy, $rawSearch);
         }
 
-        // Filter Kategori (dari Pills Kategori di atas)
+        // Filter Kategori (?category=, dari rak topik dan tautan "Semua buku ...")
         $category = trim((string) ($this->request->getVar('category') ?? ''));
         if ($category !== '' && $category !== 'semua') {
-            switch ($category) {
-                case 'fiksi':
-                    $builder->where("(catalogs.Subject LIKE '%fiksi%' OR catalogs.Subject LIKE '%sastra%' OR catalogs.Subject LIKE '%novel%' OR catalogs.Subject LIKE '%cerita%')", null, false);
-                    break;
-                case 'pendidikan':
-                    $builder->where("catalogs.Subject LIKE '%pendidikan%'", null, false);
-                    break;
-                case 'sejarah':
-                    $builder->where("(catalogs.Subject LIKE '%sejarah%' OR catalogs.Subject LIKE '%biografi%')", null, false);
-                    break;
-                case 'anak':
-                    $builder->where("(catalogs.Subject LIKE '%anak%' OR catalogs.Subject LIKE '%cerita%' OR catalogs.Subject LIKE '%dongeng%')", null, false);
-                    break;
-                case 'pengembangan_diri':
-                    $builder->where("(catalogs.Subject LIKE '%pengembangan diri%' OR catalogs.Subject LIKE '%psikologi%' OR catalogs.Subject LIKE '%motivasi%' OR catalogs.Subject LIKE '%kepemimpinan%' OR catalogs.Subject LIKE '%kewiraswastaan%')", null, false);
-                    break;
-                case 'menenangkan':
-                    $builder->where("(catalogs.Subject LIKE '%puisi%' OR catalogs.Subject LIKE '%sastra%' OR catalogs.Subject LIKE '%seni%' OR catalogs.Subject LIKE '%filsafat%' OR catalogs.Subject LIKE '%refleksi%' OR catalogs.Subject LIKE '%spiritual%')", null, false);
-                    break;
-                case 'rasa_ingin_tahu':
-                    $builder->where("(catalogs.Subject LIKE '%sains%' OR catalogs.Subject LIKE '%ilmiah%' OR catalogs.Subject LIKE '%teknologi%' OR catalogs.Subject LIKE '%riset%' OR catalogs.Subject LIKE '%penelitian%' OR catalogs.Subject LIKE '%sejarah%')", null, false);
-                    break;
-                case 'inspirasi_visual':
-                    $builder->where("(catalogs.Subject LIKE '%desain%' OR catalogs.Subject LIKE '%arsitektur%' OR catalogs.Subject LIKE '%fotografi%' OR catalogs.Subject LIKE '%seni rupa%' OR catalogs.Subject LIKE '%grafis%' OR catalogs.Subject LIKE '%ilustrasi%')", null, false);
-                    break;
-                case 'petualangan':
-                    $builder->where("(catalogs.Subject LIKE '%petualangan%' OR catalogs.Subject LIKE '%eksplorasi%' OR catalogs.Subject LIKE '%fiksi%' OR catalogs.Subject LIKE '%travel%' OR catalogs.Subject LIKE '%perjalanan%')", null, false);
-                    break;
-                default:
-                    $cleanCat = sanitizeSearch($category);
-                    $builder->like('catalogs.Subject', $cleanCat);
-                    break;
-            }
+            $this->terapkanKategori($builder, $category);
         }
 
         // Filter Ketersediaan (Semua, Tersedia, Sedang dipinjam)
@@ -607,7 +658,7 @@ private function applyAdvancedSearch($builder): bool
         }
 
         // Filter Tambahan Tradisional
-        $additionalFilters = ['Publisher', 'Author', 'PublishLocation', 'Subject', 'PublishYear', 'DeweyNo'];
+        $additionalFilters = ['Publisher', 'Author', 'ISBN', 'PublishLocation', 'Subject', 'PublishYear', 'DeweyNo'];
         foreach ($additionalFilters as $filter) {
             $value = $this->request->getVar($filter);
             if (!empty($value)) {
@@ -681,7 +732,7 @@ private function applyAdvancedSearch($builder): bool
                         '(SELECT Catalog_id, COUNT(*) as loan_count FROM collections c JOIN collectionloanitems cli ON cli.Collection_id = c.ID GROUP BY Catalog_id) loan_stats',
                         'loan_stats.Catalog_id = catalogs.ID',
                         'left'
-                    )->orderBy('COALESCE(loan_stats.loan_count, 0)', 'DESC')->orderBy('catalogs.ID', 'DESC');
+                    )->orderBy('COALESCE(loan_stats.loan_count, 0)', 'DESC', false)->orderBy('catalogs.ID', 'DESC');
                     break;
                 case 'terbaru':
                 default:
@@ -705,6 +756,7 @@ private function applyAdvancedSearch($builder): bool
             'Subject'             => (string) ($this->request->getVar('Subject') ?? ''),
             'DeweyNo'             => (string) ($this->request->getVar('DeweyNo') ?? ''),
             'Publisher'           => (string) ($this->request->getVar('Publisher') ?? ''),
+            'ISBN'                => (string) ($this->request->getVar('ISBN') ?? ''),
             'PublishYear'         => (string) ($this->request->getVar('PublishYear') ?? ''),
             'PublishLocation'     => (string) ($this->request->getVar('PublishLocation') ?? ''),
         ];
