@@ -17,29 +17,10 @@
 
 <?= $this->section('content') ?>
 <div class="bt-page-wrapper">
-	<!-- Ornamen dekoratif latar belakang -->
-	<div class="bt-bg-circle bt-bg-circle-left"></div>
-	<div class="bt-bg-circle bt-bg-circle-left-inner"></div>
-	<div class="bt-bg-circle bt-bg-circle-right"></div>
-	<div class="bt-bg-circle bt-bg-circle-right-inner"></div>
-
 	<div class="bt-container">
-		<!-- Hero Banner Card -->
 		<div class="bt-hero-card">
-			<div class="bt-hero-content">
-				<h1 class="bt-hero-title"><?= esc($data->Name ?? 'Perpustakaan') ?></h1>
-				<div class="bt-hero-subtitle"><?= esc($data->LocationLibrary_name ?? 'Buku Tamu') ?></div>
-				
-				<nav class="bt-breadcrumb" aria-label="Breadcrumb">
-					<a href="<?= base_url() ?>"><i class="fas fa-home"></i> Beranda</a>
-					<span class="separator">/</span>
-					<span>Buku Tamu</span>
-					<span class="separator">/</span>
-					<span class="current" id="btBreadcrumbCurrent">Rombongan</span>
-				</nav>
-			</div>
-
-			<div class="bt-hero-illustration" style="background-image: url('<?= base_url('assets/img/buku-tamu-hero-people-clean.png') ?>');"></div>
+			<h1 class="bt-hero-title"><?= esc($data->Name ?? 'Perpustakaan') ?></h1>
+			<div class="bt-hero-subtitle"><?= esc($data->LocationLibrary_name ?? 'Buku Tamu') ?></div>
 		</div>
 
 		<!-- Segmented Switch Tabs (Seamless Instant Switch) -->
@@ -75,7 +56,7 @@
 					<strong>Perhatian!</strong><br>
 					<?= $message ?>
 				</div>
-				<button type="button" class="bt-alert-close" onclick="this.parentElement.style.display='none'">
+				<button type="button" class="bt-alert-close" aria-label="Tutup pesan" onclick="this.parentElement.style.display='none'">
 					<span>&times;</span>
 				</button>
 			</div>

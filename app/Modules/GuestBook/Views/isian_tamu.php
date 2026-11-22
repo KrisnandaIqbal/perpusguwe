@@ -15,6 +15,9 @@ $errors    = $errors ?? [];
 $rombongan = !empty($rombongan);
 $nilai     = fn (string $kolom) => (string) ($isian[$kolom] ?? '');
 $salah     = fn (string $kolom) => isset($errors[$kolom]) ? 'is-invalid' : '';
+// Isian yang salah ditandai aria-invalid dan menunjuk pesannya; $petunjuk: id petunjuk isian (bila ada)
+$aria      = fn (string $kolom, string $petunjuk = '') => (isset($errors[$kolom]) ? ' aria-invalid="true"' : '')
+    . (isset($errors[$kolom]) || $petunjuk !== '' ? ' aria-describedby="' . trim((isset($errors[$kolom]) ? 'galat_' . $kolom . ' ' : '') . $petunjuk) . '"' : '');
 $pesan     = function (string $kolom) use ($errors) {
     return isset($errors[$kolom])
         ? '<div class="bt-invalid-feedback" id="galat_' . $kolom . '">' . esc($errors[$kolom]) . '</div>'
@@ -52,7 +55,7 @@ $jenis        = $nilai('Jenis');
 		<label for="Nama" class="bt-field-label"><?= $rombongan ? 'Nama Penanggung Jawab' : 'Nama' ?> <span class="required">*</span></label>
 		<div class="bt-input-wrap">
 			<i class="far fa-user bt-input-icon"></i>
-			<input type="text" class="bt-input form-control <?= $salah('Nama') ?>" name="Nama" id="Nama" maxlength="100"
+			<input type="text" class="bt-input form-control <?= $salah('Nama') ?>" name="Nama" id="Nama" maxlength="100"<?= $aria('Nama') ?>
 				autocomplete="name" placeholder="Nama lengkap" value="<?= esc($nilai('Nama'), 'attr') ?>" required>
 		</div>
 		<?= $pesan('Nama') ?>
@@ -63,7 +66,7 @@ $jenis        = $nilai('Jenis');
 			<label for="UnitKerja_id" class="bt-field-label">Satuan Kerja <span class="required">*</span></label>
 			<div class="bt-input-wrap">
 				<i class="fas fa-briefcase bt-input-icon"></i>
-				<select class="bt-input form-control <?= $salah('UnitKerja_id') ?>" name="UnitKerja_id" id="UnitKerja_id" <?= $rombongan ? '' : 'required' ?>>
+				<select class="bt-input form-control <?= $salah('UnitKerja_id') ?>" name="UnitKerja_id" id="UnitKerja_id" <?= $rombongan ? '' : 'required' ?><?= $aria('UnitKerja_id') ?>>
 					<option value="">Pilih satuan kerja</option>
 					<?php foreach ($unit_kerja as $unit) : ?>
 						<option value="<?= (int) $unit->id ?>" <?= $unitTerpilih === (string) $unit->id ? 'selected' : '' ?>><?= esc($unit->nama_unit) ?></option>
@@ -80,7 +83,7 @@ $jenis        = $nilai('Jenis');
 			<label for="UnitLainnya" class="bt-field-label"><?= $rombongan ? 'Nama Instansi' : 'Nama Instansi / Asal' ?> <span class="required">*</span></label>
 			<div class="bt-input-wrap">
 				<i class="far fa-building bt-input-icon"></i>
-				<input type="text" class="bt-input form-control <?= $salah('UnitLainnya') ?>" name="UnitLainnya" id="UnitLainnya" maxlength="150"
+				<input type="text" class="bt-input form-control <?= $salah('UnitLainnya') ?>" name="UnitLainnya" id="UnitLainnya" maxlength="150"<?= $aria('UnitLainnya') ?>
 					autocomplete="organization" placeholder="Contoh: nama sekolah, kampus, perusahaan, atau instansi" value="<?= esc($nilai('UnitLainnya'), 'attr') ?>">
 			</div>
 			<?= $pesan('UnitLainnya') ?>
@@ -93,7 +96,7 @@ $jenis        = $nilai('Jenis');
 			<i class="fas fa-phone-alt bt-input-icon"></i>
 			<input type="tel" class="bt-input form-control <?= $salah('HP') ?>" name="HP" id="HP" maxlength="20" inputmode="tel"
 				autocomplete="tel" placeholder="Diawali 08 atau 62" value="<?= esc($nilai('HP'), 'attr') ?>"
-				aria-describedby="petunjukHP" required>
+				<?= trim($aria('HP', 'petunjukHP')) ?> required>
 		</div>
 		<?= $pesan('HP') ?>
 		<div class="bt-field-hint" id="petunjukHP">Nomor aktif yang bisa dihubungi lewat WhatsApp.</div>
@@ -107,7 +110,7 @@ $jenis        = $nilai('Jenis');
 				<input type="number" class="bt-input form-control <?= $salah('CountPersonel') ?>" name="CountPersonel" id="CountPersonel"
 					min="<?= IsianTamu::MIN_ROMBONGAN ?>" max="<?= IsianTamu::MAX_ROMBONGAN ?>" step="1" inputmode="numeric"
 					placeholder="Paling sedikit <?= IsianTamu::MIN_ROMBONGAN ?> orang" value="<?= esc($nilai('CountPersonel'), 'attr') ?>"
-					aria-describedby="petunjukJumlah" required>
+					<?= trim($aria('CountPersonel', 'petunjukJumlah')) ?> required>
 			</div>
 			<?= $pesan('CountPersonel') ?>
 			<div class="bt-field-hint" id="petunjukJumlah">Termasuk penanggung jawab. Kalau kurang dari <?= IsianTamu::MIN_ROMBONGAN ?> orang, setiap orang mengisi buku tamu Anggota atau Bukan Anggota.</div>
@@ -117,17 +120,29 @@ $jenis        = $nilai('Jenis');
 
 <style>
 	.isian-tamu [hidden] { display: none !important; }
+	.isian-tamu label.bt-radio-card {
+		min-height: 64px;
+		border-radius: 8px !important;
+		border-color: #7c8699 !important;
+	}
+	.isian-tamu label.bt-radio-card:hover {
+		background-color: #f5f7fa;
+	}
+	.isian-tamu label.bt-radio-card span {
+		color: #5b6272 !important;
+		font-size: 0.9rem !important;
+	}
 	.isian-tamu input[type="radio"]:checked + label.bt-radio-card {
-		border-color: #1d4ed8 !important;
-		background-color: #eff6ff !important;
-		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+		border-color: #0f3fb4 !important;
+		background-color: #f5f7fa !important;
+		box-shadow: 0 0 0 1px #0f3fb4 !important;
 	}
 	.isian-tamu input[type="radio"]:focus-visible + label.bt-radio-card {
-		outline: 2px solid #1d4ed8;
-		outline-offset: 2px;
+		outline: 2px solid #0f3fb4;
+		outline-offset: 3px;
 	}
 	.isian-tamu .pilihan-jenis.is-invalid label.bt-radio-card {
-		border-color: #ef4444 !important;
+		border-color: #b91c1c !important;
 	}
 </style>
 

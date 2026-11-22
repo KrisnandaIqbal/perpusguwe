@@ -18,29 +18,10 @@
 
 <?= $this->section('content') ?>
 <div class="bt-page-wrapper">
-	<!-- Ornamen dekoratif latar belakang -->
-	<div class="bt-bg-circle bt-bg-circle-left"></div>
-	<div class="bt-bg-circle bt-bg-circle-left-inner"></div>
-	<div class="bt-bg-circle bt-bg-circle-right"></div>
-	<div class="bt-bg-circle bt-bg-circle-right-inner"></div>
-
 	<div class="bt-container">
-		<!-- Hero Banner Card -->
 		<div class="bt-hero-card">
-			<div class="bt-hero-content">
-				<h1 class="bt-hero-title"><?= esc($data->Name ?? 'Perpustakaan') ?></h1>
-				<div class="bt-hero-subtitle"><?= esc($data->LocationLibrary_name ?? 'Buku Tamu') ?></div>
-				
-				<nav class="bt-breadcrumb" aria-label="Breadcrumb">
-					<a href="<?= base_url() ?>"><i class="fas fa-home"></i> Beranda</a>
-					<span class="separator">/</span>
-					<span>Buku Tamu</span>
-					<span class="separator">/</span>
-					<span class="current" id="btBreadcrumbCurrent">Anggota</span>
-				</nav>
-			</div>
-
-			<div class="bt-hero-illustration" style="background-image: url('<?= base_url('assets/img/buku-tamu-hero-people-clean.png') ?>');"></div>
+			<h1 class="bt-hero-title"><?= esc($data->Name ?? 'Perpustakaan') ?></h1>
+			<div class="bt-hero-subtitle"><?= esc($data->LocationLibrary_name ?? 'Buku Tamu') ?></div>
 		</div>
 
 		<!-- Segmented Switch Tabs (Seamless Instant Switch) -->
@@ -81,7 +62,7 @@
 						<div class="bt-alert bt-alert-error" role="alert">
 							<i class="fas fa-exclamation-circle" style="font-size: 1.25rem; margin-top: 2px;"></i>
 							<div><?= esc(strip_tags($message)) ?></div>
-							<button type="button" class="bt-alert-close" onclick="this.parentElement.style.display='none'">
+							<button type="button" class="bt-alert-close" aria-label="Tutup pesan" onclick="this.parentElement.style.display='none'">
 								<span>&times;</span>
 							</button>
 						</div>
@@ -92,7 +73,7 @@
 							<i class="fas fa-check-circle" style="font-size: 1.25rem; margin-top: 2px;"></i>
 							<div>
 								Kunjungan Anda sudah dicatat. Ada data yang salah? 
-								<a href="<?= base_url('buku-tamu/anggota') . '?' . http_build_query(['member_no' => $kunjungan_baru['member_no'], 'ubah' => $kunjungan_baru['id']]) ?>" style="color: #1d4ed8; font-weight: 700; text-decoration: underline;">Ubah data kunjungan</a>
+								<a href="<?= base_url('buku-tamu/anggota') . '?' . http_build_query(['member_no' => $kunjungan_baru['member_no'], 'ubah' => $kunjungan_baru['id']]) ?>">Ubah data kunjungan</a>
 							</div>
 						</div>
 					<?php endif; ?>
@@ -175,7 +156,7 @@
 					<!-- Profil Anggota Ringkas -->
 					<div class="bt-member-profile-wrap">
 						<div class="d-flex align-items-center gap-3 mb-3">
-							<div style="width: 44px; height: 44px; border-radius: 12px; background: #eff6ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+							<div style="width: 44px; height: 44px; border-radius: 8px; background: #f5f7fa; color: #0f3fb4; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
 								<i class="far fa-id-card"></i>
 							</div>
 							<div>
