@@ -147,7 +147,6 @@ $idKatalog = implode(' · ', array_filter([
                 <?php endif; ?>
                 <div class="ob-cover<?= $gaya['terang'] ? ' ob-cover-terang' : '' ?>" style="background:<?= $gaya['warna'][0] ?>;color:<?= $gaya['warna'][1] ?>" aria-hidden="true" <?= $meta['hasCover'] ? 'hidden' : '' ?>>
                     <span class="ob-cover-punggung"></span>
-                    <span class="ob-cover-kategori"><?= esc($meta['topLabel']) ?></span>
                     <strong class="ob-cover-judul"><?= esc($mainTitle) ?></strong>
                     <span class="ob-cover-penulis"><?= esc(mb_strimwidth($primaryAuthor, 0, 34, '…')) ?></span>
                     <span class="ob-cover-bulat" style="background:<?= $gaya['warna'][1] ?>"></span>

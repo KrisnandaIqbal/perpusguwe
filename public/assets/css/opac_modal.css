@@ -52,7 +52,7 @@
 
 .om-tutup:hover {
     border-color: var(--opac-primary, #0f3fb4);
-    background: #eef4ff;
+    background: #f5f7fa;
 }
 
 .om-tutup svg {
@@ -208,7 +208,7 @@
 }
 
 .om-subjek a:hover {
-    background: #eef4ff;
+    background: #f5f7fa;
 }
 
 .om-aksi {
@@ -249,7 +249,7 @@
 }
 
 .om-btn-lain:hover {
-    background: #eef4ff;
+    background: #f5f7fa;
 }
 
 @media (max-width: 767.98px) {
