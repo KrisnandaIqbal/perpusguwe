@@ -29,9 +29,6 @@ body {
 .od-sampul {
     display: grid;
     place-items: center;
-    padding: 36px 24px;
-    border-radius: 20px;
-    background: #eef1f6;
 }
 
 .od-sampul [hidden],
@@ -41,7 +38,7 @@ body {
 
 .od-sampul .ob-cover,
 .od-sampul .ob-cover-img {
-    width: min(180px, 100%);
+    width: min(220px, 100%);
 }
 
 .od-sampul .ob-cover-judul {
@@ -563,11 +560,6 @@ body {
 @media (max-width: 575.98px) {
     .od-hero {
         padding: 88px 0 32px;
-    }
-
-    .od-sampul {
-        width: 100%;
-        padding: 28px 16px;
     }
 
     .od-main {
