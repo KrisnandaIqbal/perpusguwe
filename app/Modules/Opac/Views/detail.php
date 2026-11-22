@@ -187,16 +187,16 @@ $idKatalog = implode(' · ', array_filter([
 
 <div class="ob-shell od-main">
 
-    <!-- ─── Satu kartu: ringkasan, informasi bibliografi, ketersediaan koleksi ─── -->
-    <div class="od-kartu">
+    <!-- ─── Ringkasan dan informasi bibliografi ─── -->
+    <div class="od-dua<?= $rawNote !== '' ? ' od-dua-ringkasan' : '' ?>">
         <?php if ($rawNote !== '') : ?>
-            <section class="od-bagian" aria-labelledby="odRingkasan">
+            <section class="od-kartu" aria-labelledby="odRingkasan">
                 <h2 id="odRingkasan">Ringkasan</h2>
                 <p class="od-ringkas"><?= esc($rawNote) ?></p>
             </section>
         <?php endif; ?>
 
-        <section class="od-bagian" aria-labelledby="odBiblio">
+        <section class="od-kartu" aria-labelledby="odBiblio">
             <h2 id="odBiblio">Informasi bibliografi</h2>
             <dl class="od-info">
                 <?php foreach ($baris as [$label, $nilai]) : ?>
@@ -204,8 +204,10 @@ $idKatalog = implode(' · ', array_filter([
                 <?php endforeach; ?>
             </dl>
         </section>
+    </div>
 
-    <section class="od-bagian" id="sectionInventory" aria-labelledby="odKoleksi">
+    <!-- ─── Ketersediaan koleksi ─── -->
+    <section class="od-kartu" id="sectionInventory" aria-labelledby="odKoleksi">
         <h2 id="odKoleksi">Ketersediaan koleksi</h2>
         <p class="od-sub">Eksemplar fisik, koleksi digital, dan metadata katalog.</p>
 
@@ -359,7 +361,6 @@ $idKatalog = implode(' · ', array_filter([
             <?php endif; ?>
         </div>
     </section>
-    </div>
 
     <!-- ─── Buku terkait ─── -->
     <?php if (!empty($buku_terkait)) : ?>
